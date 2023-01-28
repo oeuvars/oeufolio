@@ -90,7 +90,7 @@ const Contact = () => {
               })}
             />
             {errors.name && (
-              <motion.p className="text-bloodred mt-1">
+              <motion.p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
                 {errors.name.type === "required" && "This field is required."}
                 {errors.name.type === "maxLength" && "Max length is 100 char."}
               </motion.p>
@@ -106,7 +106,7 @@ const Contact = () => {
               })}
             />
             {errors.email && (
-              <p className="text-bloodred mt-1">
+              <p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
                 {errors.email.type === "required" && "This field is required."}
                 {errors.email.type === "pattern" && "Invalid email address."}
               </p>
@@ -124,7 +124,7 @@ const Contact = () => {
               })}
             />
             {errors.message && (
-              <p className="text-bloodred mt-1">
+              <p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
                 {errors.message.type === "required" &&
                   "This field is required."}
                 {errors.message.type === "maxLength" &&
