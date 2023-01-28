@@ -86,6 +86,7 @@ module.exports = {
       }
     },
     screens: {
+      phone: "360px",
       xs: "480px",
       sm: "768px",
       tablet: "914px",

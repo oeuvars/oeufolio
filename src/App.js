@@ -67,7 +67,7 @@ function App() {
       {/* designs */}
 
       {isAboveSmallScreens ? (
-        <div className="w-5/6 mx-auto py-52">
+        <div className="w-5/6 mx-auto phone:py-52 tablet:pb-10 sm:pb-10 tablet:pt-0 sm:pt-0 md:pt-0 lg:pt-10">
           <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
             <Projects />
           </motion.div>

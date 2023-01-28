@@ -21,7 +21,7 @@ const Contact = () => {
   const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");
 
   return (
-    <section id="contact" className={`contact pt-96 lg:pt-0`}>
+    <section id="contact" className={`contact phone:pt-80 phone:mt-5 md:pt-0 tablet:pt-0 sm:pt-0`}>
       {/* HEADINGS */}
       <motion.div
         initial="hidden"

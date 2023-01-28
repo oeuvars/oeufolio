@@ -134,7 +134,7 @@ const MySkills = () => {
           </p>
         </motion.div>
       </div>
-      <div className="py-16 w-full">
+      <div className="pt-16 w-full">
       <LineGradient />
       </div>
     </section>
