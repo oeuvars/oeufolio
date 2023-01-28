@@ -69,7 +69,7 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
                 {!isAboveSmallScreens && isMenuToggled && (
                     <motion.div
                     initial={{ width: 0 }} animate={{ width: 300 }}
-                    transition={{ type: "spring", bounce: 0.1, duration: 0.85 }}
+                    transition={{ type: "spring", bounce: 0.1, duration: 1 }}
                     className="fixed right-0 bottom-0 h-full bg-black opacity-95 transition duration-500 ease-in-out w-full z-20">
                         {/* Close Icon */}
                         <motion.div className="flex justify-start p-12">
