@@ -81,7 +81,7 @@ const Contact = () => {
             method="POST"
           >
             <input
-              className="w-full bg-eggshell rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3"
+              className="w-full bg-eggshell text-jet rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3"
               type="text"
               placeholder="NAME"
               {...register("name", {
@@ -90,14 +90,14 @@ const Contact = () => {
               })}
             />
             {errors.name && (
-              <motion.p className="text-bloodred mt-1">
+              <motion.p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
                 {errors.name.type === "required" && "This field is required."}
                 {errors.name.type === "maxLength" && "Max length is 100 char."}
               </motion.p>
             )}
 
             <input
-              className="w-full bg-eggshell rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
+              className="w-full bg-eggshell text-jet rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
               type="text"
               placeholder="EMAIL"
               {...register("email", {
@@ -106,14 +106,14 @@ const Contact = () => {
               })}
             />
             {errors.email && (
-              <p className="text-bloodred mt-1">
+              <p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
                 {errors.email.type === "required" && "This field is required."}
                 {errors.email.type === "pattern" && "Invalid email address."}
               </p>
             )}
 
             <textarea
-              className="w-full bg-eggshell rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
+              className="w-full bg-eggshell text-jet rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
               name="message"
               placeholder="MESSAGE"
               rows="4"
@@ -124,7 +124,7 @@ const Contact = () => {
               })}
             />
             {errors.message && (
-              <p className="text-bloodred mt-1">
+              <p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
                 {errors.message.type === "required" &&
                   "This field is required."}
                 {errors.message.type === "maxLength" &&

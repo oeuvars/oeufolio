@@ -6,6 +6,9 @@ import menuIcon from "../assets/menu.png";
 import closeIcon from "../assets/close-icon.svg";
 import { AnimatePresence, motion, useCycle } from "framer-motion";
 import SocialMediaIcons from "../components/SocialMediaIcons";
+import Skills from "./mySkills";
+import Contact from "./Contact";
+import Design from "./Projects";
 
 const Link = ({ page, selectedPage, setSelectedPage }) => {
     const lowerCasePage = page.toLowerCase();
@@ -74,20 +77,18 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
                         {/* Close Icon */}
                         <motion.div className="flex justify-start p-12">
                             <button onClick={() => setIsMenuToggled(!isMenuToggled)}>
-                                <img className="scale-110" alt="close-icon" src={closeIcon} />
+                                <img className="scale-100" alt="close-icon" src={closeIcon} />
                             </button>
                         </motion.div>
 
                         {/* Menu Items */}
                         <motion.div className="flex flex-col gap-8 mx-auto pl-14 text-xs font-normal font-montserrat text-cosmicwhite" onClick={() => setIsMenuToggled(!isMenuToggled)}>
 
-                            <Link page="HOME" selectedPage={selectedPage} setSelectedPage={setSelectedPage} />
+                            <a href="https://youtu.be/XUn7xBrK0gI">Monza '21</a>
 
-                            <Link page="SKILLS" selectedPage={selectedPage} setSelectedPage={setSelectedPage} />
+                            <a href="https://youtu.be/kkTymGMAfgU">Mirror Mirror</a>
 
-                            <Link page="DESIGNS" selectedPage={selectedPage} setSelectedPage={setSelectedPage}/>
-
-                            <Link page="CONTACT" selectedPage={selectedPage} setSelectedPage={setSelectedPage}/>
+                            <a href="https://youtu.be/6POZlJAZsok">Just The Two Of US</a>
 
                             <div className="invert scale-75 absolute bottom-28 left-0 ml-2 opacity-85">
                               <SocialMediaIcons />

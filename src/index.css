@@ -16,6 +16,6 @@ body,
 
 }
 
-html {
+html, body {
   -webkit-tap-highlight-color: transparent;
 }
