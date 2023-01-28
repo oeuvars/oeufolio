@@ -28,7 +28,7 @@ function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   return (
-    <div className="app scroll-smooth overflow-x-hidden lg:overflow-x-visible md:overflow-x-visible">
+    <div className="app scroll-smooth">
 
       {/* NavBar */}
 

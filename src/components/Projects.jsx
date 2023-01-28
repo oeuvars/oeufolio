@@ -52,50 +52,50 @@ const Projects = () => {
             <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
               <img src={day1} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day12} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day12} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day3} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day3} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day13} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day13} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day4} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day4} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day11} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day11} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day2} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day2} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day5} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day5} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day6} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day6} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day14} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day14} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day7} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day7} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'50%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day8} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day8} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day17} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day17} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day9} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <motion.img src={day9} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day10} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day10} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
-            <motion.div className="scale-100 ease-in hover:scale-105 hover:opacity-90 transition duration-500 basis-1/3 flex-1">
-              <img src={day16} alt="" className="rounded-lg mx-auto object-cover drop-shadow-2xl" width={'90%'} height={'90%'} responsive/>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hover:filter hover:opacity-90 transition duration-500 basis-1/3 flex-1">
+              <img src={day16} alt="" className="rounded-lg object-cover drop-shadow-2xl" width={'100%'} height={'100%'} responsive/>
             </motion.div>
           </motion.div>
           <motion.div
