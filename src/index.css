@@ -15,7 +15,6 @@ body,
   @apply text-white;
 
 }
-body::-webkit-scrollbar{
-  display: none;
--webkit-tap-highlight-color: transparent;
+html {
+  -webkit-tap-highlight-color: transparent;
 }
