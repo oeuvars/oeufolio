@@ -17,4 +17,5 @@ body,
 }
 body::-webkit-scrollbar{
   display: none;
+-webkit-tap-highlight-color: transparent;
 }
