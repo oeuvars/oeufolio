@@ -59,7 +59,7 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
                         <Link page="Contact" selectedPage={selectedPage} setSelectedPage={setSelectedPage}/>
                     </div>
                     ) : (
-                    <button id="SideBar" className="p-2 max-w-[48px] max-h-[48px] z-10" onClick={() => setIsMenuToggled(!isMenuToggled)}>
+                    <button className="p-2 max-w-[48px] max-h-[48px] z-10" onClick={() => setIsMenuToggled(!isMenuToggled)}>
                             <img alt="menu-icon" src={menuIcon} />
                     </button>
                     )}
