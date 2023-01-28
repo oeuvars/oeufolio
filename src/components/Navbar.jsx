@@ -13,7 +13,7 @@ const Link = ({ page, selectedPage, setSelectedPage }) => {
     return (
       <AnchorLink
         className={`${
-          selectedPage === lowerCasePage ? "lg:text-black text-pumpkin" : ""
+          selectedPage === lowerCasePage ? "tablet:text-black text-pumpkin" : ""
         } hover:text-brown-red transition duration-500`}
         href={`#${lowerCasePage}`}
         onClick={() => setSelectedPage(lowerCasePage)}
@@ -26,7 +26,7 @@ const Link = ({ page, selectedPage, setSelectedPage }) => {
 const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
     const [isMenuToggled, setIsMenuToggled] = useState(false);
     const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");
-    const navbarBackground = isTopOfPage ? "sm:backdrop-blur bg-cosmicwhite" : "md:backdrop-blur-lg opacity-95";
+    const navbarBackground = isTopOfPage ? "bg-cosmicwhite" : "tablet:backdrop-blur-lg opacity-95";
 
 
     useEffect(() => {
@@ -43,7 +43,7 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
 
 
     return (
-        <motion.nav className={`${navbarBackground} transition duration-500 ease-in-out w-full md:fixed top-0 py-3 lg:z-30`}>
+        <motion.nav className={`${navbarBackground} transition duration-500 ease-in-out w-full tablet:fixed top-0 py-3 tablet:z-40`}>
             <div className="flex items-center justify-between mx-auto w-5/6">
                 <h4 className="font-playfair text-4xl font-bold text-jet">A/D</h4>
 

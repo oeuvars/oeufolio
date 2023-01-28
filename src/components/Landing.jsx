@@ -6,14 +6,14 @@ import SocialMediaIcons from "../components/SocialMediaIcons";
 
 
 const Landing = ({ setSelectedPage }) => {
-    const isAboveMediumScreens = useMediaQuery("(min-width: 1060px)");
+    const isAboveMediumScreens = useMediaQuery("(min-width: 914px)");
 
     return (
         <section id="home" className="md:flex md:justify-between md:items-center md:h-full gap-16 py-10">
 
             {/* Image Section */}
 
-            <div className="md:order-2 flex justify-center basis-3/5 z-10 lg:mt-16 md:mt-32 scale-110">
+            <div className="md:order-2 flex justify-center basis-3/5 z-10 lg:mt-16 md:mt-32 scale-110 tablet:pt-5 tablet:scale-125 lg:scale-110">
                 {isAboveMediumScreens ? (
                     <div className="relative z-0 ml-20 before:absolute before:-top-24 before:-left-28 before:rounded-t-[400px] before:w-full before:max-w-[2000px] before:max-h-[1200px] before:h-full before:border-2 before:border-orange-800 scale-50 before:z-[-1]">
                         <img alt="" className="hover:filter hover:saturate-150 transition duration-500 z-10 w-full scale-125 max-w-[400px] md:max-w-[600px]" src={pfp}/>
