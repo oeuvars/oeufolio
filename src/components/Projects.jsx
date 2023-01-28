@@ -20,7 +20,7 @@ import day17 from "../assets/17.jpg";
 
 const Projects = () => {
   return (
-    <section id="designs" className="phone:pt-48 xs:pt-10 sm:pt-0 tablet:pt-0 lg:pt-72 md:pt-10">
+    <section id="designs" className="phone:pt-64 phone:mt-3 xs:pt-10 sm:pt-0 tablet:pt-0 lg:pt-72 md:pt-10">
 
       {/* HEADINGS */}
       <motion.div
