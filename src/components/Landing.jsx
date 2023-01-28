@@ -19,7 +19,7 @@ const Landing = ({ setSelectedPage }) => {
                         <img alt="" className="hover:filter hover:saturate-150 transition duration-500 z-10 w-full scale-125 max-w-[400px] md:max-w-[600px]" src={pfp}/>
                     </div>
                 ) : (
-                    <div className="relative z-0 ml-6 before:absolute before:-top-0 before:-left-7 before:rounded-t-[200px] before:w-5/6 before:max-w-[400px] before:h-5/6 before:border-2 before:border-rust before:z-[-1] scale-90 mt-5">
+                    <div className="relative z-0 ml-6 before:absolute before:-top-0 before:-left-7 before:rounded-t-[200px] before:w-5/6 before:max-w-[400px] before:h-5/6 before:border before:border-rust before:z-[-1] scale-90 mt-5">
                         <img alt="" className="hover:filter hover:backdrop-saturate-150 transition duration-500 z-10 w-full max-w-[400px] pr-1" src={pfp}/>
                     </div>
                 )}

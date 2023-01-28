@@ -6,9 +6,6 @@ import menuIcon from "../assets/menu.png";
 import closeIcon from "../assets/close-icon.svg";
 import { AnimatePresence, motion, useCycle } from "framer-motion";
 import SocialMediaIcons from "../components/SocialMediaIcons";
-import Skills from "./mySkills";
-import Contact from "./Contact";
-import Design from "./Projects";
 
 const Link = ({ page, selectedPage, setSelectedPage }) => {
     const lowerCasePage = page.toLowerCase();
@@ -82,13 +79,15 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
                         </motion.div>
 
                         {/* Menu Items */}
-                        <motion.div className="flex flex-col gap-8 mx-auto pl-14 text-xs font-normal font-montserrat text-cosmicwhite" onClick={() => setIsMenuToggled(!isMenuToggled)}>
+                        <motion.div className="flex flex-col gap-8 mx-auto pl-14 text-xs font-medium font-montserrat text-cosmicwhite hover:text-brown-red" onClick={() => setIsMenuToggled(!isMenuToggled)}>
 
                             <a href="https://youtu.be/XUn7xBrK0gI">Monza '21</a>
 
                             <a href="https://youtu.be/kkTymGMAfgU">Mirror Mirror</a>
 
                             <a href="https://youtu.be/6POZlJAZsok">Just The Two Of US</a>
+
+                            <a href="https://open.spotify.com/playlist/2c4XD9EPoeHDqqTXKWzzJV?si=98bd5ec7b2d442ec">HonkyTonk</a>
 
                             <div className="invert scale-75 absolute bottom-28 left-0 ml-2 opacity-85">
                               <SocialMediaIcons />
