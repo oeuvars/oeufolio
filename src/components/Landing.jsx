@@ -1,7 +1,6 @@
 import useMediaQuery from "../hooks/useMediaQuery";
 import { motion } from "framer-motion";
 import AnchorLink from "react-anchor-link-smooth-scroll";
-import pfp from "../assets/pfp.png";
 import pfp2 from "../assets/pfp2.png";
 import SocialMediaIcons from "../components/SocialMediaIcons";
 
