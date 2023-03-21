@@ -81,7 +81,7 @@ const Contact = () => {
             method="POST"
           >
             <input
-              className="w-full bg-eggshell rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3"
+              className="w-full bg-eggshell text-jet rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3"
               type="text"
               placeholder="NAME"
               {...register("name", {
