@@ -4,7 +4,7 @@ import AnchorLink from "react-anchor-link-smooth-scroll";
 import useMediaQuery from "../hooks/useMediaQuery";
 import menuIcon from "../assets/menu.png";
 import closeIcon from "../assets/close-icon.svg";
-import { AnimatePresence, motion, useCycle } from "framer-motion";
+import { motion } from "framer-motion";
 import SocialMediaIcons from "../components/SocialMediaIcons";
 
 const Link = ({ page, selectedPage, setSelectedPage }) => {
