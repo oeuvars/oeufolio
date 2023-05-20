@@ -39,8 +39,6 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
         }
       }, [!isMenuToggled])
 
-
-
     return (
         <motion.nav className={`${navbarBackground} transition duration-500 ease-in-out w-full tablet:fixed top-0 py-3 z-40`}>
             <div className="flex items-center justify-between mx-auto w-5/6">

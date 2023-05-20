@@ -48,7 +48,7 @@ const Projects = () => {
       </motion.div>
 
       {/* PROJECTS */}
-      <motion.div className="grid md:grid-cols-4 sm:grid-cols-2 gap-12 sm:gap-10 pt-16 pb-10 lg:flex-row lg:flex-wrap">
+      <motion.div className="grid md:grid-cols-4 phone:grid-cols-2 gap-12 sm:gap-10 pt-16 pb-10 lg:flex-row lg:flex-wrap">
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
               <img src={day1} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
             </motion.div>
