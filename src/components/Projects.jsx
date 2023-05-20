@@ -48,54 +48,54 @@ const Projects = () => {
       </motion.div>
 
       {/* PROJECTS */}
-      <motion.div className="grid md:grid-cols-4 phone:grid-cols-2 lg:gap-10 phone:gap-1 pt-16 phone:pb-1 lg:pb-10 lg:flex-row lg:flex-wrap">
+      <motion.div className="grid md:grid-cols-4 phone:grid-cols-2 lg:gap-10 phone:gap-x-4 pt-16 phone:pb-1 lg:pb-10 lg:flex-row lg:flex-wrap">
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day1} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day1} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day12} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day12} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day3} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day3} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day13} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day13} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day4} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day4} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day11} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day11} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day2} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day2} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day5} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day5} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day6} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day6} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day14} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day14} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day7} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day7} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day8} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day8} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day17} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day17} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day9} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day9} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day10} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day10} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
-              <img src={day16} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
+              <img src={day16} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'100%'} height={'100%'}/>
             </motion.div>
           </motion.div>
           <motion.div
