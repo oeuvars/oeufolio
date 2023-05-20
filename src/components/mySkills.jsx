@@ -27,7 +27,7 @@ const MySkills = () => {
           </p>
           <LineGradient width="w-1/3" />
           <p className="mt-10 mb-7 text-black font-outfit font-medium lg:text-lg md:text-base">
-          It's real skill, I'm a high performance athlete, athletes skill, sweat baby, kikiki, rrraaaa, sweat sweat, ooo ooo.
+            I possess exceptional skills in web development and designing, creating visually stunning and functional websites with a seamless user experience.
           </p>
         </motion.div>
 
@@ -78,8 +78,7 @@ const MySkills = () => {
             <div className="w-1/2 md:w-3/4 h-32 bg-deepchampagne rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 z-[-1]" />
           </div>
           <p className="mt-5 font-outfit font-medium text-base text-jet">
-            It is a lot harder than I initially thought. But yeah, it's pretty fun.
-            As you can see in this 'masterpiece' it's pretty neat, eh? Nah but really, I can code.
+            With a keen eye for design and a knack for problem-solving, my web development skills bring ideas to life through seamless functionality and stunning aesthetics.
           </p>
         </motion.div>
 
@@ -105,7 +104,7 @@ const MySkills = () => {
             <div className="w-1/2 md:w-3/4 h-32 bg-deepchampagne rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 z-[-1]" />
           </div>
           <p className="mt-5 font-outfit font-medium text-base text-jet">
-            Come on! Isn't is obvious at this point? Well you can always scroll down to see for youself.
+            My design skills blend creativity and attention to detail, resulting in visually captivating graphics and layouts that effectively communicate messages and captivate audiences.
           </p>
         </motion.div>
         {/* IMAGINATIVE */}
@@ -124,13 +123,13 @@ const MySkills = () => {
             <div className="z-10">
               <p className="font-playfair font-semibold text-black text-5xl">03</p>
               <p className="font-playfair font-semibold text-brown-red text-3xl mt-3">
-                Analysis
+                Back-End
               </p>
             </div>
             <div className="w-1/2 md:w-3/4 h-32 bg-almond rounded-lg opacity-40 drop-shadow-2xl absolute right-0 top-0 z-[-1]" />
           </div>
           <p className="mt-5 font-outfit font-medium text-base text-jet">
-            Arsenal to be the Premier League champions of the 22-23 season. #COYG
+            As a backend web developer, I excel at building robust and scalable systems, optimizing performance, and ensuring seamless data management for efficient web applications.
           </p>
         </motion.div>
       </div>

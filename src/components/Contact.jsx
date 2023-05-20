@@ -58,7 +58,7 @@ const Contact = () => {
           className="basis-1/2 flex flex-col justify-center"
         >
           <img className="rounded-xl shadow-md" src={contact} alt="contact" />
-          <motion.p className="text-jet font-outfit lg:font-playfair font-semibold mt-5 text-sm lg:text-xl text-center drop-shadow-lg overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
+          <motion.p className="text-jet font-outfit lg:font-playfair font-semibold mt-5 text-sm lg:text-xl phone:text-base text-center overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
           <motion.p className="text-brown-red text-xl lg:text-3xl font-playfair font-semibold py-2 text-center">YOU</motion.p>
         </motion.div>
 
@@ -133,10 +133,10 @@ const Contact = () => {
             )}
 
             <button
-              className="p-5 bg-jet font-montserrat font-semibold text-white rounded-2xl mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
+              className="phone:p-4 lg:p-5 bg-jet font-montserrat font-semibold text-white rounded-lg mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
               type="submit"
             >
-              CONTACT ME
+              Submit
             </button>
           </form>
         </motion.div>
