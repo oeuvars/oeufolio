@@ -48,7 +48,7 @@ const Projects = () => {
       </motion.div>
 
       {/* PROJECTS */}
-      <motion.div className="grid md:grid-cols-4 phone:grid-cols-2 gap-12 phone:gap-1 pt-16 phone:pb-1 lg:pb-10 lg:flex-row lg:flex-wrap">
+      <motion.div className="grid md:grid-cols-4 phone:grid-cols-2 lg:gap-10 phone:gap-1 pt-16 phone:pb-1 lg:pb-10 lg:flex-row lg:flex-wrap">
             <motion.div className="scale-100 hover:scale-105 ease-in transition duration-300 basis-1/3 flex-1 phone:pb-2 md:pb-0 phone:pt-2 md:pt-0">
               <img src={day1} alt="" className="rounded-md mx-auto object-cover shadow-lg" width={'90%'} height={'90%'} responsive/>
             </motion.div>
@@ -109,7 +109,7 @@ const Projects = () => {
           visible: { opacity: 1, y: 0 },
         }}
       >
-        <motion.p className="text-jet font-semibold font-playfair text-lg md:text-2xl mt-5 mb-7 hover:text-jet transition duration-500 ease-in-out">Designing Do Be Hard FR.</motion.p>
+        <motion.p className="text-jet font-semibold font-playfair text-lg md:text-2xl mt-5 mb-7 hover:text-jet transition duration-500 ease-in-out">What do ya think?</motion.p>
       </motion.div>
           <div className="pt-5">
             <LineGradient />

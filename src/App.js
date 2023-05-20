@@ -9,8 +9,17 @@ import MySkills from "./components/mySkills";
 import Contact from "./components/Contact";
 import { motion } from "framer-motion";
 import Projects from "./components/Projects";
+import PuffLoader from "react-spinners/PuffLoader";
 
 function App() {
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 2000)
+  }, [])
   const [selectedPage, setSelectedPage] = useState("Home");
   const [isTopOfPage, setIsTopOfPage] = useState(true);
   const isAboveMediumScreens = useMediaQuery("(min-width: 1060px)");
@@ -30,57 +39,65 @@ function App() {
   return (
     <div className="app scroll-smooth lg:overflow-x-visible md:overflow-x-visible overflow-x-hidden">
 
-      {/* NavBar */}
+      { loading ?
 
-      <Navbar
-        isTopOfPage={isTopOfPage}
-        selectedPage = {selectedPage}
-        setSelectedPage = {setSelectedPage}
-      />
-
-      {/* Landing or Home */}
-
-      <div className="w-5/6 mx-auto md:h-full">
-        {isAboveMediumScreens && (
-          <DotGroup
-            selectedPage={selectedPage}
-            setSelectedPage={setSelectedPage}
+        <div className="flex justify-center items-center h-screen">
+          <PuffLoader
+          color={'#002820'}
+          loading={loading}
+          size={70}
           />
-        )}
-        <Landing setSelectedPage={setSelectedPage} />
-      </div>
-
-      <LineGradient />
-
-      {/* Skills */}
-
-      <div className="w-5/6 mx-auto md:h-full">
-        <motion.div
-          margin="0 0 -200px 0"
-          amount="all"
-          onViewportEnter={() => setSelectedPage("skills")}
-        >
-          <MySkills />
-        </motion.div>
-      </div>
-
-      {/* designs */}
-
-      {isAboveSmallScreens ? (
-        <div className="w-5/6 mx-auto phone:py-52 tablet:pb-10 sm:pb-10 tablet:pt-0 sm:pt-0 md:pt-0 lg:pt-10">
-          <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
-            <Projects />
-          </motion.div>
         </div>
-        ) : (
-        <div className="w-5/6 mx-auto -my-72">
-          <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
-            <Projects />
-          </motion.div>
-        </div>
-      )}
 
-      {/* Contacts */}
+
+        :
+        <>
+          <Navbar
+          isTopOfPage={isTopOfPage}
+          selectedPage = {selectedPage}
+          setSelectedPage = {setSelectedPage}
+          />
+
+          <div className="w-5/6 mx-auto md:h-full">
+            {isAboveMediumScreens && (
+              <DotGroup
+                selectedPage={selectedPage}
+                setSelectedPage={setSelectedPage}
+              />
+            )}
+            <Landing setSelectedPage={setSelectedPage} />
+          </div>
+
+          <LineGradient />
+
+
+          <div className="w-5/6 mx-auto md:h-full">
+            <motion.div
+              margin="0 0 -200px 0"
+              amount="all"
+              onViewportEnter={() => setSelectedPage("skills")}
+            >
+              <MySkills />
+            </motion.div>
+          </div>
+
+          {/* designs */}
+
+          {isAboveSmallScreens ? (
+            <div className="w-5/6 mx-auto phone:py-52 tablet:pb-10 sm:pb-10 tablet:pt-0 sm:pt-0 md:pt-0 lg:pt-10">
+              <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
+                <Projects />
+              </motion.div>
+            </div>
+            ) : (
+            <div className="w-5/6 mx-auto -my-72">
+              <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
+                <Projects />
+              </motion.div>
+            </div>
+          )}
+
+          {/* Contacts */}
 
           <div className="w-5/6 mx-auto md:h-full">
             <motion.div
@@ -91,6 +108,9 @@ function App() {
               <Contact />
             </motion.div>
           </div>
+        </>
+
+      }
     </div>
   );
 }
