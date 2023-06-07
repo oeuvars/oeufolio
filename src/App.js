@@ -58,6 +58,7 @@ function App() {
           setSelectedPage = {setSelectedPage}
           />
 
+
           <div className="w-5/6 mx-auto md:h-full">
             {isAboveMediumScreens && (
               <DotGroup
@@ -71,7 +72,7 @@ function App() {
           <LineGradient />
 
 
-          <div className="w-5/6 mx-auto md:h-full">
+          <div className="w-5/6 mx-auto mt-28">
             <motion.div
               margin="0 0 -200px 0"
               amount="all"
@@ -81,25 +82,33 @@ function App() {
             </motion.div>
           </div>
 
+          <div className="">
+            <LineGradient />
+          </div>
+
           {/* designs */}
 
           {isAboveSmallScreens ? (
-            <div className="w-5/6 mx-auto phone:py-52 tablet:pb-10 sm:pb-10 tablet:pt-0 sm:pt-0 md:pt-0 lg:pt-10">
+            <div className="w-5/6 mx-auto">
               <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
                 <Projects />
               </motion.div>
             </div>
             ) : (
-            <div className="w-5/6 mx-auto -my-72">
+            <div className="w-5/6 mx-auto">
               <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
                 <Projects />
               </motion.div>
             </div>
           )}
 
+          <div className="">
+            <LineGradient />
+          </div>
+
           {/* Contacts */}
 
-          <div className="w-5/6 mx-auto md:h-full">
+          <div className="w-5/6 mx-auto">
             <motion.div
               margin="0 0 -200px 0"
               amount="all"

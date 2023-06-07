@@ -21,7 +21,7 @@ const Contact = () => {
   const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");
 
   return (
-    <section id="contact" className={`contact phone:pt-80 phone:mt-5 md:pt-0 tablet:pt-0 sm:pt-0 lg:pt-7`}>
+    <section id="contact" className={`contact phone:mt-12 lg:mt-16`}>
       {/* HEADINGS */}
       <motion.div
         initial="hidden"
@@ -57,9 +57,9 @@ const Contact = () => {
           }}
           className="basis-1/2 flex flex-col justify-center"
         >
-          <img className="rounded-xl shadow-md" src={contact} alt="contact" />
-          <motion.p className="text-jet font-outfit lg:font-playfair font-semibold mt-5 text-sm lg:text-xl phone:text-base text-center overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
-          <motion.p className="text-brown-red text-xl lg:text-3xl font-playfair font-semibold py-2 text-center">YOU</motion.p>
+          <img className="shadow-md border-bronze border-4 rounded-sm" src={contact} alt="contact" />
+          <motion.p className="text-jet font-outfit font-semibold mt-5 text-sm lg:text-xl phone:text-base text-center overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
+          <motion.p className="text-brown-red text-xl lg:text-3xl font-playfair font-semibold pt-1 text-center">YOU</motion.p>
         </motion.div>
 
         <motion.div
@@ -71,7 +71,7 @@ const Contact = () => {
             hidden: { opacity: 0, y: 50 },
             visible: { opacity: 1, y: 0 },
           }}
-          className="basis-1/2 mt-10 md:mt-0 phone:mb-8 lg:mb-16
+          className="basis-1/2 mt-7 md:mt-0 phone:mb-8 lg:mb-16
           "
         >
           <form
@@ -81,7 +81,7 @@ const Contact = () => {
             method="POST"
           >
             <input
-              className="w-full bg-eggshell text-jet rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3"
+              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3"
               type="text"
               placeholder="NAME"
               {...register("name", {
@@ -97,7 +97,7 @@ const Contact = () => {
             )}
 
             <input
-              className="w-full bg-eggshell text-jet rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
+              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
               type="text"
               placeholder="EMAIL"
               {...register("email", {
@@ -113,7 +113,7 @@ const Contact = () => {
             )}
 
             <textarea
-              className="w-full bg-eggshell text-jet rounded-xl shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
+              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
               name="message"
               placeholder="MESSAGE"
               rows="4"

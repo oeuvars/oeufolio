@@ -2,8 +2,6 @@ import React from "react";
 import { useState, useEffect } from "react";
 import AnchorLink from "react-anchor-link-smooth-scroll";
 import useMediaQuery from "../hooks/useMediaQuery";
-import menuIcon from "../assets/menu.png";
-import closeIcon from "../assets/close-icon.svg";
 import { motion } from "framer-motion";
 import SocialMediaIcons from "../components/SocialMediaIcons";
 
@@ -26,7 +24,7 @@ const Link = ({ page, selectedPage, setSelectedPage }) => {
 const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
     const [isMenuToggled, setIsMenuToggled] = useState(false);
     const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");
-    const navbarBackground = isTopOfPage ? "bg-cosmicwhite" : "backdrop-blur-lg opacity-95";
+    const navbarBackground = isTopOfPage ? "bg-yellow-50" : "backdrop-blur-lg opacity-95";
 
     useEffect(() => {
         if (isMenuToggled) {
@@ -56,8 +54,10 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
                         <Link page="Contact" selectedPage={selectedPage} setSelectedPage={setSelectedPage}/>
                     </div>
                     ) : (
-                    <button className="p-2 max-w-[48px] max-h-[48px] z-10" onClick={() => setIsMenuToggled(!isMenuToggled)}>
-                            <img alt="menu-icon" src={menuIcon} />
+                    <button className="" onClick={() => setIsMenuToggled(!isMenuToggled)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#F17F29" className="w-9 h-9">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
                     </button>
                     )}
 
@@ -70,7 +70,9 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
                         {/* Close Icon */}
                         <motion.div className="flex justify-start p-12">
                             <button onClick={() => setIsMenuToggled(!isMenuToggled)}>
-                                <img className="scale-100" alt="close-icon" src={closeIcon} />
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#e6e6e6" className="w-7 h-7">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
                             </button>
                         </motion.div>
 

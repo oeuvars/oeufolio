@@ -20,7 +20,7 @@ import day17 from "../assets/17.jpg";
 
 const Projects = () => {
   return (
-    <section id="designs" className="phone:pt-64 phone:mt-3 xs:pt-10 sm:pt-0 tablet:pt-0 lg:pt-72 md:pt-10">
+    <section id="designs" className="mt-12">
 
       {/* HEADINGS */}
       <motion.div
@@ -42,7 +42,7 @@ const Projects = () => {
             <LineGradient width="w-1/3" />
           </div>
         </div>
-        <p className="pt-10 text-jet font-medium font-outfit md:pb-10 lg:pb-0">
+        <p className="pt-10 text-jet font-medium font-outfit md:pb-10 lg:pb-0 phone:text-sm lg:text-base">
           While very diverse, our aesthetic approach often involves distinct sense of play, aiming to put the fun in functional. Strategically, my work aims to elevate design offerings by distilling core messaging down to its clearest and freshest visual form.
         </p>
       </motion.div>
@@ -111,9 +111,6 @@ const Projects = () => {
       >
         <motion.p className="text-jet font-semibold font-playfair text-lg md:text-2xl mt-5 mb-7 hover:text-jet transition duration-500 ease-in-out">What do ya think?</motion.p>
       </motion.div>
-          <div className="pt-5">
-            <LineGradient />
-          </div>
     </section>
 
   );
