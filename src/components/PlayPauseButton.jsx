@@ -32,7 +32,7 @@ const PlayPauseButton = () => {
         className="transition duration-500 my-auto"
     >
       {!isPlaying ? (
-        <img src={playIcon} alt="Play" className="w-8 h-8"/>
+        <img src={playIcon} alt="Play" className="w-8 h-10"/>
       ) : (
         <img src={pauseIcon} alt="Pause" className="w-8 h-8"/>
       )}
