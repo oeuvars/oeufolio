@@ -18,7 +18,7 @@ function App() {
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-    }, 1000)
+    }, 2000)
   }, [])
   const [selectedPage, setSelectedPage] = useState("Home");
   const [isTopOfPage, setIsTopOfPage] = useState(true);

@@ -1,7 +1,7 @@
 import useMediaQuery from "../hooks/useMediaQuery";
 import { motion } from "framer-motion";
 import AnchorLink from "react-anchor-link-smooth-scroll";
-import profile from "../assets/Profile2.jpg";
+import profile from "../assets/Profile.webp";
 import SocialMediaIcons from "../components/SocialMediaIcons";
 import playIcon from "../assets/play.svg";
 import pauseIcon from "../assets/pause.svg";
