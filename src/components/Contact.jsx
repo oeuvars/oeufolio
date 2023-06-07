@@ -71,7 +71,7 @@ const Contact = () => {
             hidden: { opacity: 0, y: 50 },
             visible: { opacity: 1, y: 0 },
           }}
-          className="basis-1/2 mt-10 md:mt-0 pb-16
+          className="basis-1/2 mt-10 md:mt-0 phone:mb-8 lg:mb-16
           "
         >
           <form
@@ -133,7 +133,7 @@ const Contact = () => {
             )}
 
             <button
-              className="phone:p-4 lg:p-5 bg-jet font-montserrat font-semibold text-white rounded-lg mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
+              className="flex lg:mx-0 phone:mx-auto phone:px-4 lg:px-7 py-3 bg-black bg-opacity-90 font-montserrat font-semibold text-white mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
               type="submit"
             >
               Submit
@@ -141,7 +141,7 @@ const Contact = () => {
           </form>
         </motion.div>
       </div>
-      <p className="text-jet text-center font-medium text-xs pb-5 font-montserrat lg:pt-10">© Anurag Das 2023</p>
+      <p className="text-jet text-center font-semibold text-sm phone:pb-2 lg:pb-5 font-montserrat lg:pt-10">© Anurag Das 2023</p>
     </section>
   );
 };
