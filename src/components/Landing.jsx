@@ -58,7 +58,7 @@ const Landing = ({ setSelectedPage }) => {
                     <img src={cover} alt="cover" className="rounded-md w-16 h-16"/>
                     <div className="w-5/6 my-auto justify-start ml-2">
                         <h1 className="font-unbounded phone:text-base lg:text-lg">No One Really Cares</h1>
-                        <h1 className="font-unbounded phone:text-xs lg:text-sm text-bloodred">Kris Jensen</h1>
+                        <p className="font-unbounded phone:text-xs lg:text-sm text-bloodred">Kris Jensen</p>
                     </div>
                     <PlayPauseButton playIcon={playIcon} pauseIcon={pauseIcon}/>
                 </motion.div>
