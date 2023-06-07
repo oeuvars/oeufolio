@@ -133,7 +133,7 @@ const Contact = () => {
             )}
 
             <button
-              className="flex lg:mx-0 phone:mx-auto phone:px-4 lg:px-7 py-3 bg-black bg-opacity-90 font-montserrat font-semibold text-white mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
+              className="flex lg:mx-0 phone:mx-auto phone:px-4 lg:px-7 py-3 bg-jet rounded-md font-montserrat font-semibold text-white mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
               type="submit"
             >
               Submit
