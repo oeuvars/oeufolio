@@ -75,7 +75,7 @@ const MySkills = () => {
                 Front-End
               </p>
             </div>
-            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-yellow-200 via-pink-200 to-pink-400 saturate-150 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" />
+            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-yellow-200 via-pink-200 to-pink-400 saturate-150 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" ></div>
           </div>
           <p className="mt-5 font-outfit font-medium text-base text-jet">
             With a keen eye for design and a knack for problem-solving, my web development skills bring ideas to life through seamless functionality and stunning aesthetics.
@@ -101,7 +101,7 @@ const MySkills = () => {
                 Designing
               </p>
             </div>
-            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-red-200 via-red-300 to-yellow-200 saturate-200 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" />
+            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-red-200 via-red-300 to-yellow-200 saturate-200 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" ></div>
           </div>
           <p className="mt-5 font-outfit font-medium text-base text-jet">
             My design skills blend creativity and attention to detail, resulting in visually captivating graphics and layouts that effectively communicate messages and captivate audiences.
@@ -126,7 +126,9 @@ const MySkills = () => {
                 Back-End
               </p>
             </div>
-            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-yellow-100 via-yellow-300 to-yellow-500 rounded-lg opacity-40 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" />
+            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-yellow-100 via-yellow-300 to-yellow-500 rounded-lg opacity-40 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" >
+
+            </div>
           </div>
           <p className="mt-5 font-outfit font-medium text-base text-jet">
             As a backend web developer, I excel at building robust and scalable systems, optimizing performance, and ensuring seamless data management for efficient web applications.

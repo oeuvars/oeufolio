@@ -39,7 +39,7 @@ const Landing = ({ setSelectedPage }) => {
                     {/*Call To Action */}
 
                 <motion.div className="flex mt-5 justify-center md:justify-start" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.2, duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}}>
-                    <AnchorLink className="text-black py-3 px-7 font-montserrat font-semibold transition duration-500 bg-white bg-opacity-50" onClick={() => setSelectedPage("contact")} href="#contact">
+                    <AnchorLink className="text-black py-3 px-7 font-outfit font-medium transition duration-500 bg-white bg-opacity-50" onClick={() => setSelectedPage("contact")} href="#contact">
                         Contact Me
                     </AnchorLink>
 
@@ -54,7 +54,7 @@ const Landing = ({ setSelectedPage }) => {
                     <SocialMediaIcons />
                 </motion.div>
 
-                <motion.div className="bg-white text-black bg-opacity-50 border-2 border-black border-opacity-70 phone:px-7 lg:px-12 py-5 rounded-xl lg:mt-5 phone:mb-10 lg:mb-0 flex justify-between gap-3">
+                <motion.div className="bg-white text-black bg-opacity-50 border-2 border-black border-opacity-70 phone:px-7 lg:px-12 py-5 rounded-xl lg:mt-5 phone:mb-10 lg:mb-0 flex justify-between gap-3" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.2, duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}}>
                     <img src={cover} alt="cover" className="rounded-md w-16 h-16"/>
                     <div className="w-5/6 my-auto justify-start ml-2">
                         <h1 className="font-unbounded phone:text-base lg:text-lg">No One Really Cares</h1>
