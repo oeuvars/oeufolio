@@ -69,21 +69,9 @@ module.exports = {
         manrope: ["Manrope", "sans-serif"],
         montserrat: ["Montserrat", "sans-serif"],
         script: ["Dancing Script", "cursive"],
-        outfit: ["Outfit", "sans-serif"]
+        outfit: ["Outfit", "sans-serif"],
+        unbounded: ['Unbounded', "cursive"]
       },
-      content: {
-        brush: "url('./assets/brush.png')",
-        blackbrush: "url('./assets/blackbrush.svg')",
-        greybrush: "url('./assets/greybrush.svg')",
-        silverbrush: "url('./assets/silverbrush.svg')",
-        smoke: "url('./assets/silversmoke.svg')",
-        purplestroke: "url('./assets/purplestroke.svg')",
-        person1: "url('./assets/person-1.png')",
-        person2: "url('./assets/person-2.png')",
-        person3: "url('./assets/person-3.png')",
-        logo: "url('./assets/logo.svg')",
-        blebrush: "url('./assets/blebrush.png')",
-      }
     },
     screens: {
       phone: "360px",

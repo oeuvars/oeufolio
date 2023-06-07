@@ -1,47 +1,50 @@
 import useMediaQuery from "../hooks/useMediaQuery";
 import { motion } from "framer-motion";
 import AnchorLink from "react-anchor-link-smooth-scroll";
-import pfp from "../assets/pfp.webp";
+import profile from "../assets/Profile2.jpg";
 import SocialMediaIcons from "../components/SocialMediaIcons";
-
+import playIcon from "../assets/play.svg";
+import pauseIcon from "../assets/pause.svg";
+import PlayPauseButton from "./PlayPauseButton";
+import cover from "../assets/cover.webp";
 
 const Landing = ({ setSelectedPage }) => {
     const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");
 
     return (
-        <section id="home" className="md:flex md:justify-between md:items-center md:h-full gap-16 py-10">
+        <section id="home" className="md:flex md:justify-between md:items-center md:h-full gap-16">
 
             {/* Image Section */}
 
-            <div className="md:order-2 flex justify-center basis-3/5 z-10 lg:mt-16 md:mt-32 scale-110 tablet:pt-5 tablet:scale-125 lg:scale-110">
+            <div className="md:order-2 flex justify-center basis-3/5 z-10 lg:mt-20">
                 {isAboveSmallScreens ? (
-                    <div className="relative z-0 ml-20 before:absolute before:-top-16 before:-left-20 before:rounded-t-[400px] before:w-full before:max-w-[2000px] before:max-h-[1200px] before:h-full before:border-2 before:border-bronze scale-50 before:z-[-1]">
-                        <img alt="" className="hover:filter hover:saturate-150 transition duration-500 z-10 w-full scale-125 max-w-[400px] md:max-w-[600px]" src={pfp}/>
+                    <div className="relative z-0 ml-20 before:absolute before:-top-10 h-[420px] w-80 before:-left-10 before:rounded-t-[200px] before:w-full before:max-w-[2000px] before:max-h-[1200px] before:h-full before:border-2 before:border-bronze before:z-[-1]">
+                        <img alt="" className="hover:filter hover:saturate-150 transition duration-500 z-10 rounded-t-full" src={profile}/>
                     </div>
                 ) : (
-                    <div className="relative z-0 ml-4 before:absolute before:-top-0 before:-left-0 before:rounded-t-[400px] before:w-5/6 before:max-w-[400px] before:h-5/6 before:border before:border-rust before:z-[-1] mt-1">
-                        <img alt="" className="hover:filter hover:backdrop-saturate-150 transition duration-500 z-10 scale-105 w-full max-w-[400px] max-h-[450px] pl-3" src={pfp}/>
+                    <div className="relative z-0 ml-4 before:absolute before:-top-5 before:-left-5 before:rounded-t-full before:w-full before:max-w-[400px] before:h-[355px] before:border before:border-bronze before:z-[-1] mt-16">
+                        <img alt="" className="hover:filter hover:backdrop-saturate-150 transition duration-500 z-10 w-96 rounded-t-full max-w-[300px] max-h-[400px] pl-3" src={profile}/>
                     </div>
                 )}
              </div>
 
             {/* Main Section */}
-            <div className="z-30 basis-2/5 mt-12 md:mt-32">
+            <div className="z-30 basis-2/5 mt-5 md:mt-24">
                 {/*Heading Section */}
-                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}}>
-                    <p className="text-5xl md:text-6xl font-script z-10 text-princetonorange text-center md:text-start">Anurag {""} <span className="xs:relative xs:text-princetonorange xs:font-semibold z-20 before:absolute before:-left-[25px] before:-top-[70px] before:z-[-1]">Das</span></p>
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}} className="phone:mt-10 md:mt-0">
+                    <p className="text-5xl md:text-7xl font-medium font-script z-10 text-orange-400 text-center md:text-start">Anurag Das</p>
                     <p className="mt-10 mb-7 text-center text-black font-outfit text-base font-medium md:text-start lg:text-lg">In the end, you have to just pull the trigger. Trust the car, trust the brakes, just go.</p>
                 </motion.div>
 
                     {/*Call To Action */}
 
                 <motion.div className="flex mt-5 justify-center md:justify-start" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.2, duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}}>
-                    <AnchorLink className="text-black hover:text-graylilac py-3 px-7 font-montserrat font-semibold transition duration-500" onClick={() => setSelectedPage("contact")} href="#contact">
+                    <AnchorLink className="text-black py-3 px-7 font-montserrat font-semibold transition duration-500 bg-white bg-opacity-50" onClick={() => setSelectedPage("contact")} href="#contact">
                         Contact Me
                     </AnchorLink>
 
                     <a className="rounded-r-sm py-0.5 pr-0.5" href="mailto:oeuvars@gmail.com">
-                        <div className="bg-black hover:text-rose-700 transition duration-500 w-full h-full flex items-center justify-center font-playfair px-10">
+                        <div className="bg-black hover:text-rose-700 transition duration-500 w-full h-full flex items-center justify-center font-playfair px-10 py-3 font-medium">
                             Let's Talk
                         </div>
                     </a>
@@ -49,6 +52,15 @@ const Landing = ({ setSelectedPage }) => {
 
                 <motion.div className="flex mt-5 justify-center md:justify-start" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.4, duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}}>
                     <SocialMediaIcons />
+                </motion.div>
+
+                <motion.div className="bg-white text-black bg-opacity-50 border-2 border-black border-opacity-70 phone:px-7 lg:px-12 py-5 rounded-xl lg:mt-5 phone:mb-10 lg:mb-0 flex justify-between gap-3">
+                    <img src={cover} alt="cover" className="rounded-md w-16 h-16"/>
+                    <div className="w-5/6 my-auto justify-start ml-2">
+                        <h1 className="font-unbounded phone:text-base lg:text-lg">No One Really Cares</h1>
+                        <h1 className="font-unbounded phone:text-xs lg:text-sm text-bloodred">Kris Jensen</h1>
+                    </div>
+                    <PlayPauseButton playIcon={playIcon} pauseIcon={pauseIcon}/>
                 </motion.div>
             </div>
         </section>

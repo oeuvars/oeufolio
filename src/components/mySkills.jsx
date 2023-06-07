@@ -12,7 +12,7 @@ const MySkills = () => {
 
       <div className="md:flex md:justify-between md:gap-16 lg:mt-36 mt-16 md:mt-24">
         <motion.div
-          className="md:w-1/3"
+          className="md:w-1/2 -mt-10"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.5 }}
@@ -25,7 +25,7 @@ const MySkills = () => {
           <p className="font-playfair font-semibold text-3xl md:text-4xl text-deep-blue mb-5">
             THE <span className="text-bloodred">SKILLS</span>
           </p>
-          <LineGradient width="w-1/3" />
+          <LineGradient width="w-2/3" />
           <p className="mt-10 mb-7 text-black font-outfit font-medium lg:text-lg md:text-base">
             I possess exceptional skills in web development and designing, creating visually stunning and functional websites with a seamless user experience.
           </p>
