@@ -70,7 +70,7 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
                     initial={{ width: 0 }} animate={{ width: 300 }}
                     className="fixed right-0 bottom-0 h-full bg-black opacity-95 transition duration-500 ease-in-out w-full z-20">
                         {/* Close Icon */}
-                        <motion.div className="flex justify-start">
+                        <motion.div className="flex justify-start p-12">
                             <button onClick={() => setIsMenuToggled(!isMenuToggled)}>
                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#e6e6e6" className="w-7 h-7">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
