@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import AnchorLink from "react-anchor-link-smooth-scroll";
 import useMediaQuery from "../hooks/useMediaQuery";
 import { motion } from "framer-motion";
@@ -22,10 +21,14 @@ const Link = ({ page, selectedPage, setSelectedPage }) => {
   };
 
 const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
+
     const [isMenuToggled, setIsMenuToggled] = useState(false);
+
     const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");
     const navbarBackground = isTopOfPage ? "bg-yellow-50" : "backdrop-blur-lg opacity-95";
 
+
+    {/* Mobile SideBar PopUp */}
     useEffect(() => {
         if (isMenuToggled) {
           document.body.style.overflow = 'hidden'
@@ -53,14 +56,13 @@ const Navbar = ({ isTopOfPage, selectedPage, setSelectedPage }) => {
 
                         <Link page="Contact" selectedPage={selectedPage} setSelectedPage={setSelectedPage}/>
                     </div>
-                    ) : (
+                ) : (
                     <button className="" onClick={() => setIsMenuToggled(!isMenuToggled)}>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#F17F29" className="w-9 h-9">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                             </svg>
                     </button>
-                    )}
-
+                )}
 
                 {/* Mobile Menu PopUp */}
                 {!isAboveSmallScreens && isMenuToggled && (

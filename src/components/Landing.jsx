@@ -5,11 +5,12 @@ import profile from "../assets/Images/Profile.webp";
 import SocialMediaIcons from "../components/SocialMediaIcons";
 import playIcon from "../assets/Icons/play.svg";
 import pauseIcon from "../assets/Icons/pause.svg";
-import PlayPauseButton from "./PlayPauseButton";
+import PlayPauseButton from "../Utils/PlayPauseButton";
 import cover from "../assets/Images/cover.webp";
 
 const Landing = ({ setSelectedPage }) => {
     const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");
+
 
     return (
         <section id="home" className="md:flex md:justify-between md:items-center md:h-full gap-16">
@@ -19,11 +20,11 @@ const Landing = ({ setSelectedPage }) => {
             <div className="md:order-2 flex justify-center basis-3/5 z-10 lg:mt-20">
                 {isAboveSmallScreens ? (
                     <div className="relative z-0 ml-20 before:absolute before:-top-10 h-[420px] w-80 before:-left-10 before:rounded-t-[200px] before:w-full before:max-w-[2000px] before:max-h-[1200px] before:h-full before:border-2 before:border-bronze before:z-[-1]">
-                        <img alt="" className="hover:filter hover:saturate-150 transition duration-500 z-10 rounded-t-full" src={profile}/>
+                        <img alt="" className="hover:filter hover:saturate-150 transition duration-500 z-10 rounded-t-full border-2 border-bronze" src={profile}/>
                     </div>
                 ) : (
-                    <div className="relative z-0 ml-4 before:absolute before:-top-5 before:-left-5 before:rounded-t-full before:w-full before:max-w-[400px] before:h-[355px] before:border before:border-bronze before:z-[-1] mt-16">
-                        <img alt="" className="hover:filter hover:backdrop-saturate-150 transition duration-500 z-10 w-96 rounded-t-full max-w-[300px] max-h-[400px] pl-3" src={profile}/>
+                    <div className="relative z-0 ml-4 before:absolute before:-top-5 before:-left-5 before:rounded-t-full before:w-full before:max-w-[400px] before:h-[365px] before:border before:border-bronze before:z-[-1] mt-16">
+                        <img alt="" className="hover:filter hover:backdrop-saturate-150 transition duration-500 z-10 w-80 h-96 rounded-t-full border-2 border-bronze" src={profile}/>
                     </div>
                 )}
              </div>

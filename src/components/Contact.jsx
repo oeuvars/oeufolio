@@ -1,4 +1,4 @@
-import LineGradient from "../components/LineGradient";
+import LineGradient from "../Utils/LineGradient";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import contact from "../assets/Images/contact.webp";

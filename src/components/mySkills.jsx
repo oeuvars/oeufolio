@@ -1,4 +1,4 @@
-import LineGradient from "../components/LineGradient";
+import LineGradient from "../Utils/LineGradient";
 import useMediaQuery from "../hooks/useMediaQuery";
 import { motion } from "framer-motion";
 import skill from "../assets/Images/artskills.webp";
@@ -39,16 +39,16 @@ const MySkills = () => {
             >
               <img
                 alt="skills"
-                className="flex ml-36 z-10 h-1/6 w-1/2"
+                className="flex ml-36 z-10 h-1/6 w-1/2 border-2 border-bronze"
                 src={skill}
               />
             </div>
           ) : (
             <div
             className="flex relative z-0 ml-12 before:absolute before:-top-5 before:-left-5
-            before:w-4/5 before:h-5/6 before:border-2 before:border-bronze before:z-[-1]"
+            before:w-4/5 before:h-full before:border-2 before:border-bronze before:z-[-1]"
             >
-              <img alt="skills" className="flex ml-1 z-10 scale-90" src={skill} />
+              <img alt="skills" className="flex ml-1 z-10 border-2 mt-1 border-bronze h-full w-10/12" src={skill} />
             </div>
           )}
         </div>

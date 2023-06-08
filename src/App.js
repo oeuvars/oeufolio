@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import useMediaQuery from "./hooks/useMediaQuery";
 import React from "react";
-import DotGroup from "./components/DotGroup";
+import DotGroup from "./Utils/DotGroup";
 import Landing from "./components/Landing";
-import LineGradient from "./components/LineGradient";
+import LineGradient from "./Utils/LineGradient";
 import MySkills from "./components/mySkills";
 import Contact from "./components/Contact";
 import { motion } from "framer-motion";
@@ -20,6 +20,7 @@ function App() {
       setLoading(false)
     }, 1000)
   }, [])
+
   const [selectedPage, setSelectedPage] = useState("Home");
   const [isTopOfPage, setIsTopOfPage] = useState(true);
   const isAboveMediumScreens = useMediaQuery("(min-width: 1060px)");
@@ -95,7 +96,7 @@ function App() {
               </motion.div>
             </div>
             ) : (
-            <div className="w-5/6 mx-auto">
+            <div className="w-11/12 mx-auto">
               <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
                 <Projects />
               </motion.div>

@@ -12,8 +12,7 @@ body,
 #root,
 .app {
   height: 100%;
-  background-color: #FAFDF3;
-  @apply text-white;
+  @apply text-white bg-[#fdfdf3];
 
 }
 body::-webkit-scrollbar{
@@ -22,34 +21,3 @@ body::-webkit-scrollbar{
 html{
   -webkit-tap-highlight-color: transparent;
 }
-.sunset {
-  background: radial-gradient(80.99% 100% at 50% 0%, #00FF0A 0%, #36008E 100%), radial-gradient(50% 123.47% at 50% 50%, #EFE7C8 0%, #36008E 100%), linear-gradient(301.28deg, #FF006B 0%, #48DD9E 100%), linear-gradient(294.84deg, #5A60E4 0%, #D30000 100%), linear-gradient(52.29deg, #000000 0%, #00FF85 100%), radial-gradient(100% 138.69% at 100% 0%, #0007A5 0%, #FF7A00 100%), radial-gradient(70.41% 100% at 50% 0%, #D5B300 0%, #2200AA 100%);
-  background-blend-mode: screen, screen, lighten, overlay, lighten, difference, normal;
-}
-.green-grad {
-  background: linear-gradient(238.72deg, #FFB864 0%, #006C4C 100%), radial-gradient(100% 224.43% at 0% 0%, #6CFF72 0%, #002C6D 100%), linear-gradient(121.28deg, #FFEAB6 0%, #00563C 100%), radial-gradient(56.26% 101.79% at 50% 0%, #8F00FF 0%, #000000 100%), linear-gradient(65.05deg, #6F0072 0%, #DBFFE5 100%);
-  background-blend-mode: overlay, screen, color-burn, screen, normal;
-}
-
-.purple-grad {
-  background: linear-gradient(180deg, #FFB7B7 0%, #727272 100%), radial-gradient(60.91% 100% at 50% 0%, #FFD1D1 0%, #260000 100%), linear-gradient(238.72deg, #FFDDDD 0%, #720066 100%), linear-gradient(127.43deg, #00FFFF 0%, #FF4444 100%), radial-gradient(100.22% 100% at 70.57% 0%, #FF0000 0%, #00FFE0 100%), linear-gradient(127.43deg, #B7D500 0%, #3300FF 100%);
-  background-blend-mode: screen, overlay, hard-light, color-burn, color-dodge, normal;
-}
-
-.soil-burst {
-  background: radial-gradient(100% 244.46% at 0% 0%, #CCFF00 0%, #FF027C 100%), radial-gradient(50% 122.23% at 50% 50%, #9AA4FF 0%, #306C00 100%), radial-gradient(100.45% 245.58% at 0% 0%, #000AFE 0%, #70FF00 100%), linear-gradient(127.43deg, #7B0007 0%, #8F73FF 100%);
-  background-blend-mode: lighten, color-dodge, difference, normal;
-}
-
-.distorted-sun {
-  background: linear-gradient(115.58deg, #00FC19 0%, #1700A4 100.22%), radial-gradient(92.72% 100% at 50% 0%, #EBFFCB 0%, #651200 100%), radial-gradient(92.72% 100% at 50% 0%, #FAFF00 0%, #820000 100%), radial-gradient(109.21% 213.32% at 100% 0%, #FF4D00 0%, #00C2FF 100%), linear-gradient(127.43deg, #D50000 0%, #7856FF 100%);
-  background-blend-mode: lighten, overlay, lighten, screen, normal;
-}
-
-.audio-container audio::-webkit-media-controls-volume-slider,
-.audio-container audio::-webkit-media-controls-volume-slider-container,
-.audio-container audio::-webkit-media-controls-volume-slider-wrapper,
-.audio-container audio::-webkit-media-controls-mute-button {
-  display: none !important;
-}
-
