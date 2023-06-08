@@ -34,7 +34,7 @@ const Landing = ({ setSelectedPage }) => {
                 {/*Heading Section */}
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}} className="phone:mt-10 md:mt-0">
                     <p className="text-5xl md:text-7xl font-medium font-script z-10 text-orange-400 text-center md:text-start">Anurag Das</p>
-                    <p className="mt-10 mb-7 text-center text-black font-outfit text-base font-medium md:text-start lg:text-lg">In the end, you have to just pull the trigger. Trust the car, trust the brakes, just go.</p>
+                    <p className="mt-10 mb-7 text-center text-black font-outfit text-base font-medium md:text-start lg:text-lg">Full Stack Web Development (MERN), also Solid.js, Web Design and Stuffs.</p>
                 </motion.div>
 
                     {/*Call To Action */}
