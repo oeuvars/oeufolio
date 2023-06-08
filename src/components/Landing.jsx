@@ -24,7 +24,7 @@ const Landing = ({ setSelectedPage }) => {
                     </div>
                 ) : (
                     <div className="relative z-0 ml-4 before:absolute before:-top-5 before:-left-5 before:rounded-t-full before:w-full before:max-w-[400px] before:h-[365px] before:border before:border-bronze before:z-[-1] mt-16">
-                        <img alt="" className="hover:filter hover:backdrop-saturate-150 transition duration-500 z-10 w-80 h-96 rounded-t-full border-2 border-bronze" src={profile}/>
+                        <img alt="" className="hover:filter hover:backdrop-saturate-150 transition duration-500 z-10 w-80 h-96 rounded-t-full border border-bronze" src={profile}/>
                     </div>
                 )}
              </div>
