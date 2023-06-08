@@ -1,12 +1,12 @@
 import useMediaQuery from "../hooks/useMediaQuery";
 import { motion } from "framer-motion";
 import AnchorLink from "react-anchor-link-smooth-scroll";
-import profile from "../assets/Profile.webp";
+import profile from "../assets/Images/Profile.webp";
 import SocialMediaIcons from "../components/SocialMediaIcons";
-import playIcon from "../assets/play.svg";
-import pauseIcon from "../assets/pause.svg";
+import playIcon from "../assets/Icons/play.svg";
+import pauseIcon from "../assets/Icons/pause.svg";
 import PlayPauseButton from "./PlayPauseButton";
-import cover from "../assets/cover.webp";
+import cover from "../assets/Images/cover.webp";
 
 const Landing = ({ setSelectedPage }) => {
     const isAboveSmallScreens = useMediaQuery("(min-width: 768px)");

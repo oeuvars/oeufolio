@@ -1,22 +1,22 @@
 import React from "react";
 import LineGradient from "../components/LineGradient";
 import { motion } from "framer-motion";
-import day1 from '../assets/1.webp';
-import day2 from '../assets/14.jpg';
-import day3 from '../assets/3.webp';
-import day4 from '../assets/4.webp';
-import day5 from '../assets/5.webp';
-import day6 from '../assets/6.webp';
-import day7 from "../assets/7.webp";
-import day8 from "../assets/8.webp";
-import day9 from "../assets/9.webp";
-import day10 from "../assets/10.webp";
-import day11 from "../assets/11.webp";
-import day12 from "../assets/12.webp";
-import day13 from "../assets/13.webp";
-import day14 from "../assets/15.jpg";
-import day16 from "../assets/16.jpg";
-import day17 from "../assets/17.jpg";
+import day1 from '../assets/Designs/1.webp';
+import day2 from '../assets/Designs/14.jpg';
+import day3 from '../assets/Designs/3.webp';
+import day4 from '../assets/Designs/4.webp';
+import day5 from '../assets/Designs/5.webp';
+import day6 from '../assets/Designs/6.webp';
+import day7 from "../assets/Designs/7.webp";
+import day8 from "../assets/Designs/8.webp";
+import day9 from "../assets/Designs/9.webp";
+import day10 from "../assets/Designs/10.webp";
+import day11 from "../assets/Designs/11.webp";
+import day12 from "../assets/Designs/12.webp";
+import day13 from "../assets/Designs/13.webp";
+import day14 from "../assets/Designs/15.jpg";
+import day16 from "../assets/Designs/16.jpg";
+import day17 from "../assets/Designs/17.jpg";
 
 const Projects = () => {
   return (

@@ -1,8 +1,8 @@
 import React from 'react';
-import medium from "../assets/medium.svg";
-import instagram from "../assets/instagram.svg";
-import twitter from "../assets/twitter.svg";
-import github from "../assets/github.svg";
+import medium from "../assets/Icons/medium.svg";
+import instagram from "../assets/Icons/instagram.svg";
+import twitter from "../assets/Icons/twitter.svg";
+import github from "../assets/Icons/github.svg";
 
 const SocialMediaIcons = () => {
     return (

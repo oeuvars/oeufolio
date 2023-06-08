@@ -1,7 +1,7 @@
 import LineGradient from "../components/LineGradient";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
-import contact from "../assets/contact.webp";
+import contact from "../assets/Images/contact.webp";
 import useMediaQuery from "../hooks/useMediaQuery";
 
 const Contact = () => {

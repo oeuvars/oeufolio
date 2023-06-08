@@ -1,7 +1,7 @@
 import LineGradient from "../components/LineGradient";
 import useMediaQuery from "../hooks/useMediaQuery";
 import { motion } from "framer-motion";
-import skill from "../assets/artskills.webp";
+import skill from "../assets/Images/artskills.webp";
 
 const MySkills = () => {
   const isAboveLarge = useMediaQuery("(min-width: 1060px)");
