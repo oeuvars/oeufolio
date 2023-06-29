@@ -35,7 +35,7 @@ const Contact = () => {
         className={`flex ${isAboveSmallScreens? 'justify-end' : 'justify-center'} w-full`}
       >
         <div>
-          <p className="font-playfair font-semibold text-3xl md:text-4xl text-black">
+          <p className="font-chloe font-semibold text-3xl md:text-4xl text-black">
             <span className="text-bl text-black">CONTACT </span> ME
           </p>
           <div className="flex my-5">

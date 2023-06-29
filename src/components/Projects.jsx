@@ -35,7 +35,7 @@ const Projects = () => {
         }}
       >
         <div className="mt-10">
-          <p className="font-playfair text-black font-semibold text-4xl">
+          <p className="font-chloe text-black font-semibold text-4xl">
             DESIGNS
           </p>
           <div className="flex justify-center mt-5">

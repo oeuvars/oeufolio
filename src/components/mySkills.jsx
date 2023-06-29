@@ -22,7 +22,7 @@ const MySkills = () => {
             visible: { opacity: 1, x: 0 },
           }}
         >
-          <p className="font-playfair font-semibold text-3xl md:text-4xl text-deep-blue mb-5">
+          <p className="font-chloe font-semibold text-3xl md:text-4xl text-deep-blue mb-5">
             THE <span className="text-bloodred">SKILLS</span>
           </p>
           <LineGradient width="w-2/3" />
@@ -71,7 +71,7 @@ const MySkills = () => {
           <div className="relative h-32">
             <div className="z-10 flex flex-col my-auto justify-center">
               <p className="font-playfair text-black font-semibold text-5xl">01</p>
-              <p className="font-playfair text-brown-red font-semibold text-3xl mt-3">
+              <p className="font-chloe text-brown-red font-semibold text-3xl mt-3">
                 Front-End
               </p>
             </div>
@@ -97,7 +97,7 @@ const MySkills = () => {
             <div className="relative h-32">
               <div className="z-10 flex flex-col my-auto justify-center">
                 <p className="font-playfair font-semibold text-black text-5xl">02</p>
-                <p className="font-playfair text-brown-red font-semibold text-3xl mt-3">
+                <p className="font-chloe text-brown-red font-semibold text-3xl mt-3">
                   Designing
                 </p>
               </div>
@@ -122,7 +122,7 @@ const MySkills = () => {
             <div className="relative h-32">
               <div className="z-10 flex flex-col my-auto justify-center">
                 <p className="font-playfair font-semibold text-black text-5xl">03</p>
-                <p className="font-playfair font-semibold text-brown-red text-3xl mt-3">
+                <p className="font-chloe font-semibold text-brown-red text-3xl mt-3">
                   Back-End
                 </p>
               </div>
