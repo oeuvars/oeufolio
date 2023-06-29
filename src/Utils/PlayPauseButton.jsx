@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import playIcon from "../assets/Icons/play.svg";
 import pauseIcon from "../assets/Icons/pause.svg";
-import song from "../assets/Audio/NoOneReallyCares.mp3";
+import song from "../assets/Audio/ISip.mp3";
 import { motion } from "framer-motion";
 
 let audio = new Audio(song);
