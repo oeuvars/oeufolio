@@ -23,7 +23,7 @@ const MySkills = () => {
           }}
         >
           <p className="font-chloe font-semibold text-3xl md:text-4xl text-deep-blue mb-5">
-            THE SKILLS
+            THE <span className="text-boldred"> SKILLS</span>
           </p>
           <LineGradient width="w-2/3" />
           <p className="mt-8 mb-7 text-black/90 font-outfit font-medium phone:text-sm lg:text-base">
