@@ -23,10 +23,10 @@ const MySkills = () => {
           }}
         >
           <p className="font-chloe font-semibold text-3xl md:text-4xl text-deep-blue mb-5">
-            THE <span className="text-bloodred">SKILLS</span>
+            THE SKILLS
           </p>
           <LineGradient width="w-2/3" />
-          <p className="mt-8 mb-7 text-black font-outfit font-medium phone:text-sm lg:text-base">
+          <p className="mt-8 mb-7 text-black/90 font-outfit font-medium phone:text-sm lg:text-base">
             I possess exceptional skills in web development and designing, creating visually stunning and functional websites with a seamless user experience.
           </p>
         </motion.div>
@@ -70,12 +70,12 @@ const MySkills = () => {
         >
           <div className="relative h-32">
             <div className="z-10 flex flex-col my-auto justify-center">
-              <p className="font-playfair text-black font-semibold text-5xl">01</p>
-              <p className="font-chloe text-brown-red font-semibold text-3xl mt-3">
+              <p className="font-chloe text-black font-semibold text-5xl">01</p>
+              <p className="font-playfair text-brown-red font-semibold text-3xl mt-3">
                 Front-End
               </p>
             </div>
-            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-yellow-200 via-pink-200 to-pink-400 saturate-150 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" ></div>
+            <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-rose-100 to-teal-100 saturate-150 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" ></div>
           </div>
           <p className="phone:text-sm lg:text-base mt-5 font-outfit font-medium text-base text-jet">
             With a keen eye for design and a knack for problem-solving, my web development skills bring ideas to life through seamless functionality and stunning aesthetics.
@@ -96,12 +96,12 @@ const MySkills = () => {
           >
             <div className="relative h-32">
               <div className="z-10 flex flex-col my-auto justify-center">
-                <p className="font-playfair font-semibold text-black text-5xl">02</p>
-                <p className="font-chloe text-brown-red font-semibold text-3xl mt-3">
+                <p className="font-chloe font-semibold text-black text-5xl">02</p>
+                <p className="font-playfair text-brown-red font-semibold text-3xl mt-3">
                   Designing
                 </p>
               </div>
-              <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-red-200 via-red-300 to-yellow-200 saturate-200 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" ></div>
+              <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-blue-100 via-blue-300 to-blue-500 saturate-200 rounded-lg opacity-30 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" ></div>
             </div>
             <p className="mt-5 font-outfit font-medium text-base text-jet phone:text-sm lg:text-base">
               My design skills blend creativity and attention to detail, resulting in visually captivating graphics and layouts that effectively communicate messages and captivate audiences.
@@ -121,12 +121,12 @@ const MySkills = () => {
           >
             <div className="relative h-32">
               <div className="z-10 flex flex-col my-auto justify-center">
-                <p className="font-playfair font-semibold text-black text-5xl">03</p>
-                <p className="font-chloe font-semibold text-brown-red text-3xl mt-3">
+                <p className="font-chloe font-semibold text-black text-5xl">03</p>
+                <p className="font-playfair font-semibold text-brown-red text-3xl mt-3">
                   Back-End
                 </p>
               </div>
-              <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-yellow-100 via-yellow-300 to-yellow-500 rounded-lg opacity-40 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" >
+              <div className="w-1/2 md:w-3/4 h-32 bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 rounded-lg opacity-40 drop-shadow-2xl absolute right-0 top-0 lg:z-[-1]" >
 
               </div>
             </div>
