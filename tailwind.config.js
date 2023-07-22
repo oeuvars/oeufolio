@@ -70,6 +70,7 @@ module.exports = {
         unbounded: ["Unbounded", "cursive"],
         chloe: ["Chloe", "sans-serif"],
         greycliff: ["GreyCliff", "sans-serif"],
+        lora: ['Lora', 'serif']
       },
     },
     screens: {
