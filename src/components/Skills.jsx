@@ -22,7 +22,7 @@ const Skills = () => {
             visible: { opacity: 1, x: 0 },
           }}
         >
-          <p className="flex font-chloe font-semibold text-3xl md:text-5xl text-orange-500 mb-5 uppercase">
+          <p className="flex font-chloe font-semibold text-4xl md:text-5xl skills mb-5 uppercase">
             The Skills
           </p>
           <LineGradient width="w-2/3" />
@@ -31,7 +31,7 @@ const Skills = () => {
           </p>
         </motion.div>
 
-        <div className="mt-16 md:mt-0">
+        <div className="md:mt-0">
           {isAboveLarge ? (
             <div
               className="flex relative z-0 ml-96 before:absolute before:-top-10 before:-left-10

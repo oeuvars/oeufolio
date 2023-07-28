@@ -35,7 +35,7 @@ const Designs = () => {
         }}
       >
         <div className="mt-10">
-          <p className="font-chloe skills font-semibold text-5xl">
+          <p className="font-chloe skills font-semibold text-4xl md:text-5xl">
             DESIGNS
           </p>
           <div className="flex justify-center mt-5">

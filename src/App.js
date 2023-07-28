@@ -73,7 +73,7 @@ function App() {
           <LineGradient />
 
 
-          <div className="w-5/6 mx-auto mt-28">
+          <div className="w-5/6 mx-auto phone:mt-10 lg:mt-28">
             <motion.div
               margin="0 0 -200px 0"
               amount="all"

@@ -35,11 +35,11 @@ const Contact = () => {
         className={`flex ${isAboveSmallScreens? 'justify-end' : 'justify-center'} w-full`}
       >
         <div>
-          <p className="font-chloe font-semibold text-3xl md:text-4xl text-black">
-            <span className="text-bl text-black">CONTACT </span> ME
+          <p className="font-chloe text-4xl md:text-5xl skills">
+            CONTACT ME
           </p>
           <div className="flex my-5">
-            <LineGradient width="w-1/2" />
+            <LineGradient width="w-2/3 mx-auto" />
           </div>
         </div>
       </motion.div>
@@ -58,8 +58,8 @@ const Contact = () => {
           className="basis-1/2 flex flex-col justify-center"
         >
           <img className="shadow-md border-bronze border-4 rounded-sm" src={contact} alt="contact" />
-          <motion.p className="text-jet font-mabry font-medium mt-5 text-sm lg:text-xl phone:text-base text-center overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
-          <motion.p className="text-brown-red text-xl lg:text-3xl font-playfair font-semibold pt-1 text-center">YOU</motion.p>
+          <motion.p className="text-jet font-mabry font-medium mt-5 lg:text-lg phone:text-sm text-center overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
+          <motion.p className="text-brown-red text-xl lg:text-3xl font-playfair pt-1 text-center">YOU</motion.p>
         </motion.div>
 
         <motion.div
@@ -81,41 +81,41 @@ const Contact = () => {
             method="POST"
           >
             <input
-              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3"
+              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-mabry placeholder-opaque-black p-3 outline-none"
               type="text"
-              placeholder="NAME"
+              placeholder="Name"
               {...register("name", {
                 required: true,
                 maxLength: 100,
               })}
             />
             {errors.name && (
-              <motion.p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
+              <motion.p className="text-greensheen mt-1 font-mabry text-sm font-medium">
                 {errors.name.type === "required" && "This field is required."}
                 {errors.name.type === "maxLength" && "Max length is 100 char."}
               </motion.p>
             )}
 
             <input
-              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
+              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-mabry placeholder-opaque-black p-3 mt-5 outline-none"
               type="text"
-              placeholder="EMAIL"
+              placeholder="Email"
               {...register("email", {
                 required: true,
                 pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
               })}
             />
             {errors.email && (
-              <p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
+              <p className="text-greensheen mt-1 font-mabry text-sm font-medium">
                 {errors.email.type === "required" && "This field is required."}
                 {errors.email.type === "pattern" && "Invalid email address."}
               </p>
             )}
 
             <textarea
-              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-montserrat font-semibold placeholder-opaque-black p-3 mt-5"
+              className="w-full bg-eggshell text-jet rounded-md shadow-lg font-mabry placeholder-opaque-black p-3 mt-5 outline-none"
               name="message"
-              placeholder="MESSAGE"
+              placeholder="Message"
               rows="4"
               cols="50"
               {...register("message", {
@@ -124,7 +124,7 @@ const Contact = () => {
               })}
             />
             {errors.message && (
-              <p className="text-greensheen mt-1 font-montserrat text-sm font-medium">
+              <p className="text-greensheen mt-1 font-mabry text-sm font-medium">
                 {errors.message.type === "required" &&
                   "This field is required."}
                 {errors.message.type === "maxLength" &&
@@ -133,7 +133,7 @@ const Contact = () => {
             )}
 
             <button
-              className="flex lg:mx-0 phone:mx-auto phone:px-4 lg:px-7 py-3 bg-jet rounded-md font-montserrat font-semibold text-white mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
+              className="flex lg:mx-0 phone:mx-auto phone:px-4 lg:px-7 py-3 bg-jet rounded-md font-mabry text-white mt-5 hover:bg-stone-800 hover:text-cosmicwhite transition duration-500"
               type="submit"
             >
               Submit
@@ -141,7 +141,7 @@ const Contact = () => {
           </form>
         </motion.div>
       </div>
-      <p className="text-jet text-center font-semibold text-sm phone:pb-2 lg:pb-5 font-montserrat lg:pt-10">© Anurag Das 2023</p>
+      <p className="text-jet text-center text-sm phone:pb-2 lg:pb-5 font-montserrat font-semibold lg:pt-10">© Anurag Das 2023</p>
     </section>
   );
 };
