@@ -26,7 +26,7 @@ const Skills = () => {
             The Skills
           </p>
           <LineGradient width="w-2/3" />
-          <p className="mt-8 mb-7 text-black/90 font-mabry font-medium phone:text-sm lg:text-base text-justify">
+          <p className="mt-8 mb-16 text-black/90 font-mabry font-medium phone:text-sm lg:text-base text-justify">
             I possess exceptional skills in web development and designing, creating visually stunning and functional websites with a seamless user experience.
           </p>
         </motion.div>
