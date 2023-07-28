@@ -34,13 +34,13 @@ const Landing = ({ setSelectedPage }) => {
                 {/*Heading Section */}
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}} className="phone:mt-10 md:mt-0">
                     <p className="text-5xl md:text-7xl font-medium font-chloe z-10 text-orange-400 text-center md:text-start">Anurag Das</p>
-                    <p className="mt-10 mb-7 text-center text-black font-outfit text-base font-medium md:text-start lg:text-lg">Full Stack Web Development (MERN), also Solid.js, Web Design and Stuffs.</p>
+                    <p className="mt-10 mb-7 text-center text-black font-mabry text-base font-medium md:text-start lg:text-lg">Full Stack Web Development (MERN), also Solid.js, Web Design and Stuffs.</p>
                 </motion.div>
 
                     {/*Call To Action */}
 
                 <motion.div className="flex mt-5 justify-center md:justify-start" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.2, duration: 0.5 }} variants = {{ hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 }}}>
-                    <AnchorLink className="text-black py-3 px-7 font-outfit font-medium transition duration-500 bg-white bg-opacity-50" onClick={() => setSelectedPage("contact")} href="#contact">
+                    <AnchorLink className="text-black py-3 px-7 font-mabry font-medium transition duration-500 bg-white bg-opacity-50" onClick={() => setSelectedPage("contact")} href="#contact">
                         Contact Me
                     </AnchorLink>
 

@@ -58,7 +58,7 @@ const Contact = () => {
           className="basis-1/2 flex flex-col justify-center"
         >
           <img className="shadow-md border-bronze border-4 rounded-sm" src={contact} alt="contact" />
-          <motion.p className="text-jet font-outfit font-semibold mt-5 text-sm lg:text-xl phone:text-base text-center overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
+          <motion.p className="text-jet font-mabry font-medium mt-5 text-sm lg:text-xl phone:text-base text-center overflow-x-visible">Me and my pals up here would love to talk to</motion.p>
           <motion.p className="text-brown-red text-xl lg:text-3xl font-playfair font-semibold pt-1 text-center">YOU</motion.p>
         </motion.div>
 

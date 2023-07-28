@@ -63,14 +63,10 @@ module.exports = {
       }),
       fontFamily: {
         playfair: ["Playfair Display", "serif"],
-        manrope: ["Manrope", "sans-serif"],
         montserrat: ["Montserrat", "sans-serif"],
-        script: ["Dancing Script", "cursive"],
-        outfit: ["Outfit", "sans-serif"],
         unbounded: ["Unbounded", "cursive"],
         chloe: ["Chloe", "sans-serif"],
-        greycliff: ["GreyCliff", "sans-serif"],
-        lora: ['Lora', 'serif']
+        mabry: ["Mabry", "sans-serif"]
       },
     },
     screens: {

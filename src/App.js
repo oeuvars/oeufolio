@@ -5,10 +5,10 @@ import React from "react";
 import DotGroup from "./Utils/DotGroup";
 import Landing from "./components/Landing";
 import LineGradient from "./Utils/LineGradient";
-import MySkills from "./components/mySkills";
+import Skills from "./components/Skills";
 import Contact from "./components/Contact";
 import { motion } from "framer-motion";
-import Projects from "./components/Projects";
+import Designs from "./components/Designs";
 import PuffLoader from "react-spinners/PuffLoader";
 
 function App() {
@@ -79,7 +79,7 @@ function App() {
               amount="all"
               onViewportEnter={() => setSelectedPage("skills")}
             >
-              <MySkills />
+              <Skills />
             </motion.div>
           </div>
 
@@ -92,13 +92,13 @@ function App() {
           {isAboveSmallScreens ? (
             <div className="w-5/6 mx-auto">
               <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
-                <Projects />
+                <Designs />
               </motion.div>
             </div>
             ) : (
             <div className="w-11/12 mx-auto">
               <motion.div margin="0 0 -200px 0" amount="all" onViewportEnter={() => setSelectedPage("designs")}>
-                <Projects />
+                <Designs />
               </motion.div>
             </div>
           )}

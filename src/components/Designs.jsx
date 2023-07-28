@@ -18,7 +18,7 @@ import day14 from "../assets/Designs/15.jpg";
 import day16 from "../assets/Designs/16.jpg";
 import day17 from "../assets/Designs/17.jpg";
 
-const Projects = () => {
+const Designs = () => {
   return (
     <section id="designs" className="mt-12">
 
@@ -35,14 +35,14 @@ const Projects = () => {
         }}
       >
         <div className="mt-10">
-          <p className="font-chloe text-black font-semibold text-4xl">
+          <p className="font-chloe skills font-semibold text-5xl">
             DESIGNS
           </p>
           <div className="flex justify-center mt-5">
             <LineGradient width="w-1/3" />
           </div>
         </div>
-        <p className="pt-10 text-jet font-medium font-outfit md:pb-10 lg:pb-0 phone:text-sm lg:text-base">
+        <p className="pt-10 text-jet font-medium font-mabry md:pb-10 lg:pb-0 phone:text-sm lg:text-base text-justify">
           While very diverse, our aesthetic approach often involves distinct sense of play, aiming to put the fun in functional. Strategically, my work aims to elevate design offerings by distilling core messaging down to its clearest and freshest visual form.
         </p>
       </motion.div>
@@ -116,4 +116,4 @@ const Projects = () => {
   );
 };
 
-export default Projects;
+export default Designs;
