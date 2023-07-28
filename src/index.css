@@ -31,11 +31,7 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 .skills {
-  background: radial-gradient(
-    circle at 10% 20%,
-    rgb(151, 10, 130) 0%,
-    rgb(33, 33, 33) 100.2%
-  );
+  background: radial-gradient(circle at 10% 20%, rgb(255, 197, 61) 0%, rgb(255, 94, 7) 90%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
