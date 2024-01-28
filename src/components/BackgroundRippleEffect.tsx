@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useAnimation } from "framer-motion";
+import { AnimationControls, motion, useAnimation } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export const BackgroundCellAnimation = () => {
@@ -85,6 +85,19 @@ return (
 );
 };
 
+const calculateAnimation = (controls: AnimationControls, clickedCell: number[] | null, rowIdx: number, colIdx: number) => {
+  if (clickedCell) {
+    const distance = Math.sqrt(
+      Math.pow(clickedCell[0] - rowIdx, 2) +
+      Math.pow(clickedCell[1] - colIdx, 2)
+    );
+    controls.start({
+      opacity: [0, 1 - distance * 0.1, 0],
+      transition: { duration: distance * 0.2 },
+    });
+  }
+};
+
 function Pattern({className, cellClassName}: {className?: string; cellClassName?: string}) {
   const x = new Array(47).fill(0);
   const y = new Array(30).fill(0);
@@ -121,7 +134,10 @@ function Pattern({className, cellClassName}: {className?: string; cellClassName?
                   "bg-transparent border-l border-b border-neutral-600",
                   cellClassName
                 )}
-                onClick={() => setClickedCell([rowIdx, colIdx])}
+                onClick={() => {
+                  setClickedCell([rowIdx, colIdx]);
+                  calculateAnimation(controls, clickedCell, rowIdx, colIdx);
+                }}
               >
                 <motion.div
                   initial={{
