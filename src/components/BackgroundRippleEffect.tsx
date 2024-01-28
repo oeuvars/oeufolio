@@ -155,12 +155,12 @@ const Pattern = ({className, cellClassName}: {className?: string; cellClassName?
           className="flex flex-col  relative z-20 border-b"
         >
           {row.map((column, colIdx) => {
-            const controls = usePatternAnimation(clickedCell, rowIdx, colIdx);
+            const controlsArray = row.map((_, colIdx) => usePatternAnimation(clickedCell, rowIdx, colIdx));
 
             return (
               <PatternCell
                 key={`matrix-col-${colIdx}`}
-                controls={controls}
+                controls={controlsArray[colIdx]}
                 cellClassName={cellClassName}
                 onClick={() => setClickedCell([rowIdx, colIdx])}
               />
