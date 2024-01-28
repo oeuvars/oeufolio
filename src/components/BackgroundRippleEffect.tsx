@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { AnimationControls } from "framer-motion";
 
 export const BackgroundCellAnimation = () => {
   const variants = {
@@ -99,36 +100,33 @@ const Pattern = ({
   const matrix = x.map((_, i) => y.map((_, j) => [i, j]));
   const [clickedCell, setClickedCell] = useState<any>(null);
 
+  const handleAnimation = (controls: AnimationControls, clickedCell: number[], rowIdx: number, colIdx: number) => {
+    useEffect(() => {
+      if (clickedCell) {
+        const distance = Math.sqrt(
+          Math.pow(clickedCell[0] - rowIdx, 2) +
+          Math.pow(clickedCell[1] - colIdx, 2)
+        );
+        controls.start({
+          opacity: [0, 1 - distance * 0.1, 0],
+          transition: { duration: distance * 0.2 },
+        });
+      }
+    }, [clickedCell]);
+  };
+
   return (
     <div className={cn("flex flex-row  relative z-30", className)}>
       {matrix.map((row, rowIdx) => (
-        <div
-          key={`matrix-row-${rowIdx}`}
-          className="flex flex-col  relative z-20 border-b"
-        >
+        <div key={`matrix-row-${rowIdx}`} className="flex flex-col  relative z-20 border-b">
           {row.map((column, colIdx) => {
             const controls = useAnimation();
-
-            useEffect(() => {
-              if (clickedCell) {
-                const distance = Math.sqrt(
-                  Math.pow(clickedCell[0] - rowIdx, 2) +
-                    Math.pow(clickedCell[1] - colIdx, 2)
-                );
-                controls.start({
-                  opacity: [0, 1 - distance * 0.1, 0],
-                  transition: { duration: distance * 0.2 },
-                });
-              }
-            }, [clickedCell]);
+            handleAnimation(controls, clickedCell, rowIdx, colIdx);
 
             return (
               <div
                 key={`matrix-col-${colIdx}`}
-                className={cn(
-                  "bg-transparent border-l border-b border-neutral-600",
-                  cellClassName
-                )}
+                className={cn("bg-transparent border-l border-b border-neutral-600", cellClassName)}
                 onClick={() => setClickedCell([rowIdx, colIdx])}
               >
                 <motion.div
@@ -143,7 +141,7 @@ const Pattern = ({
                     ease: "backOut",
                   }}
                   animate={controls}
-                 className="bg-[rgba(14,165,233,0.15)] h-12 w-12" //  rgba(14, 165, 233, 0.15) for a more subtle effect
+                  className="bg-[rgba(14,165,233,0.15)] h-12 w-12"
                 ></motion.div>
               </div>
             );
