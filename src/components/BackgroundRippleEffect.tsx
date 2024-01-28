@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+type ClickedCell = [number, number];
+
 export const BackgroundCellAnimation = () => {
   const variants = {
     hidden: { opacity: 0, x: 0, y: 200 },
@@ -87,6 +89,26 @@ return (
 );
 };
 
+const usePatternAnimation = (clickedCell: ClickedCell | null, rowIdx: number, colIdx: number) => {
+  const controls = useAnimation();
+
+  useEffect(() => {
+    if (clickedCell) {
+      const distance = Math.sqrt(
+        Math.pow(clickedCell[0] - rowIdx, 2) +
+        Math.pow(clickedCell[1] - colIdx, 2)
+      );
+      controls.start({
+        opacity: [0, 1 - distance * 0.1, 0],
+        transition: { duration: distance * 0.2 },
+      });
+    }
+  }, [clickedCell]);
+
+  return controls;
+};
+
+
 const Pattern = ({className, cellClassName}: {className?: string; cellClassName?: string}) => {
   const x = new Array(47).fill(0);
   const y = new Array(30).fill(0);
@@ -101,20 +123,7 @@ const Pattern = ({className, cellClassName}: {className?: string; cellClassName?
           className="flex flex-col  relative z-20 border-b"
         >
           {row.map((column, colIdx) => {
-            const controls = useAnimation();
-
-            useEffect(() => {
-              if (clickedCell) {
-                const distance = Math.sqrt(
-                  Math.pow(clickedCell[0] - rowIdx, 2) +
-                    Math.pow(clickedCell[1] - colIdx, 2)
-                );
-                controls.start({
-                  opacity: [0, 1 - distance * 0.1, 0],
-                  transition: { duration: distance * 0.2 },
-                });
-              }
-            }, [clickedCell]);
+            const controls = usePatternAnimation(clickedCell, rowIdx, colIdx);
 
             return (
               <div
@@ -137,7 +146,7 @@ const Pattern = ({className, cellClassName}: {className?: string; cellClassName?
                     ease: "backOut",
                   }}
                   animate={controls}
-                 className="bg-purple-600/30 h-12 w-12"
+                  className="bg-purple-600/30 h-12 w-12"
                 ></motion.div>
               </div>
             );
