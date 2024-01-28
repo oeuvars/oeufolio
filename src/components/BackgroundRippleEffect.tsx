@@ -97,26 +97,26 @@ const BackgroundCellCore = () => {
   );
 };
 
+const usePatternAnimation = (controls: AnimationControls, clickedCell: number[], rowIdx: number, colIdx: number) => {
+  useEffect(() => {
+    if (clickedCell.length > 0) {
+      const distance = Math.sqrt(
+        Math.pow(clickedCell[0] - rowIdx, 2) +
+        Math.pow(clickedCell[1] - colIdx, 2)
+      );
+      controls.start({
+        opacity: [0, 1 - distance * 0.1, 0],
+        transition: { duration: distance * 0.2 },
+      });
+    }
+  }, [clickedCell, controls, rowIdx, colIdx]);
+};
+
 const Pattern = ({ className, cellClassName }: { className?: string; cellClassName?: string }) => {
   const x = new Array(47).fill(0);
   const y = new Array(30).fill(0);
   const matrix = x.map((_, i) => y.map((_, j) => [i, j]));
   const [clickedCell, setClickedCell] = useState<number[]>([]); // Provide an empty array as the default value
-
-  const usePatternAnimation = (controls: AnimationControls, rowIdx: number, colIdx: number) => {
-    useEffect(() => {
-      if (clickedCell.length > 0) {
-        const distance = Math.sqrt(
-          Math.pow(clickedCell[0] - rowIdx, 2) +
-          Math.pow(clickedCell[1] - colIdx, 2)
-        );
-        controls.start({
-          opacity: [0, 1 - distance * 0.1, 0],
-          transition: { duration: distance * 0.2 },
-        });
-      }
-    }, [clickedCell, controls, rowIdx, colIdx]);
-  };
 
   return (
     <div className={cn("flex flex-row  relative z-30", className)}>
@@ -124,7 +124,7 @@ const Pattern = ({ className, cellClassName }: { className?: string; cellClassNa
         <div key={`matrix-row-${rowIdx}`} className="flex flex-col  relative z-20 border-b">
           {row.map((column, colIdx) => {
             const controls = useAnimation();
-            usePatternAnimation(controls, rowIdx, colIdx);
+            usePatternAnimation(controls, clickedCell, rowIdx, colIdx);
 
             return (
               <div
@@ -154,5 +154,6 @@ const Pattern = ({ className, cellClassName }: { className?: string; cellClassNa
     </div>
   );
 };
+
 
 
