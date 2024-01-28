@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
-
-export default nextConfig;
-
-module.exports = {
+const nextConfig = {
    reactStrictMode: true,
    experimental: {
      reactRoot: true,
    },
- };
+};
+
+export default nextConfig;
