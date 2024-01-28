@@ -100,19 +100,19 @@ function Pattern({className, cellClassName}: {className?: string; cellClassName?
         >
           {row.map((column, colIdx) => {
             const controls = useAnimation();
-            const calculateAnimation = (controls: AnimationControls, clickedCell: number[] | null, rowIdx: number, colIdx: number) => {
+
+            useEffect(() => {
               if (clickedCell) {
                 const distance = Math.sqrt(
                   Math.pow(clickedCell[0] - rowIdx, 2) +
-                  Math.pow(clickedCell[1] - colIdx, 2)
+                    Math.pow(clickedCell[1] - colIdx, 2)
                 );
                 controls.start({
                   opacity: [0, 1 - distance * 0.1, 0],
                   transition: { duration: distance * 0.2 },
                 });
               }
-            };
-            calculateAnimation(controls, clickedCell, rowIdx, colIdx)
+            }, [clickedCell]);
             return (
               <div
                 key={`matrix-col-${colIdx}`}
@@ -120,23 +120,14 @@ function Pattern({className, cellClassName}: {className?: string; cellClassName?
                   "bg-transparent border-l border-b border-neutral-600",
                   cellClassName
                 )}
-                onClick={() => {
-                  setClickedCell([rowIdx, colIdx]);
-                }}
+                onClick={() => {setClickedCell([rowIdx, colIdx])}}
               >
                 <motion.div
-                  initial={{
-                    opacity: 0,
-                  }}
-                  whileHover={{
-                    opacity: [0, 1, 0.5],
-                  }}
-                  transition={{
-                    duration: 0.5,
-                    ease: "backOut",
-                  }}
+                  initial={{opacity: 0}}
+                  whileHover={{opacity: [0, 1, 0.5]}}
+                  transition={{duration: 0.5,ease: "backOut"}}
                   animate={controls}
-                 className="bg-purple-600/30 h-12 w-12"
+                  className="bg-purple-600/30 h-12 w-12"
                 ></motion.div>
               </div>
             );
