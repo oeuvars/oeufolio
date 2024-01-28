@@ -113,6 +113,15 @@ function Pattern({className, cellClassName}: {className?: string; cellClassName?
   const matrix = x.map((_, i) => y.map((_, j) => [i, j]));
   const [clickedCell, setClickedCell] = useState<any>(null);
 
+  const animationControlsArray: AnimationControls[][] = [];
+
+  // Loop to initialize animation controls for each cell
+  matrix.forEach((row, rowIdx) => {
+    animationControlsArray[rowIdx] = [];
+    row.forEach((column, colIdx) => {
+      animationControlsArray[rowIdx][colIdx] = useCellAnimation(clickedCell, rowIdx, colIdx);
+    });
+  });
 
   return (
     <div className={cn("flex flex-row  relative z-30", className)}>
@@ -122,7 +131,7 @@ function Pattern({className, cellClassName}: {className?: string; cellClassName?
           className="flex flex-col  relative z-20 border-b"
         >
           {row.map((column, colIdx) => {
-            const controls = useCellAnimation(clickedCell, rowIdx, colIdx);
+            const controls = animationControlsArray[rowIdx][colIdx];
             // const calculateAnimation = (controls: AnimationControls, clickedCell: number[] | null, rowIdx: number, colIdx: number) => {
             //   if (clickedCell) {
             //     const distance = Math.sqrt(
