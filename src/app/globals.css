@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  scroll-behavior: smooth;
+}
+@font-face {
+  font-family: GTWalsheimPro-Medium;
+  src: url("../../public/fonts/GTWalsheimPro-Medium.ttf");
+}
+@font-face {
+  font-family: GTWalsheimPro-Regular;
+  src: url("../../public/fonts/GTWalsheimPro-Regular.ttf");
+}
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
