@@ -3,8 +3,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { AnimationControls } from 'framer-motion';
 
 type ClickedCell = [number, number];
+interface PatternCellProps {
+  controls: AnimationControls;
+  cellClassName?: string;
+  onClick: () => void;
+}
 
 export const BackgroundCellAnimation = () => {
   const variants = {
@@ -108,6 +114,32 @@ const usePatternAnimation = (clickedCell: ClickedCell | null, rowIdx: number, co
   return controls;
 };
 
+const PatternCell:React.FC<PatternCellProps> = ({ controls, cellClassName, onClick }) => {
+  return (
+    <div
+      className={cn(
+        "bg-transparent border-l border-b border-neutral-600",
+        cellClassName
+      )}
+      onClick={onClick}
+    >
+      <motion.div
+        initial={{
+          opacity: 0,
+        }}
+        whileHover={{
+          opacity: [0, 1, 0.5],
+        }}
+        transition={{
+          duration: 0.5,
+          ease: "backOut",
+        }}
+        animate={controls}
+        className="bg-purple-600/30 h-12 w-12"
+      ></motion.div>
+    </div>
+  );
+};
 
 const Pattern = ({className, cellClassName}: {className?: string; cellClassName?: string}) => {
   const x = new Array(47).fill(0);
@@ -126,29 +158,12 @@ const Pattern = ({className, cellClassName}: {className?: string; cellClassName?
             const controls = usePatternAnimation(clickedCell, rowIdx, colIdx);
 
             return (
-              <div
+              <PatternCell
                 key={`matrix-col-${colIdx}`}
-                className={cn(
-                  "bg-transparent border-l border-b border-neutral-600",
-                  cellClassName
-                )}
+                controls={controls}
+                cellClassName={cellClassName}
                 onClick={() => setClickedCell([rowIdx, colIdx])}
-              >
-                <motion.div
-                  initial={{
-                    opacity: 0,
-                  }}
-                  whileHover={{
-                    opacity: [0, 1, 0.5],
-                  }}
-                  transition={{
-                    duration: 0.5,
-                    ease: "backOut",
-                  }}
-                  animate={controls}
-                  className="bg-purple-600/30 h-12 w-12"
-                ></motion.div>
-              </div>
+              />
             );
           })}
         </div>
