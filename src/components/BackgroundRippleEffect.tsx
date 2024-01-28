@@ -85,7 +85,7 @@ return (
 );
 };
 
-function cellAnimation(clickedCell: [number, number], rowIdx: number, colIdx: number) {
+function CellAnimation(clickedCell: [number, number], rowIdx: number, colIdx: number) {
   const controls = useAnimation();
 
   useEffect(() => {
@@ -121,7 +121,7 @@ function Pattern({className, cellClassName}: {className?: string; cellClassName?
               setClickedCell([rowIdx, colIdx]);
             };
 
-            const controls = cellAnimation(clickedCell, rowIdx, colIdx);
+            const controls = CellAnimation(clickedCell, rowIdx, colIdx);
             return (
               <div
                 key={`matrix-col-${colIdx}`}
