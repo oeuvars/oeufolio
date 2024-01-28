@@ -10,7 +10,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         playfair: ['Playfair Display', "serif"],
-        "gt-walsheim-medium": ["GTWalsheimPro-Medium", "sans-serif"]
+        "gt-walsheim-medium": ["GTWalsheimPro-Medium", "sans-serif"],
+        parisienne: ['Parisienne', "cursive"]
       }
     },
     screens: {
