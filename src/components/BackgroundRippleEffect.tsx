@@ -3,33 +3,98 @@
 import React, { useEffect, useRef, useState } from "react";
 import { AnimationControls, motion, useAnimation } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Github, Linkedin, Twitter } from "lucide-react";
+import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
 
 export const BackgroundCellAnimation = () => {
+  const [email, setEmail] = useState('');
+  const [isValidEmail, setIsValidEmail] = useState(false);
   const variants = {
-    hidden: { opacity: 0, x: 0, y: 200 },
+    hidden: { opacity: 0.5, x: 0, y: 200 },
     enter: { opacity: 1, x: 0, y: 0},
   }
+  const handleClick = () => {
+    if (isValidEmail) {
+      toast.success("Subscribed to the Oeuletter", {
+        style: {
+          border: "2px solid rgba(255, 255, 255, 0.1)",
+          padding: "10px",
+          color: "#fff",
+          backgroundColor: "rgba(0, 0, 0, 0.1)",
+          backdropFilter: "blur(10px)",
+          fontSize: '1.1em',
+          minWidth: "10em",
+        },
+        iconTheme: {
+          primary: "#000",
+          secondary: "#fff",
+        },
+      });
+      setEmail('')
+    } else {
+      toast.error("Not a valid email", {
+        style: {
+          border: "2px solid rgba(255, 255, 255, 0.1)",
+          padding: "10px",
+          color: "#fff",
+          backgroundColor: "rgba(0, 0, 0, 0.1)",
+          backdropFilter: "blur(10px)",
+          fontSize: '1.1em',
+          minWidth: "10em",
+        },
+        iconTheme: {
+          primary: "#000",
+          secondary: "#fff",
+        },
+      });
+    }
+
+  }
+  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputEmail = event.target.value;
+    setEmail(inputEmail);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsValidEmail(emailRegex.test(inputEmail));
+  };
 return (
   <div className="relative h-screen bg-[#111111] grid justify-center items-center overflow-hidden">
     <BackgroundCellCore />
     <div className="grid gap-3 z-50">
-      <motion.div transition={{ ease: "easeOut", duration: 1.1 }} variants={variants} initial="hidden" animate="enter" className="relative pointer-events-none select-none flex gap-2 justify-center">
+      <div className="flex gap-2 justify-center">
          <img src="/icons/Logo.svg" alt="" className="phone:w-12 phone:h-12 lg:w-20 lg:h-20 my-auto"/>
          <h1 className="phone:text-5xl lg:text-7xl font-playfair p-1 my-auto bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 via-stone-400 to-neutral-500 tracking-tighter">Oeuvars</h1>
-      </motion.div>
-      <motion.div transition={{ ease: "easeOut", duration: 1.2 }} variants={variants} initial="hidden" animate="enter" className="phone:text-2xl lg:text-3xl bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 via-stone-300 to-neutral-400 tracking-tight text-center font-parisienne py-1">Anurag Das. Lemme land g.</motion.div>
-      <motion.div className="flex w-full phone:gap-2 lg:gap-0 mt-2 " transition={{ ease: "easeOut", duration: 1.3 }} variants={variants} initial="hidden" animate="enter">
+      </div>
+      <h1 className="phone:text-2xl lg:text-3xl bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 via-stone-300 to-neutral-400 tracking-tight text-center font-parisienne py-1">Anurag Das. Lemme land g.</h1>
+      <div className="flex w-full phone:gap-2 lg:gap-0 mt-2">
         <input
-          className="bg-[#222222] text-[#FAFAFA] px-6 py-3 w-full rounded-md outline-none focus:outline-2 focus:outline focus:outline-[#333333]"
+          className={`bg-[#222222] text-[#FAFAFA] px-6 py-3 w-full rounded-md outline-none focus:outline-2 focus:outline focus:outline-[#333333] ${
+            isValidEmail ? '' : 'border-red-500'
+          }`}
           placeholder="something@gmail.com"
           type="email"
           id="email"
           name="email"
+          onChange={handleEmailChange}
+          value={email}
           required
         />
-        <button className="-ml-10">
+        <Toaster position="top-center"/>
+        <button className="-ml-10" onClick={handleClick}>
           <img src="/icons/arrow.svg" alt="" className="w-7 h-7 my-auto"/>
         </button>
+      </div>
+      <motion.div className="mx-auto flex gap-4 my-2">
+        <Link href="https://github.com/oeuvars" target="_blank">
+          <Github className="text-[#505050] w-7 h-7"/>
+        </Link>
+        <Link href="https://www.linkedin.com/in/anurag-das-00075925b/" target="_blank">
+          <Linkedin className="text-[#505050] w-7 h-7"/>
+        </Link>
+        <Link href="https://twitter.com/oeuvars" target="_blank">
+          <Twitter className="text-[#505050] w-7 h-7"/>
+        </Link>
       </motion.div>
     </div>
   </div>
