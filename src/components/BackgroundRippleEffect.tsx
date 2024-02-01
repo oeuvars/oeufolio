@@ -23,8 +23,9 @@ export const BackgroundCellAnimation = () => {
           color: "#fff",
           backgroundColor: "rgba(0, 0, 0, 0.1)",
           backdropFilter: "blur(10px)",
-          fontSize: '1.1em',
+          fontSize: '1rem',
           minWidth: "10em",
+          letterSpacing: "-0.05em"
         },
         iconTheme: {
           primary: "#000",
@@ -40,8 +41,9 @@ export const BackgroundCellAnimation = () => {
           color: "#fff",
           backgroundColor: "rgba(0, 0, 0, 0.1)",
           backdropFilter: "blur(10px)",
-          fontSize: '1.1em',
+          fontSize: '1em',
           minWidth: "10em",
+          letterSpacing: "-0.05em"
         },
         iconTheme: {
           primary: "#000",
@@ -175,11 +177,11 @@ function Pattern({className, cellClassName}: {className?: string; cellClassName?
   const [clickedCell, setClickedCell] = useState<any>(null);
 
   return (
-    <div className={cn("flex flex-row  relative z-30", className)}>
+    <div className={cn("flex flex-row relative z-30", className)}>
       {matrix.map((row, rowIdx) => (
         <div
           key={`matrix-row-${rowIdx}`}
-          className="flex flex-col  relative z-20 border-b"
+          className="flex flex-col relative z-20 border-b"
         >
           {row.map((column, colIdx) => {
             const handleCellClick = () => {
