@@ -22,3 +22,6 @@ body {
     text-wrap: balance;
   }
 }
+.animate-when-hovered {
+  @apply ease-in-out transition duration-300
+}

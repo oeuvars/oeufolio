@@ -89,13 +89,13 @@ return (
       </div>
       <motion.div className="mx-auto flex gap-4 my-2">
         <Link href="https://github.com/oeuvars" target="_blank">
-          <Github className="text-[#505050] w-7 h-7"/>
+          <Github className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7"/>
         </Link>
         <Link href="https://www.linkedin.com/in/anurag-das-00075925b/" target="_blank">
-          <Linkedin className="text-[#505050] w-7 h-7"/>
+          <Linkedin className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7"/>
         </Link>
         <Link href="https://twitter.com/oeuvars" target="_blank">
-          <Twitter className="text-[#505050] w-7 h-7"/>
+          <Twitter className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7"/>
         </Link>
       </motion.div>
     </div>
