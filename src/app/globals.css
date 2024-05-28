@@ -9,14 +9,7 @@ body {
   margin: 0;
   scroll-behavior: smooth;
 }
-@font-face {
-  font-family: GTWalsheimPro-Medium;
-  src: url("../../public/fonts/GTWalsheimPro-Medium.ttf");
-}
-@font-face {
-  font-family: GTWalsheimPro-Regular;
-  src: url("../../public/fonts/GTWalsheimPro-Regular.ttf");
-}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
