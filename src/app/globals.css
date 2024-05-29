@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Parisienne&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Parisienne&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -8,6 +8,17 @@
 body {
   margin: 0;
   scroll-behavior: smooth;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  font-optical-sizing: auto;
+  font-weight: 400;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 @layer utilities {
@@ -16,5 +27,5 @@ body {
   }
 }
 .animate-when-hovered {
-  @apply ease-in-out transition duration-300
+  @apply ease-in-out transition duration-300;
 }

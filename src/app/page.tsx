@@ -7,7 +7,7 @@ export default function Home() {
 
   return (
     <main>
-      <div className="relative h-screen bg-[#111111] grid justify-center items-center overflow-hidden">
+      <div className="relative h-[95vh] bg-[#111111] grid justify-center items-center overflow-hidden">
         <BackgroundCellCore />
         <div className="grid gap-3 z-50">
           <div className="flex gap-2 justify-center">
