@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { showToast } from "./show-toasts";
 import { createClient } from "@supabase/supabase-js";
-import { Toaster } from "react-hot-toast";
 
 const Input = () => {
   const [enquiry, setEnquiry] = useState({
@@ -44,9 +43,9 @@ const Input = () => {
     setIsValidEmail(emailRegex.test(inputEmail));
   };
   return (
-    <>
+    <div className="flex phone:w-[80vw] sm:w-auto phone:gap-2 lg:gap-0 mt-2">
       <input
-        className={`bg-[#222222] text-[#FAFAFA] px-6 py-3 w-full rounded-md outline-none focus:outline-2 focus:outline focus:outline-[#333333] ${
+        className={`bg-[#222222] text-[#FAFAFA] phone:px-3 lg:px-6 py-3 w-full rounded-md outline-none focus:outline-2 focus:outline focus:outline-[#333333] ${
           isValidEmail ? "" : "border-red-500"
         }`}
         placeholder="something@gmail.com"
@@ -57,11 +56,10 @@ const Input = () => {
         value={enquiry.email}
         required
       />
-      <Toaster position="top-center" />
-      <button className="-ml-10" onClick={handleClick}>
-        <img src="/icons/arrow.svg" alt="" className="w-7 h-7 my-auto" />
+      <button className="phone:-ml-10 lg:-ml-10" onClick={handleClick}>
+        <img src="/icons/arrow.svg" alt="" className="phone:size-5 lg:size-7 my-auto" />
       </button>
-    </>
+    </div>
   );
 };
 

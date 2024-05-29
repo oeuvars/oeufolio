@@ -2,6 +2,7 @@ import { Github, Linkedin, Twitter } from "lucide-react";
 import Link from "next/link";
 import { BackgroundCellCore } from "@/components/global/background-ripple-effect";
 import Input from "@/components/global/hero-input";
+import { Image } from "@nextui-org/image";
 
 export default function Home() {
 
@@ -11,7 +12,7 @@ export default function Home() {
         <BackgroundCellCore />
         <div className="grid gap-3 z-50">
           <div className="flex gap-2 justify-center">
-            <img
+            <Image
               src="/icons/Logo.svg"
               alt=""
               className="phone:w-12 phone:h-12 lg:w-20 lg:h-20 my-auto"
@@ -23,9 +24,7 @@ export default function Home() {
           <h1 className="phone:text-2xl lg:text-3xl bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 via-stone-300 to-neutral-400 tracking-tight text-center font-parisienne py-1">
             Anurag lemme land g.
           </h1>
-          <div className="flex w-full phone:gap-2 lg:gap-0 mt-2">
-            <Input />
-          </div>
+          <Input />
           <div className="mx-auto flex gap-4 my-2">
             <Link href="https://github.com/oeuvars" target="_blank">
               <Github className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
