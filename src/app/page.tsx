@@ -22,7 +22,7 @@ export default function Home() {
             </h1>
           </div>
           <h1 className="phone:text-2xl lg:text-3xl bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 via-stone-300 to-neutral-400 tracking-tight text-center font-parisienne py-1">
-            Anurag lemme land g.
+            Lemme land g.
           </h1>
           <Input />
           <div className="mx-auto flex gap-4 my-2">

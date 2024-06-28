@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { showToast } from "./show-toasts";
-import { createClient } from "@supabase/supabase-js";
 
 const Input = () => {
   const [enquiry, setEnquiry] = useState({
     email: "",
   });
   const [isValidEmail, setIsValidEmail] = useState(false);
-  const supabase = createClient(
-    "https://cwwohaipubnlygrkhunn.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3d29oYWlwdWJubHlncmtodW5uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxNjU1NjEyNywiZXhwIjoyMDMyMTMyMTI3fQ.8r4GoxxN40a7RrVCiqDQn9OqYmBLO8MIRuhgNFHbDjk"
-  );
-  const handleClick = async () => {
+
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
     if (isValidEmail) {
       try {
-        const { error } = await supabase.from("oeufolio").insert(enquiry);
+        const form = document.getElementById("email-form") as HTMLFormElement;
+        const formData = new FormData(form);
 
-        if (error) {
-          showToast("Try again later", false);
-        } else {
-          showToast("Subscribed to the Oeuletter", true);
-          setEnquiry({
-            email: "",
-          });
-        }
+        await fetch(form.action, {
+          method: "POST",
+          body: formData,
+          mode: "no-cors",
+        });
+
+        showToast("Subscribed to the Oeuletter", true);
+        setEnquiry({
+          email: "",
+        });
       } catch (error) {
         console.error("Unexpected error:", error);
       }
@@ -33,6 +33,7 @@ const Input = () => {
       showToast("Not a valid email", false);
     }
   };
+
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputEmail = event.target.value;
     setEnquiry({
@@ -42,8 +43,13 @@ const Input = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     setIsValidEmail(emailRegex.test(inputEmail));
   };
+
   return (
-    <div className="flex phone:w-[80vw] sm:w-auto phone:gap-2 lg:gap-0 mt-2">
+    <form
+      id="email-form"
+      action="https://docs.google.com/forms/d/e/1FAIpQLSc7cz3tltdCuYy1J8DJA1al7mqDz62_AkMFzgs95Sg5Yn9dmA/formResponse"
+      className="flex phone:w-[80vw] sm:w-auto phone:gap-2 lg:gap-0 mt-2"
+    >
       <input
         className={`bg-[#222222] text-[#FAFAFA] phone:px-3 lg:px-6 py-3 w-full rounded-md outline-none focus:outline-2 focus:outline focus:outline-[#333333] ${
           isValidEmail ? "" : "border-red-500"
@@ -51,7 +57,7 @@ const Input = () => {
         placeholder="something@gmail.com"
         type="email"
         id="email"
-        name="email"
+        name="entry.254229081"
         onChange={handleEmailChange}
         value={enquiry.email}
         required
@@ -59,7 +65,7 @@ const Input = () => {
       <button className="phone:-ml-10 lg:-ml-10" onClick={handleClick}>
         <img src="/icons/arrow.svg" alt="" className="phone:size-5 lg:size-7 my-auto" />
       </button>
-    </div>
+    </form>
   );
 };
 

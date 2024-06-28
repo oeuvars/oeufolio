@@ -5,7 +5,7 @@ import { Toaster } from "react-hot-toast";
 
 
 export const metadata: Metadata = {
-  title: "Oeuvars",
+  title: "Anurag | Oeuvars",
   description: "Oeuvars is landing",
 };
 
