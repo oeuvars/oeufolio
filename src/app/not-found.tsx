@@ -8,7 +8,7 @@ const page: FC = () => {
       <section>
          <div className="relative h-[95vh] bg-[#111111] grid justify-center items-center overflow-hidden">
             <BackgroundCellCore />
-            <div className="flex flex-col justify-center items-center z-20 absolute w-full">
+            <div className="flex flex-col justify-center items-center z-50 w-full">
                <div className="flex gap-2 mt-8">
                   <h1 className="font-bold phone:text-6xl lg:text-9xl text-neutral-50">4</h1>
                   <div className='my-auto'>

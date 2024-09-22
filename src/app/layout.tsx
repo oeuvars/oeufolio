@@ -6,8 +6,8 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Oeuvars",
-  description: "etc. etc. etc.",
+  title: "Anurag | Oeuvars",
+  description: "Anurag, etc. etc. etc.",
 };
 
 export default function RootLayout({
