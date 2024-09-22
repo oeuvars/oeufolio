@@ -12,9 +12,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        playfair: ['Playfair Display', "serif"],
-        "gt-walsheim-medium": ["GTWalsheimPro-Medium", "sans-serif"],
-        parisienne: ['Parisienne', "cursive"]
+        "instrument-serif": ["Instrument Serif", "serif"],
       }
     },
     screens: {

@@ -1,6 +1,5 @@
 import { BackgroundCellCore } from "@/components/global/background-ripple-effect";
 import { Button } from "@nextui-org/button";
-import { Image } from "@nextui-org/image";
 import Link from "next/link";
 import { FC } from "react";
 
@@ -13,7 +12,7 @@ const page: FC = () => {
                <div className="flex gap-2 mt-8">
                   <h1 className="font-bold phone:text-6xl lg:text-9xl text-neutral-50">4</h1>
                   <div className='my-auto'>
-                     <Image src="/assets/0.svg" alt="" className="phone:w-12 phone:h-12 lg:w-24 lg:h-24 my-auto" />
+                     <img src="/assets/0.svg" alt="" className="phone:w-12 phone:h-12 lg:w-24 lg:h-24 my-auto" />
                   </div>
                   <h1 className="font-bold phone:text-6xl lg:text-9xl text-neutral-50">4</h1>
                </div>
