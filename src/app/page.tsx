@@ -19,8 +19,8 @@ export default function Home() {
               Anurag Das
             </h1>
           </div>
-          <h1 className="phone:text-base mb-2 lg:text-2xl bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 via-stone-400 to-neutral-500 text-center tracking-tighter font-medium py-1 opacity-80">
-            type shit...
+          <h1 className="phone:text-sm mb-2 lg:text-xl bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 via-stone-400 to-neutral-500 text-center tracking-tighter font-medium py-1 opacity-80">
+            Soft Engineer building servers and interfaces
           </h1>
           <div className="mx-auto flex gap-4 my-2">
             <Link href="https://github.com/oeuvars" target="_blank">
