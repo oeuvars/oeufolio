@@ -1,5 +1,5 @@
 import { BackgroundCellCore } from "@/components/global/background-ripple-effect";
-import { Button } from "@nextui-org/button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FC } from "react";
 
@@ -17,7 +17,7 @@ const page: FC = () => {
                   <h1 className="font-bold phone:text-6xl lg:text-9xl text-neutral-50">4</h1>
                </div>
                <p className="phone:text-sm lg:text-lg mt-5 text-neutral-300 font-light tracking-tight">You just got lost in a beautiful space...</p>
-               <Button radius='sm' className="bg-neutral-900 mt-5 px-7 py-5 rounded-md phone:text-sm tablet:text-base text-neutral-300">
+               <Button className="bg-neutral-900 mt-5 px-7 py-5 rounded-md phone:text-sm tablet:text-base text-neutral-300">
                   <Link href="/">Home &nbsp;-&gt;</Link>
                </Button>
             </div>

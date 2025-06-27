@@ -1,6 +1,6 @@
-import { Github, Instagram, Twitter } from "lucide-react";
 import Link from "next/link";
 import { BackgroundCellCore } from "@/components/global/background-ripple-effect";
+import { IconBrandGithub, IconBrandInstagram, IconBrandTwitter } from "@tabler/icons-react";
 
 export default function Home() {
 
@@ -24,16 +24,16 @@ export default function Home() {
           </h1>
           <div className="mx-auto flex gap-4 my-2">
             <Link href="https://github.com/oeuvars" target="_blank">
-              <Github className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
+              <IconBrandGithub className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
             </Link>
             <Link
               href="https://www.instagram.com/oeuvars/"
               target="_blank"
             >
-              <Instagram className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
+              <IconBrandInstagram className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
             </Link>
             <Link href="https://twitter.com/oeuvars" target="_blank">
-              <Twitter className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
+              <IconBrandTwitter className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
             </Link>
           </div>
         </div>
