@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { BackgroundCellCore } from "@/components/global/background-ripple-effect";
-import { IconBrandGithub, IconBrandInstagram, IconBrandTwitter } from "@tabler/icons-react";
+import {
+  IconBrandGithub,
+  IconBrandInstagram,
+  IconBrandTwitter,
+} from "@tabler/icons-react";
 
 export default function Home() {
-
   return (
     <main>
-      <div className="relative h-[96vh] bg-[#111111] grid justify-center items-center overflow-hidden">
+      <div className="relative h-[96vh] grid justify-center items-center overflow-hidden">
         <BackgroundCellCore />
         <div className="grid gap-3 z-50">
           <img
@@ -26,10 +29,7 @@ export default function Home() {
             <Link href="https://github.com/oeuvars" target="_blank">
               <IconBrandGithub className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
             </Link>
-            <Link
-              href="https://www.instagram.com/oeuvars/"
-              target="_blank"
-            >
+            <Link href="https://www.instagram.com/oeuvars/" target="_blank">
               <IconBrandInstagram className="text-[#505050] animate-when-hovered hover:text-[#606060] w-7 h-7" />
             </Link>
             <Link href="https://twitter.com/oeuvars" target="_blank">
