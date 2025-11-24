@@ -3,25 +3,26 @@ import "./globals.css";
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import { Toaster } from "@/components/ui/sonner";
 import { type ReactNode } from "react";
+import { Stack } from "@/components/stack";
 
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "Anurag | Oeuvars",
   description: "Anurag, etc. etc. etc.",
-};
+} satisfies Metadata;
 
-export default function RootLayout({
+export default function Layout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
   return (
     <html lang="en">
-      <body className={plusJakartaSans.className}>
+      <Stack as="body" className={plusJakartaSans.className}>
         <Toaster position="top-center" />
         {children}
-      </body>
+      </Stack>
     </html>
   );
 }
