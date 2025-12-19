@@ -109,4 +109,4 @@ const CenterUnderline = ({
 
 CenterUnderline.displayName = "CenterUnderline"
 
-export const CenterUnderline
+export default CenterUnderline
