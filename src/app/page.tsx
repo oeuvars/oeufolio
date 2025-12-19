@@ -32,18 +32,16 @@ export default function Home() {
           <Stack dir="row" items="center" gap={1}>
             <Typography.Small className="gradient-text text-center opacity-80">Soft Engineer building servers and interfaces</Typography.Small>
             <CenterUnderline>
-              <Link className="flex items-center" href="https://cybership.io" target="_blank">
+              <Link className="flex items-center  gap-[1px]" href="https://cybership.io" target="_blank">
                 <svg
-                  width="20"
-                  height="20"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="inline align-middle my-auto"
+                  className="inline align-middle my-auto phone:size-4 lg:size-5"
                 >
                   <defs>
-                    <linearGradient id="atGradient" x1="0%" y1="100%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#e5e5e5" />
+                    <linearGradient id="atGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#9a9a9a" />
                       <stop offset="50%" stopColor="#a8a29e" />
                       <stop offset="100%" stopColor="#737373" />
                     </linearGradient>
