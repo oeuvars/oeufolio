@@ -1,35 +1,77 @@
-import { BackgroundCellCore } from "@/components/global/background-ripple-effect";
-import { Button } from "@/components/ui/button";
-import { Stack } from "@/components/stack";
-import { Typography } from "@/components/typography";
 import Link from "next/link";
-import { FC, Fragment } from "react";
+import { IconArrowLeft, IconArrowUpRight } from "@tabler/icons-react";
+import { AmbientField } from "@/components/ambient-field";
 
-const page: FC = () => {
-   return (
-      <Fragment>
-         <Stack className="relative h-[95vh] bg-[#111111] justify-center items-center overflow-hidden">
-            <BackgroundCellCore />
-            <Stack items="center" justify="center" className="z-50 w-full">
-               <Stack dir="row" className="mt-8">
-                  <Typography.H1 className="text-neutral-50 font-bold my-auto">4</Typography.H1>
-                  <Stack className='my-auto'>
-                     <img src="/assets/0.svg" alt="" className="phone:size-12 lg:size-16 my-auto" />
-                  </Stack>
-                  <Typography.H1 className="text-neutral-50 font-bold my-auto">4</Typography.H1>
-               </Stack>
-               <Typography.P className="phone:text-sm lg:text-lg mt-5 text-neutral-300 font-light tracking-tight">You just got lost in a beautiful space...</Typography.P>
-               <Button className="bg-neutral-900 mt-5 px-7 py-5 rounded-md phone:text-sm tablet:text-base text-neutral-300">
-                  <Link href="/">Home &nbsp;-&gt;</Link>
-               </Button>
-            </Stack>
-         </Stack>
-         <Stack dir="row" justify="space-between" className="bg-[#111111] phone:text-xs lg:text-sm tracking-tight text-stone-300 px-5">
-            <Typography.P>{new Date().getFullYear()} &#169;Oeuvars</Typography.P>
-            <Typography.P>Design + Build by Oeuvars</Typography.P>
-         </Stack>
-      </Fragment>
-   );
-};
+export default function NotFound() {
+  return (
+    <main className="error-shell">
+      <AmbientField signal={1} engaged={false} />
+      <div className="error-chassis" aria-hidden="true" />
 
-export default page;
+      <header className="error-header">
+        <div className="error-identity">
+          <i aria-hidden="true" />
+          <div>
+            <span>Anurag Das</span>
+            <small>Personal receiver / AD–404</small>
+          </div>
+        </div>
+        <span>Frequency unavailable</span>
+      </header>
+
+      <section className="error-stage" aria-labelledby="error-title">
+        <div className="error-number" aria-hidden="true">404</div>
+
+        <div className="error-screen">
+          <div className="error-static" aria-hidden="true" />
+          <span className="frame-cross frame-cross-a" aria-hidden="true" />
+          <span className="frame-cross frame-cross-b" aria-hidden="true" />
+
+          <span className="error-register">error / 404</span>
+          <div className="error-copy">
+            <span>No signal</span>
+            <h1 id="error-title">Nothing here.</h1>
+            <p>This frequency does not exist.</p>
+          </div>
+
+          <Link href="/" className="error-home-link">
+            <IconArrowLeft size={14} stroke={1.5} /> Return to 88.4
+          </Link>
+        </div>
+
+        <aside className="error-readout" aria-label="Error information">
+          <div>
+            <span>band</span>
+            <strong>— — —</strong>
+          </div>
+          <div>
+            <span>source</span>
+            <strong>not found</strong>
+          </div>
+          <div>
+            <span>status</span>
+            <strong>off air</strong>
+          </div>
+        </aside>
+      </section>
+
+      <footer className="error-deck">
+        <div>
+          <span>field selector</span>
+          <strong>404.0</strong>
+          <small>MHz</small>
+        </div>
+
+        <div className="error-tuner" aria-hidden="true">
+          <span>88</span>
+          <i />
+          <span>106</span>
+        </div>
+
+        <Link href="/">
+          Receiver <IconArrowUpRight size={13} stroke={1.5} />
+        </Link>
+      </footer>
+    </main>
+  );
+}

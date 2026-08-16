@@ -1,28 +1,39 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { type ReactNode } from "react";
-import { Stack } from "@/components/stack";
 
-const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"] });
+const timeThemeScript = `
+  (() => {
+    const applyTimeTheme = () => {
+      const hour = new Date().getHours();
+      const theme = hour >= 6 && hour < 18 ? "light" : "dark";
+      document.documentElement.dataset.timeTheme = theme;
+      document.documentElement.style.colorScheme = theme;
+    };
+
+    applyTimeTheme();
+    window.setInterval(applyTimeTheme, 60000);
+  })();
+`;
 
 export const metadata = {
   metadataBase: new URL("https://anurag.gg"),
   title: {
-    default: "Anurag | Oeuvars",
+    default: "Anurag Das",
     template: "%s | Anurag Das",
   },
   description:
-    "Anurag Das - Software Engineer building servers and interfaces at Cybership",
+    "Anurag Das — photographs, notes, and things in progress.",
   keywords: [
     "Anurag Das",
     "Oeuvars",
+    "Personal journal",
+    "Electric guitars",
+    "Sports cars",
+    "Arsenal",
+    "Industrial design",
     "Software Engineer",
-    "Full Stack Enginner",
-    "Cybership",
-    "Engineer",
-    "Portfolio",
   ],
   authors: [
     {
@@ -47,9 +58,9 @@ export const metadata = {
     canonical: "https://anurag.gg",
   },
   openGraph: {
-    title: "Anurag | Oeuvars",
+    title: "Anurag Das",
     description:
-      "Software Engineer building servers and interfaces at Cybership",
+      "Photographs, notes, and things in progress.",
     url: "https://anurag.gg",
     siteName: "Anurag Das",
     locale: "en_US",
@@ -57,9 +68,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Anurag | Oeuvars",
+    title: "Anurag Das",
     description:
-      "Software Engineer building servers and interfaces at Cybership",
+      "Photographs, notes, and things in progress.",
     creator: "@oeuvars",
   },
 } satisfies Metadata;
@@ -70,11 +81,14 @@ export default function Layout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <Stack as="body" className={plusJakartaSans.className}>
+    <html lang="en" data-time-theme="light" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: timeThemeScript }} />
+      </head>
+      <body>
         <Toaster position="top-center" />
         {children}
-      </Stack>
+      </body>
     </html>
   );
 }
