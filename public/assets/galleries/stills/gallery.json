@@ -1,0 +1,51 @@
+{
+  "type": "opere",
+  "nome": "stills",
+  "items": [
+    {
+      "file": "01_after-six.jpg",
+      "alt": "A guitar neck laid on the line where a pink backdrop meets a teal one, with picks set out on either side",
+      "title": "After six",
+      "note": "One more take. Then another.",
+      "field": "marigold",
+      "credit": "ROMBO",
+      "featured": false
+    },
+    {
+      "file": "02_within-reach.jpg",
+      "alt": "A black film camera seen from the front on a coral backdrop",
+      "title": "Within reach",
+      "note": "Good buttons do not need instructions.",
+      "field": "turquoise",
+      "credit": "Bo Ponomari",
+      "featured": false
+    },
+    {
+      "file": "03_desk-occupied.jpg",
+      "alt": "An orange tabby cat resting its chin and both front paws on a white table, looking at the camera",
+      "title": "Desk occupied",
+      "note": "I was using that.",
+      "field": "red",
+      "credit": "Karina Badura",
+      "featured": false
+    },
+    {
+      "file": "04_ninety-minutes.jpg",
+      "alt": "Rows of empty stadium seats in pastel pink and mint green",
+      "title": "Ninety minutes",
+      "note": "Everything else moved.",
+      "field": "mint",
+      "credit": "Maria Tyutina",
+      "featured": false
+    },
+    {
+      "file": "05_the-longer-way.jpg",
+      "alt": "Two yellow fuel pumps in front of a turquoise roadside store",
+      "title": "The longer way",
+      "note": "Parked. Looked back.",
+      "field": "pink",
+      "credit": "Mr. Location Scout",
+      "featured": false
+    }
+  ]
+}

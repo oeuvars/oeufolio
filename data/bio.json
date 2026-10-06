@@ -1,0 +1,17 @@
+{
+  "bio": "Photographs, notes, and things in progress.",
+  "email": "",
+  "location": "Kolkata, India",
+  "occupation": "Software engineer",
+  "social": {
+    "github": "https://github.com/oeuvars",
+    "instagram": "https://www.instagram.com/oeuvars/",
+    "x": "https://twitter.com/oeuvars",
+    "website": "https://cybership.io"
+  },
+  "aboutSections": {
+    "biografia": true,
+    "mostre": false,
+    "premi": false
+  }
+}

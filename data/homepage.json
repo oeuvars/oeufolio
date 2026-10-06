@@ -1,0 +1,36 @@
+{
+  "hero": {
+    "label": "Kolkata, India",
+    "name": "Anurag Das",
+    "subtitle": "Photographs, notes, and things in progress.",
+    "alt": "A pink facade with teal louvred shutters",
+    "credit": "CK Seng",
+    "field": "pink",
+    "focus": "100% 14%",
+    "desktop": [
+      "/assets/hero/desktop/01_pink-facade.jpg"
+    ],
+    "mobile": []
+  },
+  "sectionVisibility": {
+    "articles": false,
+    "galleries": true,
+    "about": true,
+    "exhibitions-cta": false,
+    "contact": false,
+    "featured": false
+  },
+  "sectionOrder": [
+    "galleries",
+    "articles",
+    "featured",
+    "exhibitions-cta",
+    "about",
+    "contact"
+  ],
+  "exhibitionsCta": {
+    "title": "Exhibitions",
+    "description": "",
+    "buttonLabel": "See all"
+  }
+}

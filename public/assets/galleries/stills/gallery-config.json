@@ -1,0 +1,10 @@
+{
+  "type": "config",
+  "nome": "stills",
+  "title": "The stills",
+  "subtitle": "In order of appearance",
+  "layout": "grid-3",
+  "order": 1,
+  "visibility": "public",
+  "enabled": false
+}

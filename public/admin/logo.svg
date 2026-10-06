@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- A still in its window with two subtitle lines, on the opening pink -->
+  <rect width="512" height="512" rx="114" fill="#f1b8c4"/>
+  <rect x="120" y="146" width="272" height="198" fill="none" stroke="#4e1a3a" stroke-width="11"/>
+  <rect x="146" y="172" width="220" height="146" fill="#4e1a3a"/>
+  <rect x="192" y="254" width="128" height="16" fill="#f6d743"/>
+  <rect x="216" y="282" width="80" height="16" fill="#f6d743"/>
+</svg>
