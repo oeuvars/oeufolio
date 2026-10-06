@@ -39,51 +39,55 @@ export default function Gallery({ section, enableFilter = false, enablePlay = fa
       : "(max-width: 640px) 90vw, (max-width: 900px) 45vw, 350px"
 
   return (
-    <section id={section.id} className="card f-cream" data-field="cream">
-      <div className="stage stage-page">
-        {section.subtitle && <p className="label">{section.subtitle}</p>}
-        <h1 className="title title-page">{section.title}</h1>
-        {enableFilter && (
-          <div className="mt-8">
-            <MediumFilter media={mediums} active={activeMedium} onChange={handleFilterChange} />
-          </div>
-        )}
-        <ul className="still-grid" data-layout={layout}>
-          {works.map((work, i) => {
-            const title = work.title ?? work.alt
-            return (
-              <li key={work.file}>
-                <button type="button" className="frame" onClick={() => setLightboxIndex(i)} aria-label={`Open ${title}`}>
-                  <Image
-                    src={work.blurDataURL ? `/assets-opt/${work.file}` : `/assets/${work.file}`}
-                    alt={work.alt}
-                    fill
-                    sizes={sizes}
-                    style={work.focus ? { objectPosition: work.focus } : undefined}
-                    {...(work.blurDataURL && { placeholder: "blur" as const, blurDataURL: work.blurDataURL })}
-                  />
-                </button>
-                <div className="cell-caption">
-                  <p className="cell-title">{i + 1}. {title}</p>
-                  {work.note && <p className="cell-note">{work.note}</p>}
-                </div>
-              </li>
-            )
-          })}
-          {enablePlay && works.length > 0 && (
-            <li>
-              <PlayCard
-                label={works.length === 1 ? "Play it" : `Play all ${countWord(works.length)}`}
-                detail={`${screeningSeconds(works.length)} seconds`}
-              />
-            </li>
+    <>
+      <section id={section.id} className="card f-cream" data-field="cream">
+        <div className="stage stage-page">
+          {section.subtitle && <p className="label">{section.subtitle}</p>}
+          <h1 className="title title-page">{section.title}</h1>
+          {enableFilter && (
+            <div className="mt-8">
+              <MediumFilter media={mediums} active={activeMedium} onChange={handleFilterChange} />
+            </div>
           )}
-        </ul>
-      </div>
+          <ul className="still-grid" data-layout={layout}>
+            {works.map((work, i) => {
+              const title = work.title ?? work.alt
+              return (
+                <li key={work.file}>
+                  <button type="button" className="frame" onClick={() => setLightboxIndex(i)} aria-label={`Open ${title}`}>
+                    <Image
+                      src={work.blurDataURL ? `/assets-opt/${work.file}` : `/assets/${work.file}`}
+                      alt={work.alt}
+                      fill
+                      sizes={sizes}
+                      style={work.focus ? { objectPosition: work.focus } : undefined}
+                      {...(work.blurDataURL && { placeholder: "blur" as const, blurDataURL: work.blurDataURL })}
+                    />
+                  </button>
+                  <div className="cell-caption">
+                    <p className="cell-title">{i + 1}. {title}</p>
+                    {work.note && <p className="cell-note">{work.note}</p>}
+                  </div>
+                </li>
+              )
+            })}
+            {enablePlay && works.length > 0 && (
+              <li>
+                <PlayCard
+                  label={works.length === 1 ? "Play it" : `Play all ${countWord(works.length)}`}
+                  detail={`${screeningSeconds(works.length)} seconds`}
+                />
+              </li>
+            )}
+          </ul>
+        </div>
+      </section>
 
+      {/* Outside the card: a card is its own stacking context, and the lightbox
+          has to cover the fixed header as well. */}
       {lightboxIndex !== null && (
         <Lightbox works={works} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
       )}
-    </section>
+    </>
   )
 }
