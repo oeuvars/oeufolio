@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { MotionConfig } from 'motion/react'
 
-import { Clock } from '../components/Clock'
 import { CopyEmail } from '../components/CopyEmail'
 import { HandCircle } from '../components/HandCircle'
 import LightRays from '../components/LightRays'
@@ -48,11 +47,8 @@ function Home() {
 
         <div className="relative mx-auto grid min-h-full w-full max-w-[1400px] grid-rows-[auto_1fr_auto] gap-[5vh] px-[5vw] py-[4.5vh]">
           <Reveal>
-            <header className="flex items-baseline justify-between border-b border-ink/25 pb-[0.8em]">
+            <header className="flex items-baseline border-b border-ink/25 pb-[0.8em]">
               <span className="label !text-ink">{profile.handle}</span>
-              <span className="label">
-                It is <Clock /> where I am
-              </span>
             </header>
           </Reveal>
 
