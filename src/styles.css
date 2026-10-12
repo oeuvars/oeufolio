@@ -1,13 +1,11 @@
-@import '@fontsource/eb-garamond/400.css';
-@import '@fontsource/eb-garamond/400-italic.css';
-@import '@fontsource/eb-garamond/500.css';
-@import '@fontsource/im-fell-english/400-italic.css';
+@import '@fontsource-variable/bitter/index.css';
+@import '@fontsource-variable/bitter/wght-italic.css';
 @import '@fontsource/reenie-beanie/400.css';
 @import 'tailwindcss';
 
 @theme {
-  --font-serif: 'EB Garamond', 'Iowan Old Style', Georgia, serif;
-  --font-accent: 'IM Fell English', 'EB Garamond', serif;
+  --font-serif: 'Bitter Variable', Georgia, serif;
+  --font-accent: 'Bitter Variable', Georgia, serif;
   --font-script: 'Reenie Beanie', cursive;
 
   --color-parchment: #f3ead2;
@@ -26,7 +24,7 @@
     min-height: 100vh;
     color: var(--color-ink);
     font-family: var(--font-serif);
-    font-weight: 500;
+    font-weight: 400;
     text-shadow: 0 1px 1px rgb(0 0 0 / 0.45);
     font-feature-settings: 'liga', 'onum', 'kern';
     -webkit-font-smoothing: antialiased;

@@ -107,5 +107,5 @@ export const profile: Profile = {
   ],
   email: 'sudo@anurag.gg',
   colophon:
-    'Set in EB Garamond and IM Fell English. Leather rendered in Blender. Built with TanStack Start.',
+    'Set in Bitter. Leather and brass rendered in Blender. Built with TanStack Start.',
 }
