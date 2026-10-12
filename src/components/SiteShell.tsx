@@ -4,7 +4,6 @@ import { MotionConfig } from 'motion/react'
 import { profile } from '../content'
 import { CopyEmail } from './CopyEmail'
 import { FoilCorner } from './FoilCorner'
-import { QuillCursor } from './QuillCursor'
 import { Reveal } from './Reveal'
 import { Dial } from './Dial'
 import { SurfaceLight } from './SurfaceLight'
@@ -41,7 +40,6 @@ export function SiteShell({ children }: SiteShellProps) {
       <div aria-hidden className="leather-bg" />
       <SurfaceLight />
       <main className="fixed inset-0 overflow-y-auto text-[clamp(14px,0.4vw+1.1vh,21px)] leading-[1.55]">
-        <QuillCursor />
 
         <div className="relative p-[2.2vmin]">
         <Dial />
