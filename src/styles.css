@@ -1,0 +1,106 @@
+@import '@fontsource/eb-garamond/400.css';
+@import '@fontsource/eb-garamond/400-italic.css';
+@import '@fontsource/eb-garamond/500.css';
+@import '@fontsource/im-fell-english/400-italic.css';
+@import '@fontsource/reenie-beanie/400.css';
+@import 'tailwindcss';
+
+@theme {
+  --font-serif: 'EB Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-accent: 'IM Fell English', 'EB Garamond', serif;
+  --font-script: 'Reenie Beanie', cursive;
+
+  --color-parchment: #f1e8d2;
+  --color-ink: #1c130c;
+  --color-ink-soft: #46361f;
+  --color-rubric: #8b1a1a;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--color-ink);
+    font-family: var(--font-serif);
+    font-feature-settings: 'liga', 'onum', 'kern';
+    -webkit-font-smoothing: antialiased;
+    background-color: #d9ccaa;
+    background-image: url('/parchment.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: var(--color-rubric);
+    color: var(--color-parchment);
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+@layer utilities {
+  .label {
+    font-size: 0.72em;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+
+  .leader {
+    flex: 1;
+    min-width: 1rem;
+    border-bottom: 1.5px dotted rgb(28 19 12 / 0.45);
+    transform: translateY(-0.3em);
+  }
+
+  .index:has(a:hover) a:not(:hover) {
+    opacity: 0.35;
+  }
+
+  .index a {
+    transition: opacity 0.2s ease;
+  }
+
+  .link {
+    text-decoration: underline;
+    text-decoration-color: rgb(139 26 26 / 0.5);
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  }
+
+  .link:hover {
+    color: var(--color-rubric);
+    text-decoration-color: var(--color-rubric);
+  }
+
+  .signature {
+    display: inline-block;
+    clip-path: inset(0 100% 0 0);
+    animation: handwrite 1.8s cubic-bezier(0.45, 0, 0.25, 1) 1.2s forwards;
+  }
+}
+
+@keyframes handwrite {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .signature {
+    clip-path: none;
+    animation: none;
+  }
+}
