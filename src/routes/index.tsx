@@ -55,7 +55,6 @@ function Home() {
           <div className="grid grid-cols-1 content-center gap-x-[6vw] gap-y-[4vh] md:grid-cols-12">
             <div className="flex flex-col gap-[3.2vh] md:col-span-7">
               <Reveal delay={0.1}>
-                <p className="label mb-[1.2em]">{profile.role}</p>
                 <h1 className="ink text-[clamp(2.4rem,5.4vw,5.2rem)] leading-[1.02] font-normal tracking-[-0.012em] text-balance">
                   {headline.before}
                   <HandCircle>
