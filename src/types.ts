@@ -1,3 +1,8 @@
+export type NavItem = {
+  to: '/' | '/likes' | '/work' | '/extras'
+  label: string
+}
+
 export type Work = {
   title: string
   summary: string
@@ -16,14 +21,46 @@ export type Question = {
   a: string
 }
 
+export type Like = {
+  title: string
+  tag: string
+  note: string
+  details?: string[]
+}
+
+export type Role = {
+  period: string
+  role: string
+  org: string
+  summary: string
+}
+
+export type Plate = {
+  title: string
+  caption: string
+  image?: string
+}
+
+export type Playlist = {
+  title: string
+  note: string
+  href: string
+  embed?: string
+}
+
 export type Profile = {
   handle: string
-  role: string
-  headline: { before: string; accent: string; after: string }
-  intro: string[]
+  nav: NavItem[]
+  basics: {
+    headline: { before: string; accent: string; after: string }
+    intro: string[]
+    now: string
+    questions: Question[]
+  }
+  likes: Like[]
+  experience: Role[]
   works: Work[]
-  now: string
-  questions: Question[]
+  extras: { plates: Plate[]; playlist: Playlist }
   socials: Social[]
   email: string
   colophon: string

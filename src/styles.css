@@ -10,10 +10,10 @@
   --font-accent: 'IM Fell English', 'EB Garamond', serif;
   --font-script: 'Reenie Beanie', cursive;
 
-  --color-parchment: #f1e8d2;
-  --color-ink: #1c130c;
-  --color-ink-soft: #46361f;
-  --color-rubric: #8b1a1a;
+  --color-parchment: #f3ead2;
+  --color-ink: #f8f1da;
+  --color-ink-soft: #e0d6b8;
+  --color-rubric: #e6b34a;
 }
 
 @layer base {
@@ -26,18 +26,16 @@
     min-height: 100vh;
     color: var(--color-ink);
     font-family: var(--font-serif);
+    font-weight: 500;
+    text-shadow: 0 1px 1px rgb(0 0 0 / 0.45);
     font-feature-settings: 'liga', 'onum', 'kern';
     -webkit-font-smoothing: antialiased;
-    background-color: #d9ccaa;
-    background-image: url('/parchment.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    background-color: #0b3a27;
   }
 
   ::selection {
     background: var(--color-rubric);
-    color: var(--color-parchment);
+    color: #0b2a1c;
   }
 
   a {
@@ -46,17 +44,109 @@
 }
 
 @layer utilities {
-  .label {
-    font-size: 0.72em;
-    letter-spacing: 0.2em;
+  .foil {
+    background-image: linear-gradient(
+      105deg,
+      #8a5b12 0%,
+      #e9c46a 14%,
+      #fff3b8 26%,
+      #d4a23a 40%,
+      #8a5b12 54%,
+      #e9c46a 68%,
+      #fff0a8 82%,
+      #9c6a16 100%
+    );
+    background-size: 240% 100%;
+    background-position: 0% 50%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.55));
+    animation: foil-sheen 7s ease-in-out infinite alternate;
+  }
+
+  .deboss {
+    color: rgb(0 0 0 / 0.07);
+    text-shadow:
+      0 1px 0 rgb(255 255 255 / 0.07),
+      0 -1px 0 rgb(0 0 0 / 0.55);
+  }
+
+  .leather-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100lvh;
+    pointer-events: none;
+    background-color: #0b3a27;
+    background-image: url('/leather.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .dial-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    padding-top: 21.5%;
+    text-decoration: none;
+    transition: transform 0.2s;
+  }
+
+  .dial-label span {
+    font-size: clamp(0.5rem, 0.78vw, 0.66rem);
+    font-weight: 600;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--color-ink-soft);
+    color: #2d1b04;
+    text-shadow: 0 1px 0 rgb(255 236 176 / 0.6);
+    padding-left: 0.22em;
+  }
+
+  .dial-label:hover span {
+    color: #000;
+  }
+
+  .dial-label.is-active span {
+    color: #120a00;
+    text-shadow:
+      0 1px 0 rgb(255 240 190 / 0.8),
+      0 0 6px rgb(255 224 140 / 0.45);
+  }
+
+  .dial-pointer {
+    position: absolute;
+    top: -0.55rem;
+    left: 50%;
+    z-index: 2;
+    width: 0.95rem;
+    height: 0.8rem;
+    transform: translateX(-50%);
+    background: linear-gradient(120deg, #fff0b0, #c8962e 55%, #7a4f0c);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.6));
+  }
+
+  .inlay {
+    background-color: rgb(5 28 19 / 0.88);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--color-rubric) 45%, transparent),
+      inset 0 0 60px rgb(0 0 0 / 0.35),
+      0 24px 70px rgb(0 0 0 / 0.55);
+  }
+
+  .stitch {
+    border: 1px dashed color-mix(in srgb, var(--color-rubric) 55%, transparent);
   }
 
   .leader {
     flex: 1;
     min-width: 1rem;
-    border-bottom: 1.5px dotted rgb(28 19 12 / 0.45);
+    border-bottom: 1.5px dotted color-mix(in srgb, var(--color-ink) 45%, transparent);
     transform: translateY(-0.3em);
   }
 
@@ -70,7 +160,7 @@
 
   .link {
     text-decoration: underline;
-    text-decoration-color: rgb(139 26 26 / 0.5);
+    text-decoration-color: color-mix(in srgb, var(--color-rubric) 55%, transparent);
     text-underline-offset: 0.2em;
     text-decoration-thickness: 1px;
     transition: color 0.15s ease, text-decoration-color 0.15s ease;
@@ -98,6 +188,12 @@
   }
 }
 
+@keyframes foil-sheen {
+  to {
+    background-position: 100% 50%;
+  }
+}
+
 @keyframes draw-stroke {
   to {
     stroke-dashoffset: 0;
@@ -117,6 +213,10 @@
 
   .signature {
     clip-path: none;
+    animation: none;
+  }
+
+  .foil {
     animation: none;
   }
 

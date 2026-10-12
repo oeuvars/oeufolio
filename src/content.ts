@@ -2,11 +2,67 @@ import type { Profile } from './types'
 
 export const profile: Profile = {
   handle: 'oeuvars',
-  role: 'Software engineer',
-  headline: { before: 'Good software should feel ', accent: 'obvious', after: '.' },
-  intro: [
-    'I build products end to end, from the first sketch to the production deploy, and I obsess over details most people will not consciously notice. But they will feel them.',
-    'I am a generalist, and I have a passion for coherence.',
+  nav: [
+    { to: '/', label: 'Basics' },
+    { to: '/likes', label: 'Likes' },
+    { to: '/work', label: 'Work' },
+    { to: '/extras', label: 'Extras' },
+  ],
+  basics: {
+    headline: { before: 'Good software should feel ', accent: 'obvious', after: '.' },
+    intro: [
+      'I build products end to end, from the first sketch to the production deploy, and I obsess over details most people will not consciously notice. But they will feel them.',
+      'I am a generalist, and I have a passion for coherence.',
+    ],
+    now: "Developing skill through doing, guiltlessly exploring passion and interests, imbuing quality. Mindful that everything around me is someone's life work.",
+    questions: [
+      { q: 'How do I reach you?', a: 'Fastest way is to email me. Keep it short, do not write me an essay.' },
+      { q: 'Are you available?', a: 'Sometimes. Ask.' },
+      { q: 'Will you read a long pitch?', a: 'No.' },
+    ],
+  },
+  likes: [
+    {
+      title: 'Electric guitar',
+      tag: 'Strings',
+      note: 'Loud, preferably.',
+    },
+    {
+      title: 'Wet shaving',
+      tag: 'Ritual',
+      note: 'A slow morning ritual, done properly.',
+      details: ['Merkur razor', 'Proraso', 'Clubman aftershave'],
+    },
+    {
+      title: 'Arsenal',
+      tag: 'Football',
+      note: 'Up the Gunners.',
+    },
+    {
+      title: 'Cats',
+      tag: 'Company',
+      note: 'Chief supervisors of everything I build.',
+    },
+  ],
+  experience: [
+    {
+      period: '2024 to now',
+      role: 'Software Engineer',
+      org: 'Company One',
+      summary: 'One or two lines on what you owned and what changed because of it.',
+    },
+    {
+      period: '2022 to 2024',
+      role: 'Software Engineer',
+      org: 'Company Two',
+      summary: 'One or two lines on what you owned and what changed because of it.',
+    },
+    {
+      period: '2020 to 2022',
+      role: 'Junior Engineer',
+      org: 'Company Three',
+      summary: 'One or two lines on what you owned and what changed because of it.',
+    },
   ],
   works: [
     {
@@ -31,12 +87,19 @@ export const profile: Profile = {
       href: 'https://github.com/oeuvars',
     },
   ],
-  now: 'Developing skill through doing, guiltlessly exploring passion and interests, imbuing quality. Mindful that everything around me is someone\'s life work.',
-  questions: [
-    { q: 'How do I reach you?', a: 'Fastest way is to email me. Keep it short, do not write me an essay.' },
-    { q: 'Are you available?', a: 'Sometimes. Ask.' },
-    { q: 'Will you read a long pitch?', a: 'No.' },
-  ],
+  extras: {
+    plates: [
+      { title: 'Untitled I', caption: 'Medium, year.' },
+      { title: 'Untitled II', caption: 'Medium, year.' },
+      { title: 'Untitled III', caption: 'Medium, year.' },
+      { title: 'Untitled IV', caption: 'Medium, year.' },
+    ],
+    playlist: {
+      title: 'On repeat',
+      note: 'What is playing while I work.',
+      href: 'https://open.spotify.com',
+    },
+  },
   socials: [
     { label: 'GitHub', href: 'https://github.com/oeuvars' },
     { label: 'X', href: 'https://x.com/oeuvars' },
@@ -44,5 +107,5 @@ export const profile: Profile = {
   ],
   email: 'sudo@anurag.gg',
   colophon:
-    'Set in EB Garamond and IM Fell English. Parchment rendered in Blender. Built with TanStack Start.',
+    'Set in EB Garamond and IM Fell English. Leather rendered in Blender. Built with TanStack Start.',
 }

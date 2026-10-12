@@ -34,7 +34,7 @@ const fragment = /* glsl */ `
     vec2 uv = (vUv - 0.5) * uCover + 0.5;
     float dx = height(uv + vec2(uTexel.x, 0.0)) - height(uv - vec2(uTexel.x, 0.0));
     float dy = height(uv + vec2(0.0, uTexel.y)) - height(uv - vec2(0.0, uTexel.y));
-    vec3 normal = normalize(vec3(-dx * 3.0, -dy * 3.0, 1.0));
+    vec3 normal = normalize(vec3(-dx * 1.6, -dy * 1.6, 1.0));
 
     vec2 toLight = uLight - vUv;
     toLight.x *= uAspect;
@@ -48,17 +48,17 @@ const fragment = /* glsl */ `
   }
 `
 
-const HEIGHT_MAP = '/paper-height.jpg'
+const HEIGHT_MAP = '/leather-height.jpg'
 const MAP_ASPECT = 1920 / 1200
 
-export function PaperLight() {
+export function SurfaceLight() {
   const host = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const container = host.current
     if (!container) return
 
-    const renderer = new Renderer({ alpha: false, dpr: 1 })
+    const renderer = new Renderer({ alpha: false, dpr: 0.6 })
     const gl = renderer.gl
     const canvas = gl.canvas as HTMLCanvasElement
     canvas.style.width = '100%'
@@ -89,8 +89,8 @@ export function PaperLight() {
     let disposed = false
 
     const resize = () => {
-      const w = window.innerWidth
-      const h = window.innerHeight
+      const w = container.clientWidth
+      const h = container.clientHeight
       renderer.setSize(w, h)
       const viewAspect = w / h
       program.uniforms.uAspect.value = viewAspect
@@ -101,12 +101,18 @@ export function PaperLight() {
     const onPointer = (event: PointerEvent) => {
       if (event.pointerType === 'touch') return
       pointerSeen = true
-      target.x = event.clientX / window.innerWidth
-      target.y = 1 - event.clientY / window.innerHeight
+      target.x = event.clientX / container.clientWidth
+      target.y = 1 - event.clientY / container.clientHeight
     }
 
+    let last = 0
     const draw = (time: number) => {
       if (disposed) return
+      if (!reduced && time - last < 33) {
+        frame = requestAnimationFrame(draw)
+        return
+      }
+      last = time
       const t = time / 1000
       if (!pointerSeen && !reduced) {
         target.x = 0.2 + 0.04 * Math.sin(t * 0.3)
@@ -150,7 +156,7 @@ export function PaperLight() {
     <div
       ref={host}
       aria-hidden
-      className="pointer-events-none fixed inset-0 mix-blend-soft-light"
+      className="pointer-events-none fixed top-0 left-0 h-[100lvh] w-full mix-blend-soft-light"
     />
   )
 }

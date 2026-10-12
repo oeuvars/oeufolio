@@ -1,4 +1,6 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
+
+import { SiteShell } from '../components/SiteShell'
 
 import appCss from '../styles.css?url'
 
@@ -32,7 +34,16 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  component: RootLayout,
 })
+
+function RootLayout() {
+  return (
+    <SiteShell>
+      <Outlet />
+    </SiteShell>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
