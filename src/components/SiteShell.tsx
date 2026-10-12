@@ -3,7 +3,6 @@ import { MotionConfig } from 'motion/react'
 
 import { profile } from '../content'
 import { CopyEmail } from './CopyEmail'
-import { FoilCorner } from './FoilCorner'
 import { Reveal } from './Reveal'
 import { Dial } from './Dial'
 import { SurfaceLight } from './SurfaceLight'
@@ -43,13 +42,7 @@ export function SiteShell({ children }: SiteShellProps) {
 
         <div className="relative p-[2.2vmin]">
         <Dial />
-        <div className="inlay relative mx-auto grid min-h-[calc(100svh-4.4vmin)] w-full max-w-[1500px] grid-rows-[auto_1fr_auto] gap-[5vh] rounded-[4px] px-[5vw] py-[4.5vh]">
-          <div aria-hidden className="stitch pointer-events-none absolute inset-[10px] rounded-[2px]" />
-          <div aria-hidden className="pointer-events-none absolute inset-[22px] border border-rubric/35" />
-          <FoilCorner className="top-[14px] left-[14px]" />
-          <FoilCorner className="top-[14px] right-[14px] rotate-90" />
-          <FoilCorner className="right-[14px] bottom-[14px] rotate-180" />
-          <FoilCorner className="bottom-[14px] left-[14px] -rotate-90" />
+        <div className="relative mx-auto grid min-h-[calc(100svh-4.4vmin)] w-full max-w-[1500px] grid-rows-[auto_1fr_auto] gap-[5vh] px-[5vw] py-[4.5vh]">
           <span
             aria-hidden
             className="deboss pointer-events-none absolute right-[6%] bottom-[10%] font-accent text-[clamp(8rem,26vw,26rem)] leading-none italic select-none"

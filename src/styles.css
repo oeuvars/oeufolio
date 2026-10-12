@@ -28,7 +28,7 @@
     text-shadow: 0 1px 1px rgb(0 0 0 / 0.45);
     font-feature-settings: 'liga', 'onum', 'kern';
     -webkit-font-smoothing: antialiased;
-    background-color: #0b3a27;
+    background-color: #2b2019;
   }
 
   ::selection {
@@ -78,8 +78,8 @@
     width: 100%;
     height: 100lvh;
     pointer-events: none;
-    background-color: #0b3a27;
-    background-image: url('/leather.jpg');
+    background-color: #2b2019;
+    background-image: linear-gradient(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.12)), url('/leather.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -127,18 +127,6 @@
     background: linear-gradient(120deg, #fff0b0, #c8962e 55%, #7a4f0c);
     clip-path: polygon(0 0, 100% 0, 50% 100%);
     filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.6));
-  }
-
-  .inlay {
-    background-color: rgb(5 28 19 / 0.88);
-    box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--color-rubric) 45%, transparent),
-      inset 0 0 60px rgb(0 0 0 / 0.35),
-      0 24px 70px rgb(0 0 0 / 0.55);
-  }
-
-  .stitch {
-    border: 1px dashed color-mix(in srgb, var(--color-rubric) 55%, transparent);
   }
 
   .leader {
