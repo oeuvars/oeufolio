@@ -1,6 +1,10 @@
-"""Render the parchment page texture used as the site background.
+"""Render the parchment page textures used by the site.
 
-Run: blender -b -P scripts/parchment.py -- <output.png> [width height samples]
+Run: blender -b -P scripts/parchment.py -- <output.png> [width height samples [color|height]]
+
+color  lit parchment colour map (public/parchment.jpg)
+height grayscale relief map of the paper fibres (public/paper-height.jpg),
+       used by the browser to light the paper from the cursor
 """
 
 import math
@@ -13,6 +17,7 @@ out_path = argv[0] if argv else "/tmp/parchment.png"
 res_x = int(argv[1]) if len(argv) > 1 else 2560
 res_y = int(argv[2]) if len(argv) > 2 else 1600
 samples = int(argv[3]) if len(argv) > 3 else 96
+mode = argv[4] if len(argv) > 4 else "color"
 
 PAGE_W = 3.2
 PAGE_H = PAGE_W * res_y / res_x
@@ -267,6 +272,36 @@ for name in ("Subsurface Weight",):
     if name in bsdf.inputs:
         bsdf.inputs[name].default_value = 0.08
 
+if mode == "height":
+    def remap(src, x, y):
+        m = node("ShaderNodeMapRange", x, y)
+        m.inputs["From Min"].default_value = 0.3
+        m.inputs["From Max"].default_value = 0.7
+        m.clamp = True
+        link(src, "Fac", m, "Value")
+        return m
+
+    a = remap(fibre_a, -800, -2400)
+    b = remap(fibre_b, -800, -2600)
+    g = remap(grain, -800, -2800)
+    wa = math_node(-600, -2400, "MULTIPLY", b=0.45)
+    link(a, "Result", wa, 0)
+    wb = math_node(-600, -2600, "MULTIPLY", b=0.35)
+    link(b, "Result", wb, 0)
+    wg = math_node(-600, -2800, "MULTIPLY", b=0.2)
+    link(g, "Result", wg, 0)
+    s1 = math_node(-400, -2500, "ADD")
+    link(wa, "Value", s1, 0)
+    link(wb, "Value", s1, 1)
+    s2 = math_node(-200, -2600, "ADD")
+    link(s1, "Value", s2, 0)
+    link(wg, "Value", s2, 1)
+    em = node("ShaderNodeEmission", 1000, 400)
+    link(s2, "Value", em, "Color")
+    for existing in list(out.inputs["Surface"].links):
+        L.remove(existing)
+    link(em, "Emission", out, "Surface")
+
 page.data.materials.append(mat)
 
 # ---------------------------------------------------------------- light + camera
@@ -308,7 +343,7 @@ if bg:
 scene.render.engine = "CYCLES"
 scene.cycles.device = "CPU"
 scene.cycles.samples = samples
-scene.cycles.use_denoising = True
+scene.cycles.use_denoising = mode != "height"
 scene.render.resolution_x = res_x
 scene.render.resolution_y = res_y
 scene.render.resolution_percentage = 100

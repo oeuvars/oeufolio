@@ -81,10 +81,26 @@
     text-decoration-color: var(--color-rubric);
   }
 
+  .ink {
+    filter: url(#ink);
+  }
+
+  .hand-circle {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw-stroke 1.2s cubic-bezier(0.45, 0, 0.25, 1) 1.6s forwards;
+  }
+
   .signature {
     display: inline-block;
     clip-path: inset(0 100% 0 0);
     animation: handwrite 1.8s cubic-bezier(0.45, 0, 0.25, 1) 1.2s forwards;
+  }
+}
+
+@keyframes draw-stroke {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
@@ -101,6 +117,11 @@
 
   .signature {
     clip-path: none;
+    animation: none;
+  }
+
+  .hand-circle {
+    stroke-dashoffset: 0;
     animation: none;
   }
 }
