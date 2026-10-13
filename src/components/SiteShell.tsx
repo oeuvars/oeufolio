@@ -24,10 +24,10 @@ type Tone = {
 const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c', tab: '/objects/tab-hamilton.avif' }
 const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', tab: '/objects/tab-van.avif' }
 const pageTones: Tone[] = [
-  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-proraso.avif' },
-  { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-lacoste.avif' },
-  { band: '#b8946a', bandInk: '#2a1a0a', panel: '#9dcdc6', panelInk: '#3b1f1a', tab: '/objects/tab-prs.avif' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca', tab: '/objects/tab-apple.avif' },
+  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
+  { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-proraso.avif' },
+  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', tab: '/objects/tab-apple.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca', tab: '/objects/tab-prs.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]

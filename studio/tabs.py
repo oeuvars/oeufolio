@@ -6,10 +6,10 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
-    prs       the top of a PRS: flame maple stained blue under gloss, bound in bare maple, with PRS's
-              mark in pearl, and a band of Blackstar's black tolex and cream piping round it under
-              its name in raised white
-    apple     platinum, with the six-colour apple let into it and the fine grooves of the cases of its time
+    prs       a PRS Silver Sky's Polar Blue, with PRS's mark and four of the birds it inlays down its
+              fretboards, dark as they are in maple, and a band of Blackstar's black tolex and cream
+              piping round it under its name in raised white
+    apple     platinum, with the six-colour apple let into it over the drilled grille of a Mac Studio
     van       a Turkish Van's own: white, auburn at head and tail as the breed is, and her mark, the cat
               asleep on her back and stretched out
 
@@ -175,6 +175,13 @@ def parted(art):
     clear = np.flatnonzero(~(art[..., 3] > 0.02).any(axis=0))
     gap = max(np.split(clear, np.flatnonzero(np.diff(clear) > 1) + 1), key=len)
     return trimmed(art[:, : gap[0]]), trimmed(art[:, gap[-1] + 1 :])
+
+
+def strewn(art):
+    """Artwork that sets several marks in a row, as each mark alone."""
+    drawn = (art[..., 3] > 0.02).any(axis=0).astype(np.int8)
+    edges = np.flatnonzero(np.diff(np.concatenate(([0], drawn, [0]))))
+    return [trimmed(art[:, a:b]) for a, b in zip(edges[::2], edges[1::2])]
 
 
 def placed(sheet, art, x0, y0, x1, y1, turn=0):
@@ -381,44 +388,41 @@ def amp(name, y0, y1, mark):
 
 def prs(name, height):
     def dress(sheet, edge):
-        X, Y = sheet.X, sheet.Y
-        shape = sheet.height.shape
-        # Flame maple: the figure lies in bars across the grain, never straight and never evenly spaced.
-        wander = cloud(shape, 71, falloff=2.0, stretch=0.35)
-        flame = np.sin(2 * np.pi * (Y / 0.34 + 0.55 * wander + 0.05 * np.sin(X * 2.4)))
-        flame = np.tanh(1.6 * flame) * (0.75 + 0.25 * np.clip(cloud(shape, 72, falloff=1.8), -1, 1))
-        sheet.paint(np.clip(flame, 0, 1) * 0.75, "#4f8fe6")
-        sheet.paint(np.clip(-flame, 0, 1) * 0.7, "#0c2a6e")
-        # The grain itself, fine and running the length of the top.
-        sheet.rgb *= (1 + 0.05 * streaks(shape[::-1], 73, 160, 0.6).T)[..., None]
-        # The stain is rubbed darker toward the edge, and the edge itself is left bare: the binding.
-        sheet.paint(0.7 * (1 - ramp(0.1, 0.75, -edge)), "#081a4a")
-        inlay(sheet, 1 - sheet.mask(edge + 0.1), "#e3c992", rough=0.14, coat=1.0)
-        # PRS's mark is let in in pearl.
-        mark, _ = placed(sheet, artwork("logos/prs"), MIDDLE - 0.72, 1.25, MIDDLE + 0.72, 5.2, turn=1)
-        sheet.paint(mark, "#efe9da")
-        pearl(sheet, mark)
-        sheet.finish(mark, rough=0.1, coat=1.0)
+        # PRS's mark runs down one side. Down the other fly four of the birds, in the order the
+        # fretboard has them. Both are let into the finish flush.
+        mark, _ = placed(sheet, artwork("logos/prs"), 0.98, 1.2, 2.1, 5.7, turn=1)
+        inlay(sheet, mark, INK, rough=0.2, coat=1.0)
+        for i, bird in enumerate(strewn(artwork("logos/prs-birds"))[4:8]):
+            flying, _ = placed(sheet, bird, 2.32, 1.12 + 1.18 * i, 3.3, 2.12 + 1.18 * i)
+            inlay(sheet, flying, INK, rough=0.2, coat=1.0)
         return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
 
-    return {"card": 1.2}, moulded(name, height, "#1d4fae", 0.08, 1.0, dress)
+    return {"card": 1.2}, moulded(name, height, "#a6cbe0", 0.08, 1.0, dress, subsurface=0.05)
 
 
 def apple(name, height):
     def dress(sheet, edge):
-        Y = sheet.Y
+        X, Y = sheet.X, sheet.Y
         badge, colour = placed(sheet, artwork("logos/apple"), MIDDLE - 0.98, 1.35, MIDDLE + 0.98, 3.75)
         sheet.rgb += badge[..., None] * (colour - sheet.rgb)
         sheet.finish(badge, rough=0.12, coat=0.9)
         # The badge is let into the case, and sits in a shallow well of its own.
         sheet.press(blur(np.clip(badge * 2, 0, 1), 2.0), 0.006)
-        # The fine parallel grooves that ran across the cases of its time.
-        top, foot, pitch = 4.9, 8.5, 0.3
-        line = ((Y - top) / pitch) % 1 - 0.5
-        groove = np.exp(-((line * pitch / 0.045) ** 2))
-        zone = stripe(sheet, top, foot) * ramp(0.32, 0.44, -edge)
-        sheet.press(groove * zone, 0.03)
-        sheet.rgb *= (1 - 0.12 * groove * zone)[..., None]
+        # The grille of a Mac Studio: round holes drilled close, each row half a step from the last.
+        # Only whole holes are drilled, so the field stops clean inside the piece's edge.
+        top, foot, pitch, bore = 4.75, 8.6, 0.2, 0.062
+        row = np.round(Y / (pitch * 0.866))
+        col = np.round(X / pitch - 0.5 * (row % 2))
+        cx, cy = (col + 0.5 * (row % 2)) * pitch, row * pitch * 0.866
+        rows = np.clip((cy * sheet.ppe).astype(int), 0, Y.shape[0] - 1)
+        cols = np.clip((cx * sheet.ppe).astype(int), 0, Y.shape[1] - 1)
+        drilled = (cy > top) & (cy < foot) & (edge[rows, cols] < -0.42)
+        hole = sheet.mask(np.hypot(X - cx, Y - cy) - bore) * drilled
+        # Each is countersunk a little, then goes down into the dark of the case.
+        sheet.press(blur(hole, 2.2), 0.02)
+        sheet.press(blur(hole, 0.7), 0.07)
+        sheet.paint(hole, "#0b0b0b")
+        sheet.finish(hole, rough=0.7, coat=0.0)
 
     return {}, moulded(name, height, "#dcdcd8", 0.1, 0.8, dress, subsurface=0.1)
 
@@ -498,10 +502,10 @@ def hamilton(name, height):
 # builds it.
 TABS = {
     "hamilton": (11, "#bfa391", (0.5, 0.0, 0.02), hamilton),
-    "proraso": (10, "#e3d3c1", (0.9, 0.02, -0.03), proraso),
-    "lacoste": (10, "#7a8597", (-0.7, -0.02, 0.02), lacoste),
-    "prs": (10, "#b8946a", (0.5, 0.03, 0.03), prs),
-    "apple": (10, "#d9d4c2", (-1.0, 0.0, -0.02), apple),
+    "lacoste": (10, "#e3d3c1", (0.9, 0.02, -0.03), lacoste),
+    "proraso": (10, "#7a8597", (-0.7, -0.02, 0.02), proraso),
+    "apple": (10, "#1e2740", (0.5, 0.03, 0.03), apple),
+    "prs": (10, "#d9d4c2", (-1.0, 0.0, -0.02), prs),
     "van": (11.5, "#8a8b78", (0.6, -0.03, 0.0), van),
 }
 
