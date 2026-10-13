@@ -5,13 +5,14 @@
     bottom   a dispatch room: trunks stacked and strapped, a trolley, and the stairs
 
 Each floor is one long room and one narrow one, and they change sides from floor to floor. Over each floor
-a painted board runs across the front, as over a shop, and is left blank: the page letters the company's
-name on it. Run from the repository root:
+a painted board runs across the front, as over a shop, with the job fixed to it in raised gilt letters: the
+company in the middle, and the month it began and the month it ended at either end. Run from the
+repository root:
 
     blender -b --factory-startup -P studio/dollhouse.py -- [--scale 0.5] [--samples 128]
 
-Writes public/objects/dollhouse.webp, lit from the front and cut out from its background. The page
-(src/components/Dollhouse.tsx) places its lettering by the measures below, so keep the two in step.
+Writes public/objects/dollhouse.webp, lit from the front and cut out from its background. The lettering
+is JOBS below, which has to say what experience says in src/content.ts.
 """
 
 import math
@@ -34,8 +35,15 @@ SAMPLES = int(option("--samples", 128))
 
 # The building, in metres. A long room, a narrow one, and the walls and floors between them.
 LONG, NARROW, WALL, HIGH, SLAB, DEEP = 9.4, 2.6, 0.3, 2.7, 0.3, 4.2
-# Over each floor, across the whole front, is a painted board, as over a shop. The page letters them.
+# Over each floor, across the whole front, is a painted board, as over a shop.
 FASCIA = 1.05
+# What the boards say, ground floor first: the month the job began, the company, and the month it ended.
+JOBS = (
+    ("Aug 2023", "ProperSKU", "Jul 2024"),
+    ("Jul 2024", "Ekarth Ventures", "Mar 2025"),
+    ("Mar 2025", "Cybership", "Now"),
+)
+FUTURA = "/System/Library/Fonts/Supplemental/Futura.ttc"
 HALF = (LONG + NARROW + 3 * WALL) / 2
 TOP = SLAB + 3 * (HIGH + FASCIA)
 EAVE, RIDGE = 0.3, 1.6
@@ -205,6 +213,20 @@ def ball(x, y, z, radius, material):
     bpy.ops.object.shade_smooth()
 
 
+def lettered(words, x, z, size, align="CENTER", weight=0.0):
+    """Raised letters fixed to the front of a board: capitals, spaced out, standing a little proud of it."""
+    bpy.ops.object.text_add(location=(x, -0.075, z), rotation=(math.pi / 2, 0, 0))
+    text = bpy.context.object.data
+    text.body = words.upper()
+    if os.path.exists(FUTURA):
+        text.font = bpy.data.fonts.load(FUTURA, check_existing=True)
+    text.size, text.space_character = size, 1.16
+    text.align_x, text.align_y = align, "CENTER"
+    # The face is a medium, and a sign's letters are cut fatter.
+    text.offset, text.extrude, text.bevel_depth, text.bevel_resolution = weight, 0.022, 0.006, 2
+    bpy.context.object.data.materials.append(GILT)
+
+
 def lamp(x, y, z, watts, across, colour="#ffd9a0"):
     bpy.ops.object.light_add(type="AREA", location=(x, y, z))
     light = bpy.context.object.data
@@ -212,6 +234,7 @@ def lamp(x, y, z, watts, across, colour="#ffd9a0"):
 
 
 PINK, PLASTER, CREAM, BRASS = paint("#e2939f", 0.75), paint("#eaa7b0", 0.75), paint("#f1e4c9", 0.7), paint("#c9982f", 0.3, 1.0)
+GILT = paint("#e0b040", 0.24, 1.0)
 WOOD, DARK, STEEL = paint("#7a4a2e"), paint("#3b1f1a"), paint("#aeb8b8", 0.35, 1.0)
 BULB = paint("#ffe2a8", glow=30)
 BOARDS = laid("#8a5a3c", "#6f4429", "#3a2416", 2.4, 0.22, "floor", 0.4, 0.35)
@@ -421,6 +444,22 @@ for storey in range(3):
     for z in (foot + 0.12, foot + FASCIA - 0.15):
         box(-HALF + 0.16, HALF - 0.16, -0.085, -0.07, z, z + 0.03, BRASS)
     box(-HALF - 0.04, HALF + 0.04, -0.1, 0.02, foot, foot + 0.07, CREAM)
+    began, company, ended = JOBS[storey]
+    middle = foot + FASCIA / 2 - 0.01
+    lettered(company, 0, middle, 0.56, weight=0.012)
+    lettered(began, -HALF + 0.55, middle, 0.25, "LEFT", 0.005)
+    lettered(ended, HALF - 0.55, middle, 0.25, "RIGHT", 0.005)
+    # A row of brass lamps on arms over the board, each throwing its own pool of light down the paint.
+    head = foot + FASCIA - 0.03
+    for i in range(5):
+        x = (i - 2) * 2.5
+        rod(x, -0.2, head, 0.014, 0.42, BRASS, "Y")
+        rod(x, -0.42, head - 0.05, 0.1, 0.13, BRASS, top=0.03)
+        ball(x, -0.42, head - 0.1, 0.035, BULB)
+        bpy.ops.object.light_add(type="SPOT", location=(x, -0.42, head - 0.13), rotation=(math.radians(16), 0, 0))
+        spot = bpy.context.object.data
+        spot.energy, spot.spot_size, spot.spot_blend, spot.shadow_soft_size = 260, math.radians(115), 0.7, 0.03
+        spot.color = linear("#ffc98a")[:3]
     # The long room is on the left on the top and bottom floors, and on the right between them.
     left = LONG if storey != 1 else NARROW
     divide = -HALF + WALL + left
