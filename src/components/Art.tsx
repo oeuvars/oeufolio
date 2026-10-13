@@ -1,5 +1,3 @@
-import { Lighthouse } from './scenes/Lighthouse'
-
 type ArtProps = {
   index: number
 }
@@ -18,8 +16,11 @@ export function Art({ index }: ArtProps) {
     )
   }
 
-  // The work page is a film's poster, so its strip is a frame of one: a lighthouse.
-  if (index === 2) return <Lighthouse />
+  // The work page's building (studio/dollhouse.py), down its right-hand side: the lift, the end of the
+  // banking hall and the stairs, with the far ends of their signs.
+  if (index === 2) {
+    return <img aria-hidden src="/objects/dollhouse.webp" alt="" className="absolute inset-0 size-full object-cover object-[84%_50%]" />
+  }
 
   return (
     <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,#1b1a19,#0d0d0d)]">
