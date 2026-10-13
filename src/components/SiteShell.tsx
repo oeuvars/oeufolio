@@ -44,14 +44,16 @@ function stripStyle(tone: Tone, slot: number, z: number, extra: Record<string, s
 }
 
 type TabProps = {
+  code?: number
   label: string
   to?: '/' | '/likes' | '/work' | '/extras'
   current?: boolean
 }
 
-function Tab({ label, to, current }: TabProps) {
+function Tab({ code, label, to, current }: TabProps) {
   const text = (
     <span className="tab-text vertical">
+      {code !== undefined && <span className="mono">CODE_{String(code).padStart(3, '0')} //</span>}
       <span className="label">{label}</span>
     </span>
   )
@@ -118,6 +120,14 @@ export function SiteShell({ children }: SiteShellProps) {
               >
                 {profile.handle}_01-0{count}
               </Link>
+              <div className="mt-auto ml-[1.1rem] flex items-end gap-[0.9rem]">
+                <p className="mono vertical rotate-180 leading-[1.7] font-bold whitespace-nowrap">
+                  Product Studies:
+                  <br />
+                  Type · Image · Craft
+                </p>
+              </div>
+              <p className="mono mt-[1.4rem] ml-[1.1rem] font-bold">FILE_01//</p>
             </div>
             <Tab label="Home" to="/" current={false} />
           </aside>
@@ -173,7 +183,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab label={item.label} to={item.to} current={open} />
+              <Tab code={i + 1} label={item.label} to={item.to} current={open} />
             </motion.section>
           )
         })}
@@ -207,7 +217,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   </ul>
                 </div>
               </div>
-              <Tab label="Contact" />
+              <Tab code={count + 1} label="Contact" />
             </aside>
 
             <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />

@@ -22,6 +22,15 @@ export function Art({ index }: ArtProps) {
         />
         <div className="absolute top-[33%] left-0 h-[14%] w-[26%] bg-ink" />
         <div className="absolute top-[42%] left-0 h-[5%] w-[64%] bg-ink" />
+        <p className="display absolute top-[49.5%] left-[4%] text-[1.4rem]">ure</p>
+        <p className="mono absolute top-[56%] left-[4%] border border-ink/60 px-[0.4em] py-[0.15em]">01-A</p>
+        <p className="mono absolute top-[63%] left-[4%] leading-[1.7] font-bold">
+          walking,
+          <br />
+          way,
+          <br />
+          still.
+        </p>
       </div>
     )
   }
@@ -29,6 +38,13 @@ export function Art({ index }: ArtProps) {
   if (index === 1) {
     return (
       <div aria-hidden className="absolute inset-0">
+        <p className="mono absolute top-[3%] left-[8%] leading-[1.7]">
+          log
+          <br />
+          00:47
+          <br />
+          red
+        </p>
         {pixels.map(([x, y]) => (
           <span
             key={`${x}-${y}`}
@@ -41,6 +57,16 @@ export function Art({ index }: ArtProps) {
           alt=""
           className="absolute top-[56%] left-[8%] h-[14%] w-[62%] border border-ink/60 object-cover object-right grayscale"
         />
+        <p className="mono absolute top-[73%] left-[8%] leading-[1.7] font-bold">
+          s open
+          <br />
+          spoke
+        </p>
+        <p className="mono absolute bottom-[3%] left-[8%] leading-[1.7] font-bold">
+          void
+          <br />
+          replies
+        </p>
       </div>
     )
   }

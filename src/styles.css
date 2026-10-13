@@ -1,10 +1,12 @@
 @import '@fontsource-variable/archivo/wdth.css';
 @import '@fontsource/playfair-display/900-italic.css';
+@import '@fontsource-variable/jetbrains-mono/index.css';
 @import 'tailwindcss';
 
 @theme {
   --font-display: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
   --font-sans: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, monospace;
   --font-serif: 'Playfair Display', Georgia, serif;
 }
 
@@ -79,6 +81,14 @@
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
@@ -160,8 +170,15 @@
     white-space: nowrap;
   }
 
-  .tab-text .label {
+  .tab-text .label,
+  .tab-text .mono {
     display: block;
+  }
+
+  .tab-text .mono {
+    margin-left: 0.2rem;
+    font-size: 0.6rem;
+    opacity: 0.8;
   }
 
   .tab-text .label {
