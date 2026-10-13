@@ -45,7 +45,7 @@ REWRITTEN = (
     (188, 209, 440, 264),  # the title, a line at a time, so the drop number beside it is left alone
     (188, 258.5, 558, 322),
     (188, 321, 558, 333),  # the rule under it
-    (504.6, 236, 514, 257),  # the last figure of the drop number
+    (452, 236, 556, 258),  # the drop number, and where it moves to
     (186, 331, 560, 362),  # the line under the title
     (320.5, 804.2, 380, 815.5),  # the end of the small print
     (434, 788, 474, 832),  # the stamp, either side of its dash
@@ -277,7 +277,9 @@ def handwriting(ref, shape):
 # The title is set smaller than the reference's, from its top left corner, and the rule under it is moved up
 # into the room that leaves, so the title, the rule and the line below each stand clear of the next.
 HEADING = (194.0, 213.0, 0.86)  # the title's top left corner, and its size against the reference's
-RULE_UP = 9.0
+HEADING_DOWN = 6.9  # then it is let down this far, to stand 12 above the rule
+RULE_UP = 4.5
+DROP_RIGHT = 38.5  # the drop number is moved along to end where the rule does
 TYPE = (200.6, 10.22, 335.5, 353.5)  # the line under the title: middle of its first letter, pitch, top, bottom
 TITLE = "PRODUCT-FIRST ENGINEER"
 # Where each of its letters comes from. A number and two edges is a letter of the reference's own line,
@@ -345,7 +347,7 @@ def printed(ref, shape):
     # The title, smaller, and its rule.
     hx, hy, size = HEADING
     for x0, y0, x1, y1 in ((190, 209, 316, 264), (190, 263, 556, 321)):
-        put(take(x0, y0, x1, y1, (x1 - x0) * size, (y1 - y0) * size), hx + (x0 - hx) * size, hy + (y0 - hy) * size)
+        put(take(x0, y0, x1, y1, (x1 - x0) * size, (y1 - y0) * size), hx + (x0 - hx) * size, hy + HEADING_DOWN + (y0 - hy) * size)
     put(take(190, 323.5, 556, 328.6), 190, 323.5 - RULE_UP)
 
     # The line under the title.
@@ -374,7 +376,8 @@ def printed(ref, shape):
     w, h = three[2] - three[0], three[3] - three[1]
     lower, upper = take(*three), take(*tight(*FROM_LABELS["E"]), w, h)
     rows = np.arange(lower.shape[0])[:, None] / lower.shape[0]
-    put(np.maximum(upper * (rows < 0.55), lower * (rows > 0.45)), three[0], three[1])
+    put(np.maximum(upper * (rows < 0.55), lower * (rows > 0.45)), three[0] + DROP_RIGHT, three[1])
+    put(take(454, 237, 504.6, 257), 454 + DROP_RIGHT, 237)
 
     # The small print ends FOR ME. Both letters are in PERFORMER, side by side.
     put(take(276.3, 804.2, 289.2, 815), 322.6, 804.2)
