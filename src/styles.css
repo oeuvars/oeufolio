@@ -129,29 +129,30 @@
     height: var(--tab-h);
     padding-top: 0.9rem;
     justify-content: center;
-    border-radius: 0 0.75rem 0.75rem 0;
+    border-radius: 0 calc(var(--protrude) * 0.45) calc(var(--protrude) * 0.45) 0;
     background-color: var(--band);
     color: var(--band-ink);
     text-decoration: none;
   }
 
+  /* The tab leaves the strip on a concave curve as wide as it protrudes, top and bottom. */
   .tab::before,
   .tab::after {
     content: '';
     position: absolute;
     left: var(--band-w);
-    width: 0.8rem;
-    height: 0.8rem;
+    width: var(--protrude);
+    height: var(--protrude);
   }
 
   .tab::before {
     bottom: 100%;
-    background: radial-gradient(circle at 100% 0, transparent 0.8rem, var(--band) calc(0.8rem + 0.5px));
+    background: radial-gradient(circle at 100% 0, transparent var(--protrude), var(--band) calc(var(--protrude) + 0.5px));
   }
 
   .tab::after {
     top: 100%;
-    background: radial-gradient(circle at 100% 100%, transparent 0.8rem, var(--band) calc(0.8rem + 0.5px));
+    background: radial-gradient(circle at 100% 100%, transparent var(--protrude), var(--band) calc(var(--protrude) + 0.5px));
   }
 
   .tab-text {
