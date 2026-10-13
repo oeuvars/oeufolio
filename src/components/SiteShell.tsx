@@ -43,22 +43,71 @@ function stripStyle(tone: Tone, slot: number, z: number, extra: Record<string, s
   } as CSSProperties
 }
 
+type TabShape = {
+  band: number
+  protrude: number
+  height: number
+}
+
 type TabProps = {
   code?: number
   label: string
+  shape: TabShape
   to?: '/' | '/likes' | '/work' | '/extras'
   current?: boolean
 }
 
-function Tab({ code, label, to, current }: TabProps) {
-  const text = (
-    <span className="tab-text vertical">
-      {code !== undefined && <span className="mono">CODE_{String(code).padStart(3, '0')} //</span>}
-      <span className="label">{label}</span>
-    </span>
+/**
+ * The outline of a folder tab, as the reference cuts it: it leaves the strip's edge on a slant, runs
+ * straight down and slants back in, with every corner eased. Returns the path and how far the slant falls.
+ */
+function tabOutline({ band, protrude, height }: TabShape) {
+  const rise = protrude * 0.33
+  const ease = protrude * 0.2
+  const reach = ease * 2
+  const corners = [
+    [band, -reach],
+    [band, 0],
+    [band + protrude, rise],
+    [band + protrude, height - rise],
+    [band, height],
+    [band, height + reach],
+  ]
+  const toward = (from: number[], to: number[]) => {
+    const length = Math.hypot(to[0] - from[0], to[1] - from[1])
+    return [from[0] + ((to[0] - from[0]) / length) * ease, from[1] + ((to[1] - from[1]) / length) * ease]
+  }
+  const turns = corners.slice(1, -1).map((corner, i) => {
+    const before = toward(corner, corners[i])
+    const after = toward(corner, corners[i + 2])
+    return `L${before[0]} ${before[1]} Q${corner[0]} ${corner[1]} ${after[0]} ${after[1]}`
+  })
+  return { rise, reach, path: `M0 ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L0 ${height + reach} Z` }
+}
+
+function Tab({ code, label, shape, to, current }: TabProps) {
+  const { rise, reach, path } = tabOutline(shape)
+  const width = shape.band + shape.protrude
+  const inside = (
+    <>
+      <svg
+        aria-hidden
+        className="tab-shape"
+        width={width}
+        height={shape.height + 2 * reach}
+        viewBox={`0 ${-reach} ${width} ${shape.height + 2 * reach}`}
+        style={{ top: -reach }}
+      >
+        <path d={path} />
+      </svg>
+      <span className="tab-text vertical" style={{ paddingTop: rise + 6 }}>
+        {code !== undefined && <span className="tab-code">CODE_{String(code).padStart(3, '0')} //</span>}
+        <span className="tab-name">{label}</span>
+      </span>
+    </>
   )
 
-  if (!to) return <div className="tab">{text}</div>
+  if (!to) return <div className="tab">{inside}</div>
 
   return (
     <Link
@@ -68,7 +117,7 @@ function Tab({ code, label, to, current }: TabProps) {
       aria-current={current ? 'page' : undefined}
       className="tab"
     >
-      {text}
+      {inside}
     </Link>
   )
 }
@@ -89,7 +138,8 @@ export function SiteShell({ children }: SiteShellProps) {
   const reduced = useReducedMotion()
   const transition = ready && !reduced ? slide : instant
 
-  const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
+  const { overlap, band, protrude, strip, spine, contact, end, mobile, rem } = metrics
+  const tabShape = (slot: number): TabShape => ({ band, protrude, height: tabHeights[slot] * rem })
   const fixed = mobile ? 0 : spine + contact + end
   const gaps = (mobile ? count : count + 3) - 1
   const openWidth = metrics.width - fixed - (count - 1) * strip + gaps * overlap
@@ -141,15 +191,15 @@ export function SiteShell({ children }: SiteShellProps) {
                 {profile.handle}_01-0{count}
               </Link>
               <div className="mt-auto ml-[1.1rem] flex items-end gap-[0.9rem]">
-                <p className="mono vertical leading-[1.7] font-bold whitespace-nowrap">
+                <p className="caption vertical leading-[1.7] whitespace-nowrap">
                   Product Studies:
                   <br />
                   Type · Image · Craft
                 </p>
               </div>
-              <p className="mono mt-[1.4rem] ml-[1.1rem] font-bold">FILE_01//</p>
+              <p className="caption mt-[1.4rem] ml-[1.1rem] !font-bold">FILE_01//</p>
             </div>
-            <Tab label="Home" to="/" current={false} />
+            <Tab label="Home" shape={tabShape(0)} to="/" current={false} />
           </aside>
         )}
 
@@ -203,7 +253,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab code={i + 1} label={item.label} to={item.to} current={open} />
+              <Tab code={i + 1} label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} />
             </motion.section>
           )
         })}
@@ -237,7 +287,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   </ul>
                 </div>
               </div>
-              <Tab code={count + 1} label="Contact" />
+              <Tab code={count + 1} label="Contact" shape={tabShape(count + 1)} />
             </aside>
 
             <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />

@@ -147,6 +147,7 @@
     color: var(--panel-ink, var(--band-ink));
   }
 
+  /* A folder tab standing out of the strip's band. Its outline is drawn in SiteShell. */
   .tab {
     position: absolute;
     top: var(--tab-top);
@@ -155,57 +156,57 @@
     display: flex;
     width: calc(var(--band-w) + var(--protrude));
     height: var(--tab-h);
-    padding-top: 0.9rem;
+    padding-left: 0.45rem;
     justify-content: center;
-    /* The join into the strip and the outer corner each take half of how far the tab stands out. */
-    --join: calc(var(--protrude) * 0.5);
-    border-radius: 0 var(--join) var(--join) 0;
-    background-color: var(--band);
     color: var(--band-ink);
     text-decoration: none;
   }
 
-  /* The tab leaves the strip on a concave curve, top and bottom. Each overlaps its neighbours by a pixel. */
-  .tab::before,
-  .tab::after {
-    content: '';
+  .tab-shape {
     position: absolute;
-    left: calc(var(--band-w) - 1px);
-    width: calc(var(--join) + 1px);
-    height: calc(var(--join) + 1px);
+    left: 0;
+    overflow: visible;
+    fill: var(--band);
+    pointer-events: none;
   }
 
-  .tab::before {
-    bottom: calc(100% - 1px);
-    background: radial-gradient(circle at 100% 0, transparent var(--join), var(--band) calc(var(--join) + 0.5px));
-  }
-
-  .tab::after {
-    top: calc(100% - 1px);
-    background: radial-gradient(circle at 100% 100%, transparent var(--join), var(--band) calc(var(--join) + 0.5px));
-  }
-
+  /* Two lines down the tab in the wide face: the name, and its code beside it, lighter and a step lower. */
   .tab-text {
+    position: relative;
     display: block;
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    line-height: 1.25;
+    text-transform: uppercase;
     white-space: nowrap;
   }
 
-  .tab-text .label,
-  .tab-text .mono {
+  .tab-text span {
     display: block;
+    filter: url(#print-fine);
   }
 
-  .tab-text .mono {
-    margin-left: 0.2rem;
-    font-size: 0.6rem;
-    opacity: 0.8;
+  .tab-code {
+    margin-left: 0.25rem;
+    padding-top: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
   }
 
-  .tab-text .label {
+  .tab-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .caption {
     font-family: var(--font-display);
-    font-size: 0.82rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    font-size: 0.64rem;
+    font-stretch: 125%;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    filter: url(#print-fine);
   }
 
   .row {
