@@ -2,6 +2,7 @@ import { animate, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef } from 'react'
 
 import type { Role } from '../types'
+import { PAGE, RAISE, STRIP, slide } from './house'
 
 type DollhouseProps = {
   roles: Role[]
@@ -10,13 +11,6 @@ type DollhouseProps = {
 /** The render's size in pixels. */
 const WIDTH = 2600
 const HEIGHT = 1470
-
-/** How many of the model's metres the page's picture is across, and the folded strip's (studio/dollhouse.py). */
-const FRAME = 28.9
-const STRIP_FRAME = 16.3
-
-/** The spring SiteShell opens a strip on. The house grows on the same one, so the two keep step. */
-const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 
 /**
  * The building (studio/dollhouse.py): a model of a house cut open at the front, standing at night in the
@@ -46,9 +40,10 @@ export function Dollhouse({ roles }: DollhouseProps) {
     const folded = strip.getBoundingClientRect().width
     if (folded > page.offsetWidth / 2) return
 
-    const small = (folded - rem) / STRIP_FRAME / (image.offsetWidth / FRAME)
+    const metre = (folded - rem) / STRIP
+    const small = metre / (image.offsetWidth / PAGE)
     const across = rem + (folded - rem) / 2 - page.offsetWidth / 2
-    const growing = animate(image, { scale: [small, 1], x: [across, 0] }, slide)
+    const growing = animate(image, { scale: [small, 1], x: [across, 0], y: [-RAISE * metre, 0] }, slide)
 
     return () => growing.stop()
   }, [still])

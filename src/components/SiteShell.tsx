@@ -168,15 +168,17 @@ export function SiteShell({ children }: SiteShellProps) {
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
   const fixed = mobile ? 0 : spine + contact + end
   const gaps = (mobile ? count : count + 3) - 1
-  const openWidth = metrics.width - fixed - (count - 1) * strip + gaps * overlap
+  // A strip whose page is a picture is folded half as wide again, to give its own picture room.
+  const folded = (i: number) => (pageTones[i].bleeds ? 1.5 : 1) * strip
+  const shut = profile.nav.reduce((sum, _, i) => (i === index ? sum : sum + folded(i)), 0)
+  const openWidth = metrics.width - fixed - shut + gaps * overlap
   const panelWidth = openWidth - band
-  const artWidth = strip - band - overlap
 
   const lefts: number[] = []
   let cursor = mobile ? 0 : spine - overlap
   for (let i = 0; i < count; i++) {
     lefts.push(cursor)
-    cursor += (i === index ? openWidth : strip) - overlap
+    cursor += (i === index ? openWidth : folded(i)) - overlap
   }
   const contactLeft = cursor
 
@@ -237,7 +239,7 @@ export function SiteShell({ children }: SiteShellProps) {
               key={item.to}
               className="strip"
               initial={false}
-              animate={{ left: lefts[i], width: open ? openWidth : strip }}
+              animate={{ left: lefts[i], width: open ? openWidth : folded(i) }}
               transition={transition}
               style={stripStyle(pageTones[i], i + 1, stack - i)}
             >
@@ -248,12 +250,13 @@ export function SiteShell({ children }: SiteShellProps) {
                   <motion.div
                     aria-hidden
                     className="absolute inset-y-0"
-                    style={{ left: overlap, width: artWidth }}
+                    style={{ left: overlap, width: folded(i) - band - overlap }}
                     initial={false}
                     animate={{ opacity: open ? 0 : 1 }}
-                    transition={{ duration: 0.35 }}
+                    // A picture page folds back into its strip's picture, which has to be there at once to take over.
+                    transition={{ duration: pageTones[i].bleeds && !open ? 0 : 0.35 }}
                   >
-                    <Art index={i} />
+                    <Art index={i} open={open} />
                   </motion.div>
                 )}
 

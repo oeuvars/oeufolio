@@ -3,18 +3,22 @@ type MastheadProps = {
 }
 
 /**
- * The poster's title, set as these films set theirs: yellow capitals in the geometric face, spaced wide
- * and centred over the picture, the first words small and the last one large, and whose picture it is
- * under them.
+ * The poster's title: yellow capitals in Geist Mono, spaced wide and centred over the picture, the first
+ * words small and the last one large, and whose picture it is under them. It is printed, not set: the ink
+ * has bled a little at its edges and has not taken everywhere (the filters are in SiteShell).
  */
 export function Masthead({ presenter }: MastheadProps) {
   return (
-    <header className="text-center text-[#f6cf43] uppercase [text-shadow:0_0.06em_0.18em_rgb(10_14_30/0.55)]">
-      <h1 className="font-bold">
-        <span className="block text-[2.6cqw] leading-none tracking-[0.55em] [margin-right:-0.55em]">Where I&rsquo;ve</span>
-        <span className="mt-[0.08em] block text-[11.5cqw] leading-[1.05] tracking-[0.16em] [margin-right:-0.16em]">Worked</span>
+    <header className="text-center font-geist text-[#f6cf43] uppercase">
+      <h1 className="font-extrabold">
+        <span className="block text-[2.5cqw] leading-none tracking-[0.5em] [margin-right:-0.5em] [filter:url(#print-fine)]">
+          Where I&rsquo;ve
+        </span>
+        <span className="mt-[0.1em] block text-[13cqw] leading-[1.05] tracking-[0.06em] [margin-right:-0.06em] [filter:url(#print)]">Worked</span>
       </h1>
-      <p className="text-[1.55cqw] leading-none font-semibold tracking-[0.5em] [margin-right:-0.5em]">A picture by {presenter}</p>
+      <p className="text-[1.5cqw] leading-none font-semibold tracking-[0.45em] [margin-right:-0.45em] [filter:url(#print-fine)]">
+        A picture by {presenter}
+      </p>
     </header>
   )
 }

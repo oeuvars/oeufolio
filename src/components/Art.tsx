@@ -1,9 +1,13 @@
+import { StripHouse } from './StripHouse'
+
 type ArtProps = {
   index: number
+  /** Whether the strip is unfolded, with its page over the art. */
+  open: boolean
 }
 
 /** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. */
-export function Art({ index }: ArtProps) {
+export function Art({ index, open }: ArtProps) {
   if (index === 1) {
     // The letter's own drawings, date and signature, down the edge of its sheet (studio/letter.py).
     return (
@@ -16,19 +20,7 @@ export function Art({ index }: ArtProps) {
     )
   }
 
-  // The work page's building from further back (studio/dollhouse.py --strip): the house small and lit at
-  // the foot of a tall night, under the moon. Its page has no frame, so the picture runs on under the tab
-  // to the strip's edge.
-  if (index === 2) {
-    return (
-      <img
-        aria-hidden
-        src="/objects/dollhouse-strip.webp"
-        alt=""
-        className="absolute inset-y-0 left-0 h-full w-[calc(100%+var(--band-w))] max-w-none object-cover object-bottom"
-      />
-    )
-  }
+  if (index === 2) return <StripHouse open={open} />
 
   return (
     <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,#1b1a19,#0d0d0d)]">

@@ -628,8 +628,8 @@ bpy.context.object.data.color = linear("#ffd9b0")[:3]
 # Where it stands: a field of snow, pines to either side, and the mountains behind, painted as a backdrop
 # is, each range paler than the one in front. The sky is left out, so the page's own night shows there.
 snow = paint("#dfe6f2", 0.9)
-bpy.ops.mesh.primitive_plane_add(size=1, location=(0, 60, -0.32))
-bpy.context.object.scale = (260, 150, 1)
+bpy.ops.mesh.primitive_plane_add(size=1, location=(0, 50, -0.32))
+bpy.context.object.scale = (260, 220, 1)
 bpy.context.object.data.materials.append(snow)
 
 
@@ -661,9 +661,13 @@ backdrop(150, "#3d4870", 24, 44, 26, 3)
 backdrop(105, "#2f395d", 16, 29, 17, 5)
 backdrop(70, "#222a48", 9, 17, 9, 8)
 # The camera, which looks level from this height. The tall frame is the same view with the lens shifted up.
+# The page grows its picture out of the strip's by these measures, which src/components/house.ts repeats.
 EYE, AWAY = FRAME_H / 2 - 1.05, 27
 STRIP_W = 2 * HALF + 3.4
-STRIP_H = STRIP_W * 4.7
+STRIP_H = STRIP_W * 3.6
+# The strip's house stands this far up from the foot of its frame, on the snow, so as not to be lost there.
+STRIP_RAISE = 1
+STRIP_FOOT = EYE - FRAME_H / 2 - STRIP_RAISE
 
 
 def sky(across, up, depth):
@@ -672,13 +676,54 @@ def sky(across, up, depth):
     return (across * grows, depth, EYE + (up - EYE) * grows), grows
 
 
+def moon(across, up, size):
+    """The moon, at this place in the frame and this big: a photograph of the full moon (studio/assets/
+    moon.png) on a disc turned to the camera, shining of itself. A ball this far off the lens's axis would
+    be drawn out into an egg, and the photograph is already of a ball. Round it is the glow it makes in
+    the air."""
+    place, grows = sky(across, up, 170)
+    radius = size * grows
+    disc = bpy.data.materials.new("moon")
+    disc.use_nodes = True
+    nodes, links = disc.node_tree.nodes, disc.node_tree.links
+    shader = nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (0, 0, 0, 1)
+    shader.inputs["Emission Strength"].default_value = 1.9
+    face = nodes.new("ShaderNodeTexImage")
+    face.image = bpy.data.images.load(os.path.join(ROOT, "studio", "assets", "moon.png"), check_existing=True)
+    face.extension = "CLIP"
+    links.new(face.outputs["Color"], shader.inputs["Emission Color"])
+    links.new(face.outputs["Alpha"], shader.inputs["Alpha"])
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type="NGON", vertices=128, calc_uvs=True, location=place, rotation=(math.pi / 2, 0, 0))
+    bpy.context.object.data.materials.append(disc)
+
+    halo = bpy.data.materials.new("halo")
+    halo.use_nodes = True
+    nodes, links = halo.node_tree.nodes, halo.node_tree.links
+    shader = nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (0, 0, 0, 1)
+    shader.inputs["Emission Color"].default_value = linear("#c9d4ff")
+    shader.inputs["Emission Strength"].default_value = 0.55
+    where, away, thin = nodes.new("ShaderNodeTexCoord"), nodes.new("ShaderNodeVectorMath"), nodes.new("ShaderNodeMapRange")
+    away.operation = "LENGTH"
+    thin.interpolation_type = "SMOOTHERSTEP"
+    thin.inputs["From Min"].default_value, thin.inputs["From Max"].default_value = radius * 0.85, radius * 3.2
+    thin.inputs["To Min"].default_value, thin.inputs["To Max"].default_value = 0.3, 0
+    links.new(where.outputs["Object"], away.inputs[0])
+    links.new(away.outputs["Value"], thin.inputs["Value"])
+    links.new(thin.outputs["Result"], shader.inputs["Alpha"])
+    bpy.ops.mesh.primitive_circle_add(radius=radius * 3.3, fill_type="NGON", vertices=96, location=(place[0], place[1] + 0.5, place[2]), rotation=(math.pi / 2, 0, 0))
+    bpy.context.object.data.materials.append(halo)
+
+
+# On the page it is rising clear of the roof's left shoulder. On the strip it rides high over the house.
+if not STRIP:
+    moon(-6.6, FRAME_H - 2.45, 0.78)
 if STRIP:
-    place, grows = sky(2.6, STRIP_H * 0.66, 170)
-    bpy.ops.mesh.primitive_circle_add(radius=2.3 * grows, fill_type="NGON", location=place, rotation=(math.pi / 2, 0, 0))
-    bpy.context.object.data.materials.append(paint("#f6edcf", glow=2.2))
+    moon(-1.3, STRIP_FOOT + STRIP_H * 0.64, 2.0)
     heavens, star = random.Random(21), paint("#f4f1e4", glow=5)
-    for _ in range(170):
-        place, grows = sky(heavens.uniform(-STRIP_W / 2, STRIP_W / 2), heavens.uniform(17, STRIP_H - 2), 180)
+    for _ in range(130):
+        place, grows = sky(heavens.uniform(-STRIP_W / 2, STRIP_W / 2), heavens.uniform(17, STRIP_FOOT + STRIP_H - 1), 180)
         bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=heavens.uniform(0.025, 0.08) * grows, location=place)
         bpy.context.object.data.materials.append(star)
 
@@ -714,13 +759,14 @@ scene.camera = bpy.context.object
 scene.camera.data.sensor_width = 36
 scene.camera.data.sensor_fit = "HORIZONTAL"
 scene.camera.data.lens = 36 * distance / wide
-# Both frames stand on the same line of snow. The tall one gets there by shifting the lens up.
-scene.camera.data.shift_y = (tall / 2 - FRAME_H / 2) / wide
+# The page's frame stands on a line of snow just in front of the house. The tall one starts lower, and gets
+# to its height by shifting the lens up.
+scene.camera.data.shift_y = (tall / 2 - FRAME_H / 2 - (STRIP_RAISE if STRIP else 0)) / wide
 # A model this small is never sharp from front to back.
 scene.camera.data.dof.use_dof = True
 scene.camera.data.dof.focus_distance = distance + 0.6
 scene.camera.data.dof.aperture_fstop = 0.5
-scene.render.resolution_x = int((480 if STRIP else 2600) * SCALE)
+scene.render.resolution_x = int((640 if STRIP else 2600) * SCALE)
 scene.render.resolution_y = int(scene.render.resolution_x * tall / wide)
 scene.render.film_transparent = True
 scene.render.engine = "CYCLES"
