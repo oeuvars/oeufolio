@@ -65,3 +65,15 @@ export type Profile = {
   email: string
   colophon: string
 }
+
+export type StackMetrics = {
+  width: number
+  height: number
+  rem: number
+  mobile: boolean
+  overlap: number
+  tab: number
+  strip: number
+  spine: number
+  contact: number
+}
