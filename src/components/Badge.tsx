@@ -4,19 +4,18 @@ import type { Badge as BadgeData } from '../types'
 
 type BadgeProps = {
   badge: BadgeData
-  /** How far in from the panel's left edge the badge may start: the last strip's tab lies over that much. */
-  clear: number
   /** Whether the strip is unfolded. Folded, the badge is decoration and the strip shows a slice of it. */
   open: boolean
 }
 
 /**
  * The ID badge (studio/badge.py) on its backdrop. It hangs in the middle of the strip whether the strip
- * is folded or not, so a folded strip shows a slice of it and unfolding uncovers the rest. Its frame ends
+ * is folded or not, so a folded strip is filled edge to edge by a crop of it, with the tabs lying over
+ * that as they do over any strip's artwork, and unfolding uncovers the rest. Its frame ends
  * at the top of the panel, where the ring runs out of shot. Its vinyl is see-through, so the backdrop
  * shows through the holder.
  */
-export function Badge({ badge, clear, open }: BadgeProps) {
+export function Badge({ badge, open }: BadgeProps) {
   return (
     <>
       <div
@@ -27,7 +26,7 @@ export function Badge({ badge, clear, open }: BadgeProps) {
           backgroundImage: badge.backdrop.image && `url(${badge.backdrop.image})`,
         }}
       />
-      <div className="absolute inset-y-0 right-0 flex justify-center overflow-hidden" style={{ left: clear }}>
+      <div className="absolute inset-0 flex justify-center overflow-hidden">
         <motion.img
           src={badge.src}
           alt={open ? badge.alt : ''}
