@@ -1,58 +1,72 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { PageTitle } from '../components/PageTitle'
+import { Floor } from '../components/Floor'
+import { Masthead } from '../components/Masthead'
 import { Reveal } from '../components/Reveal'
+import { Shop } from '../components/Shop'
+import { Roof } from '../components/scenes/Roof'
 import { profile } from '../content'
 
 export const Route = createFileRoute('/work')({ component: Work })
 
+/** A red sawtooth on marigold, as a tile: the border printed down the poster's left edge. */
+const sawtooth =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 20' preserveAspectRatio='none'%3E%3Crect width='10' height='20' fill='%23f2b632'/%3E%3Cpath d='M0 0 10 10 0 20Z' fill='%23b3291b'/%3E%3C/svg%3E\")"
+
+/**
+ * Where I've worked, as the poster for a film about it. Under the masthead is a building cut open from the
+ * roof to the street: a floor for each job, the newest at the top, and the projects as the shops at the
+ * bottom. Everything on the sheet is sized off the sheet's width, so it scales as a print would.
+ */
 function Work() {
+  const { experience, works, handle, nav } = profile
+  const issue = nav.findIndex((item) => item.to === '/work') + 1
+
   return (
-    <div className="flex flex-col gap-[5vh]">
-      <Reveal delay={0.1}>
-        <PageTitle before="Where I've " accent="worked" after="." />
-      </Reveal>
+    <div className="@container w-full font-futura">
+      <div className="relative pl-[4.6cqw] text-[clamp(12px,2.5cqw,17px)] leading-[1.4]">
+        <div
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-[2.4cqw] bg-size-[100%_4.8cqw]"
+          style={{ backgroundImage: sawtooth }}
+        />
 
-      <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[5vh] @3xl:grid-cols-12">
-        <Reveal delay={0.25} className="@3xl:col-span-7">
-          <p className="label row pb-[0.7em]">Experience</p>
-          <ul>
-            {profile.experience.map((role) => (
-              <li key={`${role.org}-${role.period}`} className="row py-[0.8em]">
-                <span className="flex flex-wrap items-baseline gap-x-[0.8em]">
-                  <span className="display text-[1.2em]">{role.org}</span>
-                  <span className="label ml-auto whitespace-nowrap">{role.period}</span>
-                </span>
-                <span className="block font-bold">{role.role}</span>
-                <span className="block text-[0.95em]">{role.summary}</span>
-              </li>
-            ))}
-          </ul>
+        <Reveal delay={0.1}>
+          <Masthead presenter={handle} issue={issue} parts={experience.length} works={works.length} />
         </Reveal>
 
-        <Reveal delay={0.4} className="@3xl:col-span-5">
-          <p className="label row pb-[0.7em]">Selected works</p>
-          <ul>
-            {profile.works.map((work) => (
-              <li key={work.title} className="row">
-                <a
-                  href={work.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="row-link -mx-[0.6em] block px-[0.6em] py-[0.8em] no-underline"
-                >
-                  <span className="flex flex-wrap items-baseline gap-x-[0.8em]">
-                    <span className="display text-[1.1em]">{work.title}</span>
-                    <span className="label ml-auto whitespace-nowrap">
-                      {work.category} / {work.year}
-                    </span>
-                  </span>
-                  <span className="block text-[0.95em]">{work.summary}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
+        <Reveal delay={0.3} className="mt-[3cqw] px-[2.5cqw]">
+          <section>
+            <h2 className="sr-only">Experience</h2>
+            <div className="-mx-[2.5cqw]">
+              <Roof sign="Experience" />
+            </div>
+            <ol className="flex flex-col gap-[1.3cqw] border-t-[1cqw] border-cream bg-mendl p-[1.3cqw] pb-0">
+              {experience.map((role, i) => (
+                <li key={`${role.org}-${role.period}`}>
+                  <Floor role={role} part={experience.length - i} index={i} />
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="bg-mendl px-[1.3cqw] pt-[1.3cqw]">
+            <h2 className="flex items-center justify-center gap-[1em] border-y-[0.5cqw] border-cream bg-cocoa py-[0.55em] text-[0.74em] font-bold tracking-[0.36em] text-cream uppercase">
+              <span aria-hidden>★</span>
+              Selected works
+              <span aria-hidden>★</span>
+            </h2>
+            <ul className="grid grid-cols-1 gap-[1.3cqw] pt-[1.3cqw] @md:grid-cols-3">
+              {works.map((work, i) => (
+                <li key={work.title}>
+                  <Shop work={work} index={i} />
+                </li>
+              ))}
+            </ul>
+          </section>
         </Reveal>
+
+        <div aria-hidden className="h-[2.6cqw] border-t-[0.7cqw] border-[#b7a682] bg-[#d9c8a4]" />
       </div>
     </div>
   )

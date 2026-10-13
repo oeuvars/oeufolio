@@ -24,7 +24,7 @@ const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif' },
-  { band: '#b8946a', bandInk: '#2a1a0a', panel: '#2a1b10', panelInk: '#f0e2c6' },
+  { band: '#b8946a', bandInk: '#2a1a0a', panel: '#9dcdc6', panelInk: '#3b1f1a' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]

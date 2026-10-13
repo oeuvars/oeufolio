@@ -1,6 +1,7 @@
 @import '@fontsource-variable/archivo/wdth.css';
 @import '@fontsource/playfair-display/900-italic.css';
 @import '@fontsource-variable/jetbrains-mono/index.css';
+@import '@fontsource-variable/jost/index.css';
 @import 'tailwindcss';
 
 @theme {
@@ -8,6 +9,13 @@
   --font-sans: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, monospace;
   --font-serif: 'Playfair Display', Georgia, serif;
+  --font-futura: 'Jost Variable', Futura, 'Century Gothic', sans-serif;
+
+  /* The work page's poster: a pink building under a teal sky, lettered in cocoa and brick red. */
+  --color-mendl: #f3b9ae;
+  --color-brick: #b3291b;
+  --color-cream: #fbf0d9;
+  --color-cocoa: #3b1f1a;
 }
 
 @theme inline {

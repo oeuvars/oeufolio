@@ -1,3 +1,5 @@
+import { Lighthouse } from './scenes/Lighthouse'
+
 type ArtProps = {
   index: number
 }
@@ -16,16 +18,8 @@ export function Art({ index }: ArtProps) {
     )
   }
 
-  if (index === 2) {
-    return (
-      <img
-        aria-hidden
-        src="/photos/blur.jpg"
-        alt=""
-        className="absolute inset-0 size-full object-cover object-[40%_50%] [filter:sepia(0.45)_saturate(0.8)_brightness(0.7)_contrast(1.15)]"
-      />
-    )
-  }
+  // The work page is a film's poster, so its strip is a frame of one: a lighthouse.
+  if (index === 2) return <Lighthouse />
 
   return (
     <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,#1b1a19,#0d0d0d)]">

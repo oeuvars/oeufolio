@@ -34,6 +34,11 @@ export type Role = {
   summary: string
 }
 
+/** What a room has lettered on it somewhere: the name of the company that kept it. */
+export type Signage = {
+  sign: string
+}
+
 export type Plate = {
   title: string
   caption: string
