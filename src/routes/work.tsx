@@ -20,15 +20,13 @@ function Work() {
   return (
     <div className="@container/box flex flex-col justify-end font-futura [mask-image:linear-gradient(to_right,transparent,#000_6.5%,#000_93.5%,transparent)] md:-my-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-ml-[4.1rem] md:min-h-screen">
       <div className="@container relative z-10 mx-auto w-full text-[12px] leading-[1.4] md:max-w-[80vh] md:text-[2cqw]">
-        <Reveal delay={0.1}>
+        <Reveal delay={0.45}>
           <Masthead presenter={handle} />
         </Reveal>
       </div>
 
-      <Reveal delay={0.3}>
-        <h2 className="sr-only">Experience</h2>
-        <Dollhouse roles={experience} />
-      </Reveal>
+      <h2 className="sr-only">Experience</h2>
+      <Dollhouse roles={experience} />
     </div>
   )
 }

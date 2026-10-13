@@ -15,7 +15,7 @@ type Tone = {
   panelInk: string
   /** The page is the badge. Its panel runs to the top of the strip, where the badge's ring leaves it. */
   hangs?: boolean
-  /** The page is a picture that runs to the strip's edges, so its panel has no frame either. Its band shows only as its tab's paper. */
+  /** The page is a picture that runs to the strip's edges, so its panel has no frame either. Its band shows only as its tab's paper, which is the colour of the picture's sky so as to be lost in it. */
   bleeds?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
@@ -28,7 +28,7 @@ const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-proraso.avif' },
-  { band: '#b8946a', bandInk: '#2a1a0a', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
+  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca', tab: '/objects/tab-prs.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
@@ -261,7 +261,8 @@ export function SiteShell({ children }: SiteShellProps) {
                   <motion.div
                     className="@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]"
                     style={{ width: panelWidth, minWidth: 0, paddingLeft: overlap + protrude + 16 }}
-                    initial={{ opacity: 0, y: 10 }}
+                    // A page that is a picture grows out of its strip's own picture, so it is there from the start.
+                    initial={pageTones[i].bleeds ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
                   >
