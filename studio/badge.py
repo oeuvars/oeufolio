@@ -276,15 +276,18 @@ def handwriting(ref, shape):
     return out
 
 
-# The title is not the reference's: it is set in Instrument Serif and printed as old letterpress is.
+# The title is not the reference's: it is set in Geist Mono and printed as old letterpress is.
 # Its last line stands as far above the rule as the reference's title did at nine tenths of its size,
 # and its capitals are 15% shorter than that title's were.
+# Instrument Serif is kept beside it: TITLE_FACE "InstrumentSerif-Regular.ttf", TITLE_WEIGHT None,
+# TITLE_BOLD 0.8 and TITLE_TRACK -1.9 set the title in that.
 HEADLINE = ("THE", "PERFORMER")
-TITLE_FACE = os.path.join(HERE, "assets", "fonts", "InstrumentSerif-Regular.ttf")
+TITLE_FACE = os.path.join(HERE, "assets", "fonts", "GeistMono[wght].ttf")
+TITLE_WEIGHT = 800  # where the face has a weight axis; None where it has one weight
 TITLE_AT = (193.0, 311.0)  # the left edge, and the baseline of the last line
 TITLE_CAP = 48.0 * 0.9 * 0.85  # the height of a capital
-TITLE_BOLD = 0.8  # the face has one weight, so every stroke is thickened by this much on each side
-TITLE_TRACK = -1.9  # and the letters are set this much closer, so they run into each other as the reference's do
+TITLE_BOLD = 0.0  # a face with one weight has every stroke thickened by this much on each side
+TITLE_TRACK = -3.0  # the letters are set this much closer, so they run into each other as the reference's do
 TITLE_LEAD = 1.16  # baseline to baseline, in capitals
 TITLE_BOX = (186, 200, 560, 322)  # the part of the card it is printed in
 RULE_UP = 2.0
@@ -342,10 +345,15 @@ def letterpress():
     cols, rows = (x1 - x0) * px, (y1 - y0) * px
     rng = np.random.default_rng(23)
 
-    probe = ImageFont.truetype(TITLE_FACE, 400)
-    top, bottom = probe.getbbox("H")[1], probe.getbbox("H")[3]
+    def cut(size):
+        font = ImageFont.truetype(TITLE_FACE, size)
+        if TITLE_WEIGHT:
+            font.set_variation_by_axes([TITLE_WEIGHT])
+        return font
+
+    top, bottom = cut(400).getbbox("H")[1], cut(400).getbbox("H")[3]
     bold = round(TITLE_BOLD * px)
-    face = ImageFont.truetype(TITLE_FACE, round(400 * (TITLE_CAP * px - 2 * bold) / (bottom - top)))
+    face = cut(round(400 * (TITLE_CAP * px - 2 * bold) / (bottom - top)))
     sheet = Image.new("L", (cols, rows), 0)
     draw = ImageDraw.Draw(sheet)
     left, last = TITLE_AT
