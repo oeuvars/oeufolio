@@ -8,18 +8,9 @@ export const profile: Profile = {
     { to: '/work', label: 'Work' },
     { to: '/extras', label: 'Extras' },
   ],
-  basics: {
-    headline: { before: 'Good software should feel ', accent: 'obvious', after: '.' },
-    intro: [
-      'I build products end to end, from the first sketch to the production deploy, and I obsess over details most people will not consciously notice. But they will feel them.',
-      'I am a generalist, and I have a passion for coherence.',
-    ],
-    now: "Developing skill through doing, guiltlessly exploring passion and interests, imbuing quality. Mindful that everything around me is someone's life work.",
-    questions: [
-      { q: 'How do I reach you?', a: 'Fastest way is to email me. Keep it short, do not write me an essay.' },
-      { q: 'Are you available?', a: 'Sometimes. Ask.' },
-      { q: 'Will you read a long pitch?', a: 'No.' },
-    ],
+  badge: {
+    src: '/objects/badge.avif',
+    alt: 'An ID card in a clear vinyl holder on a steel ring. The card reads The Performer, with a portrait of Anurag Das.',
   },
   likes: [
     {

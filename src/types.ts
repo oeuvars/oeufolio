@@ -16,9 +16,9 @@ export type Social = {
   href: string
 }
 
-export type Question = {
-  q: string
-  a: string
+export type Badge = {
+  src: string
+  alt: string
 }
 
 export type Like = {
@@ -51,12 +51,7 @@ export type Playlist = {
 export type Profile = {
   handle: string
   nav: NavItem[]
-  basics: {
-    headline: { before: string; accent: string; after: string }
-    intro: string[]
-    now: string
-    questions: Question[]
-  }
+  badge: Badge
   likes: Like[]
   experience: Role[]
   works: Work[]

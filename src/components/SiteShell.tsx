@@ -17,7 +17,7 @@ type Tone = {
 const spineTone: Tone = { band: '#8c8a76', bandInk: '#34331c', panel: '#8c8a76', panelInk: '#34331c' }
 const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb' }
 const pageTones: Tone[] = [
-  { band: '#d2c7a6', bandInk: '#3b3520', panel: '#ece4cc', panelInk: '#2f2e1d' },
+  { band: '#d2c7a6', bandInk: '#3b3520', panel: '#f3f3f2', panelInk: '#2f2e1d' },
   { band: '#7a8597', bandInk: '#121820', panel: '#bcbdc2', panelInk: '#24242a' },
   { band: '#b8946a', bandInk: '#2a1a0a', panel: '#2a1b10', panelInk: '#f0e2c6' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca' },
@@ -150,7 +150,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 {open ? (
                   <motion.div
                     className="@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]"
-                    style={{ width: panelWidth, minWidth: 0, paddingLeft: overlap + protrude + 16 }}
+                    style={{ width: panelWidth, minWidth: 0, paddingLeft: overlap + protrude + 16, '--clear': `${overlap + protrude}px` } as CSSProperties}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
