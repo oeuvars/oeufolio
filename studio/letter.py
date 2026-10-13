@@ -2,21 +2,22 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow>=11.3", "scipy"]
 # ///
-"""The letter: the reference letter itself, with most of its words changed.
+"""The letter: a new letter, written in the reference letter's own hand.
 
     uv run studio/letter.py
 
-Everything that is not changed is the reference's own ink, so the pen and the drawings are the
-photograph's and not a likeness of them. Three things are done to it:
+The ink is the reference's, so the pen is the photograph's and not a likeness of it. Four things are done:
 
 - The card is taken out from under the ink. What is left is the ink alone, see-through wherever the card
   was bare, so it is written on whatever page it is put on. The card's grain goes out separately, as a
   texture that page can be given.
-- The words that go are rubbed out to bare card, stroke by stroke.
-- The new words are written in the reference's own hand. A word the reference already wrote is lifted
-  whole and set down where it is wanted. Any other word is spelt from letters the reference wrote, a
-  different one each time a letter comes round, with the small unevenness of a hand. The few letters it
-  never wrote are drawn with the pen's width of line. The writing in the drawings is the same hand, smaller.
+- The reference's own words and drawings are taken off, all but the few words that stay where they are.
+- The new words are written in the reference's hand. A word the reference already wrote is lifted whole
+  and set down where it is wanted. Any other word is spelt from letters the reference wrote, a different
+  one each time a letter comes round, with the small unevenness of a hand. The few letters it never wrote
+  are drawn with the pen's width of line.
+- New drawings are made with the same pen, in the reference's manner: quick outlines, scribbled hair,
+  speech in bubbles. Some of what is said in them is the reference's own, lifted as it was written.
 
 Writes public/objects/letter.avif, the ink at twice the reference's size and cut close to it, and
 public/photos/laid.avif, the card's grain as a tile to multiply a page's colour by. LETTER_DEBUG=<dir>
@@ -78,6 +79,8 @@ MISREAD_LETTERS = {("a", "L3.2"), ("a", "L4.0"), ("a", "L5.7"), ("c", "L14.0"), 
 CUTS = {
     "C": ((630, 937, 648, 965), "L15"),
     "M": ((626, 1049, 649, 1074), "S1"),
+    "k~know": ((715, 905, 730, 930), "L14"),
+    "k~taking": ((469, 430, 482, 453), "L6"),
     "O'": ((667, 128, 681, 144), "D1"),
     "L'": ((652, 128, 665, 144), "D1"),
     "A'": ((700, 128, 715, 144), "D1"),
@@ -89,70 +92,53 @@ CUTS = {
 DRAWN = {
     "z": (9, [[(1.5, -9.4), (9.6, -10.0), (0.6, -0.9), (9.2, -0.5)]]),
     "P": (10, [[(3.4, -16.6), (2.2, -8), (1.0, 0.4)], [(2.8, -16.2), (8.2, -16.8), (10.6, -13.4), (8.4, -9.6), (2.2, -8.6)]]),
+    "Y": (12, [[(1.4, -16.8), (4.6, -12.6), (6.6, -8.8)], [(12.4, -17.2), (8.6, -11.6), (6.6, -8.8), (5.4, -4.4), (4.4, 0.3)]]),
+    "T": (13, [[(0.8, -16.4), (7.0, -16.8), (13.2, -17.2)], [(7.6, -16.9), (6.6, -8.4), (5.6, 0.3)]]),
     "T'": (12, [[(1.6, -10.6), (6.6, -10.9), (12.0, -11.2)], [(7.0, -11.0), (6.5, -5), (6.2, 0.2)]]),
     "C'": (10, [[(9.8, -9.2), (6.4, -11.2), (2.4, -9.9), (0.6, -5.6), (2.2, -1.4), (6.2, -0.2), (10.0, -2.0)]]),
 }
-UNREADABLE = ("in", "ur")  # letters run together so that, lifted out of their word, they read as another
+UNREADABLE = ("in", "ur", "ic")  # letters run together so that, lifted out of their word, they read as another
 PEN = 2.1  # width of the pen's line
 CAP = 17.0  # how tall the hand writes a capital
-# Writing rubbed out by where it is, not by the line it stands on: the date, and words in the drawings.
-RUBBED = (
-    (664, 106, 742, 131), (780, 104, 791, 131), (650, 128, 796, 147),
-    (470, 316, 514, 337),
-    (308, 612, 424, 634), (332, 634, 398, 650), (338, 650, 386, 664), (340, 664, 431, 682),
-    (402, 606, 418, 614),
-    (565, 582, 653, 602), (556, 602, 657, 622),
-    (739, 578, 786, 600), (680, 597, 729, 616), (692, 612, 734, 628),
-    (404, 1022, 456, 1041), (348, 1041, 470, 1060), (362, 1056, 484, 1074), (378, 1073, 421, 1088),
-)
-STAYS = ((337, 300, 351, 338),)  # and a mark that stays where a word around it goes: a bracket
+# Things said in the reference's drawings that are said again in the new ones: where each is, and its baseline.
+SAID = {
+    "how": ((568, 638, 608, 654), 651),
+    "relaxing!": ((563, 654, 644, 677), 668),
+    "golly!": ((343, 683, 395, 706), 697),
+    "life-is-so": ((486, 1061, 562, 1086), 1087),
+    "unfair!": ((486, 1086, 570, 1106), 1100),
+    "I-can't": ((327, 1011, 396, 1027), 1026),
+    "believe": ((338, 1027, 400, 1041), 1039),
+}
 # The letter as it is to read. Each run of writing: the line whose baseline it follows, or a point and
-# a slope; where it starts, or None to go on from the word before; how big; and its words. A plain word
-# is spelt out. = leaves a word of the reference where it is, or a whole line of them. @ lifts one and
-# sets it down here. + sets a word close against the one before.
+# a slope; where it starts, or None to go on from the word before; how big; and its words. A word the
+# reference wrote, and that has not been used yet, is lifted whole and set down; any other is spelt out.
+# = leaves a word of the reference where it is. # lifts something said in a drawing. + sets a word close
+# against the one before.
 WRITING = (
     ((700, 126.5, 0), 698, 1, "O'+C'+T'"),
-    ("D0", None, 1, "=D0.2"),
-    ((781, 127.5, 0), 781, 1, "6'"),
+    ((745, 127.3, 0), 745, 1, "2026"),
     ((692, 142.5, 0), 694, 1, "T'+O'+O'"),
     ((740, 142.5, 0), 738, 1, "L'+A'+T'+E'"),
     ("L0", None, 1.1, "=L0.0 younger me,"),
-    ("L1", None, 1, "=L1"),
-    ("L2", None, 1, "=L2.0 =L2.1 =L2.2 =L2.3 backwards @L2.5 @L2.6 @L2.7 @L2.8"),
-    ("L3", 155, 1, "years in between"),
-    ("L3", None, 1, "=L3.3 =L3.4 =L3.5 =L3.6"),
-    ("L4", None, 1, "=L4.0 you will find"),
-    ("L4", 520, 1, "all @L4.5 it stupid @L4.8"),
-    ("L5", None, 1, "=L5.0 =L5.1 =L5.2 yet +@L5.4 =L5.5 =L5.6 =L5.7 =L5.8 =L5.9"),
-    ("L6", None, 1, "=L6.0 =L6.1 I play an electric guitar @L5.3 +, which is loud,"),
-    ("L7", 152, 1, "preferably. I wet shave too. @L7.4 @L7.5 @L7.6"),
-    ("L8", None, 1, "=L8.0 long @L8.2 take with @L4.3 Merkur razor, Proraso and"),
-    ("L9", 152, 1, "Clubman aftershave. @L9.1 @L9.2 @L9.3 @L9.4 @L9.5 bore."),
-    ("L10", None, 1, "=L10.0 =L10.1 make sense @L10.4"),
-    ("L11", None, 1, "=L11.0 =L11.1 =L11.2 +, @L11.4 +@L11.5 @L11.6 @L11.7 @L11.8 @L11.9 Arsenal win"),
-    ("L12", None, 1, "=L12.0 shout up @L6.6 Gunners @L12.4 @L12.5 @L12.6 @L12.7 @L7.2"),
-    ("L13", 152, 1, "cats became chief supervisors... @L13.7 @L13.8 @L13.9 @L13.10 @L13.11"),
-    ("L14", None, 1, "=L14"),
-    ("L15", None, 1, "=L15.0 =L15.1 =L15.2 =L15.3 loud guitars @L15.7 slow mornings."),
-    ("L16", None, 1, "=L16"),
-    ("S0", None, 1, "=S0"),
-    ("S1", 632, 1, "Anurag"),
-    # The drawings.
-    ((482, 328, 0.2), 482, 0.9, "age"),
-    ((313, 631, -0.03), 313, 0.8, "full Arsenal"),
-    ((336, 645.5, -0.02), 336, 0.8, "match."),
-    ((341, 661, -0.02), 341, 0.8, "up the"),
-    ((343, 677.5, -0.05), 343, 0.8, "Gunners!"),
-    ((571, 597.5, -0.035), 571, 0.78, "lose sleep"),
-    ((561, 612.5, -0.02), 561, 0.8, "over it."),
-    ((743, 593, -0.03), 743, 0.8, "use"),
-    ((686, 608.5, 0.03), 686, 0.8, "foam"),
-    ((697, 625, 0.03), 697, 0.8, "soap"),
-    ((407, 1038, -0.02), 407, 0.8, "this"),
-    ((354, 1053.5, -0.03), 354, 0.8, "is who I"),
-    ((368, 1069, -0.035), 368, 0.8, "grow up to"),
-    ((398, 1083, -0.01), 398, 0.8, "be"),
+    ((160, 243, -0.004), 160, 1, "I know what you're like, so I know you'll call all of"),
+    ((156, 282, -0.004), 156, 1, "this stupid. I'm telling you anyway."),
+    ((160, 326, -0.004), 160, 1, "You pick up an electric guitar and"),
+    ((158, 365, -0.004), 158, 1, "you don't put it down."),
+    ((160, 436, -0.004), 160, 1, "You learn to shave slowly, the old way, and it ends"),
+    ((156, 475, -0.004), 156, 1, "up being the part of the morning that is yours."),
+    ((160, 644, -0.004), 160, 1, "You give your heart to Arsenal, which is a stupid"),
+    ((158, 683, -0.004), 158, 1, "thing to do with a heart."),
+    ((160, 842, -0.004), 160, 1, "And there are cats. They sit on whatever"),
+    ((156, 881, -0.004), 156, 1, "you are building and decide if it's any"),
+    ((158, 920, -0.004), 158, 1, "good. You'll like the company more than"),
+    ((160, 959, -0.004), 160, 1, "you can imagine."),
+    ((160, 1003, -0.004), 160, 1, "It isn't impressive, any of it, and I wouldn't trade it."),
+    ((158, 1042, -0.004), 158, 1, "Take your time getting here."),
+    ((612, 1113, -0.01), 612, 1, "cheers,"),
+    ((622, 1147, -0.01), 622, 1, "Anurag"),
 )
+TALL_PAGE = 1240  # the new letter runs longer than the card did
 SPACE = 16.0  # bare card between two words, and how much it varies
 PAGE = (150, 58, 640, 104)  # bare card, to take paper grain from
 SHEET = (108, 58, 640, 172)  # a larger piece of it, for the texture
@@ -335,7 +321,6 @@ class Hand:
         self.wet = np.zeros(shape)  # the new ink, at the output's size
         self.rng = np.random.default_rng(11)
         self.kept = set()
-        self.moved = set()
         self.letters = {}
         for chars, found in reading.letters.items():
             good = [(glyph, name) for glyph, name, key in found if key not in MISREAD and (chars, key) not in MISREAD_LETTERS]
@@ -348,10 +333,16 @@ class Hand:
             if sized:
                 self.letters[chars] = sized
         for chars, ((x0, y0, x1, y1), name) in CUTS.items():
-            self.letters[chars] = [self.glyph(reading.ink[y0:y1, x0:x1] * (reading.away[y0:y1, x0:x1] < 2.6), (x0, y0, x1, y1), reading.baseline(name, (x0 + x1) / 2))]
+            self.letters.setdefault(chars.split("~")[0], []).append(self.glyph(reading.ink[y0:y1, x0:x1] * (reading.away[y0:y1, x0:x1] < 2.6), (x0, y0, x1, y1), reading.baseline(name, (x0 + x1) / 2)))
         for chars, (wide, strokes) in DRAWN.items():
             self.letters[chars] = [self.glyph(*self.pen(wide, strokes, seed), 0.0) for seed in range(4)]
         self.queue = {}
+        self.shift = np.zeros(2)
+        self.drawn = np.zeros((shape[0] // UP, shape[1] // UP))  # the drawings' ink, at the reference's size
+        self.spare = {}  # the reference's own words, by what they say, till each is used
+        for key, (token, _, name) in reading.words.items():
+            if name.startswith("L") and name != "L0" and "~" not in token:
+                self.spare.setdefault(token, []).append(key)
         gaps = []
         for token, group, name in reading.words.values():
             marks = sorted(group, key=lambda i: reading.box[i][0])
@@ -390,7 +381,7 @@ class Hand:
         ink = blurred(ink, 2.2).reshape(tall + deep, 4, wide + 2 * pad, 4).mean(axis=(1, 3))
         return ink, (0, -tall, wide + 2 * pad, deep)
 
-    def lay(self, mark, x, foot, size=1.0, turn=0.0, heavy=1.0):
+    def lay(self, mark, x, foot, size=1.0, turn=0.0):
         """Set a mark down with its body's left edge at x and its foot at `foot`, in reference pixels."""
         ink, top, left, _, _ = mark
         h, w = ink.shape
@@ -400,7 +391,9 @@ class Hand:
         inverse = np.array([[cos, -sin], [sin, cos]]) / zoom
         middle = np.array([h / 2, w / 2])
         out = ndimage.affine_transform(ink, inverse, offset=middle - inverse @ np.array([side / 2, side / 2]), output_shape=(side, side), order=3, mode="constant")
-        out = np.clip(out * heavy, 0, 1)
+        if size < 0.95:  # the pen is no finer for writing small
+            out = blurred(ndimage.grey_dilation(out, size=(2, 2)), 0.6)
+        out = np.clip(out, 0, 1)
         # Where the foot of the body's left edge went.
         ay, ax = (np.array([-top, left]) - middle) * zoom
         ay, ax = side / 2 + sin * ax + cos * ay, side / 2 + cos * ax - sin * ay
@@ -408,6 +401,119 @@ class Hand:
         r0, c0 = max(row, 0), max(col, 0)
         r1, c1 = min(row + side, self.wet.shape[0]), min(col + side, self.wet.shape[1])
         self.wet[r0:r1, c0:c1] = np.maximum(self.wet[r0:r1, c0:c1], out[r0 - row : r1 - row, c0 - col : c1 - col])
+
+    def stroke(self, points, round_off=2, stray=0.45, width=PEN * 0.8):
+        """One line of the pen through some points, in reference pixels."""
+        pts = np.array(points, dtype=np.float64) + self.shift
+        # A long line is not drawn in one go: it wanders a little all the way along.
+        steps = [max(int(np.hypot(*(b - a)) / 9), 1) for a, b in zip(pts, pts[1:])]
+        pts = np.concatenate([a + (b - a) * np.arange(n)[:, None] / n for (a, b), n in zip(zip(pts, pts[1:]), steps)] + [pts[-1:]])
+        pts += self.rng.normal(0, stray, pts.shape)  # no hand puts a point where it meant to
+        for _ in range(round_off):  # round the corners off, as a hand does
+            q, r = 0.75 * pts[:-1] + 0.25 * pts[1:], 0.25 * pts[:-1] + 0.75 * pts[1:]
+            pts = np.concatenate(([pts[0]], np.column_stack((q, r)).reshape(-1, 2), [pts[-1]]))
+        # The pen bears down more in some places than others, and comes off the paper lightly.
+        press = blurred(self.rng.normal(0, 1, len(pts) + 8), 3)[4:-4]
+        press = 0.9 + 0.5 * press / max(press.std(), 1e-6) * 0.3
+        press[0] = press[-1] = 0.72
+        dark = self.rng.uniform(0.8, 0.97)
+        reach = width + 3
+        x0, y0 = np.maximum(np.floor(pts.min(axis=0) - reach).astype(int), 0)
+        x1, y1 = np.ceil(pts.max(axis=0) + reach).astype(int)
+        Y, X = np.mgrid[y0:y1, x0:x1] + 0.5
+        ink = np.zeros(X.shape)
+        for (ax, ay), (bx, by), bear in zip(pts, pts[1:], np.clip(press, 0.6, 1.25)):
+            t = np.clip(((X - ax) * (bx - ax) + (Y - ay) * (by - ay)) / max((bx - ax) ** 2 + (by - ay) ** 2, 1e-9), 0, 1)
+            d = np.hypot(X - ax - t * (bx - ax), Y - ay - t * (by - ay))
+            ink = np.maximum(ink, np.clip((width / 2 * bear - d) / 0.9 + 0.5, 0, 1) * dark * min(bear + 0.12, 1))
+        rows, cols = self.drawn.shape
+        self.drawn[y0:y1, x0:x1] = np.maximum(self.drawn[y0:y1, x0:x1], ink[: rows - y0, : cols - x0])
+
+    def strokes(self, *lines, **how):
+        for line in lines:
+            self.stroke(line, **how)
+
+    def sketch(self, *lines, **how):
+        """Lines gone over twice, as the outline of a thing is."""
+        for line in lines:
+            self.stroke(line, **how)
+            self.stroke(line, **{**how, "stray": 1.5 * how.get("stray", 0.45), "width": PEN * 0.6})
+
+    def blank(self, points):
+        """Take the ink off a patch, so what is drawn next stands in front of what was there."""
+        patch = Image.new("L", self.drawn.shape[::-1], 0)
+        ImageDraw.Draw(patch).polygon([tuple(p) for p in np.array(points, dtype=np.float64) + self.shift], fill=1)
+        self.drawn[np.asarray(patch) > 0] = 0
+
+    def loop(self, cx, cy, rx, ry, square=1.0, n=18):
+        """Points round an oval, or a box with its corners eased when `square` is small, ending past its start."""
+        t = np.linspace(0, 2 * np.pi * 1.04, n) + self.rng.uniform(0, 6)
+        c, s = np.cos(t), np.sin(t)
+        return np.column_stack((cx + rx * np.sign(c) * np.abs(c) ** square, cy + ry * np.sign(s) * np.abs(s) ** square))
+
+    def oval(self, cx, cy, rx, ry, **how):
+        self.stroke(self.loop(cx, cy, rx, ry), **{"stray": min(0.45, 0.12 * min(rx, ry)), **how})
+
+    def box(self, x0, y0, x1, y1):
+        """A box drawn a side at a time, each running a little past its corner."""
+        over = lambda: self.rng.uniform(-0.5, 2.0)
+        self.stroke([(x0 - over(), y0), (x1 + over(), y0)], round_off=1)
+        self.stroke([(x1, y0 - over()), (x1, y1 + over())], round_off=1)
+        self.stroke([(x1 + over(), y1), (x0 - over(), y1)], round_off=1)
+        self.stroke([(x0, y1 + over()), (x0, y0 - over())], round_off=1)
+
+    def hatch(self, x0, y0, x1, y1, count, lean=0.35):
+        """Shading: quick slanted lines across a patch."""
+        for k in range(count):
+            x = x0 + (x1 - x0) * (k + 0.5) / count
+            top = y0 + self.rng.uniform(0, 0.2) * (y1 - y0)
+            self.stroke([(x + lean * (y1 - y0) / 2, top), (x - lean * (y1 - y0) / 2, y1 - self.rng.uniform(0, 0.15) * (y1 - y0))], round_off=0, stray=0.5, width=PEN * 0.6)
+
+    def dot(self, x, y):
+        self.stroke([(x - 0.4, y - 0.3), (x + 0.5, y + 0.4)], stray=0.1, width=PEN * 1.1)
+
+    def bubble(self, x0, y0, x1, y1, tip):
+        """A speech bubble, in front of whatever it lies over, open where its tail leaves it for the one speaking."""
+        round_ = self.loop((x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2, (y1 - y0) / 2, 0.62, 30)[:-2]
+        round_ = np.roll(round_, -int(np.argmin(np.hypot(*(round_ - tip).T))), axis=0)
+        self.blank(np.concatenate((round_[1:], [tip])))
+        self.stroke(round_[1:], round_off=2)
+        self.stroke([round_[-1], tip, round_[1]], round_off=0, stray=0.3)
+
+    def hair(self, cx, cy, rx, ry, lean=0.5):
+        """Hair, the way the reference does it: the pen run back and forth until the paper is nearly covered."""
+        for way in (lean, -0.6 * lean):
+            count = int(2 * rx / (1.2 if way == lean else 2.4))
+            for k in range(count):
+                u = -1 + 2 * (k + 0.5) / count + self.rng.normal(0, 0.03)
+                reach = np.sqrt(max(1 - u * u, 0.04)) * ry * self.rng.uniform(0.8, 1.25)
+                x = cx + u * rx
+                self.stroke([(x + way * reach, cy - reach), (x + self.rng.normal(0, 0.8), cy), (x - way * reach, cy + reach)], round_off=1, stray=0.7, width=PEN * 0.75)
+        for _ in range(int(rx)):  # and the ends that stand out of it
+            turn = self.rng.uniform(0, 2 * np.pi)
+            edge = np.array([cx + rx * np.cos(turn), cy + ry * np.sin(turn)])
+            out = np.array([np.cos(turn), np.sin(turn)]) * self.rng.uniform(1.5, 4.5)
+            self.stroke([edge - out, edge + 0.3 * out + self.rng.normal(0, 1, 2), edge + out], round_off=1, stray=0.4, width=PEN * 0.6)
+
+    def arrow(self, *points):
+        """A line with a head on its far end."""
+        self.stroke(points, stray=0.3)
+        (ax, ay), (bx, by) = np.array(points[-2]), np.array(points[-1])
+        along = np.array([bx - ax, by - ay]) / max(np.hypot(bx - ax, by - ay), 1e-6)
+        across = np.array([-along[1], along[0]])
+        for side in (1, -1):
+            self.stroke([(bx, by), tuple(np.array([bx, by]) - 4.5 * along + side * 3 * across)], round_off=0, stray=0.2)
+
+    def dry(self):
+        """Let the drawings take on the paper: its grain breaks the line up a little, and the lens softens it."""
+        grain = blurred(self.rng.standard_normal(self.drawn.shape), 0.8)
+        ink = blurred(self.drawn, 0.5) * np.clip(1 - 0.09 * grain / grain.std(), 0.7, 1.08)
+        self.wet = np.maximum(self.wet, np.clip(ndimage.zoom(ink, UP, order=3), 0, 1))
+
+    def say(self, x, y, slope, size, words):
+        """Writing that belongs to a drawing, and moves with it."""
+        x, y = x + self.shift[0], y + self.shift[1]
+        self.write((x, y, slope), x, size, words)
 
     def pick(self, chars):
         """One of the reference's ways of writing these letters, a different one each time round."""
@@ -418,7 +524,7 @@ class Hand:
 
     def spell(self, word, x, base, size, turn):
         """Write a word letter by letter from x. Returns where it ends."""
-        marks = word.split("+") if "'" in word else None
+        marks = word.split("+") if "'+" in word or len(word) == 2 and word[1] == "'" else None
         at = 0
         while at < (len(marks) if marks else len(word)):
             if marks:
@@ -438,7 +544,7 @@ class Hand:
             if chars in ".,":
                 x -= 0.8 * size
             wide = mark[3] * scale
-            self.lay(mark, x, base(x + wide / 2) + self.rng.normal(0, 0.3), scale, turn + self.rng.normal(0, 0.02), 1.0 if size > 0.95 else 1.25)
+            self.lay(mark, x, base(x + wide / 2) + self.rng.normal(0, 0.3), scale, turn + self.rng.normal(0, 0.02))
             x += wide + (self.gap + self.rng.normal(0, 0.5)) * size
         return x - self.gap * size
 
@@ -461,15 +567,28 @@ class Hand:
             if not first:
                 x += 2.0 * size if close else (SPACE + self.rng.normal(0, 1.2)) * size
             first = False
-            if word.startswith("@"):
-                _, group, name = reading.words[word[1:]]
-                self.moved.add(word[1:])
-                ink, box = reading.lift(group)
-                mark = self.glyph(ink, box, reading.baseline(name, (box[0] + box[2]) / 2))
+            if word.startswith("#"):
+                (bx0, by0, bx1, by1), foot = SAID[word[1:]]
+                group = [i for i, (cx, cy) in reading.mid.items() if bx0 <= cx < bx1 and by0 <= cy < by1 and reading.box[i][2] - reading.box[i][0] < 45]
+                mark = self.glyph(*reading.lift(group), foot)
                 self.lay(mark, x, base(x + mark[3] / 2), size)
                 x += mark[3] * size
             else:
-                x = self.spell(word, x, base, size, turn)
+                whole = word.rstrip(".,!?")
+                if size > 0.95 and not self.spare.get(word) and self.spare.get(whole):
+                    word, rest = whole, word[len(whole) :]
+                else:
+                    rest = ""
+                if size > 0.95 and self.spare.get(word):
+                    _, group, name = reading.words[self.spare[word].pop(0)]
+                    ink, box = reading.lift(group)
+                    mark = self.glyph(ink, box, reading.baseline(name, (box[0] + box[2]) / 2))
+                    self.lay(mark, x, base(x + mark[3] / 2), size)
+                    x += mark[3] * size
+                    if rest:
+                        x = self.spell(rest, x + 2.0, base, size, turn)
+                else:
+                    x = self.spell(word, x, base, size, turn)
         return x
 
 
@@ -489,11 +608,171 @@ def rubbed(ref, reading, gone):
     return ref * (1 - cover) + (field + tiled) * cover
 
 
-def specks(reading):
-    """Small marks that are neither writing nor drawing: flecks in the card."""
-    written = {i for _, group, _ in reading.words.values() for i in group}
-    drawn = {i for i, (cx, cy) in reading.mid.items() if any(x0 <= cx < x1 and y0 <= cy < y1 for x0, y0, x1, y1 in DRAWINGS)}
-    return {i for i, size in reading.size.items() if size < 14} - written - drawn
+def drawings(pen):
+    """The drawings, in reference pixels, and what is said in them."""
+    # An amplifier with the guitar leaning on it, its lead on the floor, and a note of how it is played.
+    pen.shift[:] = 0, 8
+    pen.sketch([(628, 326), (692, 326), (692, 380), (628, 380), (628, 326)], round_off=1)
+    pen.strokes([(628, 326), (639, 315), (703, 315), (692, 326)], [(703, 315), (703, 369), (692, 380)], [(629, 336), (691, 336)], [(660, 317), (662, 311), (682, 311), (684, 317)], round_off=1, stray=0.35)
+    for x in (637, 646, 655, 664):
+        pen.oval(x, 331, 1.8, 1.8)
+    pen.strokes([(677, 329), (686, 329), (686, 333), (677, 333), (677, 329)], [(634, 341), (686, 341), (686, 375), (634, 375), (634, 341)], round_off=0, stray=0.3)
+    pen.hatch(636, 343, 685, 373, 13, 0.6)
+    pen.hatch(636, 343, 685, 373, 9, -0.6)
+    pen.hatch(694, 324, 702, 372, 4, 0.1)
+    pen.oval(660, 358, 11, 11, width=PEN * 0.6)
+    pen.stroke([(616, 384), (640, 387), (662, 384), (690, 387), (716, 384)], stray=0.6, width=PEN * 0.6)
+    pen.stroke([(630, 332), (618, 340), (611, 362), (622, 389), (660, 397), (708, 395), (736, 387), (745, 376)], round_off=3)
+    pen.strokes([(622, 318), (614, 312), (618, 307), (608, 300)], [(650, 309), (647, 302), (652, 299), (649, 291)], [(712, 322), (721, 318), (718, 312), (728, 305)], [(716, 338), (724, 337), (722, 331), (731, 329)], round_off=0, stray=0.5)
+    pen.oval(600, 338, 3, 2.3)
+    pen.dot(600, 338)
+    pen.strokes([(603, 337), (603, 322)], [(603, 322), (609, 326)], stray=0.2)
+    pen.blank([(748, 330), (738, 330), (736, 362), (745, 383), (757, 385), (770, 367), (768, 330)])
+    pen.sketch([(748, 330), (743, 326), (738, 330), (739, 338), (744, 343), (741, 352), (736, 362), (737, 374), (745, 383), (757, 385), (767, 379), (770, 367), (766, 355), (761, 346), (764, 338), (768, 330), (764, 325), (758, 330), (748, 330)])
+    pen.strokes([(750, 330), (764, 286)], [(757, 331), (770, 288)], [(764, 286), (762, 276), (768, 270), (775, 272), (775, 283), (770, 288)], [(746, 350), (758, 349)], [(746, 353), (758, 352)], [(745, 360), (759, 359)], [(745, 363), (759, 362)], [(747, 371), (759, 370)], [(744, 345), (750, 356), (748, 372), (756, 378)], stray=0.3)
+    pen.strokes([(751, 370), (766, 284)], [(755, 370), (769, 285)], [(753, 320), (759, 322)], [(755, 312), (761, 314)], [(758, 304), (764, 306)], [(760, 296), (766, 298)], stray=0.2, width=PEN * 0.5)
+    for x, y in ((765, 275), (771, 274), (773, 280), (762, 372), (764, 366)):
+        pen.dot(x, y)
+    pen.hatch(741, 373, 765, 383, 5)
+    pen.say(440, 376, 0.0, 0.8, "loud, preferably")
+    pen.arrow((588, 371), (598, 366), (606, 360))
+
+    # Shaving, in three frames: a lathered face that will not be hurried, the kit on its shelf, a younger onlooker.
+    pen.shift[:] = 0, 36
+    pen.box(160, 452, 336, 568)
+    pen.box(346, 452, 626, 568)
+    pen.sketch(pen.loop(222, 508, 25, 29), stray=0.5)
+    pen.strokes([(197, 505), (193, 509), (197, 516)], [(247, 505), (251, 509), (247, 516)], [(198, 488), (196, 500)], [(246, 488), (248, 500)], [(207, 497), (216, 495)], [(228, 495), (237, 497)], [(208, 503), (212, 505), (216, 503)], [(228, 503), (232, 505), (236, 503)], [(221, 503), (224, 512), (219, 514)], stray=0.2)
+    pen.hair(222, 483, 27, 13)
+    pen.blank([(199, 516), (196, 524), (201, 537), (212, 546), (227, 548), (239, 541), (246, 528), (245, 516)])
+    pen.sketch([(199, 516), (196, 524), (201, 529), (201, 537), (208, 539), (212, 546), (220, 544), (227, 548), (232, 542), (239, 541), (240, 533), (246, 528), (245, 516)], round_off=1)
+    pen.strokes([(199, 516), (206, 521), (213, 517), (221, 521), (229, 517), (237, 521), (245, 516)], [(217, 529), (226, 529)], [(238, 520), (241, 534)], [(243, 519), (245, 531)], round_off=1, stray=0.3)
+    for x, y in ((205, 531), (230, 536), (212, 538)):
+        pen.dot(x, y)
+    pen.strokes([(212, 547), (211, 556)], [(232, 547), (234, 556)], [(211, 556), (192, 560), (178, 568)], [(234, 556), (254, 560), (268, 568)], [(240, 557), (262, 566)], stray=0.3)
+    pen.hatch(186, 560, 214, 567, 5)
+    pen.hatch(246, 560, 262, 567, 4, -0.4)
+    pen.blank([(243, 516), (259, 516), (272, 568), (256, 568)])
+    pen.strokes([(243, 522), (257, 517)], [(244, 525), (258, 520)], [(252, 521), (262, 545)], [(255, 520), (265, 544)], [(259, 554), (266, 568)], [(272, 551), (282, 568)], [(260, 545), (262, 550)], [(265, 544), (267, 549)], stray=0.2)
+    pen.oval(265, 548, 8, 7)
+    pen.strokes([(164, 470), (172, 462)], [(164, 482), (180, 462)], [(316, 566), (334, 548)], [(324, 566), (334, 556)], stray=0.3, width=PEN * 0.5)
+    pen.bubble(282, 460, 368, 503, (252, 507))
+    pen.say(297, 477, -0.03, 0.8, "do not")
+    pen.say(293, 493, -0.03, 0.8, "rush me.")
+    pen.sketch([(356, 548), (486, 549), (616, 547)], stray=0.3)
+    pen.strokes([(380, 549), (380, 562), (392, 549)], [(590, 549), (590, 562), (578, 549)], stray=0.3)
+    pen.hatch(360, 551, 612, 555, 22, 1.4)
+    pen.oval(416, 545, 9, 3)
+    pen.strokes([(414, 543), (414, 506)], [(419, 543), (419, 506)], [(404, 500), (430, 500), (432, 506), (402, 506), (404, 500)], [(406, 503), (428, 503)], round_off=0, stray=0.25)
+    for y in (512, 518, 524, 530, 536):
+        pen.stroke([(414, y), (419, y - 1)], round_off=0, stray=0.2, width=PEN * 0.5)
+    pen.say(393, 489, -0.02, 0.75, "Merkur")
+    pen.arrow((417, 492), (417, 497))
+    pen.oval(491, 523, 29, 5)
+    pen.oval(491, 518, 29, 5)
+    pen.strokes([(462, 518), (462, 524), (464, 548)], [(520, 518), (520, 524), (518, 548)], [(465, 532), (517, 532)], [(466, 542), (516, 542)], [(474, 537), (480, 535), (486, 538), (492, 535), (498, 538), (506, 535)], stray=0.3)
+    pen.hatch(508, 526, 518, 547, 3, 0.1)
+    pen.say(463, 505, -0.02, 0.75, "Proraso")
+    pen.strokes([(562, 512), (562, 548)], [(598, 512), (598, 548)], [(562, 512), (566, 504), (574, 500)], [(598, 512), (594, 504), (586, 500)], [(574, 500), (574, 492)], [(586, 500), (586, 492)], [(572, 483), (588, 483), (588, 492), (572, 492), (572, 483)], [(576, 484), (576, 491)], [(580, 484), (580, 491)], [(584, 484), (584, 491)], [(566, 520), (594, 520), (594, 540), (566, 540), (566, 520)], [(570, 527), (576, 525), (582, 528), (590, 526)], [(570, 534), (578, 532), (586, 535)], [(563, 516), (597, 515)], round_off=0, stray=0.25)
+    pen.hatch(590, 514, 597, 547, 3, 0.1)
+    pen.say(548, 477, -0.02, 0.75, "Clubman")
+    pen.sketch(pen.loop(700, 528, 16, 17), stray=0.4)
+    pen.hair(700, 512, 17, 7)
+    pen.strokes([(684, 526), (681, 529), (684, 534)], [(716, 526), (719, 529), (716, 534)], [(691, 523), (697, 524)], [(703, 524), (709, 523)], [(695, 537), (700, 536), (705, 537)], [(700, 529), (701, 533)], [(693, 545), (692, 550)], [(707, 545), (708, 550)], [(692, 550), (674, 555), (664, 568)], [(708, 550), (726, 555), (736, 568)], [(668, 563), (690, 557), (716, 561)], [(672, 567), (700, 563), (730, 565)], stray=0.25)
+    pen.dot(694, 529)
+    pen.dot(706, 529)
+    pen.hatch(680, 552, 722, 558, 6)
+    pen.bubble(652, 458, 752, 502, (706, 511))
+    pen.say(682, 478, 0, 1, "#how")
+    pen.say(666, 495, 0, 1, "#relaxing!")
+
+    # Arsenal on the television, someone on their feet for it with a scarf held up, and the same onlooker.
+    pen.shift[:] = 0, 78
+    pen.stroke([(156, 724), (330, 725), (520, 724)], stray=0.3)
+    pen.sketch([(176, 640), (260, 640), (260, 700), (176, 700), (176, 640)], round_off=1)
+    pen.strokes([(183, 646), (240, 646), (240, 694), (183, 694), (183, 646)], [(166, 700), (270, 700), (270, 722), (166, 722), (166, 700)], [(218, 701), (218, 721)], [(214, 640), (198, 620)], [(222, 640), (242, 622)], [(266, 650), (274, 646)], [(268, 664), (277, 664)], [(266, 678), (274, 682)], round_off=1, stray=0.3)
+    pen.strokes([(245, 650), (255, 650)], [(245, 655), (255, 655)], [(245, 660), (255, 660)], [(245, 665), (255, 665)], [(211, 647), (211, 693)], [(183, 660), (192, 660), (192, 680), (183, 680)], [(240, 660), (231, 660), (231, 680), (240, 680)], [(221, 664), (226, 667)], round_off=0, stray=0.2, width=PEN * 0.5)
+    pen.oval(211, 670, 7, 7, width=PEN * 0.5)
+    pen.oval(250, 678, 2.2, 2.2)
+    pen.oval(250, 688, 2.2, 2.2)
+    for x, y in ((198, 620), (242, 622), (200, 664), (204, 678), (222, 658), (229, 669), (224, 684), (210, 711), (226, 711)):
+        pen.dot(x, y)
+    pen.hatch(168, 702, 216, 720, 8)
+    pen.strokes([(288, 668), (290, 654), (300, 650), (384, 650), (394, 654), (396, 668)], [(284, 672), (284, 716), (400, 716), (400, 672)], [(284, 672), (296, 672), (296, 692)], [(400, 672), (388, 672), (388, 692)], [(296, 692), (388, 692)], [(342, 652), (342, 690)], stray=0.4)
+    pen.hatch(298, 696, 386, 714, 13)
+    pen.blank([(324, 658), (310, 628), (296, 628), (296, 612), (384, 610), (384, 628), (370, 628), (356, 658), (358, 726), (322, 726)])
+    pen.blank(pen.loop(340, 644, 13, 14))
+    pen.sketch(pen.loop(340, 644, 12, 13), stray=0.4)
+    pen.hair(340, 632, 13, 5)
+    pen.strokes([(333, 640), (337, 638)], [(343, 638), (347, 640)], [(336, 657), (336, 661)], [(344, 657), (344, 661)], [(328, 661), (325, 700), (355, 700), (352, 661)], [(328, 661), (340, 665), (352, 661)], [(329, 662), (318, 648), (312, 630)], [(335, 659), (325, 646), (319, 629)], [(351, 662), (362, 648), (368, 630)], [(345, 659), (355, 646), (361, 629)], [(331, 700), (330, 723), (324, 724)], [(338, 700), (338, 722)], [(343, 700), (343, 722)], [(350, 700), (351, 723), (357, 724)], stray=0.25)
+    pen.dot(335, 644)
+    pen.dot(345, 644)
+    pen.oval(340, 651, 3.2, 2.8)
+    pen.dot(340, 651)
+    pen.hatch(330, 666, 351, 698, 8)
+    pen.strokes([(298, 618), (382, 616)], [(298, 627), (382, 625)], [(298, 618), (298, 627)], [(382, 616), (382, 625)], stray=0.3)
+    for x in range(304, 380, 9):
+        pen.hatch(x, 618, x + 4, 626, 2, 0.2)
+    for y in (619, 622, 625):
+        pen.strokes([(298, y), (292, y + 1)], [(382, y - 1), (388, y)], stray=0.3, width=PEN * 0.5)
+    pen.blank(pen.loop(315, 623, 5, 6))
+    pen.blank(pen.loop(365, 622, 5, 6))
+    pen.oval(315, 623, 4.5, 5.5)
+    pen.oval(365, 622, 4.5, 5.5)
+    pen.bubble(398, 628, 508, 670, (354, 652))
+    pen.say(418, 646, -0.03, 0.8, "up the")
+    pen.say(410, 662, -0.03, 0.8, "Gunners!")
+    pen.sketch(pen.loop(600, 686, 15, 16), stray=0.4)
+    pen.hair(600, 671, 16, 6.5)
+    pen.strokes([(585, 684), (582, 687), (585, 692)], [(615, 684), (618, 687), (615, 692)], [(590, 679), (596, 681)], [(603, 678), (609, 677)], [(600, 687), (601, 691)], [(594, 702), (593, 707)], [(606, 702), (607, 707)], [(593, 707), (576, 712), (568, 724)], [(607, 707), (624, 712), (632, 724)], stray=0.25)
+    pen.dot(593, 686)
+    pen.dot(604, 686)
+    pen.oval(600, 696, 2.2, 2)
+    pen.hatch(582, 711, 620, 722, 7)
+    pen.bubble(556, 626, 634, 658, (602, 663))
+    pen.say(571, 648, 0, 1, "#golly!")
+
+    # A cat sitting on the laptop, supervising, by a mug that is going cold.
+    pen.shift[:] = 215, 38
+    pen.stroke([(436, 904), (520, 905), (598, 903)], stray=0.3)
+    pen.sketch([(470, 828), (560, 826), (563, 884), (467, 885), (470, 828)], round_off=1)
+    pen.strokes([(475, 833), (555, 831), (558, 879), (472, 880), (475, 833)], [(455, 903), (467, 885)], [(563, 884), (578, 902)], [(462, 892), (572, 891)], [(459, 897), (575, 896)], round_off=1, stray=0.3)
+    pen.strokes([(478, 840), (492, 840)], [(478, 846), (488, 846)], [(480, 852), (490, 852)], [(478, 866), (487, 866)], [(538, 838), (552, 838)], [(540, 844), (550, 844)], [(536, 850), (553, 850)], [(540, 872), (552, 872)], round_off=0, stray=0.2, width=PEN * 0.5)
+    pen.blank([(497, 902), (490, 880), (497, 864), (494, 836), (505, 844), (520, 844), (530, 835), (528, 864), (535, 880), (531, 902)])
+    pen.sketch([(497, 900), (491, 880), (497, 866), (512, 862), (527, 866), (534, 880), (530, 900)])
+    pen.sketch([(499, 858), (494, 838), (505, 846), (512, 844), (520, 846), (530, 837), (526, 858), (521, 865), (512, 867), (503, 865), (499, 858)], round_off=1, stray=0.3)
+    pen.strokes([(497, 843), (500, 849)], [(527, 842), (524, 848)], [(502, 850), (509, 852)], [(523, 850), (516, 852)], [(503, 854), (509, 854)], [(516, 854), (522, 854)], [(510.5, 857), (512.5, 859.5), (514.5, 857)], [(512.5, 859.5), (510, 862)], [(512.5, 859.5), (515, 862)], [(500, 859), (487, 856)], [(500, 861), (488, 862)], [(500, 863), (490, 867)], [(525, 859), (538, 856)], [(525, 861), (537, 862)], [(525, 863), (535, 867)], [(508, 846), (509, 850)], [(512, 845), (512, 849)], [(516, 846), (515, 850)], [(494, 876), (500, 878)], [(493, 884), (499, 885)], [(494, 892), (500, 892)], [(531, 876), (526, 878)], [(532, 884), (526, 885)], [(508, 872), (510, 876)], [(514, 872), (513, 876)], [(511, 878), (511, 882)], round_off=0, stray=0.2, width=PEN * 0.6)
+    pen.oval(505, 899, 4, 2.5)
+    pen.oval(520, 899, 4, 2.5)
+    pen.sketch([(530, 896), (548, 899), (557, 888), (552, 877)])
+    pen.strokes([(540, 895), (541, 900)], [(548, 892), (552, 896)], [(551, 884), (556, 885)], stray=0.2, width=PEN * 0.6)
+    pen.oval(446, 884, 7, 2.2)
+    pen.strokes([(439, 884), (440, 902), (452, 902), (453, 884)], [(439, 888), (434, 890), (435, 896), (440, 897)], [(444, 878), (442, 873), (446, 868)], [(449, 878), (451, 872), (448, 867)], stray=0.25)
+    pen.hatch(447, 888, 452, 901, 2, 0.1)
+    pen.bubble(520, 790, 576, 819, (524, 833))
+    pen.say(535, 810, -0.02, 0.9, "no.")
+
+    # The reader, face down on the floor about all of it.
+    pen.shift[:] = 0, 163
+    pen.stroke([(148, 993), (250, 994), (392, 995)], stray=0.3)
+    pen.hatch(186, 995, 380, 999, 20, 1.6)
+    pen.sketch([(234, 962), (262, 955), (292, 958), (316, 968), (346, 974), (372, 982)])
+    pen.strokes([(314, 966), (318, 991)], [(198, 980), (176, 988), (158, 985)], [(202, 986), (180, 993)], [(232, 983), (222, 991), (206, 990)], [(149, 984), (145, 982)], [(148, 987), (143, 987)], [(149, 989), (145, 991)], [(372, 982), (381, 974), (389, 978), (387, 991), (374, 993)], [(374, 988), (387, 987)], [(364, 979), (371, 970), (379, 973)], [(340, 973), (344, 992)], stray=0.3)
+    pen.oval(153, 986, 5, 3.2)
+    pen.oval(202, 991, 4, 2.5)
+    pen.hatch(240, 962, 310, 990, 10)
+    pen.hair(214, 972, 22, 13)
+    pen.strokes([(156, 952), (160, 948), (164, 952), (168, 948), (172, 952)], [(160, 960), (164, 956), (168, 960), (172, 956)], [(246, 950), (250, 944)], [(256, 948), (261, 943)], round_off=0, stray=0.3)
+    pen.bubble(282, 899, 438, 952, (242, 957))
+    pen.say(312, 916, 0, 1, "#I-can't")
+    pen.say(294, 931, 0, 1, "#believe")
+    pen.say(356, 931, -0.02, 0.8, "this is")
+    pen.say(300, 946, -0.02, 0.8, "who I become...")
+    pen.bubble(448, 944, 538, 990, (440, 950))
+    pen.say(462, 964, 0, 1, "#life-is-so")
+    pen.say(464, 981, 0, 1, "#unfair!")
+    pen.shift[:] = 0, 0
+    pen.dry()
 
 
 def laid(ref, reading):
@@ -501,8 +780,9 @@ def laid(ref, reading):
     x0, y0, x1, y1 = SHEET
     lum = ref[y0:y1, x0:x1].mean(axis=-1)
     grain = lum / blurred(lum, 6)
-    marked = reading.away[y0:y1, x0:x1] < 4
-    grain[marked] = np.roll(grain, 17, axis=0)[marked]  # a fleck would come round again in every tile
+    even = ndimage.median_filter(grain, 9)
+    fleck = ndimage.binary_dilation(np.abs(grain - even) > 3.2 * grain.std(), iterations=2)
+    grain[fleck] = even[fleck]  # a fleck would come round again in every tile
     grain = np.clip(0.96 + 1.9 * (grain - 1), 0, 1)
     grain = np.concatenate((grain, grain[::-1]), axis=0)
     return np.concatenate((grain, grain[:, ::-1]), axis=1)
@@ -555,7 +835,7 @@ def main():
     reading = Reading(ref)
     if DEBUG:
         sheets(ref, reading)
-    rows, cols = ref.shape[0] * UP, ref.shape[1] * UP
+    rows, cols = TALL_PAGE * UP, ref.shape[1] * UP
     hand = Hand(reading, (rows, cols))
     for line, start, size, words in WRITING:
         end = hand.write(line, start, size, words)
@@ -564,14 +844,10 @@ def main():
     if DEBUG:
         print("gap", hand.gap)
 
-    # Every word of a line goes unless it was left where it is. So does the writing named by its place.
-    gone = {i for key, (_, group, name) in reading.words.items() if key not in hand.kept for i in group}
-    for i, (cx, cy) in reading.mid.items():
-        if any(x0 <= cx < x1 and y0 <= cy < y1 for x0, y0, x1, y1 in RUBBED) and reading.box[i][2] - reading.box[i][0] < 60:
-            gone.add(i)
-        if any(x0 <= cx < x1 and y0 <= cy < y1 for x0, y0, x1, y1 in STAYS):
-            gone.discard(i)
-    gone |= specks(reading)
+    drawings(hand)
+
+    # All of the reference's ink goes but the words left where they are.
+    gone = set(reading.box) - {i for key in hand.kept for i in reading.words[key][1]}
     bare = np.clip(rubbed(ref, reading, gone), 0, 1)
 
     # What is left on the card, read as ink again, with the new writing over it.
@@ -579,6 +855,7 @@ def main():
     dry *= np.clip(3.2 - reading.away, 0, 1) * ~np.isin(reading.owner, list(gone))  # ink is only where a mark is
     x0, y0, x1, y1 = card(ref)
     dry[:y0], dry[y1:], dry[:, :x0], dry[:, x1:] = 0, 0, 0, 0
+    dry = np.pad(dry, ((0, TALL_PAGE - dry.shape[0]), (0, 0)))
     dry = np.asarray(Image.fromarray(dry.astype(np.float32), mode="F").resize((cols, rows), Image.Resampling.LANCZOS), dtype=np.float64)
     wet = np.clip((np.maximum(dry, hand.wet) - FAINT) / (0.92 - FAINT), 0, 1)
     ys, xs = np.nonzero(wet > 0.3)
