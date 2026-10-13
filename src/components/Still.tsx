@@ -1,18 +1,17 @@
-import type { Signage } from '../types'
-import { Archive } from './scenes/Archive'
-import { FrontDesk } from './scenes/FrontDesk'
-import { Office } from './scenes/Office'
+import type { Room, Signage } from '../types'
+import { Bank } from './scenes/Bank'
+import { Dock } from './scenes/Dock'
+import { Warehouse } from './scenes/Warehouse'
 
 type StillProps = Signage & {
-  /** Which room: they are dealt out in order, and come round again. */
-  index: number
+  room: Room
 }
 
-const rooms = [Office, FrontDesk, Archive]
+const rooms = { warehouse: Warehouse, bank: Bank, dock: Dock }
 
 /** A furnished room of the building, with the words it is given lettered on its sign. */
-export function Still({ index, sign }: StillProps) {
-  const Room = rooms[index % rooms.length]
+export function Still({ room, sign }: StillProps) {
+  const Scene = rooms[room]
 
-  return <Room sign={sign} />
+  return <Scene sign={sign} />
 }

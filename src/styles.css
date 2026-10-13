@@ -2,6 +2,7 @@
 @import '@fontsource/playfair-display/900-italic.css';
 @import '@fontsource-variable/jetbrains-mono/index.css';
 @import '@fontsource-variable/jost/index.css';
+@import '@fontsource/londrina-solid/900.css';
 @import 'tailwindcss';
 
 @theme {
@@ -10,6 +11,7 @@
   --font-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, monospace;
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-futura: 'Jost Variable', Futura, 'Century Gothic', sans-serif;
+  --font-block: 'Londrina Solid', 'Arial Black', sans-serif;
 
   /* The work page's poster: a pink building under a teal sky, lettered in cocoa and brick red. */
   --color-mendl: #f3b9ae;

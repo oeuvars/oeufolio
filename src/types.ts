@@ -3,14 +3,6 @@ export type NavItem = {
   label: string
 }
 
-export type Work = {
-  title: string
-  summary: string
-  category: string
-  year: string
-  href: string
-}
-
 export type Social = {
   label: string
   href: string
@@ -27,11 +19,13 @@ export type Letter = {
   alt: string
 }
 
+/** The kind of place a company is, which is the room its floor of the work page's building is drawn as. */
+export type Room = 'warehouse' | 'bank' | 'dock'
+
 export type Role = {
   period: string
-  role: string
   org: string
-  summary: string
+  room: Room
 }
 
 /** What a room has lettered on it somewhere: the name of the company that kept it. */
@@ -58,7 +52,6 @@ export type Profile = {
   badge: Badge
   letter: Letter
   experience: Role[]
-  works: Work[]
   extras: { plates: Plate[]; playlist: Playlist }
   socials: Social[]
   email: string
