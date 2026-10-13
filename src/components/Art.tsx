@@ -1,8 +1,3 @@
-const pixels = [
-  [8, 6], [12, 6], [8, 10], [16, 10], [12, 14], [20, 14], [4, 18], [16, 18], [24, 18],
-  [8, 22], [12, 26], [20, 26], [4, 30], [16, 30], [10, 34], [22, 34],
-]
-
 type ArtProps = {
   index: number
 }
@@ -10,38 +5,14 @@ type ArtProps = {
 /** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. */
 export function Art({ index }: ArtProps) {
   if (index === 1) {
+    // The letter's own drawings, date and signature, down the edge of its sheet (studio/letter.py).
     return (
-      <div aria-hidden className="absolute inset-0">
-        <p className="mono absolute top-[3%] left-[8%] leading-[1.7]">
-          log
-          <br />
-          00:47
-          <br />
-          red
-        </p>
-        {pixels.map(([x, y]) => (
-          <span
-            key={`${x}-${y}`}
-            className="absolute size-[0.55rem] bg-ink"
-            style={{ left: `${x * 3}%`, top: `${6 + y * 1.4}%` }}
-          />
-        ))}
-        <img
-          src="/photos/mountain.jpg"
-          alt=""
-          className="absolute top-[56%] left-[8%] h-[14%] w-[62%] border border-ink/60 object-cover object-right grayscale"
-        />
-        <p className="mono absolute top-[73%] left-[8%] leading-[1.7] font-bold">
-          s open
-          <br />
-          spoke
-        </p>
-        <p className="mono absolute bottom-[3%] left-[8%] leading-[1.7] font-bold">
-          void
-          <br />
-          replies
-        </p>
-      </div>
+      <img
+        aria-hidden
+        src="/objects/letter-strip.avif"
+        alt=""
+        className="absolute inset-x-0 top-[1.5%] h-[97%] w-full object-contain"
+      />
     )
   }
 
