@@ -3,7 +3,6 @@
 @import '@fontsource-variable/jetbrains-mono/index.css';
 @import '@fontsource-variable/jost/index.css';
 @import '@fontsource-variable/geist-mono/index.css';
-@import '@fontsource/instrument-serif/400-italic.css';
 @import 'tailwindcss';
 
 @theme {
@@ -13,7 +12,6 @@
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-futura: 'Jost Variable', Futura, 'Century Gothic', sans-serif;
   --font-geist: 'Geist Mono Variable', ui-monospace, Menlo, monospace;
-  --font-instrument: 'Instrument Serif', 'Playfair Display', Georgia, serif;
 }
 
 @theme inline {
