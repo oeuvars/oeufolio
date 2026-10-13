@@ -6,9 +6,9 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
-    prs       a PRS Silver Sky's Polar Blue, with PRS's mark and four of the birds it inlays down its
-              fretboards, dark as they are in maple, and a band of Blackstar's black tolex and cream
-              piping round it under its name in raised white
+    prs       a Blackstar Debut's colours: its cream tolex, with PRS's mark and four of the birds PRS
+              inlays down its fretboards let in in the oxblood of its panel, and a band of its red
+              grille cloth round it under Blackstar's badge
     apple     platinum, with the six-colour apple let into it over the drilled grille of a Mac Studio
     van       a Turkish Van's own: white, auburn at head and tail as the breed is, and her mark, the cat
               asleep on her back and stretched out
@@ -359,45 +359,63 @@ def lacoste(name, height):
 
 
 def amp(name, y0, y1, mark):
-    """A band of a Blackstar amplifier clamped round the piece: black tolex between two beads of cream
-    piping, with the maker's name on it in raised white plastic, as it is on the front of the cabinets."""
+    """A band off the front of a Blackstar Debut clamped round the piece: its oxblood grille cloth between
+    two beads of cream piping, with the maker's badge on it, white letters on a black plate."""
     lap = 0.05
     x0, x1 = NEAR - lap, WIDTH - FAR + lap
     w, h = x1 - x0, y1 - y0
-    sheet = Sheet(w, h, "#131212", rough=0.34, density=3)
+    sheet = Sheet(w, h, "#4a1612", rough=0.78, density=3)
     X, Y = sheet.X, sheet.Y
-    shape = sheet.height.shape
-    sheet.coat[:] = 0.15
     # It is bent round the piece, so it falls away at each side.
     sheet.height -= 0.08 * (1 - np.clip(np.minimum(X, w - X) / 0.5, 0, 1)) ** 2
     piping = np.minimum(np.abs(Y - 0.16), np.abs(Y - (h - 0.16)))
-    word, _ = placed(sheet, mark, 0.26, 0.36, w - 0.26, h - 0.36)
-    # Tolex: a pebbled grain pressed into the black, everywhere but the piping and the letters.
-    grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
-    bare = (1 - sheet.mask(piping - 0.07)) * (1 - np.clip(blur(word, 2.0) * 3, 0, 1))
-    sheet.height += 0.005 * bare * grain
-    sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
-    sheet.paint(sheet.mask(piping - 0.05), "#e8dfc6")
+    word, _ = placed(sheet, mark, 0.4, 0.5, w - 0.4, h - 0.5)
+    lettered = np.argwhere(word > 0.1)
+    (r0, c0), (r1, c1) = lettered.min(axis=0) / sheet.ppe, lettered.max(axis=0) / sheet.ppe
+    badge = sheet.mask(box(X, Y, c0 - 0.15, r0 - 0.13, c1 + 0.15, r1 + 0.13, 0.07))
+    # Grille cloth: threads woven over and under each other, the ones lying across a shade lighter.
+    pitch = 0.095
+    u, v = X / pitch, Y / pitch
+    across = (np.floor(u) + np.floor(v)) % 2 == 0
+    thread = np.where(across, np.cos(np.pi * (v % 1 - 0.5)), np.cos(np.pi * (u % 1 - 0.5)))
+    woven = (1 - sheet.mask(piping - 0.07)) * (1 - np.clip(blur(badge, 1.5) * 2, 0, 1))
+    sheet.paint(woven * across * thread * 0.9, "#b0625a")
+    sheet.paint(woven * ~across * thread * 0.85, "#8a3f37")
+    sheet.height += 0.013 * woven * thread
+    sheet.paint(sheet.mask(piping - 0.05), "#f0dfc8")
     sheet.height += 0.022 * np.sqrt(np.clip(1 - (piping / 0.05) ** 2, 0, 1))
     sheet.finish(sheet.mask(piping - 0.05), rough=0.3, coat=0.3)
-    printed(sheet, word, "#f3f0e6", rough=0.2, coat=0.6, proud=0.024)
-    tolex = skin(sheet, f"{name}-tolex", wear=(("SurfaceImperfections003", 6, 0.05, 0),), specular=0.5)
-    band = prism(STAGE, f"{name}-amp", rect(x0, y0, x1, y1, 0.06, 4), 0.0, THICK + 0.05, tolex, bevel=0.045, segments=4)
+    printed(sheet, badge, "#17171a", rough=0.14, coat=0.8, proud=0.02)
+    printed(sheet, word, "#f4f2ec", rough=0.2, coat=0.6, proud=0.012)
+    cloth = skin(sheet, f"{name}-cloth", wear=(("SurfaceImperfections003", 6, 0.05, 0),), specular=0.4)
+    band = prism(STAGE, f"{name}-amp", rect(x0, y0, x1, y1, 0.06, 4), 0.0, THICK + 0.05, cloth, bevel=0.045, segments=4)
     return clad(band, x0, y0, w, h)
 
 
 def prs(name, height):
+    oxblood = "#7a3f46"
+
     def dress(sheet, edge):
+        shape = sheet.height.shape
         # PRS's mark runs down one side. Down the other fly four of the birds, in the order the
-        # fretboard has them. Both are let into the finish flush.
+        # fretboard has them. Both are let into the tolex flush.
         mark, _ = placed(sheet, artwork("logos/prs"), 0.98, 1.2, 2.1, 5.7, turn=1)
-        inlay(sheet, mark, INK, rough=0.2, coat=1.0)
+        inlaid = mark
+        birds = []
         for i, bird in enumerate(strewn(artwork("logos/prs-birds"))[4:8]):
-            flying, _ = placed(sheet, bird, 2.32, 1.12 + 1.18 * i, 3.3, 2.12 + 1.18 * i)
-            inlay(sheet, flying, INK, rough=0.2, coat=1.0)
+            birds.append(placed(sheet, bird, 2.32, 1.12 + 1.18 * i, 3.3, 2.12 + 1.18 * i)[0])
+            inlaid = np.maximum(inlaid, birds[-1])
+        # Tolex: a fine leather grain pressed into the cream, everywhere but the inlays.
+        grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
+        bare = 1 - np.clip(blur(inlaid, 2.0) * 3, 0, 1)
+        sheet.height += 0.0045 * bare * grain
+        sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
+        sheet.rgb *= (1 - 0.03 * bare * np.clip(grain, -1, 1))[..., None]
+        for cover in (mark, *birds):
+            inlay(sheet, cover, oxblood, rough=0.18, coat=0.9)
         return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
 
-    return {"card": 1.2}, moulded(name, height, "#a6cbe0", 0.08, 1.0, dress, subsurface=0.05)
+    return {"card": 1.2}, moulded(name, height, "#e6cdab", 0.4, 0.12, dress, subsurface=0.03)
 
 
 def apple(name, height):
