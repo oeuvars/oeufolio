@@ -5,8 +5,9 @@
     bottom   a dispatch room: trunks stacked and strapped, a trolley, and the stairs
 
 Each floor is one long room and one narrow one, and they change sides from floor to floor. Over each floor
-a painted board runs across the front, as over a shop, with the company on it in red neon, and the month
-the job began and the month it ended in small lit letters at either end, each under a brass lamp. Run from the
+a painted board runs across the front, as over a shop. The company is on it in dark letters on a box lit
+from inside, and the month the job began and the month it ended are in gilt at either end, each under a
+brass lamp. Run from the
 repository root:
 
     blender -b --factory-startup -P studio/dollhouse.py -- [--scale 0.5] [--samples 128]
@@ -236,21 +237,30 @@ def ball(x, y, z, radius, material):
     bpy.ops.object.shade_smooth()
 
 
-def lettered(words, x, z, size, align="CENTER", neon=True):
-    """A sign on the front of a board, in spaced capitals. In neon it is glass tube bent round each letter's
-    outline and stood a little off the paint, which it lights. Otherwise it is small lit letters, solid."""
-    bpy.ops.object.text_add(location=(x, -0.13 if neon else -0.085, z), rotation=(math.pi / 2, 0, 0))
-    text = bpy.context.object.data
+def lettered(words, x, z, size, align="CENTER", boxed=False):
+    """A sign on the front of a board, in spaced capitals. Boxed, it is dark letters on the face of a
+    brass-framed box lit from inside, as wide as the word needs. Otherwise it is raised gilt letters."""
+    bpy.ops.object.text_add(location=(x, -0.2 if boxed else -0.075, z), rotation=(math.pi / 2, 0, 0))
+    sign = bpy.context.object
+    text = sign.data
     text.body = words.upper()
     if os.path.exists(FUTURA):
         text.font = bpy.data.fonts.load(FUTURA, check_existing=True)
-    text.size, text.space_character = size, 1.2 if neon else 1.16
+    text.size, text.space_character = size, 1.16
     text.align_x, text.align_y = align, "CENTER"
-    if neon:
-        text.fill_mode, text.bevel_depth, text.bevel_resolution = "NONE", 0.021, 3
-    else:
-        text.offset, text.extrude = 0.004, 0.012
-    bpy.context.object.data.materials.append(paint("#ff5648", glow=11) if neon else paint("#ffd88a", glow=3.2))
+    # The face is a medium, and a sign's letters are cut fatter.
+    if not boxed:
+        text.offset, text.extrude, text.bevel_depth, text.bevel_resolution = 0.005, 0.02, 0.006, 2
+        sign.data.materials.append(GILT)
+        return
+    text.offset, text.extrude = 0.011, 0.008
+    sign.data.materials.append(paint("#2a1a17", 0.5))
+    bpy.context.view_layer.update()
+    wide, tall = sign.dimensions.x / 2 + 0.45, 0.34
+    box(x - wide, x + wide, -0.19, -0.07, z - tall, z + tall, paint("#ffe9bd", glow=1.7))
+    for edge in (-1, 1):
+        box(x - wide - 0.05, x + wide + 0.05, -0.215, -0.06, z + edge * tall - 0.025, z + edge * tall + 0.025, BRASS)
+        box(x + edge * wide - 0.025, x + edge * wide + 0.025, -0.215, -0.06, z - tall, z + tall, BRASS)
 
 
 def lamp(x, y, z, watts, across, colour="#ffd9a0"):
@@ -260,6 +270,7 @@ def lamp(x, y, z, watts, across, colour="#ffd9a0"):
 
 
 PINK, PLASTER, CREAM, BRASS = paint("#e2939f", 0.75), paint("#eaa7b0", 0.75), paint("#f1e4c9", 0.7), paint("#c9982f", 0.3, 1.0)
+GILT = paint("#e0b040", 0.24, 1.0)
 WOOD, DARK, STEEL = paint("#7a4a2e", 0.5, grain="Z"), paint("#3b1f1a"), paint("#aeb8b8", 0.35, 1.0)
 BULB = paint("#ffe2a8", glow=30)
 BOARDS = laid("#8a5a3c", "#6f4429", "#3a2416", 2.4, 0.22, "floor", 0.4, 0.35)
@@ -483,9 +494,9 @@ for storey in range(3):
     box(-HALF - 0.04, HALF + 0.04, -0.1, 0.02, foot, foot + 0.07, CREAM)
     began, company, ended = JOBS[storey]
     middle = foot + FASCIA / 2 - 0.01
-    lettered(company, 0, middle, 0.66)
-    lettered(began, -HALF + 0.55, middle, 0.27, "LEFT", neon=False)
-    lettered(ended, HALF - 0.55, middle, 0.27, "RIGHT", neon=False)
+    lettered(company, 0, middle, 0.5, boxed=True)
+    lettered(began, -HALF + 0.55, middle, 0.27, "LEFT")
+    lettered(ended, HALF - 0.55, middle, 0.27, "RIGHT")
     # A brass lamp on an arm over either end of the board, looking back at the months.
     head = foot + FASCIA - 0.03
     for x in (-HALF + 1.35, HALF - 1.35):
