@@ -14,7 +14,7 @@ type Tone = {
   panelInk: string
 }
 
-const spineTone: Tone = { band: '#8c8a76', bandInk: '#34331c', panel: '#8c8a76', panelInk: '#34331c' }
+const spineTone: Tone = { band: '#b78f86', bandInk: '#3a1512', panel: '#b78f86', panelInk: '#3a1512' }
 const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb' }
 const pageTones: Tone[] = [
   { band: '#6f2f2a', bandInk: '#ecd9c6', panel: '#e8cdc4', panelInk: '#3a1512' },
