@@ -23,6 +23,7 @@ ROOT = os.path.dirname(HERE)
 OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
 sys.path.insert(0, os.path.join(OEUSUME, "studio"))
 
+import bmesh  # noqa: E402
 import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
@@ -30,7 +31,7 @@ from mathutils import Matrix, Vector  # noqa: E402
 import stage as stage_module  # noqa: E402
 from objects.form import glass  # noqa: E402
 from paint import blur, cloud, linear  # noqa: E402
-from solids import principled, prism, rect, ring, torus, worn  # noqa: E402
+from solids import finish, principled, prism, rect, ring, worn  # noqa: E402
 from stage import Stage  # noqa: E402
 from stock import Sheet, fit  # noqa: E402
 
@@ -43,6 +44,8 @@ ZIP = ((122, 133), (137, 146), (150, 160))
 EYELETS = ((213, 77), (515, 77))
 EYELET_HOLE, EYELET_RIM = 15, 19.5
 SLOT = (308, 62, 420, 95, 16.5)
+# The ring is an oval loop: its lower turn sits in the slot and its sides run up out of the frame.
+RING_TURN, RING_BEND, RING_REACH, RING_WIRE = (393, 41), 32, 150, 7.0
 CARD = (162, 195, 577, 850)
 PHOTO = (273.5, 372.5, 456.7, 601.5)  # the print, before it is turned
 PHOTO_TURN = 0.75  # degrees clockwise: it was stuck down by hand
@@ -60,15 +63,93 @@ REWRITTEN = (
     (242, 721, 565, 781),
 )
 HAND_FROM = 603  # below this line of the reference the new words are handwriting
-RING_AT, RING_TALL, RING_WIDE, RING_WIRE = (393, 35), 45, 36, 8.0
-
-# The mat stands in for the page. It is painted darker than the page because the stand lights it brighter
-# than its albedo, and what shows through the vinyl has to land on the reference's greys.
+# The mat stands in for the page: it bounces light and is never seen. Clear vinyl comes out of the render
+# clear, so whatever the page puts behind the badge shows through it.
 MAT = "#dddddb"
-PROP = 0.2  # the holder rides this far off the mat
+PROP = 0.62  # the holder rides this far off the page: the ring runs under its header
 SHEET = 0.07  # thickness of the vinyl
 LIFT = 0.1  # how far the front sheet stands off the backing, with the card between
-TINT = 0.962  # what one surface of the vinyl lets through
+CARD_TINT = 0.97  # what the vinyl lets through over the card
+SHINE = 11.0  # how bright the reflected room has to be for vinyl, which mirrors about a fourteenth, to show it
+
+
+def stored(path):
+    """An image file as rows from the top, values as stored."""
+    image = bpy.data.images.load(path)
+    image.colorspace_settings.name = "Non-Color"
+    w, h = image.size
+    data = np.empty(w * h * 4, dtype=np.float32)
+    image.pixels.foreach_get(data)
+    bpy.data.images.remove(image)
+    return data.reshape(h, w, 4)[::-1, :, :3].astype(np.float64)
+
+
+def to_linear(v):
+    return np.where(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055) ** 2.4)
+
+
+def as_image(name, values):
+    """A float array, rows from the top, as an image a shader can read."""
+    rows, cols = values.shape
+    image = bpy.data.images.new(name, cols, rows, alpha=False, float_buffer=True)
+    image.colorspace_settings.name = "Non-Color"
+    rgba = np.dstack((values, values, values, np.ones_like(values)))[::-1].astype(np.float32)
+    image.pixels.foreach_set(rgba.ravel())
+    image.pack()
+    return image
+
+
+def widest(a, reach, pick):
+    """The largest or smallest value within `reach` pixels of each point."""
+    out = a
+    for dy in range(-reach, reach + 1):
+        for dx in range(-reach, reach + 1):
+            out = pick(out, np.roll(np.roll(a, dy, axis=0), dx, axis=1))
+    return out
+
+
+def measured_vinyl():
+    """What the reference's vinyl does to the light, measured off the photograph where nothing but vinyl
+    lies over the white page: how much it lets through, and how much it adds by reflecting the room.
+
+    The thin dark lines are left out of the first, because the model's own seams and edges make those.
+    Returns the transmission and the reflected light, both as arrays over the reference's frame."""
+    ref = stored(os.path.join(HERE, "assets", "reference.jpg")).mean(axis=-1)
+    rows, cols = ref.shape
+    Y, X = np.mgrid[0:rows, 0:cols].astype(np.float64)
+    # The bare page, with the slow fall-off the photograph has across it, fitted where nothing covers it.
+    bare = (X < 92) | (X > 634) | (Y > 893)
+    fit_ = np.linalg.lstsq(np.column_stack((np.ones(bare.sum()), X[bare], Y[bare])), ref[bare], rcond=None)[0]
+    page = np.clip(fit_[0] + fit_[1] * X + fit_[2] * Y, 0, 1)
+
+    # All of this is in the photograph's own stored values, not in light. A browser lays the render over
+    # the page by those values, so vinyl that reads as nine tenths of the page there has to cover a tenth.
+    soft = blur(ref, 0.8)
+    closed = blur(widest(widest(soft, 3, np.maximum), 3, np.minimum), 2.0)
+    # Beside the card the dark is the card's own shadow, which no seam will draw. Keep it.
+    cx0, cy0, cx1, cy1 = CARD
+    beside = ((X > cx0 - 12) & (X < cx0 + 2) & (Y > cy0 - 6) & (Y < cy1 + 4)) | ((Y > cy0 - 16) & (Y < cy0 + 2) & (X > cx0 - 6) & (X < cx1 + 6))
+    through = np.where(beside, soft, closed) / page
+    clear = float(np.median(through[300:800, 586:600]))
+    # Where the vinyl is lighter than its clearest, it is reflecting. Up to the page's own white that
+    # takes only as much light as the vinyl's cover; past it, a glint, it takes a lamp.
+    cover = 1 - clear
+    lift = np.clip((soft / page - clear) / cover, 0, 1)
+    glint = np.clip((soft / page - 1.004) / 0.03, 0, 1)
+    reflected = cover * to_linear(lift * page) + 2.6 * glint
+    # The model's vinyl already loses about a fourteenth of the light to its own two reflections.
+    through = np.clip(through, 0.2, clear) / 0.93
+
+    hx0, hy0, hx1, hy1, _ = HOLDER
+    on_card = (X > cx0) & (X < cx1) & (Y > cy0) & (Y < cy1)
+    through[on_card] = CARD_TINT / 0.93
+    # The ring hides the vinyl under it in the photograph. Put the header's own grey there.
+    at_ring = (X > 345) & (X < 442) & (Y < 100)
+    through[at_ring] = float(np.median(through[100:112, 150:300]))
+    through = np.clip(through, 0, 1)
+    off = ~((X > hx0 + 1) & (X < hx1 - 1) & (Y > hy0 + 1) & (Y < hy1 - 1)) | at_ring | ((X > cx0 - 2) & (X < cx1 + 2) & (Y > cy0 - 2) & (Y < cy1 + 2))
+    reflected[off] = 0
+    return through, reflected
 
 
 def em(value):
@@ -79,12 +160,13 @@ def box(x0, y0, x1, y1, r=0.0, steps=10):
     return rect(em(x0), em(y0), em(x1), em(y1), em(r), steps)
 
 
-def vinyl():
+def vinyl(lets_through):
     """The studio's glass as clear vinyl. The studio lets light straight through its glass, so what lies
     under it is not left in the dark. Flat vinyl does the same here, but where the sheet turns, at a ridge,
     a bevel or a cut edge, the light is bent away and does not arrive underneath. Those turns are let cast
-    their shadow, so every weld and edge lays a thin dark line on the side away from the lamp. What gets
-    through by refraction alone is still traced, and that is the bright line beside it."""
+    their shadow, so every weld and edge lays a thin dark line on the side away from the lamp.
+    lets_through is how clear the sheet is at each point of the frame, measured off the reference: fused
+    vinyl is cloudier than the open pocket."""
     material = glass()
     material.name = "vinyl"
     nodes, links = material.node_tree.nodes, material.node_tree.links
@@ -98,7 +180,7 @@ def vinyl():
     passes.inputs["From Min"].default_value = 0.78
     passes.inputs["From Max"].default_value = 0.99
     passes.inputs["To Min"].default_value = 0.0
-    passes.inputs["To Max"].default_value = TINT
+    passes.inputs["To Max"].default_value = 1.0
     tint = nodes.new("ShaderNodeCombineColor")
     links.new(geometry.outputs["True Normal"], split.inputs[0])
     links.new(split.outputs["Z"], level.inputs[0])
@@ -114,54 +196,45 @@ def vinyl():
     seen.inputs["From Min"].default_value = 0.5
     seen.inputs["From Max"].default_value = 0.94
     seen.inputs["To Min"].default_value = 0.06
-    seen.inputs["To Max"].default_value = TINT
+    seen.inputs["To Max"].default_value = 1.0
+    # Light crosses two faces of the sheet, so each takes the root of what the whole lets through.
+    over = nodes.new("ShaderNodeMapping")
+    over.inputs["Scale"].default_value = (1 / em(FRAME[0]), 1 / em(FRAME[1]), 1.0)
+    over.inputs["Location"].default_value = (0.0, 1.0, 0.0)
+    cloudy = nodes.new("ShaderNodeTexImage")
+    cloudy.image = as_image("vinyl-through", np.sqrt(lets_through))
+    cloudy.extension = "EXTEND"
+    both = nodes.new("ShaderNodeMath")
+    both.operation = "MULTIPLY"
     through = nodes.new("ShaderNodeCombineColor")
     links.new(level.outputs[0], seen.inputs["Value"])
+    links.new(geometry.outputs["Position"], over.inputs["Vector"])
+    links.new(over.outputs["Vector"], cloudy.inputs["Vector"])
+    links.new(seen.outputs["Result"], both.inputs[0])
+    links.new(cloudy.outputs["Color"], both.inputs[1])
     for channel in ("Red", "Green", "Blue"):
-        links.new(seen.outputs["Result"], through.inputs[channel])
+        links.new(both.outputs[0], through.inputs[channel])
+    # Thin sheet is never dead flat. A slow wave in the face it reflects with pulls what it mirrors about.
+    place = nodes.new("ShaderNodeTexCoord")
+    spread = nodes.new("ShaderNodeMapping")
+    spread.inputs["Scale"].default_value = (0.2, 0.11, 1.0)
+    swell = nodes.new("ShaderNodeTexNoise")
+    swell.inputs["Scale"].default_value = 1.0
+    swell.inputs["Detail"].default_value = 1.5
+    wave = nodes.new("ShaderNodeBump")
+    wave.inputs["Strength"].default_value = 0.3
+    wave.inputs["Distance"].default_value = 0.6
+    links.new(place.outputs["Object"], spread.inputs["Vector"])
+    links.new(spread.outputs["Vector"], swell.inputs["Vector"])
+    links.new(swell.outputs["Fac"], wave.inputs["Height"])
     for node in nodes:
+        if node.bl_idname == "ShaderNodeBsdfGlossy":
+            links.new(wave.outputs["Normal"], node.inputs["Normal"])
         if node.bl_idname == "ShaderNodeBsdfRefraction":
             links.new(through.outputs["Color"], node.inputs["Color"])
             node.inputs["IOR"].default_value = 1.47
         if node.bl_idname == "ShaderNodeFresnel":
             node.inputs["IOR"].default_value = 1.47
-    return material
-
-
-def passes_light(material):
-    """Let shadow rays through a Principled material, so a film of plastic does not sit in its own shadow."""
-    nodes, links = material.node_tree.nodes, material.node_tree.links
-    path = nodes.new("ShaderNodeLightPath")
-    clear = nodes.new("ShaderNodeBsdfTransparent")
-    either = nodes.new("ShaderNodeMixShader")
-    links.new(path.outputs["Is Shadow Ray"], either.inputs[0])
-    links.new(nodes["Principled BSDF"].outputs["BSDF"], either.inputs[1])
-    links.new(clear.outputs[0], either.inputs[2])
-    links.new(either.outputs[0], nodes["Material Output"].inputs["Surface"])
-    return material
-
-
-def uneven(material, scale, low, stretch=(1.0, 1.0, 1.0)):
-    """Break up a material's opacity with noise. Nothing on real plastic is ruled: a line thins and
-    thickens along its length, and a frosted patch is cloudier in places."""
-    nodes, links = material.node_tree.nodes, material.node_tree.links
-    shader = nodes["Principled BSDF"]
-    coord = nodes.new("ShaderNodeTexCoord")
-    mapping = nodes.new("ShaderNodeMapping")
-    mapping.inputs["Scale"].default_value = stretch
-    noise = nodes.new("ShaderNodeTexNoise")
-    noise.inputs["Scale"].default_value = scale
-    noise.inputs["Detail"].default_value = 4.0
-    noise.inputs["Roughness"].default_value = 0.65
-    spread = nodes.new("ShaderNodeMapRange")
-    spread.inputs["From Min"].default_value = 0.3
-    spread.inputs["From Max"].default_value = 0.7
-    spread.inputs["To Min"].default_value = low * shader.inputs["Alpha"].default_value
-    spread.inputs["To Max"].default_value = shader.inputs["Alpha"].default_value
-    links.new(coord.outputs["Object"], mapping.inputs["Vector"])
-    links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
-    links.new(noise.outputs["Fac"], spread.inputs["Value"])
-    links.new(spread.outputs["Result"], shader.inputs["Alpha"])
     return material
 
 
@@ -236,15 +309,15 @@ def seam(name, x0, y0, x1, y1, r, width, z0, z1, steps=14):
 
 
 def punches():
-    """The two eyelet holes and the slot, as outlines."""
-    return [ring(em(x), em(y), em(EYELET_HOLE), 64) for x, y in EYELETS] + [box(*SLOT, steps=14)]
+    """The slot, as an outline. The eyelets are pressed into the header and not cut through."""
+    return [box(*SLOT, steps=14)]
 
 
-def holder():
+def holder(lets_through):
     """One piece of clear vinyl: the front sheet, the welded rim round it, the zip across the mouth and the
-    pressed eyelets, with the holes punched through. The back sheet is left out: it lies flat on the mat
+    pressed eyelets, with the slot punched through. The back sheet is left out: it lies flat on the page
     and shows nothing."""
-    clear = vinyl()
+    clear = vinyl(lets_through)
     outline = box(*HOLDER, steps=14)
     x0, y0, x1, y1, r = POCKET
     z0 = PROP
@@ -254,18 +327,18 @@ def holder():
     sheet = prism(STAGE, "holder", outline, top, end, clear)
     # The weld is a low flat bead all the way round. Its top lets light through; its rounded edges turn it.
     parts = [rework(prism(STAGE, "rim", outline, z0, end + 0.09, clear), [box(x0, y0, x1, y1, r, 14)], bevel=0.075, segments=5)]
-    # The header is the two sheets fused, so it is solid from the mat side up.
-    parts.append(prism(STAGE, "header", box(x0 - 2, y0 - 2, x1 + 2, HEADER_END, r, 14), z0, top + 0.01, clear))
+    # The header is the two sheets fused into one thicker one.
+    parts.append(prism(STAGE, "header", box(x0 - 2, y0 - 2, x1 + 2, HEADER_END, r, 14), top - 0.05, top + 0.01, clear))
     for i, (ya, yb) in enumerate(ZIP):
-        parts.append(rework(prism(STAGE, f"zip-{i}", box(x0 - 2, ya, x1 + 2, yb), end - 0.02, end + 0.14, clear), bevel=0.1, segments=5))
+        parts.append(rework(prism(STAGE, f"zip-{i}", box(x0 - 2, ya, x1 + 2, yb), end - 0.02, end + 0.065, clear), bevel=0.08, segments=5))
         parts.append(prism(STAGE, f"zip-under-{i}", box(x0 - 2, ya + 3, x1 + 2, yb + 3), top - 0.1, top + 0.02, clear))
     for i, (x, y) in enumerate(EYELETS):
         lip = prism(STAGE, f"eyelet-{i}", ring(em(x), em(y), em(EYELET_RIM + 3.2), 72), end - 0.02, end + 0.1, clear)
         parts.append(rework(lip, [ring(em(x), em(y), em(EYELET_RIM - 2.6), 72)], bevel=0.075, segments=5))
     rework(sheet, punches(), bevel=0.035, segments=3, join=parts)
 
-    # Where the press came down it left hairline seams: inside the weld, round the outer edge, either side
-    # of the zip and round the slot. Each is a narrow cut with steep walls, and steep vinyl turns light away,
+    # Where the press came down it left hairline seams: inside the weld, round the outer edge
+    # and round the slot and the eyelets. Each is a narrow cut with steep walls, and steep vinyl turns light away,
     # so each shows as a dark line however it is lit.
     hx0, hy0, hx1, hy1, hr = HOLDER
     sx0, sy0, sx1, sy1, sr = SLOT
@@ -276,8 +349,6 @@ def holder():
             seam("seam-inner", x0 + 1.2, y0 + 1.2, x1 - 1.2, y1 - 1.2, r, 1.5, low, high),
             seam("seam-outer", hx0 + 2.2, hy0 + 2.2, hx1 - 2.2, hy1 - 2.2, hr - 2.2, 1.2, end + 0.02, high),
             seam("seam-slot", sx0 - 2.4, sy0 - 2.4, sx1 + 2.4, sy1 + 2.4, sr + 2.4, 1.2, low, high),
-            rework(prism(STAGE, "seam-zip-a", box(x0 + 2, ZIP[0][0] - 2.6, x1 - 2, ZIP[0][0] - 1.1), low, high, None), bevel=em(0.68), segments=2),
-            rework(prism(STAGE, "seam-zip-b", box(x0 + 2, ZIP[-1][1] + 1.1, x1 - 2, ZIP[-1][1] + 2.6), low, high, None), bevel=em(0.68), segments=2),
         ]
         + [
             rework(
@@ -290,37 +361,11 @@ def holder():
         ],
     )
 
-    # Fused vinyl is cloudy: the header reads greyer than the pocket, and so does the bed of the zip.
-    frost = uneven(passes_light(principled("frost", (0.5, 0.5, 0.51), rough=0.42, specular_ior_level=0.4, alpha=0.14)), 0.22, 0.8)
-    header = rework(prism(STAGE, "frost", box(x0, y0, x1, HEADER_END, r, 14), end + 0.004, end + 0.016, frost), punches())
-    bed = uneven(passes_light(principled("zip-bed", (0.36, 0.36, 0.37), rough=0.45, specular_ior_level=0.3, alpha=0.24)), 0.4, 0.75, (0.2, 1.0, 1.0))
-    zip_bed = prism(STAGE, "zip-bed", box(x0, ZIP[0][0], x1, ZIP[-1][1]), top - 0.12, top - 0.11, bed)
-
-    # A backing in the mat's own paint, just under the holder. The holder rides a little off the mat, and
-    # without this the card's shadow would fall that far and spread; on the backing it stays the thin line
-    # it is in the reference.
-    paint = principled("backing", MAT, rough=0.8)
-    backing = prism(STAGE, "backing", outline, z0 - 0.03, z0 - 0.015, paint)
-    backing.visible_camera = False
-    backing.visible_shadow = False
-    backing["stand"] = "backing"
-    return [sheet, header, zip_bed], end
+    return [sheet], end
 
 
 def card_art(rows, cols):
     """The reference's card as linear colour: its ink lifted off the photograph, the portrait replaced."""
-
-    def stored(path):
-        image = bpy.data.images.load(path)
-        image.colorspace_settings.name = "Non-Color"
-        w, h = image.size
-        data = np.empty(w * h * 4, dtype=np.float32)
-        image.pixels.foreach_get(data)
-        bpy.data.images.remove(image)
-        return data.reshape(h, w, 4)[::-1, :, :3].astype(np.float64)
-
-    def to_linear(v):
-        return np.where(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055) ** 2.4)
 
     plate = fit(stored(os.path.join(HERE, "assets", "plate.png")), rows, cols)
     lum = plate.mean(axis=-1)
@@ -362,7 +407,7 @@ def card_art(rows, cols):
     # The reference's card sits a touch askew, so its own edge shadow strays onto the plate. This card casts its own.
     ink[:, : round(9 * sx)] = 0
 
-    stock = np.clip(to_linear(paper) * np.array([1.1, 1.0, 0.925]), 0, 1)
+    stock = np.clip(to_linear(paper) * np.array([1.16, 1.06, 0.98]), 0, 1)
     art = stock * (1 - ink[..., None] * (1 - linear("#171614")))
 
     # The portrait is a small photographic print stuck down a little out of true, so the box shows beside it.
@@ -413,72 +458,83 @@ def card(z):
 
 
 def steel_ring(z):
-    """A chrome ring hooked through the slot: its lowest point sits down in the slot and the rest rises
-    toward the top of the frame, where it runs out of shot."""
-    steel = worn(principled("steel", (0.78, 0.78, 0.79), rough=0.09, metal=1.0), "Scratches003", 4, 0.16)
-    loop = torus(STAGE, "ring", em(RING_TALL), em(RING_WIRE), steel, steps=192, around=28)
-    tip = math.radians(11)
-    squeeze = Matrix.Diagonal((RING_WIDE / RING_TALL, 1 / math.cos(tip), 1, 1))
-    rise = em(RING_TALL) * math.sin(tip)
-    loop.matrix_world = Matrix.Translation((em(RING_AT[0]), -em(RING_AT[1]), z + rise)) @ Matrix.Rotation(tip, 4, "X") @ squeeze
+    """A steel loop threaded through the slot. It is tipped across the sheet, so its left side runs behind
+    the header and its right side in front, and it crosses the sheet in the slot."""
+    steel = worn(principled("steel", (0.86, 0.86, 0.87), rough=0.08, metal=1.0), "Scratches003", 3, 0.12)
+    bend, reach, wire = em(RING_BEND), em(RING_REACH), em(RING_WIRE)
+    steps = 48
+    line = [(bend * math.cos(math.pi * i / steps), bend * math.sin(math.pi * i / steps)) for i in range(steps + 1)]
+    line += [(-bend, -reach * i / 12) for i in range(1, 12)]
+    line += [(bend * math.cos(math.pi + math.pi * i / steps), -reach + bend * math.sin(math.pi + math.pi * i / steps)) for i in range(steps + 1)]
+    line += [(bend, -reach + reach * i / 12) for i in range(1, 12)]
+    bm = bmesh.new()
+    rings = []
+    around = 28
+    for i, (x, y) in enumerate(line):
+        ax, ay = line[i - 1]
+        bx, by = line[(i + 1) % len(line)]
+        length = math.hypot(bx - ax, by - ay)
+        nx, ny = (by - ay) / length, -(bx - ax) / length
+        rings.append(
+            [
+                bm.verts.new((x + wire * math.cos(2 * math.pi * k / around) * nx, -(y + wire * math.cos(2 * math.pi * k / around) * ny), wire * math.sin(2 * math.pi * k / around)))
+                for k in range(around)
+            ]
+        )
+    for i, a in enumerate(rings):
+        b = rings[(i + 1) % len(rings)]
+        for k in range(around):
+            bm.faces.new((a[k], b[k], b[(k + 1) % around], a[(k + 1) % around]))
+    loop = finish(STAGE, "ring", bm, steel)
+    tip = math.radians(16.5)
+    widen = Matrix.Diagonal((1 / math.cos(tip), 1, 1, 1))
+    loop.matrix_world = Matrix.Translation((em(RING_TURN[0]), -em(RING_TURN[1]), z)) @ Matrix.Rotation(-tip, 4, "Y") @ widen
 
 
-def dim_room():
-    """What the plastic and the ring reflect: a dark room with a few soft streaks of light in it, seen by
-    reflections only. Flat vinyl then lays a faint, uneven sheen over what is under it and the ink stays black."""
-    plane = bpy.data.meshes.new("room")
-    plane.from_pydata([(-70, -70, 0), (70, -70, 0), (70, 70, 0), (-70, 70, 0)], [], [(0, 1, 2, 3)])
-    obj = STAGE.add("room", plane)
-    obj["stand"] = "room"
-    obj.location = (em(FRAME[0]) / 2, -em(FRAME[1]) / 2, 36)
-    for seen in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission"):
-        setattr(obj, seen, False)
-    material = bpy.data.materials.new("room")
-    material.use_nodes = True
-    nodes, links = material.node_tree.nodes, material.node_tree.links
+def room(reflected):
+    """What the vinyl and the ring mirror. The camera is orthographic, so the flat of the sheet mirrors
+    whatever hangs straight over it, point for point. A sheet of light hangs just over the set, lit only
+    where the reference's vinyl shines and by as much, and clear everywhere else. Straight above that is a
+    black card, so the flat of the sheet mirrors nothing else; anything that curves or leans, the ring and
+    the shoulders of the beads, looks past the card into the studio. Only reflections see either."""
+    w, h = em(FRAME[0]), em(FRAME[1])
+    sheet = bpy.data.meshes.new("shine")
+    sheet.from_pydata([(0, -h, 0), (w, -h, 0), (w, 0, 0), (0, 0, 0)], [], [(0, 1, 2, 3)])
+    sheet.uv_layers.new().data.foreach_set("uv", [0, 0, 1, 0, 1, 1, 0, 1])
+    glow = bpy.data.materials.new("shine")
+    glow.use_nodes = True
+    nodes, links = glow.node_tree.nodes, glow.node_tree.links
     nodes.clear()
     coord = nodes.new("ShaderNodeTexCoord")
-    stretch = nodes.new("ShaderNodeMapping")
-    stretch.inputs["Scale"].default_value = (0.3, 0.035, 1.0)
-    stretch.inputs["Rotation"].default_value = (0, 0, math.radians(8))
-    cloud = nodes.new("ShaderNodeTexNoise")
-    cloud.inputs["Scale"].default_value = 1.0
-    cloud.inputs["Detail"].default_value = 3.0
-    lift = nodes.new("ShaderNodeMapRange")
-    lift.inputs["From Min"].default_value = 0.45
-    lift.inputs["From Max"].default_value = 0.75
-    lift.inputs["To Min"].default_value = 0.0
-    lift.inputs["To Max"].default_value = 1.1
+    lit = nodes.new("ShaderNodeTexImage")
+    lit.image = as_image("vinyl-shine", reflected * SHINE)
+    lit.interpolation = "Cubic"
+    lit.extension = "CLIP"
     emit = nodes.new("ShaderNodeEmission")
+    clear = nodes.new("ShaderNodeBsdfTransparent")
+    both = nodes.new("ShaderNodeAddShader")
     out = nodes.new("ShaderNodeOutputMaterial")
-    links.new(coord.outputs["Object"], stretch.inputs["Vector"])
-    links.new(stretch.outputs["Vector"], cloud.inputs["Vector"])
-    links.new(cloud.outputs["Fac"], lift.inputs["Value"])
-    links.new(lift.outputs["Result"], emit.inputs["Strength"])
-    links.new(emit.outputs[0], out.inputs["Surface"])
-    # Reflections find these by chance. Sampled as lights they would be picked and then thrown away,
-    # since nothing diffuse may see them, and the set would lose that share of its light.
-    material.cycles.emission_sampling = "NONE"
-    plane.materials.append(material)
-
-    # One long strip light. The camera is orthographic, so flat vinyl mirrors whatever hangs right over it.
-    strip = bpy.data.meshes.new("strip")
-    strip.from_pydata([(-0.55, -11, 0), (0.55, -11, 0), (0.55, 11, 0), (-0.55, 11, 0)], [], [(0, 1, 2, 3)])
-    glow = bpy.data.materials.new("strip")
-    glow.use_nodes = True
-    gn, gl = glow.node_tree.nodes, glow.node_tree.links
-    gn.clear()
-    lamp = gn.new("ShaderNodeEmission")
-    lamp.inputs["Strength"].default_value = 0.7
-    end = gn.new("ShaderNodeOutputMaterial")
-    gl.new(lamp.outputs[0], end.inputs["Surface"])
+    links.new(coord.outputs["UV"], lit.inputs["Vector"])
+    links.new(lit.outputs["Color"], emit.inputs["Strength"])
+    links.new(emit.outputs[0], both.inputs[0])
+    links.new(clear.outputs[0], both.inputs[1])
+    links.new(both.outputs[0], out.inputs["Surface"])
+    # Reflections find it by chance. Sampled as a light it would be picked and then thrown away, since
+    # nothing diffuse may see it, and the set would lose that share of its light.
     glow.cycles.emission_sampling = "NONE"
-    strip.materials.append(glow)
-    light = STAGE.add("strip", strip)
-    light["stand"] = "room"
-    light.location = (em(141), -em(520), 30)
-    for seen in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission"):
-        setattr(light, seen, False)
+    sheet.materials.append(glow)
+    shine = STAGE.add("shine", sheet)
+    shine.location = (0, 0, 2.0)
+
+    dark = bpy.data.meshes.new("room")
+    dark.from_pydata([(-24, -27, 0), (24, -27, 0), (24, 27, 0), (-24, 27, 0)], [], [(0, 1, 2, 3)])
+    dark.materials.append(principled("room", (0.004, 0.004, 0.004), rough=1.0, specular_ior_level=0.0))
+    ceiling = STAGE.add("room", dark)
+    ceiling.location = (w / 2, -h / 2, 130)
+    for obj in (shine, ceiling):
+        obj["stand"] = "room"
+        for seen in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission"):
+            setattr(obj, seen, False)
 
 
 def badge():
@@ -496,31 +552,35 @@ def badge():
     target = Vector((em(FRAME[0]) / 2, -em(FRAME[1]) / 2, 0))
     lamp.location = target + Vector((15, -34, 26))
     lamp.rotation_euler = (target - lamp.location).to_track_quat("-Z", "Y").to_euler()
-    # A big bright box beside the key that only shiny things see. It lights nothing and casts nothing,
-    # but every bead of vinyl that leans its way, and the ring, catch it as a white line.
+    # What shines in the reference is a lamp close to the lens, a little below and to the right of it.
+    # Only shiny things see this one: it lights nothing and casts nothing. Flat vinyl mirrors the dark
+    # above it and stays clear; a face that leans ten degrees its way, the shoulder of a bead or the
+    # crown of the wire, catches it white.
     flash = bpy.data.lights.new("flash", "AREA")
-    flash.size = 13
-    flash.energy = 150000
+    flash.size = 22
+    flash.energy = 480000
     flash.color = (0.88, 0.91, 1.0)
     spark = STAGE.add("flash", flash)
     spark["stand"] = "key"
-    spark.location = target + Vector((14, -32, 27))
+    # It hangs well outside the frame: straight over it, the flat of the sheet would mirror it whole.
+    spark.location = target + 120 * Vector((0.22, -0.28, 0.935)).normalized()
     spark.rotation_euler = (target - spark.location).to_track_quat("-Z", "Y").to_euler()
     spark.visible_diffuse = False
     spark.visible_transmission = False
-    plastic, end = holder()
+    lets_through, reflected = measured_vinyl()
+    plastic, end = holder(lets_through)
     card(PROP + 0.07)
-    steel_ring(PROP + LIFT + SHEET / 2)
-    dim_room()
+    steel_ring(PROP + LIFT + 0.01)
+    room(reflected)
     cx, cy = em(FRAME[0]) / 2, -em(FRAME[1]) / 2
     STAGE.shoot(
         "badge",
         (0, 0, em(FRAME[0]), em(FRAME[1])),
         bleed=0.0,
-        shadow=0.1,
+        shadow=0.0,
         exposure=0.88,
         room=0.95,
-        mat_through_glass=True,
+        mat_through_glass=False,
         shadowless=tuple(plastic),
         sharp=1.25,
     )
