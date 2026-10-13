@@ -14,7 +14,7 @@ function Likes() {
       </Reveal>
 
       <Reveal delay={0.25}>
-        <ul className="grid grid-cols-1 border-t border-ink/30 xl:grid-cols-2 xl:gap-x-[4vw]">
+        <ul className="grid grid-cols-1 border-t border-ink/30 @3xl:grid-cols-2 @3xl:gap-x-[4vw]">
           {profile.likes.map((like, i) => (
             <li key={like.title} className="row py-[0.9em]">
               <span className="flex items-baseline gap-[0.8em]">

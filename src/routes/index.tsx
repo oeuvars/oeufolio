@@ -10,8 +10,8 @@ function Basics() {
   const { headline, intro, questions, now } = profile.basics
 
   return (
-    <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[5vh] xl:grid-cols-12">
-      <div className="flex flex-col gap-[3.2vh] xl:col-span-7">
+    <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[5vh] @3xl:grid-cols-12">
+      <div className="flex flex-col gap-[3.2vh] @3xl:col-span-7">
         <Reveal delay={0.1}>
           <PageTitle before={headline.before} accent={headline.accent} after={headline.after} />
         </Reveal>
@@ -22,7 +22,7 @@ function Basics() {
         </Reveal>
       </div>
 
-      <div className="flex flex-col gap-[4vh] xl:col-span-5">
+      <div className="flex flex-col gap-[4vh] @3xl:col-span-5">
         <Reveal delay={0.35}>
           <p className="label row pb-[0.7em]">Questions</p>
           <dl>

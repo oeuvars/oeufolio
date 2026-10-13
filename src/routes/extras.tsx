@@ -15,8 +15,8 @@ function Extras() {
         <PageTitle before="A few " accent="extras" after="." />
       </Reveal>
 
-      <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[5vh] xl:grid-cols-12">
-        <Reveal delay={0.25} className="xl:col-span-7">
+      <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[5vh] @3xl:grid-cols-12">
+        <Reveal delay={0.25} className="@3xl:col-span-7">
           <p className="label row pb-[0.7em]">Art and design</p>
           <ul className="grid grid-cols-2 gap-[1.4em] pt-[1em]">
             {plates.map((plate, i) => (
@@ -39,7 +39,7 @@ function Extras() {
           </ul>
         </Reveal>
 
-        <Reveal delay={0.4} className="xl:col-span-5">
+        <Reveal delay={0.4} className="@3xl:col-span-5">
           <p className="label row pb-[0.7em]">Playlist</p>
           <div className="pt-[0.8em]">
             <p className="display text-[1.2em]">{playlist.title}</p>
