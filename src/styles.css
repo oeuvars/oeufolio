@@ -147,10 +147,9 @@
     color: var(--panel-ink, var(--band-ink));
   }
 
-  /* The badge's page has no frame: its panel is the whole strip above the foot, tabs lying over it. */
+  /* The badge's page has no frame: its panel is the whole strip, with the tabs lying over it. */
   .panel-hangs {
-    top: 0;
-    right: 0;
+    inset: 0;
     border-radius: 0;
   }
 
