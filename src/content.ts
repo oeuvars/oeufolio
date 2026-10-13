@@ -10,7 +10,7 @@ export const profile: Profile = {
   ],
   badge: {
     src: '/objects/badge.avif',
-    backdrop: { color: '#6f2f2a' },
+    backdrop: { color: '#e3b23c' },
     alt: 'An ID card in a clear vinyl holder on a steel ring. It reads The Performer, Drop 25, product-first engineer, Cybership. Name: Anurag Das. Occupation: Engineer. Shade: T3 Warm. The holder of this card is an official performer for me. 02-03X.',
   },
   likes: [
