@@ -42,9 +42,6 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3
     devDependencies:
-      '@fontsource/sometype-mono':
-        specifier: ^5.3.0
-        version: 5.3.0
       '@tanstack/router-cli':
         specifier: ^1.132.0
         version: 1.167.41
@@ -141,9 +138,6 @@ packages:
 
   '@fontsource/playfair-display@5.3.0':
     resolution: {integrity: sha512-uJSABalvdWc10fEPppQjQocamT21LEyRfzzWfRfqbkPz+sRv+kKpYDKyluBUskvJREkJTos9epj1WjQROGu99Q==}
-
-  '@fontsource/sometype-mono@5.3.0':
-    resolution: {integrity: sha512-Qqt/fCJh8W3VGLohf/fql6dtybk1RtMDXgzWyxI1RjeuqRr3vv/Y0Nl2M7C8NTwVN2SbeuoYg75HzP+3FQmJ0A==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1222,8 +1216,6 @@ snapshots:
   '@fontsource-variable/archivo@5.3.0': {}
 
   '@fontsource/playfair-display@5.3.0': {}
-
-  '@fontsource/sometype-mono@5.3.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

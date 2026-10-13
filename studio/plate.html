@@ -2,20 +2,15 @@
 <meta charset="utf-8" />
 <title>plate</title>
 <!--
-  The printed words on the card that differ from the reference, set in the card's own places.
-  What is written by hand on the three rules is not here: studio/badge.py writes that.
+  The mark beside the line under the title, and the three rules, in the card's own places.
+  The words are not here: studio/badge.py sets those from the reference's own letters.
   Coordinates are the card's pixels in the reference (415 x 655). Captured at 830 x 1310 CSS pixels,
   2x, into studio/assets/overlay.png: black is ink, white is bare card. studio/badge.py prints it
   onto the reference photograph where the old words were.
 -->
 <style>
-  @font-face {
-    font-family: 'Mono';
-    src: url('/node_modules/@fontsource/sometype-mono/files/sometype-mono-latin-400-normal.woff2') format('woff2');
-  }
   html, body { margin: 0; background: #fff; }
   svg { display: block; }
-  .mono { font-family: 'Mono', monospace; fill: #000; }
   .bold { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 700; }
 </style>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 415 655" width="830" height="1310">
@@ -26,9 +21,7 @@
     </filter>
   </defs>
 
-  <text class="mono" x="294" y="58" font-size="17.5" textLength="55.5" lengthAdjust="spacingAndGlyphs">DROP:25</text>
 
-  <text class="mono" x="33" y="156.7" font-size="17.1" textLength="226">PRODUCT-FIRST ENGINEER</text>
   <g filter="url(#scribble)">
     <rect x="275" y="141.5" width="66" height="18.5" rx="3" fill="#000" />
     <rect x="268" y="150" width="14" height="6" fill="#000" />

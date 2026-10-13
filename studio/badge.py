@@ -13,10 +13,12 @@ vinyl and the card are the photograph's and not a likeness of them. Three things
   the vinyl darkens or lightens it and nothing else, so the vinyl is see-through on whatever page it is
   laid on, and on a white one it reads as the photograph does.
 - The portrait is replaced inside the print's own outline, which sits a little askew in its printed box.
-- The words in REWRITTEN are rubbed out to bare card. The printed ones are set again from
-  studio/assets/overlay.png, a capture of studio/plate.html. The handwritten ones are written again in
-  the reference's own hand: its letters are lifted and put in a new order, and the few it never wrote
-  are drawn with the same pen.
+- The words in REWRITTEN are rubbed out to bare card and put back in the reference's own letters, lifted
+  and set in a new order. That goes for the type, the dot-matrix stamp and the handwriting. A letter the
+  reference never used is made from ones it did: a G from a C, a 5 from an E and a 3, stamp figures from
+  the stamp's own grid of dots, and a few capitals drawn with the marker's width of pen.
+- The mark beside the line under the title, and the three rules, come from studio/assets/overlay.png,
+  a capture of studio/plate.html.
 
 Writes public/objects/badge.avif at twice the reference's size. studio/badge_model.py is the earlier
 Blender model of the same badge; the page does not use it.
@@ -40,8 +42,11 @@ CARD = (162, 195, 577, 850)
 PRINT = ((274.2, 372.0), (456.8, 373.4), (458.4, 600.2), (271.4, 601.0))
 BLANK = (478, 385, 566, 595)  # bare card, to take paper grain from
 REWRITTEN = (
-    (502.6, 236, 514, 257),  # the last figure of the drop number
-    (190, 331, 560, 362),  # the line under the title
+    (504.6, 236, 514, 257),  # the last figure of the drop number
+    (186, 331, 560, 362),  # the line under the title
+    (320.5, 804.2, 380, 815.5),  # the end of the small print
+    (434, 788, 474, 832),  # the stamp, either side of its dash
+    (486, 788, 547, 832),
     (190, 653, 565, 660),  # the three rules
     (190, 708.5, 565, 715),
     (190, 764.5, 565, 771),
@@ -266,6 +271,107 @@ def handwriting(ref, shape):
     return out
 
 
+TYPE = (200.6, 10.22, 335.5, 353.5)  # the line under the title: middle of its first letter, pitch, top, bottom
+TITLE = "PRODUCT-FIRST ENGINEER"
+# Where each of its letters comes from. A number and two edges is a letter of the reference's own line,
+# SKIN-FIRST FOUNDATION: which one, counting from nought, and where it begins and ends. Its letters are
+# wider than their pitch and run into each other, so each is cut where it is clear of its neighbours.
+FROM_LINE = {
+    "R": (7, 266.2, 277.9),
+    "O": (19, 387.4, 399.7),
+    "D": (15, 349.6, 359.9),
+    "U": (13, 328.4, 338.9),
+    "T": (9, 287.7, 299.6),
+    "N": (3, 225.0, 237.8),
+    "I": (6, 258.8, 265.2),
+    "-": (4, 238.2, 245.0),
+    "F": (5, 246.2, 257.0),
+    "S": (8, 277.9, 287.7),
+}
+# The rest come from the narrower type the card's labels are set in. It is the same face, and the line
+# under the title is that face drawn out to about half as wide again: so are these.
+FROM_LABELS = {"P": (480.0, 239, 488.6, 254), "C": (205.0, 688, 212.6, 702.4), "E": (222.6, 633, 229.7, 646)}
+STAMP = (794.0, 5.33, 3.15)  # the stamp's dots: top row, and the pitch down and across
+STAMPED = (  # figures to make from dots, with the left column of each
+    (438.5, (".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###.")),
+    (489.7, (".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###.")),
+    (509.4, (".###.", "#...#", "....#", "..##.", "....#", "#...#", ".###.")),
+    (528.4, ("#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#")),
+)
+
+
+def printed(ref, shape):
+    """The reference's printed letters in their new places, as ink at the output's size."""
+    lum = ref.mean(axis=-1)
+    ink = np.clip((0.94 - lum) / (0.94 - PRINT_INK.mean()), 0, 1)
+    out = np.zeros(shape)
+
+    def take(x0, y0, x1, y1, w=None, h=None):
+        """The ink in a box of the reference, resampled to w by h reference pixels."""
+        w, h = w or x1 - x0, h or y1 - y0
+        rows, cols = round(h * UP), round(w * UP)
+        ys = y0 + (np.arange(rows) + 0.5) / rows * (y1 - y0) - 0.5
+        xs = x0 + (np.arange(cols) + 0.5) / cols * (x1 - x0) - 0.5
+        return np.clip(ndimage.map_coordinates(ink, np.meshgrid(ys, xs, indexing="ij"), order=3, mode="nearest"), 0, 1)
+
+    def tight(x0, y0, x1, y1):
+        """The box drawn in to the ink inside it."""
+        found = ink[round(y0) : round(y1), round(x0) : round(x1)] > 0.3
+        ys, xs = np.nonzero(found)
+        return round(x0) + xs.min() - 0.7, round(y0) + ys.min() - 0.7, round(x0) + xs.max() + 1.7, round(y0) + ys.max() + 1.7
+
+    def put(mark, x, y):
+        top, left = round(y * UP), round(x * UP)
+        h, w = mark.shape
+        out[top : top + h, left : left + w] = np.maximum(out[top : top + h, left : left + w], mark)
+
+    # The line under the title.
+    first, pitch, top, bottom = TYPE
+    for i, letter in enumerate(TITLE):
+        middle = first + i * pitch
+        if letter == " ":
+            continue
+        if letter in FROM_LINE:
+            source, x0, x1 = FROM_LINE[letter]
+            put(take(x0, top, x1, bottom), middle - (first + source * pitch - x0), top)
+            continue
+        box = tight(*FROM_LABELS["C" if letter == "G" else letter])
+        wide = {"P": 10.4, "C": 10.6, "E": 9.8, "G": 10.8}[letter] + 1.4
+        mark = np.clip(take(*box, wide, 16.4) * 1.3, 0, 1) ** 0.85
+        if letter == "G":  # a C with a bar and a spur
+            h, w = mark.shape
+            bar = np.zeros_like(mark)
+            bar[round(0.5 * h) : round(0.5 * h) + round(2.0 * UP), round(0.52 * w) : w - round(1.5 * UP)] = 0.85
+            bar[round(0.5 * h) : round(0.76 * h), w - round(4.0 * UP) : w - round(1.5 * UP)] = 0.85
+            mark = np.maximum(mark, blurred(bar, 0.45 * UP))
+        put(mark, middle - wide / 2 + (0.5 if letter in "PE" else 0.0), 336.3)
+
+    # The drop number's 5: the top of an E on the bottom of the 3 it replaces.
+    three = tight(505.0, 239, 513.4, 255)
+    w, h = three[2] - three[0], three[3] - three[1]
+    lower, upper = take(*three), take(*tight(*FROM_LABELS["E"]), w, h)
+    rows = np.arange(lower.shape[0])[:, None] / lower.shape[0]
+    put(np.maximum(upper * (rows < 0.55), lower * (rows > 0.45)), three[0], three[1])
+
+    # The small print ends FOR ME. Both letters are in PERFORMER, side by side.
+    put(take(276.3, 804.2, 289.2, 815), 322.6, 804.2)
+
+    # The stamp. Its 2 is moved along, and the other figures are made of the same dots on the same grid.
+    put(take(507.2, 790, 524.6, 831), 507.2 - 51.8, 790)
+    top, down, across = STAMP
+    spots = []
+    for column, rows_ in STAMPED:
+        on = [(c, r) for r, row in enumerate(rows_) for c, mark in enumerate(row) if mark == "#"]
+        spots += [(column + c * across, top + r * down) for c, r in on]
+        spots += [(column + c * across, top + (r + 0.5) * down) for c, r in on if (c, r + 1) in on]  # stems are struck twice
+    Y, X = np.mgrid[round(786 * UP) : round(834 * UP), round(432 * UP) : round(548 * UP)] + 0.5
+    dots = np.zeros(X.shape)
+    for x, y in spots:
+        dots = np.maximum(dots, np.clip((2.0 * UP - np.hypot(X - x * UP, Y - y * UP)) / (0.8 * UP) + 0.5, 0, 1))
+    put(np.clip(blurred(dots, 0.35 * UP), 0, 1), 432, 786)
+    return out
+
+
 def words(card, X, Y, ref):
     """Rub the old words out to bare card and put the new ones there."""
     rubbed = np.zeros(X.shape)
@@ -279,6 +385,7 @@ def words(card, X, Y, ref):
     ink[cy0:cy1, cx0:cx1] = 1 - np.asarray(plate, dtype=np.float64) / 255
     # The photograph's own type has spread and softened. So does this, or it would sit on top of the picture.
     ink = np.clip(blurred(ink, 0.6 * UP) * 1.08, 0, 1) * (rubbed > 0.5)
+    ink = np.maximum(ink, printed(ref, X.shape) * (rubbed > 0.5))
     card = card * (1 - ink[..., None]) + PRINT_INK * ink[..., None]
 
     # A marker runs a little dry in places.
