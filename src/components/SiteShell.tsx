@@ -220,7 +220,7 @@ export function SiteShell({ children }: SiteShellProps) {
             >
               <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs ? 'panel-hangs' : ''}`}>
                 {pageTones[i].hangs ? (
-                  <Badge badge={profile.badge} open={open} />
+                  <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
                 ) : (
                   <motion.div
                     aria-hidden
