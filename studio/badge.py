@@ -278,14 +278,14 @@ def handwriting(ref, shape):
 
 # The title is not the reference's: it is set in Geist Mono and printed as old letterpress is.
 # Its last line stands as far above the rule as the reference's title did at nine tenths of its size,
-# and its capitals are 15% shorter than that title's were.
+# and its capitals are 15% shorter than that title's were, then a tenth taller again.
 # Instrument Serif is kept beside it: TITLE_FACE "InstrumentSerif-Regular.ttf", TITLE_WEIGHT None,
 # TITLE_BOLD 0.8 and TITLE_TRACK -1.9 set the title in that.
 HEADLINE = ("THE", "PERFORMER")
 TITLE_FACE = os.path.join(HERE, "assets", "fonts", "GeistMono[wght].ttf")
 TITLE_WEIGHT = 800  # where the face has a weight axis; None where it has one weight
 TITLE_AT = (193.0, 311.0)  # the left edge, and the baseline of the last line
-TITLE_CAP = 48.0 * 0.9 * 0.85  # the height of a capital
+TITLE_CAP = 48.0 * 0.9 * 0.85 * 1.1  # the height of a capital
 TITLE_BOLD = 0.0  # a face with one weight has every stroke thickened by this much on each side
 TITLE_TRACK = -3.0  # the letters are set this much closer, so they run into each other as the reference's do
 TITLE_LEAD = 1.16  # baseline to baseline, in capitals
