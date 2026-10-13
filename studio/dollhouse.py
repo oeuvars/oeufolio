@@ -5,18 +5,20 @@
     bottom   a dispatch room: trunks stacked and strapped, a trolley, and the stairs
 
 Each floor is one long room and one narrow one, and they change sides from floor to floor. Over each floor
-a painted board runs across the front, as over a shop, with the job fixed to it in raised gilt letters: the
-company in the middle, and the month it began and the month it ended at either end. Run from the
+a painted board runs across the front, as over a shop, with the company on it in red neon, and the month
+the job began and the month it ended in small lit letters at either end, each under a brass lamp. Run from the
 repository root:
 
     blender -b --factory-startup -P studio/dollhouse.py -- [--scale 0.5] [--samples 128]
 
-Writes public/objects/dollhouse.webp, lit from the front and cut out from its background. The lettering
+Writes public/objects/dollhouse.webp, by night with its lamps lit, in the snow among pines with mountains
+behind. The sky is left clear, for the page's own night to show through. The lettering
 is JOBS below, which has to say what experience says in src/content.ts.
 """
 
 import math
 import os
+import random
 import sys
 
 import bmesh
@@ -48,7 +50,9 @@ HALF = (LONG + NARROW + 3 * WALL) / 2
 TOP = SLAB + 3 * (HIGH + FASCIA)
 EAVE, RIDGE = 0.3, 1.6
 # What the camera frames: the building and a margin round it.
-FRAME_W, FRAME_H = 2 * HALF + 1.0, TOP + EAVE + RIDGE + 1.3
+FRAME_W, FRAME_H = 2 * HALF + 4.9, TOP + EAVE + RIDGE + 2.9
+# Nothing in a model is set down dead square. The same slips every time.
+random.seed(7)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -60,9 +64,9 @@ def linear(code):
     return tuple(channel(int(code[i : i + 2], 16) / 255) for i in (1, 3, 5)) + (1,)
 
 
-def paint(colour, rough=0.6, metal=0.0, glow=0.0):
+def paint(colour, rough=0.6, metal=0.0, glow=0.0, grain=None):
     """A plain material. glow is how brightly it shines of itself."""
-    key = (colour, rough, metal, glow)
+    key = (colour, rough, metal, glow, grain)
     if key not in materials:
         material = bpy.data.materials.new(colour)
         material.use_nodes = True
@@ -74,12 +78,12 @@ def paint(colour, rough=0.6, metal=0.0, glow=0.0):
             shader.inputs["Emission Color"].default_value = linear(colour)
             shader.inputs["Emission Strength"].default_value = glow
         else:
-            worn(material, colour=linear(colour))
+            worn(material, colour=linear(colour), grain=grain)
         materials[key] = material
     return materials[key]
 
 
-def worn(material, colour=None, source=None, under=None, tooth_depth=0.22):
+def worn(material, colour=None, source=None, under=None, tooth_depth=0.22, grain=None):
     """Nothing in a model is quite flat or quite one colour: give a material a fine tooth, and mottle it."""
     nodes, links = material.node_tree.nodes, material.node_tree.links
     shader = nodes["Principled BSDF"]
@@ -113,7 +117,26 @@ def worn(material, colour=None, source=None, under=None, tooth_depth=0.22):
         mix.inputs["Color1"].default_value = colour
     else:
         links.new(source, mix.inputs["Color1"])
-    links.new(mix.outputs["Color"], shader.inputs["Base Color"])
+    # Dirt gathers where two surfaces meet, and nowhere else.
+    nook, dirt, soiled = nodes.new("ShaderNodeAmbientOcclusion"), nodes.new("ShaderNodeMapRange"), nodes.new("ShaderNodeMixRGB")
+    nook.inputs["Distance"].default_value = 0.35
+    dirt.inputs["From Min"].default_value, dirt.inputs["To Min"].default_value = 0.35, 0.3
+    soiled.blend_type = "MULTIPLY"
+    soiled.inputs["Fac"].default_value = 1
+    links.new(nook.outputs["AO"], dirt.inputs["Value"])
+    links.new(mix.outputs["Color"], soiled.inputs["Color1"])
+    links.new(dirt.outputs["Result"], soiled.inputs["Color2"])
+    links.new(soiled.outputs["Color"], shader.inputs["Base Color"])
+    if grain:
+        # Wood: long streaks down its length, darker and a little raised.
+        place, stretch, streaks = nodes.new("ShaderNodeNewGeometry"), nodes.new("ShaderNodeMapping"), nodes.new("ShaderNodeTexNoise")
+        stretch.inputs["Scale"].default_value = {"X": (2, 50, 50), "Z": (50, 50, 2)}[grain]
+        streaks.inputs["Detail"].default_value = 5
+        links.new(place.outputs["Position"], stretch.inputs["Vector"])
+        links.new(stretch.outputs["Vector"], streaks.inputs["Vector"])
+        links.new(streaks.outputs["Fac"], shade.inputs["Value"])
+        shade.inputs["To Min"].default_value, shade.inputs["To Max"].default_value = 0.5, 1.2
+        links.new(streaks.outputs["Fac"], bump.inputs["Height"])
 
 
 def papered(one, two, width, chequer=False, rough=0.7):
@@ -178,7 +201,7 @@ def laid(one, two, joint, across, down, lie="wall", rough=0.6, sunk=0.5):
         bump.inputs["Strength"].default_value = sunk
         bump.inputs["Distance"].default_value = 0.03
         links.new(height.outputs[0], bump.inputs["Height"])
-        worn(material, source=courses.outputs["Color"], under=bump)
+        worn(material, source=courses.outputs["Color"], under=bump, grain="X" if lie == "floor" else None)
         materials[key] = material
     return materials[key]
 
@@ -213,18 +236,21 @@ def ball(x, y, z, radius, material):
     bpy.ops.object.shade_smooth()
 
 
-def lettered(words, x, z, size, align="CENTER", weight=0.0):
-    """Raised letters fixed to the front of a board: capitals, spaced out, standing a little proud of it."""
-    bpy.ops.object.text_add(location=(x, -0.075, z), rotation=(math.pi / 2, 0, 0))
+def lettered(words, x, z, size, align="CENTER", neon=True):
+    """A sign on the front of a board, in spaced capitals. In neon it is glass tube bent round each letter's
+    outline and stood a little off the paint, which it lights. Otherwise it is small lit letters, solid."""
+    bpy.ops.object.text_add(location=(x, -0.13 if neon else -0.085, z), rotation=(math.pi / 2, 0, 0))
     text = bpy.context.object.data
     text.body = words.upper()
     if os.path.exists(FUTURA):
         text.font = bpy.data.fonts.load(FUTURA, check_existing=True)
-    text.size, text.space_character = size, 1.16
+    text.size, text.space_character = size, 1.2 if neon else 1.16
     text.align_x, text.align_y = align, "CENTER"
-    # The face is a medium, and a sign's letters are cut fatter.
-    text.offset, text.extrude, text.bevel_depth, text.bevel_resolution = weight, 0.022, 0.006, 2
-    bpy.context.object.data.materials.append(GILT)
+    if neon:
+        text.fill_mode, text.bevel_depth, text.bevel_resolution = "NONE", 0.021, 3
+    else:
+        text.offset, text.extrude = 0.004, 0.012
+    bpy.context.object.data.materials.append(paint("#ff5648", glow=11) if neon else paint("#ffd88a", glow=3.2))
 
 
 def lamp(x, y, z, watts, across, colour="#ffd9a0"):
@@ -234,8 +260,7 @@ def lamp(x, y, z, watts, across, colour="#ffd9a0"):
 
 
 PINK, PLASTER, CREAM, BRASS = paint("#e2939f", 0.75), paint("#eaa7b0", 0.75), paint("#f1e4c9", 0.7), paint("#c9982f", 0.3, 1.0)
-GILT = paint("#e0b040", 0.24, 1.0)
-WOOD, DARK, STEEL = paint("#7a4a2e"), paint("#3b1f1a"), paint("#aeb8b8", 0.35, 1.0)
+WOOD, DARK, STEEL = paint("#7a4a2e", 0.5, grain="Z"), paint("#3b1f1a"), paint("#aeb8b8", 0.35, 1.0)
 BULB = paint("#ffe2a8", glow=30)
 BOARDS = laid("#8a5a3c", "#6f4429", "#3a2416", 2.4, 0.22, "floor", 0.4, 0.35)
 BRICK = laid("#b4532f", "#9a4326", "#d9cdb8", 0.42, 0.14, "wall", 0.8, 0.6)
@@ -249,14 +274,14 @@ def bulb(x, y, z, watts):
 
 
 def pendant(x, y, ceiling, shade):
-    bulb(x, y, ceiling - 0.78, 420)
+    bulb(x, y, ceiling - 0.78, 360)
     rod(x, y, ceiling - 0.25, 0.012, 0.5, DARK)
     rod(x, y, ceiling - 0.6, 0.3, 0.24, shade, top=0.06)
     ball(x, y, ceiling - 0.68, 0.09, BULB)
 
 
 def sconce(x, z):
-    bulb(x, DEEP - 0.36, z + 0.06, 170)
+    bulb(x, DEEP - 0.36, z + 0.06, 150)
     rod(x, DEEP - 0.08, z, 0.03, 0.16, BRASS, "Y")
     ball(x, DEEP - 0.2, z + 0.06, 0.11, BULB)
 
@@ -271,17 +296,29 @@ def room(x0, x1, z0, wall, floor, dado=None):
     if dado:
         box(x0, x1, DEEP - 0.06, DEEP, z0, z0 + 1.0, dado)
         box(x0, x1, DEEP - 0.09, DEEP, z0 + 1.0, z0 + 1.07, CREAM)
-    lamp((x0 + x1) / 2, DEEP * 0.45, z0 + HIGH - 0.1, 6 * (x1 - x0), min(x1 - x0, 5))
+    lamp((x0 + x1) / 2, DEEP * 0.45, z0 + HIGH - 0.1, 2 * (x1 - x0), min(x1 - x0, 5))
     # A skirting along the foot of the back wall, and a cornice under the ceiling.
     box(x0, x1, DEEP - 0.07, DEEP - 0.02, z0 + 0.02, z0 + 0.16, CREAM)
     box(x0, x1, DEEP - 0.12, DEEP - 0.02, z0 + HIGH - 0.14, z0 + HIGH - 0.02, CREAM)
 
 
+def askew(parts, most=0.07):
+    """Turn the pieces of one thing together about its middle, as a hand leaves it."""
+    turn = random.uniform(-most, most)
+    for part in parts:
+        part.rotation_euler.z = turn
+        part.location.x += random.uniform(-0.012, 0.012) if part is parts[0] else 0
+
+
 def carton(x, y, z, w, d, h, body, ribbon):
     """A box tied up with ribbon, standing on z."""
-    box(x - w / 2, x + w / 2, y - d / 2, y + d / 2, z, z + h, body)
-    box(x - 0.03, x + 0.03, y - d / 2 - 0.006, y + d / 2 + 0.006, z, z + h + 0.006, ribbon)
-    box(x - w / 2 - 0.006, x + w / 2 + 0.006, y - 0.03, y + 0.03, z, z + h + 0.006, ribbon)
+    askew(
+        [
+            box(x - w / 2, x + w / 2, y - d / 2, y + d / 2, z, z + h, body),
+            box(x - 0.03, x + 0.03, y - d / 2 - 0.006, y + d / 2 + 0.006, z, z + h + 0.006, ribbon),
+            box(x - w / 2 - 0.006, x + w / 2 + 0.006, y - 0.03, y + 0.03, z, z + h + 0.006, ribbon),
+        ]
+    )
 
 
 def parcels(x0, x1, z0):
@@ -366,10 +403,10 @@ def dispatch(x0, x1, z0):
     room(x0, x1, z0, papered("#e3a933", "#e9b647", 0.26), papered("#2f8f8a", "#efe6d2", 0.55, chequer=True, rough=0.3), paint("#2f8f8a", 0.5))
 
     def trunk(x, y, z, w, d, h, hide):
-        box(x - w / 2, x + w / 2, y - d / 2, y + d / 2, z, z + h, hide)
+        box(x - w / 2, x + w / 2, y - d / 2, y + d / 2, z, z + h, hide).rotation_euler.z = random.uniform(-0.03, 0.03)
         for across in (-0.28, 0.28):
-            box(x + across * w - 0.035, x + across * w + 0.035, y - d / 2 - 0.008, y + d / 2 + 0.008, z, z + h + 0.008, strap)
-        box(x - 0.09, x + 0.09, y - d / 2 - 0.03, y - d / 2, z + h * 0.62, z + h * 0.72, BRASS)
+            box(x + across * w - 0.035, x + across * w + 0.035, y - d / 2 - 0.012, y + d / 2 + 0.012, z, z + h + 0.008, strap)
+        box(x - 0.09, x + 0.09, y - d / 2 - 0.035, y - d / 2 - 0.005, z + h * 0.62, z + h * 0.72, BRASS)
 
     for side in (-1, 1):
         for row, across in enumerate((3, 2, 1)):
@@ -402,7 +439,7 @@ def lift(x0, x1, z0):
         box(middle + side * 0.36 - 0.33, middle + side * 0.36 + 0.33, DEEP - 0.14, DEEP - 0.1, z0 + 0.04, z0 + 2.27, paint("#c4532a", 0.35))
     rod(middle, DEEP - 0.06, z0 + 2.52, 0.14, 0.05, BRASS, "Y")
     ball(middle, 2.0, z0 + HIGH - 0.3, 0.14, BULB)
-    bulb(middle, 2.0, z0 + HIGH - 0.52, 160)
+    bulb(middle, 2.0, z0 + HIGH - 0.52, 190)
 
 
 def vault(x0, x1, z0):
@@ -417,7 +454,7 @@ def vault(x0, x1, z0):
     bpy.context.object.data.materials.append(BRASS)
     bpy.ops.object.shade_smooth()
     ball(middle, 2.0, z0 + HIGH - 0.3, 0.14, BULB)
-    bulb(middle, 2.0, z0 + HIGH - 0.52, 160)
+    bulb(middle, 2.0, z0 + HIGH - 0.52, 190)
 
 
 def stairs(x0, x1, z0):
@@ -425,7 +462,7 @@ def stairs(x0, x1, z0):
     for step in range(9):
         box(x0 + 0.1 + step * 0.26, x1 - 0.02, DEEP - 1.3, DEEP - 0.02, z0 + step * 0.3, z0 + (step + 1) * 0.3, WOOD if step % 2 else paint("#8a5a3c", 0.45))
     ball((x0 + x1) / 2, 2.0, z0 + HIGH - 0.3, 0.14, BULB)
-    bulb((x0 + x1) / 2, 2.0, z0 + HIGH - 0.52, 160)
+    bulb((x0 + x1) / 2, 2.0, z0 + HIGH - 0.52, 190)
 
 
 # The shell: a base, the walls and the floors between, all plastered pink.
@@ -446,19 +483,18 @@ for storey in range(3):
     box(-HALF - 0.04, HALF + 0.04, -0.1, 0.02, foot, foot + 0.07, CREAM)
     began, company, ended = JOBS[storey]
     middle = foot + FASCIA / 2 - 0.01
-    lettered(company, 0, middle, 0.56, weight=0.012)
-    lettered(began, -HALF + 0.55, middle, 0.25, "LEFT", 0.005)
-    lettered(ended, HALF - 0.55, middle, 0.25, "RIGHT", 0.005)
-    # A row of brass lamps on arms over the board, each throwing its own pool of light down the paint.
+    lettered(company, 0, middle, 0.66)
+    lettered(began, -HALF + 0.55, middle, 0.27, "LEFT", neon=False)
+    lettered(ended, HALF - 0.55, middle, 0.27, "RIGHT", neon=False)
+    # A brass lamp on an arm over either end of the board, looking back at the months.
     head = foot + FASCIA - 0.03
-    for i in range(5):
-        x = (i - 2) * 2.5
-        rod(x, -0.2, head, 0.014, 0.42, BRASS, "Y")
-        rod(x, -0.42, head - 0.05, 0.1, 0.13, BRASS, top=0.03)
-        ball(x, -0.42, head - 0.1, 0.035, BULB)
-        bpy.ops.object.light_add(type="SPOT", location=(x, -0.42, head - 0.13), rotation=(math.radians(16), 0, 0))
+    for x in (-HALF + 1.35, HALF - 1.35):
+        rod(x, -0.4, head, 0.014, 0.82, BRASS, "Y")
+        rod(x, -0.82, head - 0.05, 0.1, 0.13, BRASS, top=0.03)
+        ball(x, -0.82, head - 0.1, 0.035, BULB)
+        bpy.ops.object.light_add(type="SPOT", location=(x, -0.82, head - 0.13), rotation=(math.radians(48), 0, 0))
         spot = bpy.context.object.data
-        spot.energy, spot.spot_size, spot.spot_blend, spot.shadow_soft_size = 260, math.radians(115), 0.7, 0.03
+        spot.energy, spot.spot_size, spot.spot_blend, spot.shadow_soft_size = 300, math.radians(110), 0.8, 0.04
         spot.color = linear("#ffc98a")[:3]
     # The long room is on the left on the top and bottom floors, and on the right between them.
     left = LONG if storey != 1 else NARROW
@@ -522,12 +558,64 @@ box(-HALF - 0.04, HALF + 0.04, -0.05, 0.02, SLAB - 0.07, SLAB, CREAM)
 box(-HALF - 0.12, HALF + 0.12, -0.12, 0.02, TOP - 0.16, TOP, CREAM)
 box(-HALF - 0.2, HALF + 0.2, -0.2, 0.02, TOP - 0.06, TOP + 0.04, CREAM)
 
-# The light of a shop window: a low sun square on, and the sky to fill the shadows.
-bpy.ops.object.light_add(type="SUN", rotation=(math.radians(52), 0, math.radians(-34)))
-bpy.context.object.data.energy, bpy.context.object.data.angle = 2.5, math.radians(5)
-# The table it stands on, which shows only as the shadow the building leaves there.
-bpy.ops.mesh.primitive_plane_add(size=80, location=(0, 0, 0))
-bpy.context.object.is_shadow_catcher = True
+# Night: the moon from over the left shoulder, hardly any sky, and every lamp in the house lit.
+bpy.ops.object.light_add(type="SUN", rotation=(math.radians(50), 0, math.radians(-38)))
+bpy.context.object.data.energy, bpy.context.object.data.angle = 0.42, math.radians(4)
+bpy.context.object.data.color = linear("#a9bcff")[:3]
+# What light there is in the street: a wide, weak lamp well out in front, so the front is not lost.
+bpy.ops.object.light_add(type="AREA", location=(0, -14, TOP * 0.6), rotation=(math.pi / 2, 0, 0))
+bpy.context.object.data.energy, bpy.context.object.data.size = 650, 14
+bpy.context.object.data.color = linear("#ffd9b0")[:3]
+# Where it stands: a field of snow, pines to either side, and the mountains behind, painted as a backdrop
+# is, each range paler than the one in front. The sky is left out, so the page's own night shows there.
+snow = paint("#dfe6f2", 0.9)
+bpy.ops.mesh.primitive_plane_add(size=1, location=(0, 60, -0.32))
+bpy.context.object.scale = (260, 150, 1)
+bpy.context.object.data.materials.append(snow)
+
+
+def backdrop(distance, colour, low, high, step, seed):
+    """A range of mountains cut out of board and stood up behind: a ragged line of peaks, lit by nothing."""
+    rise = random.Random(seed)
+    material = bpy.data.materials.new("range")
+    material.use_nodes = True
+    shader = material.node_tree.nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (0, 0, 0, 1)
+    shader.inputs["Emission Color"].default_value = linear(colour)
+    shader.inputs["Emission Strength"].default_value = 1
+    mesh = bpy.data.meshes.new("range")
+    build = bmesh.new()
+    reach = distance * 1.6
+    ridge = [(x, rise.uniform(low, high) if i % 2 else rise.uniform(low * 0.55, low)) for i, x in enumerate(range(int(-reach), int(reach) + step, step))]
+    foot = [build.verts.new((x, distance, -1)) for x, _ in ridge]
+    crest = [build.verts.new((x + rise.uniform(-step / 4, step / 4), distance, z)) for x, z in ridge]
+    for i in range(len(ridge) - 1):
+        build.faces.new((foot[i], foot[i + 1], crest[i + 1], crest[i]))
+    build.to_mesh(mesh)
+    solid = bpy.data.objects.new("range", mesh)
+    scene.collection.objects.link(solid)
+    solid.data.materials.append(material)
+
+
+# Their heights keep every peak inside the frame, so that it is sky, and not mountain, that meets its edges.
+backdrop(150, "#3d4870", 24, 44, 26, 3)
+backdrop(105, "#2f395d", 16, 29, 17, 5)
+backdrop(70, "#222a48", 9, 17, 9, 8)
+bpy.ops.mesh.primitive_circle_add(radius=5.5, fill_type="NGON", location=(-34, 170, 96), rotation=(math.pi / 2, 0, 0))
+bpy.context.object.data.materials.append(paint("#f6edcf", glow=3))
+
+pine, trunk_bark = paint("#173a31", 0.8), paint("#3a2a1e", 0.8)
+grove = random.Random(11)
+for side in (-1, 1):
+    for i in range(16):
+        x = side * (HALF + 1.6 + grove.uniform(0, 9) + i * 0.5)
+        y, tall = grove.uniform(1.5, 26), grove.uniform(5.5, 10.5)
+        rod(x, y, 0.4, 0.16, 1.4, trunk_bark)
+        for tier in range(4):
+            rod(x, y, 1.0 + tall * (0.16 + tier * 0.22), tall * (0.26 - tier * 0.05), tall * 0.4, pine, top=0.02)
+# A stone step for it to stand on.
+box(-HALF - 0.55, HALF + 0.55, -0.7, DEEP + WALL, -0.32, 0, paint("#8f8a80", 0.8))
+box(-HALF - 0.3, HALF + 0.3, -0.4, DEEP + WALL, -0.02, 0.12, paint("#a39d90", 0.8))
 world = bpy.data.worlds.new("sky")
 world.use_nodes = True
 sky = world.node_tree.nodes.new("ShaderNodeTexSky")
@@ -537,19 +625,19 @@ try:
 except AttributeError:
     pass
 world.node_tree.links.new(sky.outputs["Color"], world.node_tree.nodes["Background"].inputs["Color"])
-world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.13
+world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.025
 scene.world = world
 
 # A long lens from well back and square on, so the rooms keep their depth and nothing leans.
-distance = 46
-bpy.ops.object.camera_add(location=(0, -distance, FRAME_H / 2 - 0.5), rotation=(math.pi / 2, 0, 0))
+distance = 27
+bpy.ops.object.camera_add(location=(0, -distance, FRAME_H / 2 - 1.05), rotation=(math.pi / 2, 0, 0))
 scene.camera = bpy.context.object
 scene.camera.data.sensor_width = 36
 scene.camera.data.lens = 36 * distance / FRAME_W
 # A model this small is never sharp from front to back.
 scene.camera.data.dof.use_dof = True
-scene.camera.data.dof.focus_distance = distance + 1.6
-scene.camera.data.dof.aperture_fstop = 0.32
+scene.camera.data.dof.focus_distance = distance + 0.6
+scene.camera.data.dof.aperture_fstop = 0.5
 scene.render.resolution_x = int(1600 * SCALE)
 scene.render.resolution_y = int(1600 * SCALE * FRAME_H / FRAME_W)
 scene.render.film_transparent = True
@@ -567,13 +655,13 @@ except Exception:
     pass
 scene.view_settings.view_transform = "AgX"
 try:
-    scene.view_settings.look = "AgX - Punchy"
+    scene.view_settings.look = "AgX - Medium High Contrast"
 except TypeError:
     pass
-scene.view_settings.exposure = 0.3
+scene.view_settings.exposure = 0.15
 scene.render.image_settings.file_format = "WEBP"
 scene.render.image_settings.color_mode = "RGBA"
 scene.render.image_settings.quality = 90
 scene.render.filepath = os.path.join(ROOT, "public", "objects", "dollhouse.webp")
 bpy.ops.render.render(write_still=True)
-print("frame", FRAME_W, FRAME_H, "half", HALF, "top", TOP)
+print("frame", FRAME_W, FRAME_H, "pixels", scene.render.resolution_x, scene.render.resolution_y)

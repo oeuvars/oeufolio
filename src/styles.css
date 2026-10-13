@@ -10,10 +10,6 @@
   --font-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, monospace;
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-futura: 'Jost Variable', Futura, 'Century Gothic', sans-serif;
-
-  /* The work page's poster: a teal sheet lettered in cocoa and brick red. */
-  --color-brick: #b3291b;
-  --color-cocoa: #3b1f1a;
 }
 
 @theme inline {
