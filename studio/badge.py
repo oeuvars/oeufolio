@@ -337,8 +337,9 @@ def letterpress():
     Old metal type on soft card does four things a screen does not. The ink spreads, so the letters are a
     little fatter than the face and their edges are rough where it crept into the grain. It is squeezed
     out from under the type, so it lies thicker round the edge of a letter than in the middle. It does not
-    take evenly, so a stem is paler in patches and has pinholes where the card shows. And the sorts are
-    worn and never sit dead level, so each letter stands a hair off its line."""
+    take evenly, so a stem is paler in patches and the card's tooth and fibres leak through it, while a
+    little of the ink leaks out into the card round each letter. And the sorts are worn and never sit dead
+    level, so each letter stands a hair off its line."""
     fine = 4  # drawn this many times the output's size, so the roughness is in the ink and not the pixels
     px = UP * fine
     x0, y0, x1, y1 = TITLE_BOX
@@ -385,6 +386,23 @@ def letterpress():
     weight *= 1 - 0.22 * np.clip((noise(1.6) - 1.3) / 0.6, 0, 1)
     holes = np.clip((noise(0.22) - 2.05) / 0.3, 0, 1) * body
     inked = inked * weight * (1 - 0.85 * holes)
+    # The card leaks through. Its tooth shows as flecks where the type did not press ink down into it, and
+    # its fibres as short pale streaks along the sheet. Both come thick where the type is worn and thin
+    # where it is not, so the wear lies across the words in patches.
+    def grain(across, down):
+        fy = np.fft.fftfreq(rows)[:, None]
+        fx = np.fft.rfftfreq(cols)[None, :]
+        kernel = np.exp(-2 * np.pi**2 * ((across * px * fx) ** 2 + (down * px * fy) ** 2))
+        field = np.fft.irfft2(np.fft.rfft2(rng.standard_normal((rows, cols))) * kernel, s=(rows, cols))
+        return field / field.std()
+
+    worn = np.clip(0.5 + 0.55 * noise(7.0), 0, 1)
+    tooth = np.clip((grain(0.17, 0.17) - (1.95 - 1.05 * worn)) / 0.3, 0, 1)
+    fibres = np.clip((grain(1.5, 0.2) - (2.35 - 1.0 * worn)) / 0.3, 0, 1)
+    inked *= 1 - np.maximum(0.8 * tooth, 0.9 * fibres)
+    # And the ink leaks out: a faint stain round each letter, running a little way along the fibres.
+    stain = np.clip(blurred(type_, 1.0 * px) * 2.4, 0, 1) * np.clip(0.45 + 0.5 * grain(1.1, 0.3), 0, 1)
+    inked = np.maximum(inked, 0.2 * stain)
     # Flecks of ink the type threw clear of itself.
     near = np.clip(blurred(type_, 2.2 * px) * 3, 0, 1) * (1 - np.clip(soft * 4, 0, 1))
     inked = np.maximum(inked, 0.55 * near * np.clip((noise(0.2) - 2.6) / 0.25, 0, 1))
