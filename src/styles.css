@@ -6,6 +6,29 @@
 @import '@fontsource/petit-formal-script/400.css';
 @import 'tailwindcss';
 
+/* On the mat, a tap on a phone still plays an object's hover. Mat holds data-lingering on an object the pointer
+   has brushed, so its move finishes after the pointer has gone. */
+@custom-variant brushed (&:is(:hover, [data-lingering]));
+
+/* A mat too narrow to strew its objects on, which stacks them in rows. */
+@custom-variant stacked (&:where([data-stacked='true'] *));
+
+/* How fast a turning part on the mat turns, as a multiple of its own pace. It is a number so that it can ease. */
+@property --rate {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+/* The mat's live type, which has to match the type in its renders. */
+@font-face {
+  font-family: 'Paper Mono';
+  src: url('/fonts/paper-mono-vf.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-display: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
   --font-sans: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
@@ -14,11 +37,57 @@
   --font-futura: 'Jost Variable', Futura, 'Century Gothic', sans-serif;
   --font-geist: 'Geist Mono Variable', ui-monospace, Menlo, monospace;
   --font-script: 'Petit Formal Script', 'Snell Roundhand', cursive;
+
+  --color-mat: #e8b73d;
+  --ease-spring: cubic-bezier(0.2, 1.3, 0.3, 1);
+  /* One turn of the recorder's reel at --rate 1. */
+  --animate-reel: turn 8s linear infinite;
+  --background-image-mat-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.1 0 0 0 -.42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @theme inline {
   --color-paper: var(--paper);
   --color-ink: var(--ink);
+
+  /* The mat's rulers and light. These read variables that the mat sets on itself, so they are written into each rule that uses them. */
+  --background-image-ticks-x: linear-gradient(90deg, color-mix(in srgb, var(--ink) 45%, transparent) 1px, transparent 1px);
+  --background-image-ticks-y: linear-gradient(color-mix(in srgb, var(--ink) 45%, transparent) 1px, transparent 1px);
+  --background-image-golden: linear-gradient(calc(var(--glow-turn, 90) * 1deg), rgb(255 150 60), rgb(255 196 120));
+  /* The mat at night with the pendant lamp on: bright under the bulb at --lx --ly and dark in the far corners. */
+  --background-image-room: radial-gradient(circle 125cqw at var(--lx) var(--ly), rgb(10 14 40 / 0.03), rgb(10 14 40 / 0.16) 38%, rgb(10 14 40 / 0.3) 75%, rgb(10 14 40 / 0.42));
+  --background-image-glow: radial-gradient(circle 75cqw at var(--lx) var(--ly), rgb(255 186 104 / 0.5), rgb(255 186 104 / 0.16) 30%, transparent 72%);
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring: linear(
+      0,
+      0.009,
+      0.035 2.1%,
+      0.141 4.4%,
+      0.723 12.9%,
+      0.938 16.7%,
+      1.017,
+      1.077,
+      1.121,
+      1.149 24.3%,
+      1.159,
+      1.163,
+      1.161,
+      1.154 29.9%,
+      1.129 32.8%,
+      1.051 39.6%,
+      1.017 43.1%,
+      0.991,
+      0.977 51%,
+      0.974 53.8%,
+      0.975 57.1%,
+      0.997 69.8%,
+      1.003 76.9%,
+      1.004 83.8%,
+      1
+    );
+  }
 }
 
 @layer base {
@@ -71,6 +140,18 @@
     background-image: url('/photos/crumple.jpg');
     background-size: cover;
     background-position: center;
+  }
+
+  /*
+   * The extras strip's mat is leather, not paper, so the sheet's grain and creases are cut away over it and
+   * left on the paper that lies on it. SiteShell works out the cut.
+   */
+  .grain::before,
+  .grain::after {
+    mask-image: var(--grain-cut);
+    mask-size: var(--grain-cut-size);
+    mask-position: var(--grain-cut-position);
+    mask-repeat: no-repeat;
   }
 
   .display {
@@ -256,9 +337,99 @@
   }
 }
 
+/*
+ * The extras page's mat: yellow leather, ruled as a cutting mat with a grid, bold every fifth line, and
+ * darker toward the corners. The leather is one square, rendered and repeated. What is on the mat is set in
+ * its own ink and its own mono, eases on the plain CSS curves, and is not print on the folder's paper.
+ */
+@utility mat {
+  --ink: #1d1916;
+  --font-mono: 'Paper Mono', ui-monospace, Menlo, monospace;
+  --default-transition-timing-function: ease;
+  --ease-out: ease-out;
+  --line: color-mix(in srgb, var(--ink) 13%, transparent);
+  --line-bold: color-mix(in srgb, var(--ink) 25%, transparent);
+  background:
+    linear-gradient(var(--line-bold) 1px, transparent 1px) 0 22px / 120px 120px,
+    linear-gradient(90deg, var(--line-bold) 1px, transparent 1px) 22px 0 / 120px 120px,
+    linear-gradient(var(--line) 1px, transparent 1px) 0 22px / 24px 24px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 22px 0 / 24px 24px,
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, color-mix(in srgb, var(--ink) 16%, transparent)),
+    url('/objects/mat/leather.avif') 0 0 / 160px 160px,
+    var(--color-mat);
+
+  & p {
+    filter: none;
+  }
+
+  & :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
+}
+
+/* An object sits where Mat puts it: --x and --y are its centre in pixels, --r its turn in degrees. */
+@utility placed {
+  translate: calc(var(--x, 0) * 1px - 50%) calc(var(--y, -600) * 1px - 50%);
+  rotate: calc(var(--r, 0) * 1deg);
+}
+
+/*
+ * The shadow an object throws on the mat, as a lamp over a desk throws one: darkest and sharpest in the
+ * crease where the object meets the mat on the side away from the light, then three steps out along the
+ * throw, each further, softer and fainter. The throw is as long as the object is tall, so what lies flat
+ * has little more than the crease. The filter turns with the object, so the throw is turned back by --r to
+ * keep every shadow falling one way. It is as long as the mat is large, by --s.
+ */
+@utility cast-shadow {
+  --turn: calc(var(--r, 0) * 1deg);
+  --throw: calc(var(--tall, 0.5) * var(--lift, 1) / 3 * var(--s, 1) * 1px);
+  --blur: calc(var(--shb) * var(--soft, 1) * var(--s, 1) * 1px);
+  --cast-x: calc((var(--shx) * cos(var(--turn)) + var(--shy) * sin(var(--turn))) * var(--throw));
+  --cast-y: calc((var(--shy) * cos(var(--turn)) - var(--shx) * sin(var(--turn))) * var(--throw));
+  --cast: calc(var(--sha) * var(--dim, 1));
+  filter: drop-shadow(calc(var(--cast-x) * 0.1) calc(var(--cast-y) * 0.1) calc(var(--s, 1) * 0.7px) rgb(30 16 0 / calc(var(--cast) * 0.55)))
+    drop-shadow(calc(var(--cast-x) * 0.35) calc(var(--cast-y) * 0.35) calc(var(--blur) * (0.1 + var(--tall, 0.5) * 0.3)) rgb(46 26 0 / calc(var(--cast) * 0.4)))
+    drop-shadow(calc(var(--cast-x) * 0.7) calc(var(--cast-y) * 0.7) calc(var(--blur) * (0.2 + var(--tall, 0.5) * 0.7)) rgb(46 26 0 / calc(var(--cast) * 0.28)))
+    drop-shadow(var(--cast-x) var(--cast-y) calc(var(--blur) * (0.35 + var(--tall, 0.5) * 1.3)) rgb(46 26 0 / calc(var(--cast) * 0.18)));
+}
+
+/* An object springs to its place and eases when it is picked up. While held it follows the pointer at once. */
+@utility settling {
+  transition:
+    translate 1s var(--ease-spring),
+    rotate 1s var(--ease-spring),
+    scale 0.25s ease-out,
+    filter 0.25s ease-out,
+    opacity 0.3s;
+}
+
+@utility gripped {
+  transition:
+    scale 0.2s ease-out,
+    filter 0.2s ease-out;
+}
+
+/* A turning part gathers speed and runs down. useRevving hands each step of --rate to its turn animation. */
+@utility revving {
+  transition: --rate 0.9s ease-out;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
 
+  .mat *,
+  .mat *::before,
+  .mat *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

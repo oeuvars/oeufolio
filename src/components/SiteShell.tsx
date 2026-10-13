@@ -17,6 +17,8 @@ type Tone = {
   hangs?: boolean
   /** The page is a picture that runs to the strip's edges, so its panel has no frame either. Its band shows only as its tab's paper, which is the colour of the picture's sky so as to be lost in it. */
   bleeds?: boolean
+  /** The page is a mat that takes the whole strip, band and all, so its panel has no frame. The band shows only as its tab's paper. */
+  fills?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
   /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
@@ -29,7 +31,7 @@ const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-proraso.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca', tab: '/objects/tab-prs.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#e8b73d', panelInk: '#1d1916', fills: true, tab: '/objects/tab-prs.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
@@ -69,13 +71,16 @@ type TabProps = {
   current?: boolean
   /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
   src: string
+  /** The strip's page lies over its band, so the tab has no foot on the band: only what stands out of the strip is paper. */
+  footless?: boolean
 }
 
 /**
  * The outline of a folder tab, as the reference cuts it: it leaves the strip's edge on a slant, runs
- * straight down and slants back in, with every corner eased. Returns the path and how far its joins reach.
+ * straight down and slants back in, with every corner eased. Its foot is the length of band it grows out of.
+ * Returns the path and how far its joins reach.
  */
-function tabOutline({ band, protrude, height }: TabShape) {
+function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   const rise = protrude * 0.33
   const ease = protrude * 0.2
   const reach = ease * 2
@@ -96,11 +101,12 @@ function tabOutline({ band, protrude, height }: TabShape) {
     const after = toward(corner, corners[i + 2])
     return `L${before[0]} ${before[1]} Q${corner[0]} ${corner[1]} ${after[0]} ${after[1]}`
   })
-  return { reach, path: `M0 ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L0 ${height + reach} Z` }
+  const foot = footless ? band : 0
+  return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, current, src }: TabProps) {
-  const { reach, path } = tabOutline(shape)
+function Tab({ label, shape, to, current, src, footless }: TabProps) {
+  const { reach, path } = tabOutline(shape, footless)
   const width = shape.band + shape.protrude
   const margin = (tabMargin * width) / tabSpan
   const inside = (
@@ -182,6 +188,36 @@ export function SiteShell({ children }: SiteShellProps) {
   }
   const contactLeft = cursor
 
+  // The mat's strip is leather, not paper, so the sheet's grain and creases are cut away over it (styles.css):
+  // a column from where the strip before it ends to its own edge. They are put back in the shape of the paper
+  // that lies on the mat there: the tab of the strip before it with its piece, and the piece on the mat's own tab.
+  const mat = pageTones.findIndex((tone) => tone.fills)
+  const matFrom = lefts[mat] + overlap
+  const matTo = lefts[mat] + (mat === index ? openWidth : folded(mat))
+  const tabWidth = band + protrude
+  const pieceMargin = (tabMargin * tabWidth) / tabSpan
+  const tabBefore = { shape: tabShape(mat), top: tabTops[mat] * metrics.rem, src: (mat > 0 ? pageTones[mat - 1] : spineTone).tab }
+  const tabOwn = { shape: tabShape(mat + 1), top: tabTops[mat + 1] * metrics.rem, src: pageTones[mat].tab }
+  const paper = tabOutline(tabBefore.shape)
+  const paperHeight = tabBefore.shape.height + 2 * paper.reach
+  const paperMask = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-paper.reach} ${tabWidth} ${paperHeight}" preserveAspectRatio="none"><path d="${paper.path}"/></svg>`
+  const column = 'linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0)'
+  const grainCut = {
+    '--grain-cut': `${column}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
+    '--grain-cut-size': [
+      '100% 100%',
+      `${tabWidth}px ${paperHeight}px`,
+      `${tabWidth + 2 * pieceMargin}px ${tabBefore.shape.height + 2 * pieceMargin}px`,
+      `${tabWidth + 2 * pieceMargin}px ${tabOwn.shape.height + 2 * pieceMargin}px`,
+    ].join(', '),
+    '--grain-cut-position': [
+      '0 0',
+      `calc(var(--mat-from) * 1px - ${band}px) ${tabBefore.top - paper.reach}px`,
+      `calc(var(--mat-from) * 1px - ${band + pieceMargin}px) ${tabBefore.top - pieceMargin}px`,
+      `calc(var(--mat-to) * 1px - ${band + pieceMargin}px) ${tabOwn.top - pieceMargin}px`,
+    ].join(', '),
+  }
+
   return (
     <MotionConfig reducedMotion="user">
       <svg aria-hidden width="0" height="0" className="absolute">
@@ -204,9 +240,13 @@ export function SiteShell({ children }: SiteShellProps) {
           </filter>
         </defs>
       </svg>
-      <main
+      <motion.main
         className="grain fixed inset-0 overflow-hidden bg-[#1f1e1b]"
-        style={{ '--band-w': `${band}px`, '--protrude': `${protrude}px` } as CSSProperties}
+        style={{ '--band-w': `${band}px`, '--protrude': `${protrude}px`, ...grainCut } as CSSProperties}
+        initial={false}
+        // The cut follows the mat's strip as it slides: both are on the same spring.
+        animate={{ '--mat-from': matFrom, '--mat-to': matTo }}
+        transition={transition}
       >
         {!mobile && (
           <aside className="strip" style={stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine })}>
@@ -243,7 +283,7 @@ export function SiteShell({ children }: SiteShellProps) {
               transition={transition}
               style={stripStyle(pageTones[i], i + 1, stack - i)}
             >
-              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds ? 'panel-hangs' : ''}`}>
+              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills ? 'panel-hangs' : ''}`}>
                 {pageTones[i].hangs ? (
                   <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
                 ) : (
@@ -287,7 +327,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills} />
             </motion.section>
           )
         })}
@@ -327,7 +367,7 @@ export function SiteShell({ children }: SiteShellProps) {
             <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />
           </>
         )}
-      </main>
+      </motion.main>
     </MotionConfig>
   )
 }

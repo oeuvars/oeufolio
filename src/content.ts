@@ -23,17 +23,22 @@ export const profile: Profile = {
     { period: 'Aug 2023 to Jul 2024', org: 'ProperSKU' },
   ],
   extras: {
-    plates: [
-      { title: 'Untitled I', caption: 'Medium, year.' },
-      { title: 'Untitled II', caption: 'Medium, year.' },
-      { title: 'Untitled III', caption: 'Medium, year.' },
-      { title: 'Untitled IV', caption: 'Medium, year.' },
+    name: 'Anurag Das',
+    career: 'Software Engineer building servers and interfaces at',
+    company: { label: 'Cybership', href: 'https://cybership.io' },
+    particulars: [
+      { label: 'Name', value: 'Anurag Das' },
+      { label: 'Goes by', value: 'Oeuvars' },
+      { label: 'Based in', value: 'Kolkata, India' },
+      { label: 'Picky about', value: 'Fonts' },
     ],
-    playlist: {
-      title: 'On repeat',
-      note: 'What is playing while I work.',
-      href: 'https://open.spotify.com',
+    likes: {
+      record: { subject: 'Electric guitars', title: 'after six', note: 'One more take. Then another.' },
+      recorder: { subject: 'Industrial design', title: 'within reach', note: 'Good buttons do not need instructions.' },
+      key: { subject: 'Sports cars', title: 'the longer way', note: 'Parked. Looked back.' },
+      ticket: { subject: 'Arsenal', title: 'ninety minutes', note: 'Everything else moved.' },
     },
+    playlist: { title: 'Two x 3', href: 'https://open.spotify.com/playlist/6aMM3pxZ1qYxR3uiwtRBox' },
   },
   socials: [
     { label: 'GitHub', href: 'https://github.com/oeuvars' },

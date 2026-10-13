@@ -1,63 +1,46 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { PageTitle } from '../components/PageTitle'
-import { Reveal } from '../components/Reveal'
+import { Earphones } from '../components/mat/Earphones'
+import { IdCard } from '../components/mat/IdCard'
+import { KeyBunch } from '../components/mat/KeyBunch'
+import { Mat } from '../components/mat/Mat'
+import { MatchTicket } from '../components/mat/MatchTicket'
+import { FinPick, WedgePick } from '../components/mat/Picks'
+import { RecordSleeve } from '../components/mat/RecordSleeve'
+import { Recorder } from '../components/mat/Recorder'
+import { SafetyRazor } from '../components/mat/SafetyRazor'
+import { ShavingCream } from '../components/mat/ShavingCream'
+import { Wallet } from '../components/mat/Wallet'
 import { profile } from '../content'
 
 export const Route = createFileRoute('/extras')({ component: Extras })
 
+/**
+ * The extras, as what was left on a desk: a yellow leather cutting mat seen from overhead, with the things
+ * I like lying on it as renders. The mat is the page, and the page is the whole strip. The
+ * page's own margins are given over to it: the ones undone here are SiteShell's padding round a page, up to
+ * where the strip before this one lies over it, and the band beside it. The sports cars like has no object
+ * of its own: it is the car key on the bunch that carries the name.
+ */
 function Extras() {
-  const { plates, playlist } = profile.extras
+  const { name, career, company, particulars, likes, playlist } = profile.extras
 
   return (
-    <div className="flex flex-col gap-[5vh]">
-      <Reveal delay={0.1}>
-        <PageTitle before="A few " accent="extras" after="." />
-      </Reveal>
-
-      <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[5vh] @3xl:grid-cols-12">
-        <Reveal delay={0.25} className="@3xl:col-span-7">
-          <p className="label row pb-[0.7em]">Art and design</p>
-          <ul className="grid grid-cols-2 gap-[1.4em] pt-[1em]">
-            {plates.map((plate) => (
-              <li key={plate.title}>
-                <figure>
-                  <div className="frame grid aspect-[4/3] place-items-center bg-ink/[0.06]">
-                    {plate.image && (
-                      <img src={plate.image} alt={plate.title} className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <figcaption className="mt-[0.5em] flex items-baseline justify-between gap-[1em] text-[0.9em]">
-                    <span className="font-bold">{plate.title}</span>
-                    <span>{plate.caption}</span>
-                  </figcaption>
-                </figure>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-
-        <Reveal delay={0.4} className="@3xl:col-span-5">
-          <p className="label row pb-[0.7em]">Playlist</p>
-          <div className="pt-[0.8em]">
-            <p className="display text-[1.2em]">{playlist.title}</p>
-            <p className="mb-[0.8em]">{playlist.note}</p>
-            {playlist.embed ? (
-              <iframe
-                title={playlist.title}
-                src={playlist.embed}
-                loading="lazy"
-                allow="encrypted-media"
-                className="h-[352px] w-full border border-ink/40"
-              />
-            ) : (
-              <a href={playlist.href} target="_blank" rel="noreferrer" className="label link">
-                Open the playlist
-              </a>
-            )}
-          </div>
-        </Reveal>
-      </div>
-    </div>
+    <>
+      <h1 className="sr-only">Extras</h1>
+      <Mat className="-mt-[6.4vh] -mr-[calc(clamp(1rem,2.6vw,3rem)+1.4rem)] -mb-[4vh] -ml-[2.5rem] min-h-screen md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem]">
+        <KeyBunch name={name} career={career} company={company} car={likes.key} />
+        <IdCard particulars={particulars} />
+        <RecordSleeve like={likes.record} playlist={playlist} />
+        <Recorder like={likes.recorder} />
+        <MatchTicket like={likes.ticket} />
+        <ShavingCream />
+        <SafetyRazor />
+        <Earphones />
+        <Wallet />
+        <FinPick />
+        <WedgePick />
+      </Mat>
+    </>
   )
 }
