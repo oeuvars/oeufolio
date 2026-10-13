@@ -12,12 +12,14 @@ type Tone = {
   bandInk: string
   panel: string
   panelInk: string
+  /** The panel runs to the top of the strip, for a page with something hanging from above it. */
+  hangs?: boolean
 }
 
 const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c' }
 const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb' }
 const pageTones: Tone[] = [
-  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c' },
+  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true },
   { band: '#7a8597', bandInk: '#121820', panel: '#bcbdc2', panelInk: '#24242a' },
   { band: '#b8946a', bandInk: '#2a1a0a', panel: '#2a1b10', panelInk: '#f0e2c6' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca' },
@@ -215,7 +217,7 @@ export function SiteShell({ children }: SiteShellProps) {
               transition={transition}
               style={stripStyle(pageTones[i], i + 1, stack - i)}
             >
-              <div className="panel scroll-quiet overflow-x-hidden overflow-y-auto">
+              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs ? 'panel-hangs' : ''}`}>
                 <motion.div
                   aria-hidden
                   className="absolute inset-y-0"
