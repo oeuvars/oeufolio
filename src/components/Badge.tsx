@@ -7,8 +7,8 @@ type BadgeProps = {
 }
 
 /**
- * The ID badge, a Blender render (studio/badge.py). Its frame ends at the top of the panel, where the
- * ring runs out of shot, so the badge hangs from there and settles like something on a hook.
+ * The ID badge (studio/badge.py). Its frame ends at the top of the panel, where the ring runs out of
+ * shot, so the badge hangs from there and settles like something on a hook.
  */
 export function Badge({ badge }: BadgeProps) {
   return (
