@@ -237,9 +237,52 @@ def ball(x, y, z, radius, material):
     bpy.ops.object.shade_smooth()
 
 
+def backlit(tall):
+    """The face of a lit box: brightest along the tube behind its middle, falling off to its top and its
+    foot, and nowhere quite even."""
+    material = bpy.data.materials.new("backlit")
+    material.use_nodes = True
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    shader = nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = linear("#fff1d0")
+    shader.inputs["Emission Color"].default_value = linear("#ffe2ad")
+    place, apart, away, fall = nodes.new("ShaderNodeTexCoord"), nodes.new("ShaderNodeSeparateXYZ"), nodes.new("ShaderNodeMath"), nodes.new("ShaderNodeMapRange")
+    away.operation = "ABSOLUTE"
+    fall.inputs["From Max"].default_value = tall
+    fall.inputs["To Min"].default_value, fall.inputs["To Max"].default_value = 2.5, 1.0
+    patches, uneven, both = nodes.new("ShaderNodeTexNoise"), nodes.new("ShaderNodeMapRange"), nodes.new("ShaderNodeMath")
+    patches.inputs["Scale"].default_value = 1.3
+    uneven.inputs["To Min"].default_value, uneven.inputs["To Max"].default_value = 0.6, 1.3
+    both.operation = "MULTIPLY"
+    links.new(place.outputs["Object"], apart.inputs[0])
+    links.new(apart.outputs["Z"], away.inputs[0])
+    links.new(away.outputs[0], fall.inputs["Value"])
+    links.new(place.outputs["Object"], patches.inputs["Vector"])
+    links.new(patches.outputs["Fac"], uneven.inputs["Value"])
+    links.new(fall.outputs["Result"], both.inputs[0])
+    links.new(uneven.outputs["Result"], both.inputs[1])
+    links.new(both.outputs[0], shader.inputs["Emission Strength"])
+    return material
+
+
+def frosted():
+    """A pane of frosted glass: what is behind it shows through softened, with the light spread over it."""
+    if "frosted" not in materials:
+        material = bpy.data.materials.new("frosted")
+        material.use_nodes = True
+        shader = material.node_tree.nodes["Principled BSDF"]
+        shader.inputs["Base Color"].default_value = linear("#fff6e2")
+        shader.inputs["Roughness"].default_value = 0.42
+        shader.inputs["IOR"].default_value = 1.46
+        shader.inputs["Transmission Weight"].default_value = 1
+        materials["frosted"] = material
+    return materials["frosted"]
+
+
 def lettered(words, x, z, size, align="CENTER", boxed=False):
-    """A sign on the front of a board, in spaced capitals. Boxed, it is dark letters on the face of a
-    brass-framed box lit from inside, as wide as the word needs. Otherwise it is raised gilt letters."""
+    """A sign on the front of a board, in spaced capitals. Boxed, it is letters painted on the lit face of a
+    brass-framed box, as wide as the word needs, behind a pane of frosted glass that softens them and
+    spreads the light over them. Otherwise it is raised gilt letters."""
     bpy.ops.object.text_add(location=(x, -0.2 if boxed else -0.075, z), rotation=(math.pi / 2, 0, 0))
     sign = bpy.context.object
     text = sign.data
@@ -254,13 +297,14 @@ def lettered(words, x, z, size, align="CENTER", boxed=False):
         sign.data.materials.append(GILT)
         return
     text.offset, text.extrude = 0.011, 0.008
-    sign.data.materials.append(paint("#2a1a17", 0.5))
+    sign.data.materials.append(paint("#3a2118", 0.7))
     bpy.context.view_layer.update()
     wide, tall = sign.dimensions.x / 2 + 0.45, 0.34
-    box(x - wide, x + wide, -0.19, -0.07, z - tall, z + tall, paint("#ffe9bd", glow=1.7))
+    box(x - wide, x + wide, -0.19, -0.07, z - tall, z + tall, backlit(tall))
+    box(x - wide, x + wide, -0.275, -0.262, z - tall, z + tall, frosted())
     for edge in (-1, 1):
-        box(x - wide - 0.05, x + wide + 0.05, -0.215, -0.06, z + edge * tall - 0.025, z + edge * tall + 0.025, BRASS)
-        box(x + edge * wide - 0.025, x + edge * wide + 0.025, -0.215, -0.06, z - tall, z + tall, BRASS)
+        box(x - wide - 0.06, x + wide + 0.06, -0.31, -0.06, z + edge * tall - 0.03, z + edge * tall + 0.03, BRASS)
+        box(x + edge * wide - 0.03, x + edge * wide + 0.03, -0.31, -0.06, z - tall, z + tall, BRASS)
 
 
 def lamp(x, y, z, watts, across, colour="#ffd9a0"):
