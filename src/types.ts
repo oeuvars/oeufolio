@@ -19,18 +19,9 @@ export type Letter = {
   alt: string
 }
 
-/** The kind of place a company is, which is the room its floor of the work page's building is drawn as. */
-export type Room = 'warehouse' | 'bank' | 'dock'
-
 export type Role = {
   period: string
   org: string
-  room: Room
-}
-
-/** What a room has lettered on it somewhere: the name of the company that kept it. */
-export type Signage = {
-  sign: string
 }
 
 export type Plate = {
