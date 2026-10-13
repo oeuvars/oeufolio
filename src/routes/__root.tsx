@@ -19,13 +19,13 @@ export const Route = createRootRoute({
       },
       {
         name: 'description',
-        content: 'Portfolio of oeuvars, set as an old book.',
+        content: 'Portfolio of oeuvars, laid out as a stack of file folders.',
       },
     ],
     links: [
       {
         rel: 'icon',
-        href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%233a1a10'/%3E%3Cpath d='M20 6 C22 13 28 16 34 20 C28 24 22 27 20 34 C18 27 12 24 6 20 C12 16 18 13 20 6Z' fill='%23a67c1b'/%3E%3C/svg%3E",
+        href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23272521'/%3E%3Crect x='8' y='8' width='9' height='24' fill='%23ece4cc'/%3E%3Crect x='19' y='12' width='13' height='20' fill='%237d8798'/%3E%3C/svg%3E",
       },
       {
         rel: 'stylesheet',

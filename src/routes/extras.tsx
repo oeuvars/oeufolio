@@ -6,8 +6,6 @@ import { profile } from '../content'
 
 export const Route = createFileRoute('/extras')({ component: Extras })
 
-const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI']
-
 function Extras() {
   const { plates, playlist } = profile.extras
 
@@ -17,23 +15,23 @@ function Extras() {
         <PageTitle before="A few " accent="extras" after="." />
       </Reveal>
 
-      <div className="grid grid-cols-1 gap-x-[6vw] gap-y-[4vh] md:grid-cols-12">
-        <Reveal delay={0.25} className="md:col-span-7">
-          <p className="label mb-[0.8em]">Art and design</p>
-          <ul className="grid grid-cols-2 gap-[1.4em]">
+      <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[5vh] xl:grid-cols-12">
+        <Reveal delay={0.25} className="xl:col-span-7">
+          <p className="label row pb-[0.7em]">Art and design</p>
+          <ul className="grid grid-cols-2 gap-[1.4em] pt-[1em]">
             {plates.map((plate, i) => (
               <li key={plate.title}>
                 <figure>
-                  <div className="grid aspect-[4/3] place-items-center border border-ink/40 bg-ink/[0.04] shadow-[inset_0_0_0_5px_rgba(255,255,255,0.12)]">
+                  <div className="frame grid aspect-[4/3] place-items-center bg-ink/[0.06]">
                     {plate.image ? (
                       <img src={plate.image} alt={plate.title} className="h-full w-full object-cover" />
                     ) : (
-                      <span className="label">Plate {numerals[i]}</span>
+                      <span className="label">IMG_{String(i + 1).padStart(2, '0')}</span>
                     )}
                   </div>
                   <figcaption className="mt-[0.5em] flex items-baseline justify-between gap-[1em] text-[0.9em]">
-                    <span className="italic">{plate.title}</span>
-                    <span className="text-ink-soft">{plate.caption}</span>
+                    <span className="font-bold">{plate.title}</span>
+                    <span>{plate.caption}</span>
                   </figcaption>
                 </figure>
               </li>
@@ -41,21 +39,21 @@ function Extras() {
           </ul>
         </Reveal>
 
-        <Reveal delay={0.4} className="md:col-span-5">
-          <p className="label mb-[0.8em]">Playlist</p>
-          <div className="border-t border-ink/25 pt-[0.8em]">
-            <p className="text-[1.25em]">{playlist.title}</p>
-            <p className="mb-[0.8em] italic text-ink-soft">{playlist.note}</p>
+        <Reveal delay={0.4} className="xl:col-span-5">
+          <p className="label row pb-[0.7em]">Playlist</p>
+          <div className="pt-[0.8em]">
+            <p className="display text-[1.2em]">{playlist.title}</p>
+            <p className="mb-[0.8em]">{playlist.note}</p>
             {playlist.embed ? (
               <iframe
                 title={playlist.title}
                 src={playlist.embed}
                 loading="lazy"
                 allow="encrypted-media"
-                className="h-[352px] w-full rounded-[2px] border border-ink/30"
+                className="h-[352px] w-full border border-ink/40"
               />
             ) : (
-              <a href={playlist.href} target="_blank" rel="noreferrer" className="link">
+              <a href={playlist.href} target="_blank" rel="noreferrer" className="label link">
                 Open the playlist
               </a>
             )}

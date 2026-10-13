@@ -1,10 +1,13 @@
 import { useState } from 'react'
 
+import { cn } from '../lib/utils'
+
 type CopyEmailProps = {
   email: string
+  className?: string
 }
 
-export function CopyEmail({ email }: CopyEmailProps) {
+export function CopyEmail({ email, className }: CopyEmailProps) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -14,7 +17,7 @@ export function CopyEmail({ email }: CopyEmailProps) {
   }
 
   return (
-    <button type="button" onClick={copy} className="link cursor-pointer text-left italic">
+    <button type="button" onClick={copy} className={cn('label link cursor-pointer text-left', className)}>
       {copied ? 'Copied' : email}
     </button>
   )

@@ -1,17 +1,16 @@
-@import '@fontsource-variable/bitter/index.css';
-@import '@fontsource-variable/bitter/wght-italic.css';
-@import '@fontsource/reenie-beanie/400.css';
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/jetbrains-mono/index.css';
 @import 'tailwindcss';
 
 @theme {
-  --font-serif: 'Bitter Variable', Georgia, serif;
-  --font-accent: 'Bitter Variable', Georgia, serif;
-  --font-script: 'Reenie Beanie', cursive;
+  --font-display: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, monospace;
+}
 
-  --color-parchment: #f3ead2;
-  --color-ink: #f8f1da;
-  --color-ink-soft: #e0d6b8;
-  --color-rubric: #e6b34a;
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
 }
 
 @layer base {
@@ -22,18 +21,17 @@
   body {
     margin: 0;
     min-height: 100vh;
-    color: var(--color-ink);
-    font-family: var(--font-serif);
-    font-weight: 400;
-    text-shadow: 0 1px 1px rgb(0 0 0 / 0.45);
-    font-feature-settings: 'liga', 'onum', 'kern';
+    background-color: #1d1c1a;
+    color: #2f2e1d;
+    font-family: var(--font-sans);
+    font-weight: 450;
+    font-stretch: 100%;
     -webkit-font-smoothing: antialiased;
-    background-color: #2b2019;
   }
 
   ::selection {
-    background: var(--color-rubric);
-    color: #0b2a1c;
+    background: #2f2e1d;
+    color: #ece4cc;
   }
 
   a {
@@ -42,153 +40,174 @@
 }
 
 @layer utilities {
-  .foil {
-    background-image: linear-gradient(
-      105deg,
-      #8a5b12 0%,
-      #e9c46a 14%,
-      #fff3b8 26%,
-      #d4a23a 40%,
-      #8a5b12 54%,
-      #e9c46a 68%,
-      #fff0a8 82%,
-      #9c6a16 100%
-    );
-    background-size: 240% 100%;
-    background-position: 0% 50%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: none;
-    filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.55));
-    animation: foil-sheen 7s ease-in-out infinite alternate;
-  }
-
-  .deboss {
-    color: rgb(0 0 0 / 0.07);
-    text-shadow:
-      0 1px 0 rgb(255 255 255 / 0.07),
-      0 -1px 0 rgb(0 0 0 / 0.55);
-  }
-
-  .leather-bg {
+  .grain::after {
+    content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100lvh;
-    pointer-events: none;
-    background-color: #2b2019;
-    background-image: linear-gradient(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.12)), url('/leather.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-
-  .dial-label {
-    position: absolute;
     inset: 0;
-    display: flex;
-    justify-content: center;
-    padding-top: 21.5%;
-    text-decoration: none;
-    transition: transform 0.2s;
+    z-index: 100;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  .dial-label span {
-    font-size: clamp(0.5rem, 0.78vw, 0.66rem);
-    font-weight: 600;
-    letter-spacing: 0.22em;
+  .display {
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    font-weight: 850;
+    letter-spacing: -0.02em;
+    line-height: 0.92;
     text-transform: uppercase;
-    color: #2d1b04;
-    text-shadow: 0 1px 0 rgb(255 236 176 / 0.6);
-    padding-left: 0.22em;
   }
 
-  .dial-label:hover span {
-    color: #000;
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  .dial-label.is-active span {
-    color: #120a00;
-    text-shadow:
-      0 1px 0 rgb(255 240 190 / 0.8),
-      0 0 6px rgb(255 224 140 / 0.45);
+  .vertical {
+    writing-mode: vertical-rl;
   }
 
-  .dial-pointer {
+  .scroll-quiet {
+    scrollbar-width: none;
+  }
+
+  .scroll-quiet::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* One sheet in the stack. Later sheets sit on top and cast a shadow to the left. */
+  .sheet {
+    position: relative;
+    flex: 0 0 0;
+    min-width: var(--strip);
+    background-color: var(--paper);
+    color: var(--ink);
+    filter: drop-shadow(-5px 0 7px rgb(0 0 0 / 0.28));
+    transition: flex-grow 0.7s cubic-bezier(0.65, 0, 0.2, 1);
+  }
+
+  .sheet.is-open {
+    flex: 1 1 0;
+  }
+
+  /* Folder tab hanging off the left edge, with concave fillets where it meets the sheet. */
+  .tab {
     position: absolute;
-    top: -0.55rem;
-    left: 50%;
+    top: var(--tab-top);
+    right: 100%;
     z-index: 2;
-    width: 0.95rem;
+    display: flex;
+    width: var(--tab-w);
+    height: 7.5rem;
+    padding: 0.85rem 0 0 0;
+    justify-content: center;
+    border-radius: 0.8rem 0 0 0.8rem;
+    background-color: var(--paper);
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .tab::before,
+  .tab::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    width: 0.8rem;
     height: 0.8rem;
-    transform: translateX(-50%);
-    background: linear-gradient(120deg, #fff0b0, #c8962e 55%, #7a4f0c);
-    clip-path: polygon(0 0, 100% 0, 50% 100%);
-    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.6));
   }
 
-  .leader {
-    flex: 1;
-    min-width: 1rem;
-    border-bottom: 1.5px dotted color-mix(in srgb, var(--color-ink) 45%, transparent);
-    transform: translateY(-0.3em);
+  .tab::before {
+    bottom: 100%;
+    background: radial-gradient(circle at 0 0, transparent 0.8rem, var(--paper) calc(0.8rem + 0.5px));
   }
 
-  .index:has(a:hover) a:not(:hover) {
-    opacity: 0.35;
+  .tab::after {
+    top: 100%;
+    background: radial-gradient(circle at 0 100%, transparent 0.8rem, var(--paper) calc(0.8rem + 0.5px));
   }
 
-  .index a {
-    transition: opacity 0.2s ease;
+  .tab-text {
+    display: block;
+    white-space: nowrap;
+  }
+
+  .tab-text .label {
+    display: block;
+  }
+
+  .tab-text .label:first-child {
+    opacity: 0.7;
+    font-size: 0.6rem;
+  }
+
+  .tab-text .label:last-child {
+    margin-right: 0.3rem;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+  }
+
+  .row {
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  }
+
+  .row-link {
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .row-link:hover {
+    background-color: var(--ink);
+    color: var(--paper);
+  }
+
+  .mark {
+    background-color: var(--ink);
+    color: var(--paper);
+    padding: 0 0.12em;
   }
 
   .link {
     text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--color-rubric) 55%, transparent);
-    text-underline-offset: 0.2em;
     text-decoration-thickness: 1px;
-    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+    text-underline-offset: 0.2em;
+    transition: opacity 0.15s ease;
   }
 
   .link:hover {
-    color: var(--color-rubric);
-    text-decoration-color: var(--color-rubric);
+    opacity: 0.6;
   }
 
-  .ink {
-    filter: url(#ink);
+  .frame {
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
   }
 
-  .hand-circle {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: draw-stroke 1.2s cubic-bezier(0.45, 0, 0.25, 1) 1.6s forwards;
+  .frame::before,
+  .frame::after {
+    content: '';
+    position: absolute;
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 2px solid var(--ink);
   }
 
-  .signature {
-    display: inline-block;
-    clip-path: inset(0 100% 0 0);
-    animation: handwrite 1.8s cubic-bezier(0.45, 0, 0.25, 1) 1.2s forwards;
+  .frame::before {
+    top: -1px;
+    left: -1px;
+    border-right: 0;
+    border-bottom: 0;
   }
-}
 
-@keyframes foil-sheen {
-  to {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes draw-stroke {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes handwrite {
-  to {
-    clip-path: inset(0 0 0 0);
+  .frame::after {
+    right: -1px;
+    bottom: -1px;
+    border-top: 0;
+    border-left: 0;
   }
 }
 
@@ -197,17 +216,7 @@
     scroll-behavior: auto;
   }
 
-  .signature {
-    clip-path: none;
-    animation: none;
-  }
-
-  .foil {
-    animation: none;
-  }
-
-  .hand-circle {
-    stroke-dashoffset: 0;
-    animation: none;
+  .sheet {
+    transition: none;
   }
 }
