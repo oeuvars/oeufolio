@@ -17,7 +17,7 @@ function Likes() {
         <ul className="grid grid-cols-1 border-t border-ink/30 @3xl:grid-cols-2 @3xl:gap-x-[4vw]">
           {profile.likes.map((like, i) => (
             <li key={like.title} className="row py-[0.9em]">
-              <span className="flex items-baseline gap-[0.8em]">
+              <span className="flex flex-wrap items-baseline gap-x-[0.8em]">
                 <span className="label w-[2.4em] shrink-0">{String(i + 1).padStart(2, '0')}</span>
                 <span className="display text-[1.35em]">{like.title}</span>
                 <span className="label ml-auto whitespace-nowrap">{like.tag}</span>

@@ -97,53 +97,63 @@
   }
 
   /*
-   * One sheet in the stack. Earlier sheets sit on top and cast a shadow to the right,
-   * so each later sheet tucks its left edge (--overlap) underneath its neighbour.
+   * One strip in the stack: a panel with a narrow paper band down its right edge.
+   * The band colour frames the panel top and bottom, and a label tab grows out of
+   * the band over the next strip. Earlier strips sit on top of later ones.
    */
-  .sheet {
+  .strip {
     position: absolute;
     top: 0;
     bottom: 0;
-    display: flex;
-    padding-left: var(--overlap);
-    background-color: var(--paper);
-    color: var(--ink);
-    filter: drop-shadow(6px 0 8px rgb(0 0 0 / 0.3));
+    background-color: var(--band);
+    color: var(--band-ink);
+    filter: drop-shadow(5px 0 7px rgb(0 0 0 / 0.38));
   }
 
-  /* Raised label tab at the top of the margin column; each one hangs lower than the last. */
+  .panel {
+    position: absolute;
+    top: 3.1vh;
+    bottom: 3.3vh;
+    left: 0;
+    right: var(--band-w);
+    overflow: hidden;
+    background-color: var(--panel, var(--band));
+    color: var(--panel-ink, var(--band-ink));
+  }
+
   .tab {
     position: absolute;
-    top: 0;
-    left: var(--overlap);
+    top: var(--tab-top);
+    left: calc(100% - var(--band-w));
     z-index: 2;
     display: flex;
-    width: var(--tab-w);
+    width: calc(var(--band-w) + var(--protrude));
     height: var(--tab-h);
     padding-top: 0.9rem;
     justify-content: center;
-    border-radius: 0 0 0.9rem 0;
-    background-color: color-mix(in srgb, var(--paper) 90%, black);
-    box-shadow: 2px 2px 5px rgb(0 0 0 / 0.22);
-    color: var(--ink);
+    border-radius: 0 0.75rem 0.75rem 0;
+    background-color: var(--band);
+    color: var(--band-ink);
     text-decoration: none;
   }
 
-  /* Inset panel that holds the page content, or a crop of artwork while collapsed. */
-  .card {
-    position: relative;
-    flex: 1 1 0;
-    min-width: 0;
-    margin: 3vh 0.55rem 3vh calc(var(--tab-w) + 0.35rem);
-    overflow: hidden;
-    border: 1px solid transparent;
-    transition: background-color 0.45s ease, border-color 0.45s ease;
+  .tab::before,
+  .tab::after {
+    content: '';
+    position: absolute;
+    left: var(--band-w);
+    width: 0.8rem;
+    height: 0.8rem;
   }
 
-  .card-page {
-    background-color: color-mix(in srgb, var(--paper) 72%, white);
-    border-color: color-mix(in srgb, var(--ink) 35%, transparent);
-    box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--paper) 72%, white), inset 0 0 0 5px color-mix(in srgb, var(--ink) 18%, transparent);
+  .tab::before {
+    bottom: 100%;
+    background: radial-gradient(circle at 100% 0, transparent 0.8rem, var(--band) calc(0.8rem + 0.5px));
+  }
+
+  .tab::after {
+    top: 100%;
+    background: radial-gradient(circle at 100% 100%, transparent 0.8rem, var(--band) calc(0.8rem + 0.5px));
   }
 
   .tab-text {
@@ -156,16 +166,16 @@
   }
 
   .tab-text .label:first-child {
-    opacity: 0.7;
-    font-size: 0.6rem;
     margin-left: 0.15rem;
+    font-size: 0.6rem;
+    opacity: 0.75;
   }
 
   .tab-text .label:last-child {
     margin-right: 0.3rem;
     font-family: var(--font-display);
-    font-weight: 800;
     font-size: 0.82rem;
+    font-weight: 800;
     letter-spacing: 0.08em;
   }
 

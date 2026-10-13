@@ -72,8 +72,10 @@ export type StackMetrics = {
   rem: number
   mobile: boolean
   overlap: number
-  tab: number
+  band: number
+  protrude: number
   strip: number
   spine: number
   contact: number
+  end: number
 }

@@ -9,11 +9,13 @@ const fallback: StackMetrics = {
   height: 900,
   rem: 16,
   mobile: false,
-  overlap: 14.4,
-  tab: 48,
-  strip: clamp(96, 151.2, 160),
-  spine: clamp(86.4, 144, 144),
-  contact: clamp(96, 144, 144),
+  overlap: 16,
+  band: 30.4,
+  protrude: 33.6,
+  strip: clamp(128, 172.8, 208),
+  spine: clamp(104, 153, 160),
+  contact: clamp(112, 129.6, 160),
+  end: 51.2,
 }
 
 function measure(): StackMetrics {
@@ -27,11 +29,13 @@ function measure(): StackMetrics {
     height,
     rem,
     mobile,
-    overlap: 0.9 * rem,
-    tab: (mobile ? 2.4 : 3) * rem,
-    strip: mobile ? 3.1 * rem : clamp(6 * rem, 0.105 * width, 10 * rem),
-    spine: mobile ? 0 : clamp(5.4 * rem, 0.16 * height, 9 * rem),
-    contact: mobile ? 0 : clamp(6 * rem, 0.1 * width, 9 * rem),
+    overlap: rem,
+    band: (mobile ? 1.4 : 1.9) * rem,
+    protrude: (mobile ? 1.5 : 2.1) * rem,
+    strip: mobile ? 3.6 * rem : clamp(8 * rem, 0.12 * width, 13 * rem),
+    spine: clamp(6.5 * rem, 0.17 * height, 10 * rem),
+    contact: clamp(7 * rem, 0.09 * width, 10 * rem),
+    end: 3.2 * rem,
   }
 }
 

@@ -19,7 +19,7 @@ function Work() {
           <ul>
             {profile.experience.map((role) => (
               <li key={`${role.org}-${role.period}`} className="row py-[0.8em]">
-                <span className="flex items-baseline gap-[0.8em]">
+                <span className="flex flex-wrap items-baseline gap-x-[0.8em]">
                   <span className="display text-[1.2em]">{role.org}</span>
                   <span className="label ml-auto whitespace-nowrap">{role.period}</span>
                 </span>
@@ -41,7 +41,7 @@ function Work() {
                   rel="noreferrer"
                   className="row-link -mx-[0.6em] block px-[0.6em] py-[0.8em] no-underline"
                 >
-                  <span className="flex items-baseline gap-[0.8em]">
+                  <span className="flex flex-wrap items-baseline gap-x-[0.8em]">
                     <span className="label w-[2.4em] shrink-0">{String(i + 1).padStart(2, '0')}</span>
                     <span className="display text-[1.1em]">{work.title}</span>
                     <span className="label ml-auto whitespace-nowrap">
