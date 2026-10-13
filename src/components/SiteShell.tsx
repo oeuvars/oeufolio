@@ -14,10 +14,10 @@ type Tone = {
   panelInk: string
 }
 
-const spineTone: Tone = { band: '#b78f86', bandInk: '#3a1512', panel: '#b78f86', panelInk: '#3a1512' }
+const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c' }
 const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb' }
 const pageTones: Tone[] = [
-  { band: '#6f2f2a', bandInk: '#ecd9c6', panel: '#e8cdc4', panelInk: '#3a1512' },
+  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c' },
   { band: '#7a8597', bandInk: '#121820', panel: '#bcbdc2', panelInk: '#24242a' },
   { band: '#b8946a', bandInk: '#2a1a0a', panel: '#2a1b10', panelInk: '#f0e2c6' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca' },
