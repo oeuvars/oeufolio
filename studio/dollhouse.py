@@ -51,7 +51,8 @@ HALF = (LONG + NARROW + 3 * WALL) / 2
 TOP = SLAB + 3 * (HIGH + FASCIA)
 EAVE, RIDGE = 0.3, 1.6
 # What the camera frames: the building and a margin round it.
-FRAME_W, FRAME_H = 2 * HALF + 4.9, TOP + EAVE + RIDGE + 2.9
+# The frame is much wider than the house: the page shows as much of the country round it as it has room for.
+FRAME_W, FRAME_H = 2 * HALF + 16, TOP + EAVE + RIDGE + 2.9
 # Nothing in a model is set down dead square. The same slips every time.
 random.seed(7)
 
@@ -662,9 +663,9 @@ bpy.context.object.data.materials.append(paint("#f6edcf", glow=3))
 pine, trunk_bark = paint("#173a31", 0.8), paint("#3a2a1e", 0.8)
 grove = random.Random(11)
 for side in (-1, 1):
-    for i in range(16):
-        x = side * (HALF + 1.6 + grove.uniform(0, 9) + i * 0.5)
-        y, tall = grove.uniform(1.5, 26), grove.uniform(5.5, 10.5)
+    for i in range(30):
+        x = side * (HALF + 1.5 + grove.uniform(0, 5) + i * 0.62)
+        y, tall = grove.uniform(1.0, 34), grove.uniform(5.5, 11)
         rod(x, y, 0.4, 0.16, 1.4, trunk_bark)
         for tier in range(4):
             rod(x, y, 1.0 + tall * (0.16 + tier * 0.22), tall * (0.26 - tier * 0.05), tall * 0.4, pine, top=0.02)
@@ -693,8 +694,8 @@ scene.camera.data.lens = 36 * distance / FRAME_W
 scene.camera.data.dof.use_dof = True
 scene.camera.data.dof.focus_distance = distance + 0.6
 scene.camera.data.dof.aperture_fstop = 0.5
-scene.render.resolution_x = int(1600 * SCALE)
-scene.render.resolution_y = int(1600 * SCALE * FRAME_H / FRAME_W)
+scene.render.resolution_x = int(2600 * SCALE)
+scene.render.resolution_y = int(2600 * SCALE * FRAME_H / FRAME_W)
 scene.render.film_transparent = True
 scene.render.engine = "CYCLES"
 scene.cycles.samples = SAMPLES

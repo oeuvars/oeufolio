@@ -15,6 +15,8 @@ type Tone = {
   panelInk: string
   /** The page is the badge. Its panel runs to the top of the strip, where the badge's ring leaves it. */
   hangs?: boolean
+  /** The page is a picture that runs to the strip's edges, so its panel has no frame either. */
+  bleeds?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
   /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
@@ -26,7 +28,7 @@ const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-proraso.avif' },
-  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', tab: '/objects/tab-apple.avif' },
+  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca', tab: '/objects/tab-prs.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
@@ -239,7 +241,7 @@ export function SiteShell({ children }: SiteShellProps) {
               transition={transition}
               style={stripStyle(pageTones[i], i + 1, stack - i)}
             >
-              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs ? 'panel-hangs' : ''}`}>
+              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds ? 'panel-hangs' : ''}`}>
                 {pageTones[i].hangs ? (
                   <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
                 ) : (
