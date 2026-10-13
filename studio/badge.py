@@ -42,7 +42,7 @@ CARD = (162, 195, 577, 850)
 PRINT = ((274.2, 372.0), (456.8, 373.4), (458.4, 600.2), (271.4, 601.0))
 BLANK = (478, 385, 566, 595)  # bare card, to take paper grain from
 REWRITTEN = (
-    (188, 209, 440, 264),  # the title, a line at a time, so the drop number beside it is left alone
+    (188, 203, 440, 264),  # the title, a line at a time, so the drop number beside it is left alone
     (188, 258.5, 558, 322),
     (188, 321, 558, 333),  # the rule under it
     (452, 236, 556, 258),  # the drop number, and where it moves to
@@ -274,11 +274,11 @@ def handwriting(ref, shape):
     return out
 
 
-# The title is set smaller than the reference's, from its top left corner, and the rule under it is moved up
-# into the room that leaves, so the title, the rule and the line below each stand clear of the next.
-HEADING = (194.0, 213.0, 0.86)  # the title's top left corner, and its size against the reference's
-HEADING_DOWN = 6.9  # then it is let down this far, to stand 12 above the rule
-RULE_UP = 4.5
+# The title is the reference's own size, so its second line runs the card's full width as it does there.
+# It is lifted a little and its rule with it, so the title, the rule and the line below each stand clear.
+HEADING = (194.0, 213.0, 1.0)  # the title's top left corner, and its size against the reference's
+HEADING_DOWN = -4.0
+RULE_UP = 2.0
 DROP_RIGHT = 38.5  # the drop number is moved along to end where the rule does
 TYPE = (200.6, 10.22, 335.5, 353.5)  # the line under the title: middle of its first letter, pitch, top, bottom
 TITLE = "PRODUCT-FIRST ENGINEER"
