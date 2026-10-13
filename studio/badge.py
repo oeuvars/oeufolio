@@ -17,6 +17,8 @@ vinyl and the card are the photograph's and not a likeness of them. Three things
   and set in a new order. That goes for the type, the dot-matrix stamp and the handwriting. A letter the
   reference never used is made from ones it did: a G from a C, a 5 from an E and a 3, stamp figures from
   the stamp's own grid of dots, and a few capitals drawn with the marker's width of pen.
+- The title alone is not the reference's. It is set in Instrument Serif and printed as old letterpress is
+  (see letterpress).
 - The mark beside the line under the title, and the three rules, come from studio/assets/overlay.png,
   a capture of studio/plate.html.
 
@@ -27,7 +29,7 @@ Blender model of the same badge; the page does not use it.
 import os
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from scipy import ndimage
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -274,10 +276,15 @@ def handwriting(ref, shape):
     return out
 
 
-# The title is set a tenth smaller than the reference's, from its top left corner, then let down so that
-# it still stands as far above its rule. The rule is lifted a little, to clear the line below it.
-HEADING = (194.0, 213.0, 0.9)  # the title's top left corner, and its size against the reference's
-HEADING_DOWN = 6.3
+# The title is not the reference's: it is set in Instrument Serif and printed as old letterpress is.
+# Its last line stands as far above the rule as the reference's title did at nine tenths of its size,
+# and its capitals are 15% shorter than that title's were.
+HEADLINE = ("THE", "PERFORMER")
+TITLE_FACE = os.path.join(HERE, "assets", "fonts", "InstrumentSerif-Regular.ttf")
+TITLE_AT = (193.0, 311.0)  # the left edge, and the baseline of the last line
+TITLE_CAP = 48.0 * 0.9 * 0.85  # the height of a capital
+TITLE_LEAD = 1.22  # baseline to baseline, in capitals
+TITLE_BOX = (186, 200, 560, 322)  # the part of the card it is printed in
 RULE_UP = 2.0
 DROP_RIGHT = 38.5  # the drop number is moved along to end where the rule does
 TYPE = (200.6, 10.22, 335.5, 353.5)  # the line under the title: middle of its first letter, pitch, top, bottom
@@ -319,6 +326,60 @@ CROSS = ((1, 2), (3, 2), (2, 3), (1, 4), (3, 4))  # the X's single dots: column 
 DOT = (513.0, 815.3)  # a dot of the reference's stamp that stands alone
 
 
+def letterpress():
+    """The title as ink, 0 for bare card to 1 for black, over TITLE_BOX at the output's size.
+
+    Old metal type on soft card does four things a screen does not. The ink spreads, so the letters are a
+    little fatter than the face and their edges are rough where it crept into the grain. It is squeezed
+    out from under the type, so it lies thicker round the edge of a letter than in the middle. It does not
+    take evenly, so a stem is paler in patches and has pinholes where the card shows. And the sorts are
+    worn and never sit dead level, so each letter stands a hair off its line."""
+    fine = 4  # drawn this many times the output's size, so the roughness is in the ink and not the pixels
+    px = UP * fine
+    x0, y0, x1, y1 = TITLE_BOX
+    cols, rows = (x1 - x0) * px, (y1 - y0) * px
+    rng = np.random.default_rng(23)
+
+    probe = ImageFont.truetype(TITLE_FACE, 400)
+    top, bottom = probe.getbbox("H")[1], probe.getbbox("H")[3]
+    face = ImageFont.truetype(TITLE_FACE, round(400 * TITLE_CAP * px / (bottom - top)))
+    sheet = Image.new("L", (cols, rows), 0)
+    draw = ImageDraw.Draw(sheet)
+    left, last = TITLE_AT
+    for i, line in enumerate(HEADLINE):
+        base = last - (len(HEADLINE) - 1 - i) * TITLE_CAP * TITLE_LEAD
+        x = (left - x0) * px - face.getbbox(line[0])[0]
+        for j, letter in enumerate(line):
+            dx, dy = rng.normal(0, 0.1 * px), rng.normal(0, 0.22 * px)
+            draw.text((x + dx, (base - y0) * px + dy), letter, font=face, fill=255, anchor="ls")
+            pair = line[j : j + 2]
+            x += face.getlength(pair) - face.getlength(pair[1:]) if len(pair) == 2 else 0
+    type_ = np.asarray(sheet, dtype=np.float64) / 255
+
+    def noise(sigma):
+        field = blurred(rng.standard_normal((rows, cols)), sigma * px)
+        return field / field.std()
+
+    # Spread, with a ragged edge: the line between ink and card wanders with the grain.
+    soft = blurred(type_, 0.42 * px)
+    edge = 0.4 + 0.085 * noise(0.33) + 0.035 * noise(1.3)
+    inked = np.clip((soft - edge) / 0.05 + 0.5, 0, 1)
+    # Squash: thicker at the rim than in the body of a stroke.
+    body = np.clip((blurred(inked, 1.0 * px) - 0.62) / 0.3, 0, 1)
+    weight = 1.0 - 0.07 * body
+    # Uneven take: slow patches, and pinholes where a fleck of card stayed dry.
+    weight *= np.clip(0.97 + 0.05 * noise(4.0), 0.84, 1.0)
+    weight *= 1 - 0.22 * np.clip((noise(1.6) - 1.3) / 0.6, 0, 1)
+    holes = np.clip((noise(0.22) - 2.05) / 0.3, 0, 1) * body
+    inked = inked * weight * (1 - 0.85 * holes)
+    # Flecks of ink the type threw clear of itself.
+    near = np.clip(blurred(type_, 2.2 * px) * 3, 0, 1) * (1 - np.clip(soft * 4, 0, 1))
+    inked = np.maximum(inked, 0.55 * near * np.clip((noise(0.2) - 2.6) / 0.25, 0, 1))
+
+    small = inked.reshape(rows // fine, fine, cols // fine, fine).mean(axis=(1, 3))
+    return np.clip(blurred(small, 0.3 * UP), 0, 1)
+
+
 def printed(ref, shape):
     """The reference's printed letters in their new places, as ink at the output's size."""
     lum = ref.mean(axis=-1)
@@ -344,10 +405,8 @@ def printed(ref, shape):
         h, w = mark.shape
         out[top : top + h, left : left + w] = np.maximum(out[top : top + h, left : left + w], mark)
 
-    # The title, smaller, and its rule.
-    hx, hy, size = HEADING
-    for x0, y0, x1, y1 in ((190, 209, 316, 264), (190, 263, 556, 321)):
-        put(take(x0, y0, x1, y1, (x1 - x0) * size, (y1 - y0) * size), hx + (x0 - hx) * size, hy + HEADING_DOWN + (y0 - hy) * size)
+    # The title, in its own face, and the reference's rule under it.
+    put(letterpress(), TITLE_BOX[0], TITLE_BOX[1])
     put(take(190, 323.5, 556, 328.6), 190, 323.5 - RULE_UP)
 
     # The line under the title.
