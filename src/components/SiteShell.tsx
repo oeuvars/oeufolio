@@ -106,6 +106,26 @@ export function SiteShell({ children }: SiteShellProps) {
 
   return (
     <MotionConfig reducedMotion="user">
+      <svg aria-hidden width="0" height="0" className="absolute">
+        <defs>
+          {/* Ink on paper: a ragged edge, then flecks where the ink did not take. */}
+          <filter id="print" x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="3" result="edge" />
+            <feDisplacementMap in="SourceGraphic" in2="edge" scale="1.3" xChannelSelector="R" yChannelSelector="G" result="rough" />
+            <feGaussianBlur in="rough" stdDeviation="0.3" result="soft" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="8" result="grain" />
+            <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.7 0 0 0 0.2" result="taken" />
+            <feComposite in="soft" in2="taken" operator="in" />
+          </filter>
+          <filter id="print-fine" x="-5%" y="-10%" width="110%" height="120%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5" result="edge" />
+            <feDisplacementMap in="SourceGraphic" in2="edge" scale="0.6" xChannelSelector="R" yChannelSelector="G" result="rough" />
+            <feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="2" seed="11" result="grain" />
+            <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.4 0 0 0 0.36" result="taken" />
+            <feComposite in="rough" in2="taken" operator="in" />
+          </filter>
+        </defs>
+      </svg>
       <main
         className="grain fixed inset-0 overflow-hidden bg-[#1f1e1b]"
         style={{ '--band-w': `${band}px`, '--protrude': `${protrude}px` } as CSSProperties}
@@ -121,7 +141,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 {profile.handle}_01-0{count}
               </Link>
               <div className="mt-auto ml-[1.1rem] flex items-end gap-[0.9rem]">
-                <p className="mono vertical rotate-180 leading-[1.7] font-bold whitespace-nowrap">
+                <p className="mono vertical leading-[1.7] font-bold whitespace-nowrap">
                   Product Studies:
                   <br />
                   Type · Image · Craft

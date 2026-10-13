@@ -16,7 +16,7 @@ export function Badge({ badge }: BadgeProps) {
     <>
       <div
         aria-hidden
-        className="absolute inset-0 rounded-[0.7rem] bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundColor: badge.backdrop.color,
           backgroundImage: badge.backdrop.image && `url(${badge.backdrop.image})`,

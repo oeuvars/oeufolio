@@ -92,6 +92,23 @@
     text-transform: uppercase;
   }
 
+  /*
+   * Type printed on the paper, not laid over it: the ink's edge is a little ragged where it met the
+   * grain, and it did not take evenly, so the sheet shows through in flecks. The filters are in SiteShell.
+   */
+  :where(.panel p) {
+    filter: url(#print-fine);
+  }
+
+  .label,
+  .mono {
+    filter: url(#print-fine);
+  }
+
+  .display {
+    filter: url(#print);
+  }
+
   .vertical {
     writing-mode: vertical-rl;
   }
@@ -125,6 +142,7 @@
     left: 0;
     right: var(--band-w);
     overflow: hidden;
+    border-radius: 0.6rem;
     background-color: var(--panel, var(--band));
     color: var(--panel-ink, var(--band-ink));
   }
@@ -139,30 +157,32 @@
     height: var(--tab-h);
     padding-top: 0.9rem;
     justify-content: center;
-    border-radius: 0 calc(var(--protrude) * 0.45) calc(var(--protrude) * 0.45) 0;
+    /* The join into the strip and the outer corner each take half of how far the tab stands out. */
+    --join: calc(var(--protrude) * 0.5);
+    border-radius: 0 var(--join) var(--join) 0;
     background-color: var(--band);
     color: var(--band-ink);
     text-decoration: none;
   }
 
-  /* The tab leaves the strip on a concave curve as wide as it protrudes, top and bottom. */
+  /* The tab leaves the strip on a concave curve, top and bottom. Each overlaps its neighbours by a pixel. */
   .tab::before,
   .tab::after {
     content: '';
     position: absolute;
-    left: var(--band-w);
-    width: var(--protrude);
-    height: var(--protrude);
+    left: calc(var(--band-w) - 1px);
+    width: calc(var(--join) + 1px);
+    height: calc(var(--join) + 1px);
   }
 
   .tab::before {
-    bottom: 100%;
-    background: radial-gradient(circle at 100% 0, transparent var(--protrude), var(--band) calc(var(--protrude) + 0.5px));
+    bottom: calc(100% - 1px);
+    background: radial-gradient(circle at 100% 0, transparent var(--join), var(--band) calc(var(--join) + 0.5px));
   }
 
   .tab::after {
-    top: 100%;
-    background: radial-gradient(circle at 100% 100%, transparent var(--protrude), var(--band) calc(var(--protrude) + 0.5px));
+    top: calc(100% - 1px);
+    background: radial-gradient(circle at 100% 100%, transparent var(--join), var(--band) calc(var(--join) + 0.5px));
   }
 
   .tab-text {
