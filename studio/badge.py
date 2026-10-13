@@ -283,7 +283,9 @@ HEADLINE = ("THE", "PERFORMER")
 TITLE_FACE = os.path.join(HERE, "assets", "fonts", "InstrumentSerif-Regular.ttf")
 TITLE_AT = (193.0, 311.0)  # the left edge, and the baseline of the last line
 TITLE_CAP = 48.0 * 0.9 * 0.85  # the height of a capital
-TITLE_LEAD = 1.22  # baseline to baseline, in capitals
+TITLE_BOLD = 0.8  # the face has one weight, so every stroke is thickened by this much on each side
+TITLE_TRACK = -1.9  # and the letters are set this much closer, so they run into each other as the reference's do
+TITLE_LEAD = 1.16  # baseline to baseline, in capitals
 TITLE_BOX = (186, 200, 560, 322)  # the part of the card it is printed in
 RULE_UP = 2.0
 DROP_RIGHT = 38.5  # the drop number is moved along to end where the rule does
@@ -342,18 +344,21 @@ def letterpress():
 
     probe = ImageFont.truetype(TITLE_FACE, 400)
     top, bottom = probe.getbbox("H")[1], probe.getbbox("H")[3]
-    face = ImageFont.truetype(TITLE_FACE, round(400 * TITLE_CAP * px / (bottom - top)))
+    bold = round(TITLE_BOLD * px)
+    face = ImageFont.truetype(TITLE_FACE, round(400 * (TITLE_CAP * px - 2 * bold) / (bottom - top)))
     sheet = Image.new("L", (cols, rows), 0)
     draw = ImageDraw.Draw(sheet)
     left, last = TITLE_AT
     for i, line in enumerate(HEADLINE):
         base = last - (len(HEADLINE) - 1 - i) * TITLE_CAP * TITLE_LEAD
-        x = (left - x0) * px - face.getbbox(line[0])[0]
+        x = (left - x0) * px - face.getbbox(line[0])[0] + bold
         for j, letter in enumerate(line):
             dx, dy = rng.normal(0, 0.1 * px), rng.normal(0, 0.22 * px)
-            draw.text((x + dx, (base - y0) * px + dy), letter, font=face, fill=255, anchor="ls")
+            at = (x + dx, (base - y0) * px - bold + dy)
+            draw.text(at, letter, font=face, fill=255, anchor="ls", stroke_width=bold, stroke_fill=255)
             pair = line[j : j + 2]
-            x += face.getlength(pair) - face.getlength(pair[1:]) if len(pair) == 2 else 0
+            if len(pair) == 2:
+                x += face.getlength(pair) - face.getlength(pair[1:]) + 2 * bold + TITLE_TRACK * px
     type_ = np.asarray(sheet, dtype=np.float64) / 255
 
     def noise(sigma):
