@@ -17,18 +17,24 @@ type Tone = {
   hangs?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
+  /** A moulded plastic piece stuck on the strip's paper tab, in place of words (studio/tabs.py). */
+  tab?: string
 }
 
 const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c' }
-const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb' }
+const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', tab: '/objects/tab-hamilton.avif' }
 const pageTones: Tone[] = [
-  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true },
-  { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif' },
-  { band: '#b8946a', bandInk: '#2a1a0a', panel: '#9dcdc6', panelInk: '#3b1f1a' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca' },
+  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-proraso.avif' },
+  { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-lacoste.avif' },
+  { band: '#b8946a', bandInk: '#2a1a0a', panel: '#9dcdc6', panelInk: '#3b1f1a', tab: '/objects/tab-prs.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca', tab: '/objects/tab-apple.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
+// A tab's width on a wide screen and the room a render of its plastic keeps round the tab, in rem: WIDTH
+// and MARGIN in studio/tabs.py. The heights above are for a tab of this width.
+const tabSpan = 4
+const tabMargin = 0.3
 
 const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 const instant = { duration: 0 } as const
@@ -43,7 +49,6 @@ function stripStyle(tone: Tone, slot: number, z: number, extra: Record<string, s
     '--ink': tone.panelInk,
     '--panel-grain': tone.grain ? `url(${tone.grain})` : 'none',
     '--tab-top': `${tabTops[slot]}rem`,
-    '--tab-h': `${tabHeights[slot]}rem`,
     zIndex: z,
     ...extra,
   } as CSSProperties
@@ -56,11 +61,12 @@ type TabShape = {
 }
 
 type TabProps = {
-  code?: number
   label: string
   shape: TabShape
   to?: '/' | '/likes' | '/work' | '/extras'
   current?: boolean
+  /** A render of the plastic stuck on the tab. The tab then carries no words, and the label is only what a link to it is called. */
+  src?: string
 }
 
 /**
@@ -91,9 +97,10 @@ function tabOutline({ band, protrude, height }: TabShape) {
   return { rise, reach, path: `M0 ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L0 ${height + reach} Z` }
 }
 
-function Tab({ code, label, shape, to, current }: TabProps) {
+function Tab({ label, shape, to, current, src }: TabProps) {
   const { rise, reach, path } = tabOutline(shape)
   const width = shape.band + shape.protrude
+  const margin = (tabMargin * width) / tabSpan
   const inside = (
     <>
       <svg
@@ -106,14 +113,30 @@ function Tab({ code, label, shape, to, current }: TabProps) {
       >
         <path d={path} />
       </svg>
-      <span className="tab-text vertical" style={{ paddingTop: rise + 6 }}>
-        {code !== undefined && <span className="tab-code">CODE_{String(code).padStart(3, '0')} //</span>}
-        <span className="tab-name">{label}</span>
-      </span>
+      {src ? (
+        <img
+          aria-hidden
+          alt=""
+          src={src}
+          draggable={false}
+          className="tab-plastic"
+          style={{ left: -margin, top: -margin, width: width + 2 * margin, height: shape.height + 2 * margin }}
+        />
+      ) : (
+        <span className="tab-text vertical" style={{ paddingTop: rise + 6 }}>
+          <span className="tab-name">{label}</span>
+        </span>
+      )}
     </>
   )
 
-  if (!to) return <div className="tab">{inside}</div>
+  if (!to) {
+    return (
+      <div className="tab" style={{ height: shape.height }}>
+        {inside}
+      </div>
+    )
+  }
 
   return (
     <Link
@@ -122,6 +145,7 @@ function Tab({ code, label, shape, to, current }: TabProps) {
       aria-label={label}
       aria-current={current ? 'page' : undefined}
       className="tab"
+      style={{ height: shape.height }}
     >
       {inside}
     </Link>
@@ -144,8 +168,8 @@ export function SiteShell({ children }: SiteShellProps) {
   const reduced = useReducedMotion()
   const transition = ready && !reduced ? slide : instant
 
-  const { overlap, band, protrude, strip, spine, contact, end, mobile, rem } = metrics
-  const tabShape = (slot: number): TabShape => ({ band, protrude, height: tabHeights[slot] * rem })
+  const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
+  const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
   const fixed = mobile ? 0 : spine + contact + end
   const gaps = (mobile ? count : count + 3) - 1
   const openWidth = metrics.width - fixed - (count - 1) * strip + gaps * overlap
@@ -263,7 +287,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab code={i + 1} label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} />
             </motion.section>
           )
         })}
@@ -297,7 +321,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   </ul>
                 </div>
               </div>
-              <Tab code={count + 1} label="Contact" shape={tabShape(count + 1)} />
+              <Tab label="Contact" shape={tabShape(count + 1)} src={contactTone.tab} />
             </aside>
 
             <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />

@@ -172,7 +172,6 @@
     z-index: 2;
     display: flex;
     width: calc(var(--band-w) + var(--protrude));
-    height: var(--tab-h);
     padding-left: 0.45rem;
     justify-content: center;
     color: var(--band-ink);
@@ -187,7 +186,16 @@
     pointer-events: none;
   }
 
-  /* Two lines down the tab in the wide face: the name, and its code beside it, lighter and a step lower. */
+  /* Plastic stuck on the tab. The render brings the shadow it sits in. This is the one the lamp throws. */
+  .tab-plastic {
+    position: absolute;
+    max-width: none;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(1.5px 1px 1.2px rgb(0 0 0 / 0.3));
+  }
+
+  /* The name, down the tab in the wide face. */
   .tab-text {
     position: relative;
     display: block;
@@ -201,14 +209,6 @@
   .tab-text span {
     display: block;
     filter: url(#print-fine);
-  }
-
-  .tab-code {
-    margin-left: 0.25rem;
-    padding-top: 0.3rem;
-    font-size: 0.7rem;
-    font-weight: 400;
-    letter-spacing: 0.05em;
   }
 
   .tab-name {
