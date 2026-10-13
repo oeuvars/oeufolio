@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react'
 
 import { profile } from '../content'
 import { Art } from './Art'
+import { Badge } from './Badge'
 import { CopyEmail } from './CopyEmail'
 import { useStackMetrics } from './useStackMetrics'
 
@@ -12,7 +13,7 @@ type Tone = {
   bandInk: string
   panel: string
   panelInk: string
-  /** The panel runs to the top of the strip, for a page with something hanging from above it. */
+  /** The page is the badge. Its panel runs to the top of the strip, where the badge's ring leaves it. */
   hangs?: boolean
 }
 
@@ -218,21 +219,25 @@ export function SiteShell({ children }: SiteShellProps) {
               style={stripStyle(pageTones[i], i + 1, stack - i)}
             >
               <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs ? 'panel-hangs' : ''}`}>
-                <motion.div
-                  aria-hidden
-                  className="absolute inset-y-0"
-                  style={{ left: overlap, width: artWidth }}
-                  initial={false}
-                  animate={{ opacity: open ? 0 : 1 }}
-                  transition={{ duration: 0.35 }}
-                >
-                  <Art index={i} />
-                </motion.div>
+                {pageTones[i].hangs ? (
+                  <Badge badge={profile.badge} clear={mobile ? 0 : overlap + protrude} open={open} />
+                ) : (
+                  <motion.div
+                    aria-hidden
+                    className="absolute inset-y-0"
+                    style={{ left: overlap, width: artWidth }}
+                    initial={false}
+                    animate={{ opacity: open ? 0 : 1 }}
+                    transition={{ duration: 0.35 }}
+                  >
+                    <Art index={i} />
+                  </motion.div>
+                )}
 
                 {open ? (
                   <motion.div
                     className="@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]"
-                    style={{ width: panelWidth, minWidth: 0, paddingLeft: overlap + protrude + 16, '--clear': `${overlap + protrude}px` } as CSSProperties}
+                    style={{ width: panelWidth, minWidth: 0, paddingLeft: overlap + protrude + 16 }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}

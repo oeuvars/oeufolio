@@ -7,34 +7,8 @@ type ArtProps = {
   index: number
 }
 
-/** Cropped decorative fragments shown on a collapsed sheet. */
+/** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. */
 export function Art({ index }: ArtProps) {
-  if (index === 0) {
-    return (
-      <div aria-hidden className="absolute inset-0 border-t border-ink/60">
-        <div className="absolute top-[5%] left-0 h-[1.4%] w-[34%] bg-ink" />
-        <div
-          className="absolute top-[24%] left-[8%] h-[5%] w-[70%]"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 9px, var(--ink) 9px 12px, transparent 12px 14px)',
-          }}
-        />
-        <div className="absolute top-[33%] left-0 h-[14%] w-[26%] bg-ink" />
-        <div className="absolute top-[42%] left-0 h-[5%] w-[64%] bg-ink" />
-        <p className="display absolute top-[49.5%] left-[4%] text-[1.4rem]">ure</p>
-        <p className="mono absolute top-[56%] left-[4%] border border-ink/60 px-[0.4em] py-[0.15em]">01-A</p>
-        <p className="mono absolute top-[63%] left-[4%] leading-[1.7] font-bold">
-          walking,
-          <br />
-          way,
-          <br />
-          still.
-        </p>
-      </div>
-    )
-  }
-
   if (index === 1) {
     return (
       <div aria-hidden className="absolute inset-0">
