@@ -42,6 +42,9 @@ CARD = (162, 195, 577, 850)
 PRINT = ((274.2, 372.0), (456.8, 373.4), (458.4, 600.2), (271.4, 601.0))
 BLANK = (478, 385, 566, 595)  # bare card, to take paper grain from
 REWRITTEN = (
+    (188, 209, 440, 264),  # the title, a line at a time, so the drop number beside it is left alone
+    (188, 258.5, 558, 322),
+    (188, 321, 558, 333),  # the rule under it
     (504.6, 236, 514, 257),  # the last figure of the drop number
     (186, 331, 560, 362),  # the line under the title
     (320.5, 804.2, 380, 815.5),  # the end of the small print
@@ -271,6 +274,10 @@ def handwriting(ref, shape):
     return out
 
 
+# The title is set smaller than the reference's, from its top left corner, and the rule under it is moved up
+# into the room that leaves, so the title, the rule and the line below each stand clear of the next.
+HEADING = (194.0, 213.0, 0.86)  # the title's top left corner, and its size against the reference's
+RULE_UP = 9.0
 TYPE = (200.6, 10.22, 335.5, 353.5)  # the line under the title: middle of its first letter, pitch, top, bottom
 TITLE = "PRODUCT-FIRST ENGINEER"
 # Where each of its letters comes from. A number and two edges is a letter of the reference's own line,
@@ -334,6 +341,12 @@ def printed(ref, shape):
         top, left = round(y * UP), round(x * UP)
         h, w = mark.shape
         out[top : top + h, left : left + w] = np.maximum(out[top : top + h, left : left + w], mark)
+
+    # The title, smaller, and its rule.
+    hx, hy, size = HEADING
+    for x0, y0, x1, y1 in ((190, 209, 316, 264), (190, 263, 556, 321)):
+        put(take(x0, y0, x1, y1, (x1 - x0) * size, (y1 - y0) * size), hx + (x0 - hx) * size, hy + (y0 - hy) * size)
+    put(take(190, 323.5, 556, 328.6), 190, 323.5 - RULE_UP)
 
     # The line under the title.
     first, pitch, top, bottom = TYPE
