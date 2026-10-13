@@ -69,13 +69,17 @@ type TabProps = {
   current?: boolean
   /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
   src: string
+  /** The strip is a picture to its edge, with no band of paper down it for the tab to grow out of. */
+  bare?: boolean
 }
 
 /**
  * The outline of a folder tab, as the reference cuts it: it leaves the strip's edge on a slant, runs
  * straight down and slants back in, with every corner eased. Returns the path and how far its joins reach.
+ * A tab's paper carries on across the strip's band, which is the same paper. A bare tab starts at the
+ * strip's edge.
  */
-function tabOutline({ band, protrude, height }: TabShape) {
+function tabOutline({ band, protrude, height }: TabShape, bare?: boolean) {
   const rise = protrude * 0.33
   const ease = protrude * 0.2
   const reach = ease * 2
@@ -96,11 +100,12 @@ function tabOutline({ band, protrude, height }: TabShape) {
     const after = toward(corner, corners[i + 2])
     return `L${before[0]} ${before[1]} Q${corner[0]} ${corner[1]} ${after[0]} ${after[1]}`
   })
-  return { reach, path: `M0 ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L0 ${height + reach} Z` }
+  const foot = bare ? band : 0
+  return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, current, src }: TabProps) {
-  const { reach, path } = tabOutline(shape)
+function Tab({ label, shape, to, current, src, bare }: TabProps) {
+  const { reach, path } = tabOutline(shape, bare)
   const width = shape.band + shape.protrude
   const margin = (tabMargin * width) / tabSpan
   const inside = (
@@ -283,7 +288,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} bare={pageTones[i].bleeds} />
             </motion.section>
           )
         })}
