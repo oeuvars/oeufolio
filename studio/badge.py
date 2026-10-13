@@ -292,12 +292,22 @@ FROM_LINE = {
 # under the title is that face drawn out to about half as wide again: so are these.
 FROM_LABELS = {"P": (480.0, 239, 488.6, 254), "C": (205.0, 688, 212.6, 702.4), "E": (222.6, 633, 229.7, 646)}
 STAMP = (794.0, 5.33, 3.15)  # the stamp's dots: top row, and the pitch down and across
-STAMPED = (  # figures to make from dots, with the left column of each
-    (438.5, (".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###.")),
-    (489.7, (".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###.")),
-    (509.4, (".###.", "#...#", "....#", "..##.", "....#", "#...#", ".###.")),
-    (528.4, ("#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#")),
-)
+# The left column of each figure the reference stamped, 45-12H, and of the six places a figure goes.
+STRUCK = {"5": 457.6, "2": 509.4, "H": 528.4}
+PLACES = (438.5, 457.6, None, 489.7, 509.4, 528.4)
+# 02-03X, each figure as bands of the reference's own figures, top to bottom: which figure, the rows the
+# band runs between, and the row it is laid at. Rows count from nought and a band may start part way
+# through one. A 3 is the top of the 2 on the bottom of the 5. A 0 is the same with the H's uprights
+# between, taken clear of its bar. An X is the ends of the H's uprights with five single dots crossing.
+STAMPED = {
+    0: (("2", 0, 2, 0), ("H", 1.83, 2.83, 2), ("H", 1.83, 2.83, 3), ("H", 4.17, 5.17, 4), ("5", 5, 7, 5)),
+    1: (("2", 0, 7, 0),),
+    3: (("2", 0, 2, 0), ("H", 1.83, 2.83, 2), ("H", 1.83, 2.83, 3), ("H", 4.17, 5.17, 4), ("5", 5, 7, 5)),
+    4: (("2", 0, 4, 0), ("5", 4, 7, 4)),
+    5: (("H", 0, 2.26, 0), ("H", 4.74, 7, 4.74)),
+}
+CROSS = ((1, 2), (3, 2), (2, 3), (1, 4), (3, 4))  # the X's single dots: column and row
+DOT = (513.0, 815.3)  # a dot of the reference's stamp that stands alone
 
 
 def printed(ref, shape):
@@ -356,19 +366,23 @@ def printed(ref, shape):
     # The small print ends FOR ME. Both letters are in PERFORMER, side by side.
     put(take(276.3, 804.2, 289.2, 815), 322.6, 804.2)
 
-    # The stamp. Its 2 is moved along, and the other figures are made of the same dots on the same grid.
-    put(take(507.2, 790, 524.6, 831), 507.2 - 51.8, 790)
+    # The stamp, from the reference's own dots.
     top, down, across = STAMP
-    spots = []
-    for column, rows_ in STAMPED:
-        on = [(c, r) for r, row in enumerate(rows_) for c, mark in enumerate(row) if mark == "#"]
-        spots += [(column + c * across, top + r * down) for c, r in on]
-        spots += [(column + c * across, top + (r + 0.5) * down) for c, r in on if (c, r + 1) in on]  # stems are struck twice
-    Y, X = np.mgrid[round(786 * UP) : round(834 * UP), round(432 * UP) : round(548 * UP)] + 0.5
-    dots = np.zeros(X.shape)
-    for x, y in spots:
-        dots = np.maximum(dots, np.clip((2.0 * UP - np.hypot(X - x * UP, Y - y * UP)) / (0.8 * UP) + 0.5, 0, 1))
-    put(np.clip(blurred(dots, 0.35 * UP), 0, 1), 432, 786)
+
+    def edge(row):
+        """Where one row of dots ends and the next begins."""
+        return 790.5 if row <= 0 else 830.0 if row >= 7 else top + (row - 0.5) * down
+
+    for place, bands in STAMPED.items():
+        for figure, start, end, at in bands:
+            x0 = STRUCK[figure] - 2.4
+            put(take(x0, edge(start), x0 + 4 * across + 4.8, edge(end)), PLACES[place] - 2.4, edge(at))
+    cx, cy = DOT
+    dot = take(cx - 3.2, cy - 3.2, cx + 3.2, cy + 3.2)
+    span = (np.arange(dot.shape[0]) + 0.5) / UP - 3.2
+    dot = dot * np.clip((3.0 - np.hypot(span[None, :], span[:, None])) / 0.6, 0, 1)
+    for column, row in CROSS:
+        put(dot, PLACES[5] + column * across - 3.2, top + row * down - 3.2)
     return out
 
 
