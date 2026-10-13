@@ -274,10 +274,10 @@ def handwriting(ref, shape):
     return out
 
 
-# The title is the reference's own size, so its second line runs the card's full width as it does there.
-# It is lifted a little and its rule with it, so the title, the rule and the line below each stand clear.
-HEADING = (194.0, 213.0, 1.0)  # the title's top left corner, and its size against the reference's
-HEADING_DOWN = -4.0
+# The title is set a tenth smaller than the reference's, from its top left corner, then let down so that
+# it still stands as far above its rule. The rule is lifted a little, to clear the line below it.
+HEADING = (194.0, 213.0, 0.9)  # the title's top left corner, and its size against the reference's
+HEADING_DOWN = 6.3
 RULE_UP = 2.0
 DROP_RIGHT = 38.5  # the drop number is moved along to end where the rule does
 TYPE = (200.6, 10.22, 335.5, 353.5)  # the line under the title: middle of its first letter, pitch, top, bottom
