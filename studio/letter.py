@@ -6,18 +6,21 @@
 
     uv run studio/letter.py
 
-Everything that is not changed is the reference's own pixels, so the card, the pen and the drawings are
-the photograph's and not a likeness of them. Three things are done to it:
+Everything that is not changed is the reference's own ink, so the pen and the drawings are the
+photograph's and not a likeness of them. Three things are done to it:
 
-- The photograph is cut down to the card, so the card lies on whatever page it is put on.
-- The words that go are rubbed out to bare card, stroke by stroke, and the card's own grain is put back.
+- The card is taken out from under the ink. What is left is the ink alone, see-through wherever the card
+  was bare, so it is written on whatever page it is put on. The card's grain goes out separately, as a
+  texture that page can be given.
+- The words that go are rubbed out to bare card, stroke by stroke.
 - The new words are written in the reference's own hand. A word the reference already wrote is lifted
   whole and set down where it is wanted. Any other word is spelt from letters the reference wrote, a
   different one each time a letter comes round, with the small unevenness of a hand. The few letters it
   never wrote are drawn with the pen's width of line. The writing in the drawings is the same hand, smaller.
 
-Writes public/objects/letter.avif at twice the reference's size. LETTER_DEBUG=<dir> also writes the
-sheets the reading of the reference was checked against.
+Writes public/objects/letter.avif, the ink at twice the reference's size and cut close to it, and
+public/photos/laid.avif, the card's grain as a tile to multiply a page's colour by. LETTER_DEBUG=<dir>
+also writes the sheets the reading of the reference was checked against.
 """
 
 import os
@@ -152,6 +155,8 @@ WRITING = (
 )
 SPACE = 16.0  # bare card between two words, and how much it varies
 PAGE = (150, 58, 640, 104)  # bare card, to take paper grain from
+SHEET = (108, 58, 640, 172)  # a larger piece of it, for the texture
+FAINT = 0.1  # what the eye reads as ink on bare card and is only its grain
 
 # About how wide the hand writes each letter, to tell which letters a mark is.
 WIDTH = {**dict.fromkeys(".,'!1", 3), **dict.fromkeys("ilI", 6), **dict.fromkeys("jr-sce", 9), **dict.fromkeys("gp()", 12), "m": 16, "w": 14, "M": 16}
@@ -334,6 +339,8 @@ class Hand:
         self.letters = {}
         for chars, found in reading.letters.items():
             good = [(glyph, name) for glyph, name, key in found if key not in MISREAD and (chars, key) not in MISREAD_LETTERS]
+            if not set(chars) & set("ij!?"):  # a dot read into a letter that has none is its neighbour's
+                good = [([i for i in glyph if reading.size[i] >= 12] or glyph, name) for glyph, name in good]
             sized = [self.glyph(*reading.lift(glyph), reading.baseline(name, np.mean([reading.mid[i][0] for i in glyph]))) for glyph, name in good]
             if len(sized) > 3:  # one far from the rest in size is another letter
                 wide, tall = np.median([g[3] for g in sized]), np.median([g[4] for g in sized])
@@ -482,6 +489,25 @@ def rubbed(ref, reading, gone):
     return ref * (1 - cover) + (field + tiled) * cover
 
 
+def specks(reading):
+    """Small marks that are neither writing nor drawing: flecks in the card."""
+    written = {i for _, group, _ in reading.words.values() for i in group}
+    drawn = {i for i, (cx, cy) in reading.mid.items() if any(x0 <= cx < x1 and y0 <= cy < y1 for x0, y0, x1, y1 in DRAWINGS)}
+    return {i for i, size in reading.size.items() if size < 14} - written - drawn
+
+
+def laid(ref, reading):
+    """The card's grain on its own: how much lighter or darker than itself the bare card is at each point."""
+    x0, y0, x1, y1 = SHEET
+    lum = ref[y0:y1, x0:x1].mean(axis=-1)
+    grain = lum / blurred(lum, 6)
+    marked = reading.away[y0:y1, x0:x1] < 4
+    grain[marked] = np.roll(grain, 17, axis=0)[marked]  # a fleck would come round again in every tile
+    grain = np.clip(0.96 + 1.9 * (grain - 1), 0, 1)
+    grain = np.concatenate((grain, grain[::-1]), axis=0)
+    return np.concatenate((grain, grain[:, ::-1]), axis=1)
+
+
 def card(ref):
     """Where the card lies on the page it was photographed on: its edges, a little way in from each."""
     warm = blurred(ref[..., 0] - ref[..., 2], 1.5)  # the card is cream and the page behind it is grey
@@ -545,20 +571,33 @@ def main():
             gone.add(i)
         if any(x0 <= cx < x1 and y0 <= cy < y1 for x0, y0, x1, y1 in STAYS):
             gone.discard(i)
+    gone |= specks(reading)
     bare = np.clip(rubbed(ref, reading, gone), 0, 1)
 
-    ink = ref[reading.ink > 0.93].mean(axis=0)
-    page = np.dstack([np.asarray(Image.fromarray(bare[..., c].astype(np.float32), mode="F").resize((cols, rows), Image.Resampling.LANCZOS), dtype=np.float64) for c in range(3)])
-    wet = np.clip(hand.wet, 0, 1)[..., None]
-    page = page * (1 - wet) + ink * wet
-
-    x0, y0, x1, y1 = (v * UP for v in card(ref))
-    out = np.clip(page, 0, 1)[y0:y1, x0:x1]
+    # What is left on the card, read as ink again, with the new writing over it.
+    dry = np.clip((reading.card - bare.mean(axis=-1)) / (reading.card - 0.16), 0, 1)
+    dry *= np.clip(3.2 - reading.away, 0, 1) * ~np.isin(reading.owner, list(gone))  # ink is only where a mark is
+    x0, y0, x1, y1 = card(ref)
+    dry[:y0], dry[y1:], dry[:, :x0], dry[:, x1:] = 0, 0, 0, 0
+    dry = np.asarray(Image.fromarray(dry.astype(np.float32), mode="F").resize((cols, rows), Image.Resampling.LANCZOS), dtype=np.float64)
+    wet = np.clip((np.maximum(dry, hand.wet) - FAINT) / (0.92 - FAINT), 0, 1)
+    ys, xs = np.nonzero(wet > 0.3)
+    edge = 4 * UP
+    cut = (slice(ys.min() - edge, ys.max() + edge), slice(xs.min() - edge, xs.max() + edge))
+    colour = ref[reading.ink > 0.93].mean(axis=0)
+    out = np.dstack((np.broadcast_to(colour, (rows, cols, 3)), wet))[cut]
     target = os.path.join(ROOT, "public", "objects", "letter.avif")
-    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(target, quality=84, subsampling="4:4:4", speed=2)
-    print(f"letter {x1 - x0}x{y1 - y0} {os.path.getsize(target) / 1e3:.0f} kB")
+    Image.fromarray((out * 255 + 0.5).astype(np.uint8), mode="RGBA").save(target, quality=84, subsampling="4:4:4", speed=2)
+    print(f"letter {out.shape[1]}x{out.shape[0]} {os.path.getsize(target) / 1e3:.0f} kB")
+
+    grain = laid(ref, reading)
+    target = os.path.join(ROOT, "public", "photos", "laid.avif")
+    Image.fromarray((grain * 255 + 0.5).astype(np.uint8)).save(target, quality=88, speed=2)
+    print(f"laid {grain.shape[1]}x{grain.shape[0]} {os.path.getsize(target) / 1e3:.0f} kB")
     if DEBUG:
-        Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(DEBUG, "out.png"))
+        on = np.array([0.812, 0.808, 0.796]) * np.tile(grain, (out.shape[0] // grain.shape[0] + 1, out.shape[1] // grain.shape[1] + 1))[: out.shape[0], : out.shape[1], None]
+        shown = on * (1 - out[..., 3:]) + out[..., :3] * out[..., 3:]
+        Image.fromarray((shown * 255 + 0.5).astype(np.uint8)).save(os.path.join(DEBUG, "out.png"))
 
 
 main()

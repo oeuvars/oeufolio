@@ -15,13 +15,15 @@ type Tone = {
   panelInk: string
   /** The page is the badge. Its panel runs to the top of the strip, where the badge's ring leaves it. */
   hangs?: boolean
+  /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
+  grain?: string
 }
 
 const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c' }
 const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb' }
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true },
-  { band: '#7a8597', bandInk: '#121820', panel: '#bcbdc2', panelInk: '#24242a' },
+  { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif' },
   { band: '#b8946a', bandInk: '#2a1a0a', panel: '#2a1b10', panelInk: '#f0e2c6' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca' },
 ]
@@ -39,6 +41,7 @@ function stripStyle(tone: Tone, slot: number, z: number, extra: Record<string, s
     '--panel-ink': tone.panelInk,
     '--paper': tone.panel,
     '--ink': tone.panelInk,
+    '--panel-grain': tone.grain ? `url(${tone.grain})` : 'none',
     '--tab-top': `${tabTops[slot]}rem`,
     '--tab-h': `${tabHeights[slot]}rem`,
     zIndex: z,
