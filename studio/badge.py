@@ -44,7 +44,9 @@ EYELETS = ((213, 77), (515, 77))
 EYELET_HOLE, EYELET_RIM = 15, 19.5
 SLOT = (308, 62, 420, 95, 16.5)
 CARD = (162, 195, 577, 850)
-PHOTO = (273.5, 371, 459, 601)
+PHOTO = (273.5, 372.5, 456.7, 601.5)  # the print, before it is turned
+PHOTO_TURN = 0.75  # degrees clockwise: it was stuck down by hand
+GUIDE = (273.9, 371.0, 460.0, 602.2)  # the box printed on the card to place it in
 RING_AT, RING_TALL, RING_WIDE, RING_WIRE = (393, 35), 45, 36, 8.0
 
 # The mat stands in for the page. It is painted darker than the page because the stand lights it brighter
@@ -200,9 +202,15 @@ def holder():
     made.append(rim)
 
     # The header is fused flat, which leaves it greyer than the pocket.
-    frost = uneven(passes_light(principled("frost", (0.5, 0.5, 0.51), rough=0.42, specular_ior_level=0.4, alpha=0.5)), 0.22, 0.8)
+    frost = uneven(passes_light(principled("frost", (0.5, 0.5, 0.51), rough=0.42, specular_ior_level=0.4, alpha=0.27)), 0.22, 0.8)
     header = rework(prism(STAGE, "header", box(x0, y0, x1, HEADER_END, r, 14), end + 0.004, end + 0.016, frost), punches())
     made.append(header)
+
+    # The zip sits on a fused strip, and the fold under it holds a little shade.
+    bed = uneven(passes_light(principled("zip-bed", (0.36, 0.36, 0.37), rough=0.45, specular_ior_level=0.3, alpha=0.68)), 0.4, 0.75, (0.2, 1.0, 1.0))
+    made.append(prism(STAGE, "zip-bed", box(x0, ZIP[0][0], x1, ZIP[-1][1]), end + 0.004, end + 0.014, bed))
+    shade = uneven(passes_light(principled("shade", (0.2, 0.2, 0.21), rough=0.6, specular_ior_level=0.0, alpha=0.2)), 0.5, 0.6)
+    made.append(plate(STAGE, "shade-mouth", box(x0, ZIP[-1][1], x1, ZIP[-1][1] + 12), end + 0.02, shade))
 
     # The zip: three ridges across the mouth of the pocket.
     for i, (ya, yb) in enumerate(ZIP):
@@ -217,7 +225,7 @@ def holder():
     # Where the sheet turns an edge it shows as a thin dark line, as the cut edge of any clear plastic does.
     dark = uneven(passes_light(principled("edge", (0.03, 0.033, 0.036), rough=0.5, specular_ior_level=0.0, alpha=0.92)), 1.4, 0.45)
     faint = uneven(passes_light(principled("edge-faint", (0.1, 0.105, 0.11), rough=0.5, specular_ior_level=0.0, alpha=0.62)), 1.1, 0.4)
-    shine = uneven(passes_light(principled("edge-shine", (1.0, 1.0, 1.0), rough=0.3, specular_ior_level=0.0, alpha=0.8)), 2.2, 0.1, (0.25, 1.0, 1.0))
+    shine = uneven(passes_light(principled("edge-shine", (1.0, 1.0, 1.0), rough=0.3, specular_ior_level=0.0, alpha=0.95)), 2.2, 0.25, (0.25, 1.0, 1.0))
     hx0, hy0, hx1, hy1, hr = HOLDER
     made.append(contour("line-outer", hx0 + 1, hy0 + 1, hx1 - 1, hy1 - 1, hr - 1, 1.6, end + 0.075, faint))
     made.append(contour("line-inner", x0, y0, x1, y1, r, 1.8, end + 0.03, dark))
@@ -234,6 +242,26 @@ def holder():
         made.append(annulus(STAGE, f"line-eyelet-{i}", em(x), em(y), em(EYELET_HOLE - 0.7), em(EYELET_HOLE + 0.9), end + 0.03, dark))
     sx0, sy0, sx1, sy1, sr = SLOT
     made.append(contour("line-slot", sx0, sy0, sx1, sy1, sr, 1.6, end + 0.03, dark))
+
+    # The light comes from the lower right. The left weld leans away from it and reads grey, the right one
+    # shades the strip of pocket beside it, and both throw a hard line where they turn.
+    deep = uneven(passes_light(principled("shade-deep", (0.2, 0.2, 0.21), rough=0.6, specular_ior_level=0.0, alpha=0.34)), 0.5, 0.7)
+    made.append(plate(STAGE, "shade-left", box(hx0 + 1, y0 + 14, x0 - 1, y1 - 14), end + 0.078, deep))
+    made.append(plate(STAGE, "shade-right", box(x1 - 11, y0 + 150, x1 - 2, y1 - 20), end + 0.02, shade))
+    made.append(plate(STAGE, "line-left-outer", box(hx0 + 0.4, hy0 + 26, hx0 + 2.2, hy1 - 26), end + 0.08, dark))
+    made.append(plate(STAGE, "line-right-outer", box(hx1 - 2.0, hy0 + 26, hx1 - 0.4, hy1 - 26), end + 0.08, dark))
+    made.append(plate(STAGE, "line-left-inner", box(x0 - 0.3, y0 + 14, x0 + 1.9, y1 - 14), end + 0.035, dark))
+    made.append(plate(STAGE, "shine-left-a", box(x0 - 3.2, y0 + 20, x0 - 1.2, y1 - 20), end + 0.082, shine))
+    made.append(plate(STAGE, "shine-left-b", box(x0 + 2.4, y0 + 110, x0 + 6.0, y1 - 20), end + 0.036, shine))
+
+    # A backing in the mat's own paint, just under the holder. The holder rides off the mat to let the ring
+    # through, and without this the card's shadow would fall that far and spread; on the backing it stays
+    # the thin line it is in the reference. It is cut away under the ring, which has to be seen beneath.
+    paint = principled("backing", MAT, rough=0.8)
+    backing = rework(prism(STAGE, "backing", outline, z0 - 0.03, z0 - 0.015, paint), [box(342, 12, 446, 99, 6)])
+    backing.visible_camera = False
+    backing.visible_shadow = False
+    backing["stand"] = "backing"
     return made, end
 
 
@@ -265,22 +293,48 @@ def card_art(rows, cols):
     ink = np.clip(ink + 0.5 * (ink - blur(ink, 2.0)), 0, 1) ** 0.72
 
     cw, ch = CARD[2] - CARD[0], CARD[3] - CARD[1]
-    px0, py0, px1, py1 = PHOTO
-    c0, c1 = round((px0 - CARD[0]) / cw * cols), round((px1 - CARD[0]) / cw * cols)
-    r0, r1 = round((py0 - CARD[1]) / ch * rows), round((py1 - CARD[1]) / ch * rows)
-    edge = round(cols / cw * 1.6)
-    ink[r0 - edge : r1 + edge, c0 - edge : c1 + edge] = 0
+    sx, sy = cols / cw, rows / ch
+    Y, X = np.mgrid[0:rows, 0:cols] + 0.5
 
-    stock = np.clip(to_linear(paper) * np.array([1.1, 0.99, 0.955]), 0, 1)
+    def box_distance(x0, y0, x1, y1):
+        """Signed distance in card pixels to a rectangle given in reference pixels."""
+        qx = np.abs(X - (x0 + x1 - 2 * CARD[0]) / 2 * sx) - (x1 - x0) / 2 * sx
+        qy = np.abs(Y - (y0 + y1 - 2 * CARD[1]) / 2 * sy) - (y1 - y0) / 2 * sy
+        return np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0)
+
+    # Clear the old portrait and its box, then print the box again as a hairline.
+    guide = box_distance(*GUIDE)
+    ink[guide < 3 * sx] = 0
+    ink = np.maximum(ink, 0.42 * np.clip(1.2 - np.abs(guide) / (0.55 * sx), 0, 1))
+    # The reference's card sits a touch askew, so its own edge shadow strays onto the plate. This card casts its own.
+    ink[:, : round(9 * sx)] = 0
+
+    stock = np.clip(to_linear(paper) * np.array([1.1, 0.975, 0.855]), 0, 1)
     art = stock * (1 - ink[..., None] * (1 - linear("#171614")))
 
-    # The portrait is a small photographic print stuck to the card, with the paper's white at its edge.
+    # The portrait is a small photographic print stuck down a little out of true, so the box shows beside it.
+    px0, py0, px1, py1 = PHOTO
+    pw, ph = (px1 - px0) * sx, (py1 - py0) * sy
+    turn = math.radians(PHOTO_TURN)
+    dx = X - ((px0 + px1) / 2 - CARD[0]) * sx
+    dy = Y - ((py0 + py1) / 2 - CARD[1]) * sy
+    u = dx * math.cos(turn) + dy * math.sin(turn)
+    v = -dx * math.sin(turn) + dy * math.cos(turn)
+    inside = np.maximum(np.abs(u) - pw / 2, np.abs(v) - ph / 2)
+    cover = np.clip(0.5 - inside, 0, 1)
+
     face = stored(os.path.join(ROOT, "public", "photos", "face.jpg"))
     fh, fw = face.shape[:2]
-    face = face[round(fh * 0.13) : round(fh * 0.88), round(fw * 0.2) : round(fw * 0.8)]
-    print_ = to_linear(fit(face, r1 - r0, c1 - c0)) * 0.9 + 0.025
-    art[r0 - edge : r1 + edge, c0 - edge : c1 + edge] = to_linear(np.array([0.95, 0.94, 0.92]))
-    art[r0:r1, c0:c1] = print_
+    face = to_linear(face[round(fh * 0.13) : round(fh * 0.88), round(fw * 0.2) : round(fw * 0.8)]) * 1.02 + 0.03
+    fy = np.clip((v / ph + 0.5) * face.shape[0] - 0.5, 0, face.shape[0] - 1.001)
+    fx = np.clip((u / pw + 0.5) * face.shape[1] - 0.5, 0, face.shape[1] - 1.001)
+    iy, ix = fy.astype(int), fx.astype(int)
+    ty, tx = (fy - iy)[..., None], (fx - ix)[..., None]
+    print_ = (face[iy, ix] * (1 - tx) + face[iy, ix + 1] * tx) * (1 - ty) + (face[iy + 1, ix] * (1 - tx) + face[iy + 1, ix + 1] * tx) * ty
+    # The cut edge of photographic paper shows white.
+    rim = np.clip((inside + 1.3 * sx) / (0.6 * sx), 0, 1)[..., None]
+    print_ = print_ * (1 - rim) + to_linear(np.array([0.96, 0.95, 0.93])) * rim
+    art = art * (1 - cover[..., None]) + print_ * cover[..., None]
     return np.clip(art, 0, 1)
 
 
@@ -374,8 +428,17 @@ def dim_room():
 
 def badge():
     stage_module.MAT = MAT
-    # The reference is lit from the upper right: the card's shadow falls to its left and below.
-    stage_module.BOX_ON_STAND = Vector((0.32, 0.36, 0.875)).normalized()
+    # The reference is lit from the lower right: shadows fall up and to the left, and the frame brightens
+    # toward the bottom. The room's big box goes there, and a nearer key gives the fall-off.
+    stage_module.BOX_ON_STAND = Vector((0.42, -0.3, 0.86)).normalized()
+    key = bpy.data.lights.new("key", "AREA")
+    key.size = 16
+    key.energy = 6500
+    lamp = STAGE.add("key", key)
+    lamp["stand"] = "key"
+    target = Vector((em(FRAME[0]) / 2, -em(FRAME[1]) / 2, 0))
+    lamp.location = target + Vector((15, -34, 26))
+    lamp.rotation_euler = (target - lamp.location).to_track_quat("-Z", "Y").to_euler()
     plastic, end = holder()
     card(PROP + SHEET + 0.025)
     steel_ring(PROP + SHEET + GAP / 2)
@@ -385,8 +448,9 @@ def badge():
         "badge",
         (0, 0, em(FRAME[0]), em(FRAME[1])),
         bleed=0.0,
-        shadow=0.14,
+        shadow=0.1,
         exposure=0.6,
+        room=0.86,
         mat_through_glass=True,
         shadowless=tuple(plastic),
         sharp=1.25,
