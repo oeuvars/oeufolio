@@ -10,10 +10,12 @@ from inside, and the month the job began and the month it ended are in gilt at e
 brass lamp. Run from the
 repository root:
 
-    blender -b --factory-startup -P studio/dollhouse.py -- [--scale 0.5] [--samples 128]
+    blender -b --factory-startup -P studio/dollhouse.py -- [--strip] [--scale 0.5] [--samples 128]
 
 Writes public/objects/dollhouse.webp, by night with its lamps lit, in the snow among pines with mountains
-behind. The sky is left clear, for the page's own night to show through. The lettering
+behind. The sky is left clear, for the page's own night to show through. With --strip it writes
+public/objects/dollhouse-strip.webp instead, for the page's folded strip: the same house from the same
+place, small at the foot of a tall frame, under the moon and the stars. The lettering
 is JOBS below, which has to say what experience says in src/content.ts.
 """
 
@@ -35,6 +37,7 @@ def option(name, default):
 
 SCALE = option("--scale", 1)
 SAMPLES = int(option("--samples", 128))
+STRIP = "--strip" in ARGS
 
 # The building, in metres. A long room, a narrow one, and the walls and floors between them.
 LONG, NARROW, WALL, HIGH, SLAB, DEEP = 9.4, 2.6, 0.3, 2.7, 0.3, 4.2
@@ -657,8 +660,27 @@ def backdrop(distance, colour, low, high, step, seed):
 backdrop(150, "#3d4870", 24, 44, 26, 3)
 backdrop(105, "#2f395d", 16, 29, 17, 5)
 backdrop(70, "#222a48", 9, 17, 9, 8)
-bpy.ops.mesh.primitive_circle_add(radius=5.5, fill_type="NGON", location=(-34, 170, 96), rotation=(math.pi / 2, 0, 0))
-bpy.context.object.data.materials.append(paint("#f6edcf", glow=3))
+# The camera, which looks level from this height. The tall frame is the same view with the lens shifted up.
+EYE, AWAY = FRAME_H / 2 - 1.05, 27
+STRIP_W = 2 * HALF + 3.4
+STRIP_H = STRIP_W * 4.7
+
+
+def sky(across, up, depth):
+    """Where to put something that far off for it to show at this place in the frame, and how much it grows."""
+    grows = (AWAY + depth) / AWAY
+    return (across * grows, depth, EYE + (up - EYE) * grows), grows
+
+
+if STRIP:
+    place, grows = sky(2.6, STRIP_H * 0.66, 170)
+    bpy.ops.mesh.primitive_circle_add(radius=2.3 * grows, fill_type="NGON", location=place, rotation=(math.pi / 2, 0, 0))
+    bpy.context.object.data.materials.append(paint("#f6edcf", glow=2.2))
+    heavens, star = random.Random(21), paint("#f4f1e4", glow=5)
+    for _ in range(170):
+        place, grows = sky(heavens.uniform(-STRIP_W / 2, STRIP_W / 2), heavens.uniform(17, STRIP_H - 2), 180)
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=heavens.uniform(0.025, 0.08) * grows, location=place)
+        bpy.context.object.data.materials.append(star)
 
 pine, trunk_bark = paint("#173a31", 0.8), paint("#3a2a1e", 0.8)
 grove = random.Random(11)
@@ -685,17 +707,21 @@ world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.025
 scene.world = world
 
 # A long lens from well back and square on, so the rooms keep their depth and nothing leans.
-distance = 27
-bpy.ops.object.camera_add(location=(0, -distance, FRAME_H / 2 - 1.05), rotation=(math.pi / 2, 0, 0))
+distance = AWAY
+wide, tall = (STRIP_W, STRIP_H) if STRIP else (FRAME_W, FRAME_H)
+bpy.ops.object.camera_add(location=(0, -distance, EYE), rotation=(math.pi / 2, 0, 0))
 scene.camera = bpy.context.object
 scene.camera.data.sensor_width = 36
-scene.camera.data.lens = 36 * distance / FRAME_W
+scene.camera.data.sensor_fit = "HORIZONTAL"
+scene.camera.data.lens = 36 * distance / wide
+# Both frames stand on the same line of snow. The tall one gets there by shifting the lens up.
+scene.camera.data.shift_y = (tall / 2 - FRAME_H / 2) / wide
 # A model this small is never sharp from front to back.
 scene.camera.data.dof.use_dof = True
 scene.camera.data.dof.focus_distance = distance + 0.6
 scene.camera.data.dof.aperture_fstop = 0.5
-scene.render.resolution_x = int(2600 * SCALE)
-scene.render.resolution_y = int(2600 * SCALE * FRAME_H / FRAME_W)
+scene.render.resolution_x = int((480 if STRIP else 2600) * SCALE)
+scene.render.resolution_y = int(scene.render.resolution_x * tall / wide)
 scene.render.film_transparent = True
 scene.render.engine = "CYCLES"
 scene.cycles.samples = SAMPLES
@@ -718,6 +744,6 @@ scene.view_settings.exposure = 0.15
 scene.render.image_settings.file_format = "WEBP"
 scene.render.image_settings.color_mode = "RGBA"
 scene.render.image_settings.quality = 90
-scene.render.filepath = os.path.join(ROOT, "public", "objects", "dollhouse.webp")
+scene.render.filepath = os.path.join(ROOT, "public", "objects", "dollhouse-strip.webp" if STRIP else "dollhouse.webp")
 bpy.ops.render.render(write_still=True)
-print("frame", FRAME_W, FRAME_H, "pixels", scene.render.resolution_x, scene.render.resolution_y)
+print("frame", wide, tall, "pixels", scene.render.resolution_x, scene.render.resolution_y)

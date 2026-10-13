@@ -16,16 +16,16 @@ export function Art({ index }: ArtProps) {
     )
   }
 
-  // The work page's building (studio/dollhouse.py), down its right-hand side: the lift, the end of the
-  // banking hall and the stairs, with the far ends of their signs. Its page has no frame, so the picture
-  // runs on under the tab to the strip's edge.
+  // The work page's building from further back (studio/dollhouse.py --strip): the house small and lit at
+  // the foot of a tall night, under the moon. Its page has no frame, so the picture runs on under the tab
+  // to the strip's edge.
   if (index === 2) {
     return (
       <img
         aria-hidden
-        src="/objects/dollhouse.webp"
+        src="/objects/dollhouse-strip.webp"
         alt=""
-        className="absolute inset-y-0 left-0 h-full w-[calc(100%+var(--band-w))] max-w-none object-cover object-[69%_50%]"
+        className="absolute inset-y-0 left-0 h-full w-[calc(100%+var(--band-w))] max-w-none object-cover object-bottom"
       />
     )
   }

@@ -15,7 +15,7 @@ type Tone = {
   panelInk: string
   /** The page is the badge. Its panel runs to the top of the strip, where the badge's ring leaves it. */
   hangs?: boolean
-  /** The page is a picture that runs to the strip's edges, so its panel has no frame either. */
+  /** The page is a picture that runs to the strip's edges, so its panel has no frame either. Its band shows only as its tab's paper. */
   bleeds?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
@@ -28,7 +28,7 @@ const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-proraso.avif' },
-  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
+  { band: '#b8946a', bandInk: '#2a1a0a', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#141311', panelInk: '#e6dfca', tab: '/objects/tab-prs.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
@@ -69,17 +69,13 @@ type TabProps = {
   current?: boolean
   /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
   src: string
-  /** The strip is a picture to its edge, with no band of paper down it for the tab to grow out of. */
-  bare?: boolean
 }
 
 /**
  * The outline of a folder tab, as the reference cuts it: it leaves the strip's edge on a slant, runs
  * straight down and slants back in, with every corner eased. Returns the path and how far its joins reach.
- * A tab's paper carries on across the strip's band, which is the same paper. A bare tab starts at the
- * strip's edge.
  */
-function tabOutline({ band, protrude, height }: TabShape, bare?: boolean) {
+function tabOutline({ band, protrude, height }: TabShape) {
   const rise = protrude * 0.33
   const ease = protrude * 0.2
   const reach = ease * 2
@@ -100,12 +96,11 @@ function tabOutline({ band, protrude, height }: TabShape, bare?: boolean) {
     const after = toward(corner, corners[i + 2])
     return `L${before[0]} ${before[1]} Q${corner[0]} ${corner[1]} ${after[0]} ${after[1]}`
   })
-  const foot = bare ? band : 0
-  return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
+  return { reach, path: `M0 ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L0 ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, current, src, bare }: TabProps) {
-  const { reach, path } = tabOutline(shape, bare)
+function Tab({ label, shape, to, current, src }: TabProps) {
+  const { reach, path } = tabOutline(shape)
   const width = shape.band + shape.protrude
   const margin = (tabMargin * width) / tabSpan
   const inside = (
@@ -288,7 +283,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} bare={pageTones[i].bleeds} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} />
             </motion.section>
           )
         })}
