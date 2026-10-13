@@ -60,6 +60,7 @@ LETTERS = {
     "r": (430, 739, 447, 769),
 }
 PEN = 4.4  # width of the marker's line
+HAND = 0.9  # size of the writing against the reference's own
 # What to write: the left edge and the baseline of each line, then its letters. A letter is a lifted one
 # by name, or a drawn one starting with "+". Each may be followed by a gap before it, a size and a lean.
 WRITING = (
@@ -174,7 +175,7 @@ def portrait(card, X, Y):
 def pen(shape, strokes):
     """Marker lines through the given points, in output pixels. The pen rests a moment where a line ends."""
     out = np.zeros(shape)
-    half = PEN * UP / 2
+    half = PEN * HAND * UP / 2
     for points in strokes:
         pts = np.array(points, dtype=np.float64)
         # No hand puts a point where it meant to. The same line always strays the same way.
@@ -244,18 +245,21 @@ def handwriting(ref, shape):
 
     for x, base, line in WRITING:
         for name, gap, size, lean in ((*item, *(0, 1.0, 0.0)[len(item) - 1 :]) for item in line):
-            x += gap
+            x += gap * HAND
+            size *= HAND
             if name.startswith("+"):
                 w, h, strokes = DRAWN[name]
-                out[:] = np.maximum(out, pen(shape, [[((x + px) * UP, (base - h + py) * UP) for px, py in stroke] for stroke in strokes]))
-                x += w
+                out[:] = np.maximum(out, pen(shape, [[((x + px * HAND) * UP, (base + (py - h) * HAND) * UP) for px, py in stroke] for stroke in strokes]))
+                x += w * HAND
             elif name == "g":  # an a, with the tail the reference gives its J
                 w, _ = lay(letter("a2"), x, base, size, lean)
-                out[:] = np.maximum(out, pen(shape, [[((x + w - 4.5 + dx) * UP, (base + dy) * UP) for dx, dy in ((0, -8), (0.5, 4), (-1, 10), (-6, 13), (-12, 11))]]))
+                tail = ((0, -8), (0.5, 4), (-1, 10), (-6, 13), (-12, 11))
+                out[:] = np.maximum(out, pen(shape, [[((x + w + (dx - 4.5) * HAND) * UP, (base + dy * HAND) * UP) for dx, dy in tail]]))
                 x += w
             elif name == "i":
                 w, h = lay(letter("i"), x, base, size, lean)
-                out[:] = np.maximum(out, pen(shape, [[((x + w / 2 + 0.3) * UP, (base - h - 6.5) * UP), ((x + w / 2 + 1.3) * UP, (base - h - 5.5) * UP)]]))
+                dot = ((0.3, -6.5), (1.3, -5.5))
+                out[:] = np.maximum(out, pen(shape, [[((x + w / 2 + dx * HAND) * UP, (base - h + dy * HAND) * UP) for dx, dy in dot]]))
                 x += w
             else:
                 x += lay(letter(name), x, base, size, lean)[0]
