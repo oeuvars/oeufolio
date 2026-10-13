@@ -250,12 +250,14 @@ def pearl(sheet, mask):
 
 
 def abalone(sheet, mask):
-    """Abalone shell, as PRS cuts its birds from: pearl, with the sea's green and blue running through it
-    in patches and a little pink where they turn."""
+    """Abalone shell, as PRS cuts its birds from, at its darkest: the sea's green and blue in patches,
+    lit and shadowed, with a little purple where they turn."""
     shape = sheet.height.shape
-    sheet.paint(mask, "#cfe6dc")
-    pearl(sheet, mask)
-    for seed, tint, amount in ((81, "#2fa890", 0.7), (82, "#4f7cd8", 0.5), (83, "#e08fb8", 0.32)):
+    sheet.paint(mask, "#4f9f92")
+    figure = np.clip(streaks(shape, 61, 34, 13) + 0.7 * streaks(shape, 62, 12, 30), -2, 2) / 2
+    sheet.paint(mask * np.clip(figure, 0, 1) * 0.55, "#a9e3d3")
+    sheet.paint(mask * np.clip(-figure, 0, 1) * 0.6, "#174f55")
+    for seed, tint, amount in ((81, "#0f7f6c", 0.7), (82, "#2c50b6", 0.6), (83, "#b24a8e", 0.4)):
         sheet.paint(mask * np.clip(streaks(shape, seed, 22, 14), 0, 2) * amount, tint)
     sheet.finish(mask, rough=0.08, coat=1.0)
     # It is cut and let in, so a hairline shows all round it.
