@@ -1,27 +1,32 @@
-"""The folder tabs' plastic: five moulded pieces, one stuck on each paper tab, each for something I like
-and carrying its maker's mark, the way stickers end up on everything a kid owns.
+"""What is stuck on the folder tabs: six pieces, one on each paper tab, each for something I like and
+carrying its maker's mark, the way stickers end up on everything a kid owns.
 
-    proraso   Proraso's green under its own badge, and a chromed plate struck with Merkur's name as the
-              foot of a Merkur razor is
+    hamilton  a watch strap: brown top grain leather, padded and saddle stitched, with Hamilton's mark
+              stamped into it
+    proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
+              with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
-    prs       Blackstar's black tolex and cream piping, its name in raised white as on the amplifiers,
-              and a pearl plate off a PRS fretboard with PRS's mark on it
+    prs       the top of a PRS: flame maple stained blue under gloss, bound in bare maple, with PRS's
+              mark in pearl, and a band of Blackstar's black tolex and cream piping round it under
+              its name in raised white
     apple     platinum, with the six-colour apple let into it and the fine grooves of the cases of its time
-    hamilton  Hamilton's khaki and its name, and a sticker over it of a Turkish Van asleep on her back
+    van       a Turkish Van's own: white, auburn at head and tail as the breed is, and her mark, the cat
+              asleep on her back and stretched out
 
 Uses the copy stand from the oeusume studio. Run from the repository root:
 
     blender -b --factory-startup -P studio/tabs.py -- [tab ...] [--scale 0.5] [--samples 64] [--proofs DIR]
 
-Writes public/objects/tab-<name>.avif for each tab named, or for all five. Set OEUSUME if that checkout
+Writes public/objects/tab-<name>.avif for each tab named, or for all six. Set OEUSUME if that checkout
 is not in ~/Documents/oeusume.
 
-The frame is the paper tab SiteShell cuts, in the page's own rem, so the render lies straight over it. The
-plastic is cut to the paper's shape and is smaller, with paper left showing all round it, and it was
-stuck down by hand, so none sits quite true. Each piece is a solid with a rounded edge. Its colours, its
-marks and the texture moulded into it are painted as a sheet and laid over the solid from above.
+The frame is the paper tab SiteShell cuts, in the page's own rem, so the render lies straight over it. A
+piece is smaller than the paper, with paper left showing all round it, and it was stuck down by hand, so
+none sits quite true. Each is a solid with a rounded edge, and the plastic ones are cut to the paper's
+shape. A piece's colours, its marks and the texture of its surface are painted as a sheet and laid over
+the solid from above.
 
-The marks are the makers' own, from studio/assets/logos. The cat is drawn in studio/cat.svg.
+The marks are the makers' own, from studio/assets/logos. The cat's is drawn in studio/cat.svg.
 """
 
 import argparse
@@ -40,6 +45,8 @@ from mathutils import Matrix  # noqa: E402
 
 import stage as stage_module  # noqa: E402
 from paint import blur, box, cloud, linear, ramp, segment, streaks  # noqa: E402
+from objects.fob import spaced, stitch  # noqa: E402
+from paint import disc  # noqa: E402
 from solids import fillet, principled, prism, rect  # noqa: E402
 from stage import Stage  # noqa: E402
 from stock import Sheet, fit, pixels_of  # noqa: E402
@@ -89,6 +96,7 @@ def stuck(obj, height, askew):
     """Set a piece down as a hand does: turned a little about its middle and a little off its place.
     askew is the turn in degrees and the slip across and down the page in rem."""
     turn, across, down = askew
+    bpy.context.view_layer.update()
     middle = Matrix.Translation((WIDTH / 2, -height / 2, 0))
     slip = Matrix.Translation((across, -down, 0)) @ middle @ Matrix.Rotation(math.radians(-turn), 4, "Z") @ middle.inverted()
     obj.matrix_world = slip @ obj.matrix_world
@@ -107,14 +115,15 @@ def within(X, Y, points):
     return np.where(inside, -distance, distance)
 
 
-def skin(sheet, name, **surface):
-    """A sheet's painted surface as a material alone, for a solid to wear."""
+def skin(sheet, name, punched=False, **surface):
+    """A sheet's painted surface as a material alone, for a solid to wear. punched keeps what was
+    punched out of the sheet clear, for a solid with holes through it."""
     plane = sheet.build(STAGE, name, **surface)
     material = plane.data.materials[0]
     bpy.data.objects.remove(plane, do_unlink=True)
     # The solid has its own outline. The sheet's would fray it where the two meet.
     shader = material.node_tree.nodes["Principled BSDF"]
-    for link in list(shader.inputs["Alpha"].links):
+    for link in list(shader.inputs["Alpha"].links) if not punched else []:
         material.node_tree.links.remove(link)
     return material
 
@@ -215,181 +224,39 @@ def inlay(sheet, mask, colour, rough=0.16, coat=0.7):
     sheet.rgb *= (1 - 0.18 * blur(seam, 0.8))[..., None]
 
 
-def struck(name, x0, y0, x1, y1, mark):
-    """A chromed plate let into the plastic and standing a little proud of it. It is crowned like the cap
-    of a razor, so it mirrors the room in a sweep, and the maker's name is struck into it as Merkur
-    strikes its own into the foot of a razor: the letters are sunk, and the die leaves them dull."""
-    w, h = x1 - x0, y1 - y0
-    corner = 0.24
-    sheet = Sheet(w, h, "#d6d6da", rough=0.03, density=3)
-    X, Y = sheet.X, sheet.Y
-    sheet.metal[:] = 1.0
-    sheet.height -= 0.11 * ((X - w / 2) / (w / 2)) ** 2
-    sheet.height -= 0.07 * (1 - np.clip(-box(X, Y, 0, 0, w, h, corner) / 0.45, 0, 1)) ** 2
-    cover, _ = placed(sheet, mark, 0.34, 0.34, w - 0.34, h - 0.34, turn=1)
-    # A die has clean edges, whatever the drawing of the mark was like.
-    cover = ramp(0.3, 0.7, blur(cover, 2.2))
-    sheet.press(blur(cover, 1.8), 0.026)
-    sheet.finish(cover, rough=0.34)
-    sheet.rgb *= (1 - 0.5 * cover)[..., None]
-    # Plating is never flawless, and a razor is handled every morning.
-    sheet.rough += 0.012 * np.clip(cloud(sheet.height.shape, 9, falloff=1.8), -2, 2)
-    chrome = skin(
-        sheet,
-        f"{name}-chrome",
-        wear=(("Scratches003", 3, 0.05, 0.0004), ("SurfaceImperfections003", 5, 0.05, 0)),
-        specular=0.5,
-    )
-    plate = prism(STAGE, f"{name}-plate", rect(x0, y0, x1, y1, corner, 10), THICK - 0.08, THICK + 0.055, chrome, bevel=0.05, segments=5)
-    return clad(plate, x0, y0, w, h)
+def swirl(sheet, mask, seed, light, dark, amount=0.35, stretch=0.5):
+    """Slow swirls of a lighter and a darker shade, as celluloid, acetate and fur have."""
+    turn = cloud(sheet.height.shape, seed, falloff=2.2, stretch=stretch)
+    sheet.paint(mask * np.clip(turn, 0, 1.6) * amount, light)
+    sheet.paint(mask * np.clip(-turn, 0, 1.6) * amount, dark)
 
 
-def sticker(name, art, cx, cy, length, turn):
-    """A vinyl sticker cut close round a drawing and pressed onto the plastic, its middle at cx, cy, the
-    drawing `length` rem long and turned by `turn` degrees."""
-    w, h = length * art.shape[1] / art.shape[0], length
-    sheet = Sheet(w, h, "#fbf8f1", rough=0.2, density=3)
-    cover, colour = placed(sheet, art, 0, 0, w, h)
-    sheet.rgb += np.clip(cover * 4, 0, 1)[..., None] * (colour - sheet.rgb)
-    sheet.opacity = cover
-    sheet.coat[:] = 0.6
-    # Vinyl has a thickness, and its cut edge rounds over.
-    sheet.height += 0.014 * ramp(0.1, 0.9, blur(cover, 3.0))
-    plane = sheet.build(
-        STAGE,
-        name,
-        thickness=THICK + 0.02,
-        wear=(("Scratches003", 4, 0.05, 0.0003), ("SurfaceImperfections003", 6, 0.06, 0)),
-        specular=0.5,
-        coat_rough=0.08,
-        at=(cx - w / 2, cy - h / 2),
-    )
-    middle = Matrix.Translation((cx, -cy, 0))
-    plane.matrix_world = middle @ Matrix.Rotation(math.radians(-turn), 4, "Z") @ middle.inverted()
-    return plane
-
-
-def proraso(name, sheet, edge, height):
-    badge, colour = placed(sheet, artwork("logos/proraso"), MIDDLE - 1.24, 0.98, MIDDLE + 1.24, 5.3, turn=1)
-    printed(sheet, badge, colour, rough=0.18, coat=0.7, proud=0.006)
-    plate = struck(name, MIDDLE - 1.2, 5.72, MIDDLE + 1.2, 8.88, artwork("logos/merkur"))
-    return {"card": 2.2}, [plate]
-
-
-def lacoste(name, sheet, edge, height):
-    X, Y = sheet.X, sheet.Y
-    word, crocodile = parted(artwork("logos/lacoste"))
-    tipped = stripe(sheet, 7.42, 8.72)
-    croc, colour = placed(sheet, crocodile, MIDDLE - 1.16, 1.0, MIDDLE + 1.16, 2.62)
-    wordmark, _ = placed(sheet, word, MIDDLE - 0.5, 3.0, MIDDLE + 0.5, 7.05, turn=1)
-    # Petit piqué: the knit's small raised cells, moulded into the face inside a plain border.
-    pitch = 0.18
-    row = np.floor(Y / (pitch * 0.866))
-    u = (X / pitch + 0.5 * (row % 2)) % 1 - 0.5
-    v = (Y / (pitch * 0.866)) % 1 - 0.5
-    cell = np.clip(1 - (u * u + v * v) / 0.2, 0, 1)
-    field = ramp(0.2, 0.3, -edge) * (1 - tipped) * (1 - np.clip(blur(croc, 4.0) * 3, 0, 1))
-    sheet.height += 0.016 * field * cell
-    sheet.rough += 0.14 * field
-    # The crocodile is sewn on as a patch, so it stands off the knit.
-    printed(sheet, croc, colour, rough=0.3, coat=0.3, proud=0.014)
-    printed(sheet, wordmark, INK, rough=0.3, coat=0.2)
-    inlay(sheet, stripe(sheet, 7.5, 8.12), "#004f2b", rough=0.1)
-    inlay(sheet, stripe(sheet, 8.34, 8.64), "#cf2027")
-    return {}, []
-
-
-def prs(name, sheet, edge, height):
+def pearl(sheet, mask):
+    """Mother of pearl. It is laid down in patches, each catching the light or missing it, and each
+    throws back a little colour of its own."""
     shape = sheet.height.shape
-    top, foot = 5.0, 8.3
-    piping = np.abs(edge + 0.3)
-    plate = stripe(sheet, top, foot) * sheet.mask(0.47 + edge)
-    rule = np.clip(stripe(sheet, top, top + 0.15) + stripe(sheet, foot - 0.15, foot), 0, 1) * plate
-    bead = np.clip(1 - (piping / 0.045) ** 2, 0, 1)
-    star, _ = placed(sheet, artwork("logos/blackstar"), MIDDLE - 0.36, 1.3, MIDDLE + 0.36, 4.62, turn=1)
-    mark, _ = placed(sheet, artwork("logos/prs"), MIDDLE - 0.56, top + 0.36, MIDDLE + 0.56, foot - 0.36, turn=1)
-    # Tolex: a pebbled grain pressed into the black, everywhere but the piping, the plate and the letters.
-    grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
-    bare = (1 - plate) * (1 - sheet.mask(piping - 0.065)) * (1 - np.clip(blur(star, 2.0) * 3, 0, 1))
-    sheet.height += 0.006 * bare * grain
-    sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
-    # The piping stands proud as a rounded bead.
-    sheet.paint(sheet.mask(piping - 0.045), "#e8dfc6")
-    sheet.height += 0.02 * np.sqrt(bead)
-    sheet.finish(sheet.mask(piping - 0.045), rough=0.3, coat=0.3)
-    # Blackstar's name is moulded in white plastic and fixed to the front of the cabinet.
-    printed(sheet, star, "#f1eee4", rough=0.22, coat=0.5, proud=0.022)
-    # The plate is mother of pearl between two gold rules.
-    inlay(sheet, plate, "#ece6d6", rough=0.1, coat=1.0)
-    pearl = plate * (1 - rule)
-    # Pearl is laid down in patches, each catching the light or missing it, and each throws back a
-    # little colour of its own.
     figure = np.clip(streaks(shape, 61, 34, 13) + 0.7 * streaks(shape, 62, 12, 30), -2, 2) / 2
-    sheet.paint(pearl * np.clip(figure, 0, 1) * 0.9, "#ffffff")
-    sheet.paint(pearl * np.clip(-figure, 0, 1) * 0.55, "#a5a196")
+    sheet.paint(mask * np.clip(figure, 0, 1) * 0.9, "#ffffff")
+    sheet.paint(mask * np.clip(-figure, 0, 1) * 0.5, "#a5a196")
     for seed, tint in ((63, "#eab4c4"), (64, "#a9dcc0"), (65, "#b3c9f0")):
-        sheet.paint(pearl * np.clip(streaks(shape, seed, 26, 20), 0, 2) * 0.2, tint)
-    sheet.paint(rule, "#d3a548")
-    sheet.finish(rule, rough=0.22, metal=1.0, coat=0.0)
-    # PRS's mark is cut into the pearl and filled with black.
-    sheet.press(blur(mark, 1.0), 0.004)
-    sheet.paint(mark, INK)
-    sheet.finish(mark, rough=0.3, coat=0.4)
-    return {"card": 1.6}, []
+        sheet.paint(mask * np.clip(streaks(shape, seed, 26, 20), 0, 2) * 0.2, tint)
 
 
-def apple(name, sheet, edge, height):
-    Y = sheet.Y
-    badge, colour = placed(sheet, artwork("logos/apple"), MIDDLE - 0.98, 1.35, MIDDLE + 0.98, 3.75)
-    sheet.rgb += badge[..., None] * (colour - sheet.rgb)
-    sheet.finish(badge, rough=0.12, coat=0.9)
-    # The badge is let into the case, and sits in a shallow well of its own.
-    sheet.press(blur(np.clip(badge * 2, 0, 1), 2.0), 0.006)
-    # The fine parallel grooves that ran across the cases of its time.
-    top, foot, pitch = 4.9, 8.5, 0.3
-    line = ((Y - top) / pitch) % 1 - 0.5
-    groove = np.exp(-((line * pitch / 0.045) ** 2))
-    zone = stripe(sheet, top, foot) * ramp(0.32, 0.44, -edge)
-    sheet.press(groove * zone, 0.03)
-    sheet.rgb *= (1 - 0.12 * groove * zone)[..., None]
-    return {}, []
-
-
-def hamilton(name, sheet, edge, height):
-    mark, _ = placed(sheet, artwork("logos/hamilton"), MIDDLE - 0.58, 1.1, MIDDLE + 0.58, 5.25, turn=1)
-    printed(sheet, mark, INK, rough=0.3, coat=0.3)
-    cat = sticker(f"{name}-cat", artwork("cat"), MIDDLE + 0.02, 7.95, 5.1, 4.0)
-    return {}, [cat]
-
-
-# Each piece: the height in rem of the paper tab it is stuck on (SiteShell's tabHeights) and that paper's
-# colour (the band of its strip), which lights its edges from below; how it was set down (see stuck); the
-# plastic's colour and roughness and how much clear gloss lies over it; what it carries; and how the
-# plastic itself is finished.
-TABS = {
-    "proraso": (10, "#e3d3c1", (0.9, 0.02, -0.03), "#0a7440", 0.1, 0.7, proraso, {"subsurface": 0.04}),
-    "lacoste": (10, "#7a8597", (-0.7, -0.02, 0.02), "#f1eee6", 0.3, 0.25, lacoste, {"subsurface": 0.08}),
-    "prs": (10, "#b8946a", (0.5, 0.03, 0.03), "#121111", 0.3, 0.2, prs, {}),
-    "apple": (10, "#d9d4c2", (-1.0, 0.0, -0.02), "#dcdcd8", 0.1, 0.8, apple, {"subsurface": 0.1}),
-    "hamilton": (11.5, "#8a8b78", (0.6, -0.03, 0.0), "#978758", 0.26, 0.3, hamilton, {"subsurface": 0.03}),
-}
-
-
-def tab(name):
-    height, paper, askew, colour, rough, coat, dress, surface = TABS[name]
-    stage_module.MAT = paper
+def moulded(name, height, colour, rough, coat, dress, **surface):
+    """A piece of plastic cut to the paper tab. dress paints what it carries on its sheet, given the
+    sheet and the distance in from the plastic's edge, and returns whatever else is fixed to it."""
     sheet = Sheet(WIDTH, height, colour, rough=rough, density=3)
     sheet.coat[:] = coat
     shape = outline(height)
     edge = within(sheet.X, sheet.Y, shape)
     pillow(sheet, edge)
-    shot, fitted = dress(f"tab-{name}", sheet, edge, height)
+    fitted = dress(sheet, edge) or []
     # Moulded plastic is never one even shine: it flows a little as it cools, and it has been handled.
     sheet.rough += 0.025 * np.clip(cloud(sheet.height.shape, 5, falloff=2.0), -2, 2)
     sheet.height += 0.0012 * np.clip(cloud(sheet.height.shape, 6, falloff=2.4), -2, 2)
     plastic = skin(
         sheet,
-        f"tab-{name}-skin",
+        f"{name}-skin",
         scan="Plastic010",
         scan_size=7,
         scan_normal=0.25,
@@ -399,9 +266,251 @@ def tab(name):
         coat_rough=0.06,
         **surface,
     )
-    body = prism(STAGE, f"tab-{name}", shape, 0.0, THICK, plastic, bevel=EDGE, segments=7)
-    clad(body, 0, 0, WIDTH, height)
-    for piece in (body, *fitted):
+    body = prism(STAGE, name, shape, 0.0, THICK, plastic, bevel=EDGE, segments=7)
+    return [clad(body, 0, 0, WIDTH, height), *fitted]
+
+
+def knurl(X, Y, pitch):
+    """Diamond knurling: two sets of grooves cut across each other leave rows of small pyramids."""
+    a = (X * math.cos(math.radians(30)) + Y * math.sin(math.radians(30))) / pitch
+    b = (X * math.cos(math.radians(30)) - Y * math.sin(math.radians(30))) / pitch
+    return np.minimum(1 - np.abs(2 * (a % 1) - 1), 1 - np.abs(2 * (b % 1) - 1))
+
+
+def grip(name, y0, y1, mark):
+    """The handle of a Merkur razor, as a chromed collar clamped round the plastic. Most of it is the
+    grip: a fine diamond knurl, satin where the plating has rounded every point. Below that is the
+    polished band the razor has above its knob, and the maker's mark is struck into it there."""
+    lap = 0.05
+    x0, x1 = NEAR - lap, WIDTH - FAR + lap
+    w, h = x1 - x0, y1 - y0
+    lip, band = 0.28, 1.18
+    sheet = Sheet(w, h, "#d6d6da", rough=0.03, density=3)
+    X, Y = sheet.X, sheet.Y
+    sheet.metal[:] = 1.0
+    # It is bent round the piece: it bows a little across, and falls away at each side.
+    sheet.height -= 0.05 * ((X - w / 2) / (w / 2)) ** 2
+    sheet.height -= 0.09 * (1 - np.clip(np.minimum(X, w - X) / 0.5, 0, 1)) ** 2
+    cut = ramp(lip - 0.015, lip + 0.015, Y) * ramp(band - 0.015, band + 0.015, h - Y)
+    sheet.height += 0.016 * cut * blur(knurl(X, Y, 0.13), 1.2)
+    sheet.rough += 0.24 * cut
+    sheet.rgb *= (1 - 0.14 * cut)[..., None]
+    # A groove is turned where the knurl stops, and one more near each end.
+    for y in (lip, h - band, 0.1, h - 0.1):
+        sheet.press(np.exp(-(((Y - y) / 0.026) ** 2)), 0.014)
+    die, _ = placed(sheet, mark, 0.3, h - band + 0.17, w - 0.3, h - 0.21)
+    # A die leaves what it strikes sunk and dull.
+    sheet.press(blur(die, 1.0), 0.02)
+    sheet.finish(die, rough=0.36)
+    sheet.rgb *= (1 - 0.55 * die)[..., None]
+    # Plating is never flawless, and a razor is handled every morning.
+    sheet.rough += 0.012 * np.clip(cloud(sheet.height.shape, 9, falloff=1.8), -2, 2)
+    chrome = skin(
+        sheet,
+        f"{name}-chrome",
+        wear=(("Scratches003", 3, 0.05, 0.0004), ("SurfaceImperfections003", 5, 0.05, 0)),
+        specular=0.5,
+    )
+    collar = prism(STAGE, f"{name}-grip", rect(x0, y0, x1, y1, 0.05, 4), 0.0, THICK + 0.05, chrome, bevel=0.045, segments=4)
+    return clad(collar, x0, y0, w, h)
+
+
+def proraso(name, height):
+    def dress(sheet, edge):
+        badge, colour = placed(sheet, artwork("logos/proraso"), MIDDLE - 1.04, 0.98, MIDDLE + 1.04, 4.82, turn=1)
+        printed(sheet, badge, colour, rough=0.18, coat=0.7, proud=0.006)
+        inlay(sheet, stripe(sheet, 5.2, 5.4), "#f2ecd9")
+        inlay(sheet, stripe(sheet, 5.5, 5.59), "#c5222b")
+        return [grip(name, 5.9, 8.56, artwork("logos/merkur"))]
+
+    return {"card": 2.2}, moulded(name, height, "#0a7440", 0.1, 0.7, dress, subsurface=0.04)
+
+
+def lacoste(name, height):
+    def dress(sheet, edge):
+        X, Y = sheet.X, sheet.Y
+        word, crocodile = parted(artwork("logos/lacoste"))
+        tipped = stripe(sheet, 7.42, 8.72)
+        croc, colour = placed(sheet, crocodile, MIDDLE - 1.16, 1.0, MIDDLE + 1.16, 2.62)
+        wordmark, _ = placed(sheet, word, MIDDLE - 0.5, 3.0, MIDDLE + 0.5, 7.05, turn=1)
+        # Petit piqué: the knit's small raised cells, moulded into the face inside a plain border.
+        pitch = 0.18
+        row = np.floor(Y / (pitch * 0.866))
+        u = (X / pitch + 0.5 * (row % 2)) % 1 - 0.5
+        v = (Y / (pitch * 0.866)) % 1 - 0.5
+        cell = np.clip(1 - (u * u + v * v) / 0.2, 0, 1)
+        field = ramp(0.2, 0.3, -edge) * (1 - tipped) * (1 - np.clip(blur(croc, 4.0) * 3, 0, 1))
+        sheet.height += 0.016 * field * cell
+        sheet.rough += 0.14 * field
+        # The crocodile is sewn on as a patch, so it stands off the knit.
+        printed(sheet, croc, colour, rough=0.3, coat=0.3, proud=0.014)
+        printed(sheet, wordmark, INK, rough=0.3, coat=0.2)
+        inlay(sheet, stripe(sheet, 7.5, 8.12), "#004f2b", rough=0.1)
+        inlay(sheet, stripe(sheet, 8.34, 8.64), "#cf2027")
+
+    return {}, moulded(name, height, "#f1eee6", 0.3, 0.25, dress, subsurface=0.08)
+
+
+def amp(name, y0, y1, mark):
+    """A band of a Blackstar amplifier clamped round the piece: black tolex between two beads of cream
+    piping, with the maker's name on it in raised white plastic, as it is on the front of the cabinets."""
+    lap = 0.05
+    x0, x1 = NEAR - lap, WIDTH - FAR + lap
+    w, h = x1 - x0, y1 - y0
+    sheet = Sheet(w, h, "#131212", rough=0.34, density=3)
+    X, Y = sheet.X, sheet.Y
+    shape = sheet.height.shape
+    sheet.coat[:] = 0.15
+    # It is bent round the piece, so it falls away at each side.
+    sheet.height -= 0.08 * (1 - np.clip(np.minimum(X, w - X) / 0.5, 0, 1)) ** 2
+    piping = np.minimum(np.abs(Y - 0.16), np.abs(Y - (h - 0.16)))
+    word, _ = placed(sheet, mark, 0.26, 0.36, w - 0.26, h - 0.36)
+    # Tolex: a pebbled grain pressed into the black, everywhere but the piping and the letters.
+    grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
+    bare = (1 - sheet.mask(piping - 0.07)) * (1 - np.clip(blur(word, 2.0) * 3, 0, 1))
+    sheet.height += 0.005 * bare * grain
+    sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
+    sheet.paint(sheet.mask(piping - 0.05), "#e8dfc6")
+    sheet.height += 0.022 * np.sqrt(np.clip(1 - (piping / 0.05) ** 2, 0, 1))
+    sheet.finish(sheet.mask(piping - 0.05), rough=0.3, coat=0.3)
+    printed(sheet, word, "#f3f0e6", rough=0.2, coat=0.6, proud=0.024)
+    tolex = skin(sheet, f"{name}-tolex", wear=(("SurfaceImperfections003", 6, 0.05, 0),), specular=0.5)
+    band = prism(STAGE, f"{name}-amp", rect(x0, y0, x1, y1, 0.06, 4), 0.0, THICK + 0.05, tolex, bevel=0.045, segments=4)
+    return clad(band, x0, y0, w, h)
+
+
+def prs(name, height):
+    def dress(sheet, edge):
+        X, Y = sheet.X, sheet.Y
+        shape = sheet.height.shape
+        # Flame maple: the figure lies in bars across the grain, never straight and never evenly spaced.
+        wander = cloud(shape, 71, falloff=2.0, stretch=0.35)
+        flame = np.sin(2 * np.pi * (Y / 0.34 + 0.55 * wander + 0.05 * np.sin(X * 2.4)))
+        flame = np.tanh(1.6 * flame) * (0.75 + 0.25 * np.clip(cloud(shape, 72, falloff=1.8), -1, 1))
+        sheet.paint(np.clip(flame, 0, 1) * 0.75, "#4f8fe6")
+        sheet.paint(np.clip(-flame, 0, 1) * 0.7, "#0c2a6e")
+        # The grain itself, fine and running the length of the top.
+        sheet.rgb *= (1 + 0.05 * streaks(shape[::-1], 73, 160, 0.6).T)[..., None]
+        # The stain is rubbed darker toward the edge, and the edge itself is left bare: the binding.
+        sheet.paint(0.7 * (1 - ramp(0.1, 0.75, -edge)), "#081a4a")
+        inlay(sheet, 1 - sheet.mask(edge + 0.1), "#e3c992", rough=0.14, coat=1.0)
+        # PRS's mark is let in in pearl.
+        mark, _ = placed(sheet, artwork("logos/prs"), MIDDLE - 0.72, 1.25, MIDDLE + 0.72, 5.2, turn=1)
+        sheet.paint(mark, "#efe9da")
+        pearl(sheet, mark)
+        sheet.finish(mark, rough=0.1, coat=1.0)
+        return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
+
+    return {"card": 1.2}, moulded(name, height, "#1d4fae", 0.08, 1.0, dress)
+
+
+def apple(name, height):
+    def dress(sheet, edge):
+        Y = sheet.Y
+        badge, colour = placed(sheet, artwork("logos/apple"), MIDDLE - 0.98, 1.35, MIDDLE + 0.98, 3.75)
+        sheet.rgb += badge[..., None] * (colour - sheet.rgb)
+        sheet.finish(badge, rough=0.12, coat=0.9)
+        # The badge is let into the case, and sits in a shallow well of its own.
+        sheet.press(blur(np.clip(badge * 2, 0, 1), 2.0), 0.006)
+        # The fine parallel grooves that ran across the cases of its time.
+        top, foot, pitch = 4.9, 8.5, 0.3
+        line = ((Y - top) / pitch) % 1 - 0.5
+        groove = np.exp(-((line * pitch / 0.045) ** 2))
+        zone = stripe(sheet, top, foot) * ramp(0.32, 0.44, -edge)
+        sheet.press(groove * zone, 0.03)
+        sheet.rgb *= (1 - 0.12 * groove * zone)[..., None]
+
+    return {}, moulded(name, height, "#dcdcd8", 0.1, 0.8, dress, subsurface=0.1)
+
+
+def van(name, height):
+    def dress(sheet, edge):
+        # The breed's own pattern: colour on the head and on the tail, and white between.
+        head, tail = stripe(sheet, 0.0, 2.2), stripe(sheet, height - 2.3, height)
+        for seed, cap in ((17, head), (18, tail)):
+            inlay(sheet, cap, "#a4552b")
+            swirl(sheet, cap, seed, "#c9824c", "#6a2f15", amount=0.5, stretch=0.8)
+        # A Van's tail is ringed in a darker auburn.
+        for y in (height - 1.82, height - 1.38, height - 0.94):
+            sheet.paint(stripe(sheet, y - 0.06, y + 0.06) * 0.75, "#5e2a13")
+        mark, colour = placed(sheet, artwork("cat"), MIDDLE - 1.2, 2.5, MIDDLE + 1.2, height - 2.6)
+        printed(sheet, mark, colour, rough=0.2, coat=0.6, proud=0.006)
+
+    return {}, moulded(name, height, "#f3efe4", 0.18, 0.5, dress, subsurface=0.06)
+
+
+def hamilton(name, height):
+    """No plastic: the long end of a watch strap lying down the tab. Brown top grain leather, padded so
+    it stands highest down its middle, its edges burnished dark, saddle stitched in ecru all round, with
+    holes punched for the buckle's tongue and Hamilton's mark stamped into it blind."""
+    left, right, head, foot = 0.82, 3.42, 0.9, height - 0.85
+    middle, point, seam = (left + right) / 2, 1.05, 0.24
+    shape = fillet([(left, head, 0.14), (right, head, 0.14), (right, foot - point, 0.9), (middle, foot, 0.5), (left, foot - point, 0.9)], steps=14)
+    sewn = fillet(
+        [
+            (left + seam, head + seam, 0.06),
+            (right - seam, head + seam, 0.06),
+            (right - seam, foot - point - 0.06, 0.7),
+            (middle, foot - 1.45 * seam, 0.32),
+            (left + seam, foot - point - 0.06, 0.7),
+        ],
+        steps=12,
+    )
+    sheet = Sheet(WIDTH, height, "#71421f", rough=0.42, density=3)
+    X, Y = sheet.X, sheet.Y
+    edge = within(X, Y, shape)
+    sheet.height -= 0.1 * (1 - np.clip(-edge / 0.75, 0, 1)) ** 2
+    # The mark goes in before the stitching: pressed and burnished, with no colour of its own.
+    mark, _ = placed(sheet, artwork("logos/hamilton"), middle - 0.5, 1.75, middle + 0.5, 5.75, turn=1)
+    sheet.press(blur(mark, 1.2), 0.03)
+    sheet.ink(mark, "#1d1916", 0.5)
+    sheet.finish(mark, rough=0.26)
+    sheet.ink(ramp(-0.1, -0.02, edge), "#1d1916", 0.55)
+    # The stitch line is creased in before the thread goes through.
+    sheet.press(np.exp(-((within(X, Y, sewn) / 0.07) ** 2)), 0.018)
+    stitch(sheet, spaced(sewn, 0.27), thread="#e9dcba", length=0.2, width=0.07)
+    for y in (6.55, 7.3, 8.05, 8.8):
+        hole = disc(X, Y, middle, y, 0.115)
+        sheet.punch(hole)
+        # Round each hole the leather is crushed down, and darkened by the tongue.
+        sheet.press(np.exp(-((hole / 0.09) ** 2)), 0.03)
+        sheet.ink(np.exp(-((hole / 0.07) ** 2)), "#1d1916", 0.5)
+    leather = skin(
+        sheet,
+        f"{name}-leather",
+        punched=True,
+        scan="Leather037",
+        scan_size=5.5,
+        scan_normal=1.5,
+        scan_rough=1.0,
+        wear=(("SurfaceImperfections003", 12, 0.1, 0),),
+        mottle=0.08,
+        sheen=0.15,
+        specular=0.5,
+        subsurface=0.03,
+    )
+    strap = prism(STAGE, name, shape, 0.0, THICK - 0.02, leather, bevel=0.1, segments=6)
+    return {}, [clad(strap, 0, 0, WIDTH, height)]
+
+
+# Each tab: the height in rem of the paper tab (SiteShell's tabHeights), that paper's colour (the band of
+# its strip), which lights the piece's edges from below, how the piece was set down (see stuck), and what
+# builds it.
+TABS = {
+    "hamilton": (11, "#bfa391", (0.5, 0.0, 0.02), hamilton),
+    "proraso": (10, "#e3d3c1", (0.9, 0.02, -0.03), proraso),
+    "lacoste": (10, "#7a8597", (-0.7, -0.02, 0.02), lacoste),
+    "prs": (10, "#b8946a", (0.5, 0.03, 0.03), prs),
+    "apple": (10, "#d9d4c2", (-1.0, 0.0, -0.02), apple),
+    "van": (11.5, "#8a8b78", (0.6, -0.03, 0.0), van),
+}
+
+
+def tab(name):
+    height, paper, askew, build = TABS[name]
+    stage_module.MAT = paper
+    shot, pieces = build(f"tab-{name}", height)
+    for piece in pieces:
         stuck(piece, height, askew)
     ceiling(height)
     STAGE.shoot(f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=2.0, **shot)

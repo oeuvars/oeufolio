@@ -168,12 +168,7 @@
     top: var(--tab-top);
     left: calc(100% - var(--band-w));
     z-index: 2;
-    display: flex;
     width: calc(var(--band-w) + var(--protrude));
-    padding-left: 0.45rem;
-    justify-content: center;
-    color: var(--band-ink);
-    text-decoration: none;
   }
 
   .tab-shape {
@@ -184,35 +179,13 @@
     pointer-events: none;
   }
 
-  /* Plastic stuck on the tab. The render brings the shadow it sits in. This is the one the lamp throws. */
-  .tab-plastic {
+  /* What is stuck on the tab. The render brings the shadow it sits in. This is the one the lamp throws. */
+  .tab-piece {
     position: absolute;
     max-width: none;
     pointer-events: none;
     user-select: none;
     filter: drop-shadow(1.5px 1px 1.2px rgb(0 0 0 / 0.3));
-  }
-
-  /* The name, down the tab in the wide face. */
-  .tab-text {
-    position: relative;
-    display: block;
-    font-family: var(--font-display);
-    font-stretch: 125%;
-    line-height: 1.25;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .tab-text span {
-    display: block;
-    filter: url(#print-fine);
-  }
-
-  .tab-name {
-    font-size: 0.86rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
   }
 
   .caption {

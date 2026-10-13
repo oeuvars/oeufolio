@@ -1,8 +1,8 @@
 <!--
-  The cat sticker for the last tab: a Turkish Van asleep on her back, stretched out as far as she goes.
+  The cat's own mark for the last tab: a Turkish Van asleep on her back, stretched out as far as she goes.
   White, with the breed's auburn on her head and her tail. Captured into studio/assets/cat.png by a
   headless Chromium with a clear default background (00000000), a window of 300 x 712 and four device
-  pixels to one of these. studio/tabs.py lays it on the plastic as a sticker cut round her.
+  pixels to one of these. studio/tabs.py prints it on a piece of plastic of her own.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -6 300 712" width="300" height="712">
   <defs>
@@ -109,4 +109,5 @@
     <path stroke-width="5" d="M132 199 q 10 13 20 3" />
   </g>
   <path fill="#e58783" stroke="#2f1d14" stroke-width="4" stroke-linejoin="round" d="M123 188 L 141 188 L 132 199 Z" />
+
 </svg>

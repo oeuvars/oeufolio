@@ -17,12 +17,12 @@ type Tone = {
   hangs?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
-  /** A moulded plastic piece stuck on the strip's paper tab, in place of words (studio/tabs.py). */
-  tab?: string
+  /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
+  tab: string
 }
 
-const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c' }
-const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', tab: '/objects/tab-hamilton.avif' }
+const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c', tab: '/objects/tab-hamilton.avif' }
+const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', tab: '/objects/tab-van.avif' }
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-proraso.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-lacoste.avif' },
@@ -31,7 +31,7 @@ const pageTones: Tone[] = [
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
-// A tab's width on a wide screen and the room a render of its plastic keeps round the tab, in rem: WIDTH
+// A tab's width on a wide screen and the room a render of its piece keeps round the tab, in rem: WIDTH
 // and MARGIN in studio/tabs.py. The heights above are for a tab of this width.
 const tabSpan = 4
 const tabMargin = 0.3
@@ -65,13 +65,13 @@ type TabProps = {
   shape: TabShape
   to?: '/' | '/likes' | '/work' | '/extras'
   current?: boolean
-  /** A render of the plastic stuck on the tab. The tab then carries no words, and the label is only what a link to it is called. */
-  src?: string
+  /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
+  src: string
 }
 
 /**
  * The outline of a folder tab, as the reference cuts it: it leaves the strip's edge on a slant, runs
- * straight down and slants back in, with every corner eased. Returns the path and how far the slant falls.
+ * straight down and slants back in, with every corner eased. Returns the path and how far its joins reach.
  */
 function tabOutline({ band, protrude, height }: TabShape) {
   const rise = protrude * 0.33
@@ -94,11 +94,11 @@ function tabOutline({ band, protrude, height }: TabShape) {
     const after = toward(corner, corners[i + 2])
     return `L${before[0]} ${before[1]} Q${corner[0]} ${corner[1]} ${after[0]} ${after[1]}`
   })
-  return { rise, reach, path: `M0 ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L0 ${height + reach} Z` }
+  return { reach, path: `M0 ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L0 ${height + reach} Z` }
 }
 
 function Tab({ label, shape, to, current, src }: TabProps) {
-  const { rise, reach, path } = tabOutline(shape)
+  const { reach, path } = tabOutline(shape)
   const width = shape.band + shape.protrude
   const margin = (tabMargin * width) / tabSpan
   const inside = (
@@ -113,20 +113,14 @@ function Tab({ label, shape, to, current, src }: TabProps) {
       >
         <path d={path} />
       </svg>
-      {src ? (
-        <img
-          aria-hidden
-          alt=""
-          src={src}
-          draggable={false}
-          className="tab-plastic"
-          style={{ left: -margin, top: -margin, width: width + 2 * margin, height: shape.height + 2 * margin }}
-        />
-      ) : (
-        <span className="tab-text vertical" style={{ paddingTop: rise + 6 }}>
-          <span className="tab-name">{label}</span>
-        </span>
-      )}
+      <img
+        aria-hidden
+        alt=""
+        src={src}
+        draggable={false}
+        className="tab-piece"
+        style={{ left: -margin, top: -margin, width: width + 2 * margin, height: shape.height + 2 * margin }}
+      />
     </>
   )
 
@@ -229,7 +223,7 @@ export function SiteShell({ children }: SiteShellProps) {
               </div>
               <p className="caption mt-[1.4rem] ml-[1.1rem] !font-bold">FILE_01//</p>
             </div>
-            <Tab label="Home" shape={tabShape(0)} to="/" current={false} />
+            <Tab label="Home" shape={tabShape(0)} to="/" current={false} src={spineTone.tab} />
           </aside>
         )}
 
