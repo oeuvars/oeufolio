@@ -26,9 +26,8 @@ function Basics() {
         <Reveal delay={0.35}>
           <p className="label row pb-[0.7em]">Questions</p>
           <dl>
-            {questions.map((item, i) => (
-              <div key={item.q} className="row grid grid-cols-[2.4em_1fr] gap-x-[0.6em] py-[0.7em]">
-                <dt className="label pt-[0.3em]">Q{i + 1}</dt>
+            {questions.map((item) => (
+              <div key={item.q} className="row py-[0.7em]">
                 <dd>
                   <span className="font-bold">{item.q}</span> {item.a}
                 </dd>

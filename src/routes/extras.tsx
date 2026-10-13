@@ -19,14 +19,12 @@ function Extras() {
         <Reveal delay={0.25} className="@3xl:col-span-7">
           <p className="label row pb-[0.7em]">Art and design</p>
           <ul className="grid grid-cols-2 gap-[1.4em] pt-[1em]">
-            {plates.map((plate, i) => (
+            {plates.map((plate) => (
               <li key={plate.title}>
                 <figure>
                   <div className="frame grid aspect-[4/3] place-items-center bg-ink/[0.06]">
-                    {plate.image ? (
+                    {plate.image && (
                       <img src={plate.image} alt={plate.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="label">IMG_{String(i + 1).padStart(2, '0')}</span>
                     )}
                   </div>
                   <figcaption className="mt-[0.5em] flex items-baseline justify-between gap-[1em] text-[0.9em]">

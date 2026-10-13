@@ -63,7 +63,6 @@ export type Profile = {
   extras: { plates: Plate[]; playlist: Playlist }
   socials: Social[]
   email: string
-  colophon: string
 }
 
 export type StackMetrics = {

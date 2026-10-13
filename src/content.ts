@@ -106,6 +106,4 @@ export const profile: Profile = {
     { label: 'LinkedIn', href: 'https://linkedin.com/in/oeuvars' },
   ],
   email: 'sudo@anurag.gg',
-  colophon:
-    'Set in Archivo and JetBrains Mono. Built with TanStack Start.',
 }

@@ -33,7 +33,7 @@ function Work() {
         <Reveal delay={0.4} className="@3xl:col-span-5">
           <p className="label row pb-[0.7em]">Selected works</p>
           <ul>
-            {profile.works.map((work, i) => (
+            {profile.works.map((work) => (
               <li key={work.title} className="row">
                 <a
                   href={work.href}
@@ -42,13 +42,12 @@ function Work() {
                   className="row-link -mx-[0.6em] block px-[0.6em] py-[0.8em] no-underline"
                 >
                   <span className="flex flex-wrap items-baseline gap-x-[0.8em]">
-                    <span className="label w-[2.4em] shrink-0">{String(i + 1).padStart(2, '0')}</span>
                     <span className="display text-[1.1em]">{work.title}</span>
                     <span className="label ml-auto whitespace-nowrap">
                       {work.category} / {work.year}
                     </span>
                   </span>
-                  <span className="block pl-[3.2em] text-[0.95em]">{work.summary}</span>
+                  <span className="block text-[0.95em]">{work.summary}</span>
                 </a>
               </li>
             ))}

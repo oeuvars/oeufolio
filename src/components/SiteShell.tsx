@@ -5,7 +5,6 @@ import type { CSSProperties } from 'react'
 import { profile } from '../content'
 import { Art } from './Art'
 import { CopyEmail } from './CopyEmail'
-import { Reveal } from './Reveal'
 import { useStackMetrics } from './useStackMetrics'
 
 type Tone = {
@@ -29,8 +28,6 @@ const tabHeights = [11, 10, 10, 10, 10, 11.5]
 const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 const instant = { duration: 0 } as const
 
-const code = (position: number) => `CODE_${String(position).padStart(3, '0')}`
-
 function stripStyle(tone: Tone, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties {
   return {
     '--band': tone.band,
@@ -47,16 +44,14 @@ function stripStyle(tone: Tone, slot: number, z: number, extra: Record<string, s
 }
 
 type TabProps = {
-  position: number
   label: string
   to?: '/' | '/likes' | '/work' | '/extras'
   current?: boolean
 }
 
-function Tab({ position, label, to, current }: TabProps) {
+function Tab({ label, to, current }: TabProps) {
   const text = (
     <span className="tab-text vertical">
-      <span className="label">{code(position)} //</span>
       <span className="label">{label}</span>
     </span>
   )
@@ -115,7 +110,7 @@ export function SiteShell({ children }: SiteShellProps) {
       >
         {!mobile && (
           <aside className="strip" style={stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine })}>
-            <div className="absolute inset-y-0 left-0 flex flex-col justify-between py-[3vh]" style={{ right: band }}>
+            <div className="absolute inset-y-0 left-0 flex flex-col py-[3vh]" style={{ right: band }}>
               <Link
                 to="/"
                 aria-label={profile.handle}
@@ -123,12 +118,8 @@ export function SiteShell({ children }: SiteShellProps) {
               >
                 {profile.handle}_01-0{count}
               </Link>
-              <div className="mx-[1.1rem] flex items-end justify-between gap-[0.5rem]">
-                <p className="label vertical whitespace-nowrap opacity-80">{profile.colophon}</p>
-                <p className="label whitespace-nowrap">FILE_01//</p>
-              </div>
             </div>
-            <Tab position={0} label="Home" to="/" current={false} />
+            <Tab label="Home" to="/" current={false} />
           </aside>
         )}
 
@@ -164,12 +155,6 @@ export function SiteShell({ children }: SiteShellProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
                   >
-                    <Reveal>
-                      <div className="row label flex justify-between pb-[0.7em]">
-                        <span>FILE_0{i + 1}//</span>
-                        <span>{profile.handle}</span>
-                      </div>
-                    </Reveal>
                     <div className="grid flex-1 content-center py-[4vh]">{children}</div>
                     <footer className="label flex flex-col gap-[0.6em] border-t border-ink/30 pt-[0.9em] md:hidden">
                       <CopyEmail email={profile.email} />
@@ -188,7 +173,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab position={i + 1} label={item.label} to={item.to} current={open} />
+              <Tab label={item.label} to={item.to} current={open} />
             </motion.section>
           )
         })}
@@ -220,10 +205,9 @@ export function SiteShell({ children }: SiteShellProps) {
                       </li>
                     ))}
                   </ul>
-                  <p className="label vertical whitespace-nowrap opacity-70">&copy; 2026 {profile.handle}</p>
                 </div>
               </div>
-              <Tab position={count + 1} label="Contact" />
+              <Tab label="Contact" />
             </aside>
 
             <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />
