@@ -118,7 +118,7 @@ WRITING = (
     ((745, 127.3, 0), 745, 1, "2026"),
     ((692, 142.5, 0), 694, 1, "T'+O'+O'"),
     ((740, 142.5, 0), 738, 1, "L'+A'+T'+E'"),
-    ("L0", 165, 1.1, "HELLO younger me,"),
+    ("L0", None, 1.1, "=L0.0 younger me,"),
     ((160, 243, -0.004), 160, 1, "I know what you're like, so I know you'll call all of"),
     ((156, 282, -0.004), 156, 1, "this stupid. I'm telling you anyway."),
     ((160, 326, -0.004), 160, 1, "You pick up an electric guitar and"),
@@ -136,7 +136,6 @@ WRITING = (
     ((612, 1113, -0.01), 612, 1, "cheers,"),
     ((622, 1147, -0.01), 622, 1, "Anurag"),
 )
-BODY = 0.85  # how big the letter is written, against the reference's own hand
 TALL_PAGE = 1240  # the new letter runs longer than the card did
 # The folded strip: the date, the drawings and the signature, cut from the page and set one under another.
 # Each row is where it sits across the strip, from 0 at the left to 1 at the right, and the boxes it is
@@ -359,7 +358,7 @@ class Hand:
         self.drawn = np.zeros((shape[0] // UP, shape[1] // UP))  # the drawings' ink, at the reference's size
         self.spare = {}  # the reference's own words, by what they say, till each is used
         for key, (token, _, name) in reading.words.items():
-            if name.startswith("L") and "~" not in token:
+            if name.startswith("L") and name != "L0" and "~" not in token:
                 self.spare.setdefault(token, []).append(key)
         gaps = []
         for token, group, name in reading.words.values():
@@ -531,7 +530,7 @@ class Hand:
     def say(self, x, y, slope, size, words):
         """Writing that belongs to a drawing, and moves with it."""
         x, y = (np.array([x, y]) - self.grown[1]) * self.grown[0] + self.grown[1] + self.shift
-        self.write((x, y, slope), x, size, words, whole=False)
+        self.write((x, y, slope), x, size, words)
 
     def pick(self, chars):
         """One of the reference's ways of writing these letters, a different one each time round."""
@@ -566,7 +565,7 @@ class Hand:
             x += wide + (self.gap + self.rng.normal(0, 0.5)) * size
         return x - self.gap * size
 
-    def write(self, line, start, size, words, whole=True):
+    def write(self, line, start, size, words):
         reading = self.reading
         if isinstance(line, str):
             base, turn = (lambda x: reading.baseline(line, x)), 0.0
@@ -592,12 +591,12 @@ class Hand:
                 self.lay(mark, x, base(x + mark[3] / 2), size)
                 x += mark[3] * size
             else:
-                bare = word.rstrip(".,!?")
-                if whole and not self.spare.get(word) and self.spare.get(word.rstrip(".,!?")):
-                    word, rest = bare, word[len(bare) :]
+                whole = word.rstrip(".,!?")
+                if size > 0.95 and not self.spare.get(word) and self.spare.get(whole):
+                    word, rest = whole, word[len(whole) :]
                 else:
                     rest = ""
-                if whole and self.spare.get(word):
+                if size > 0.95 and self.spare.get(word):
                     _, group, name = reading.words[self.spare[word].pop(0)]
                     ink, box = reading.lift(group)
                     mark = self.glyph(ink, box, reading.baseline(name, (box[0] + box[2]) / 2))
@@ -867,8 +866,8 @@ def drawings(pen):
 def strip(reading):
     """The ink of the folded strip: the page's drawings again, with its date and signature, in one column."""
     hand = Hand(reading, (TALL_PAGE * UP, reading.marks.shape[1] * UP))
-    for line, start, size, words in WRITING[:4] + WRITING[-2:]:
-        hand.write(line, start, size * BODY, words)
+    for run in WRITING[:4] + WRITING[-2:]:
+        hand.write(*run)
     drawings(hand)
     ink = np.clip((hand.wet - FAINT) / (0.92 - FAINT), 0, 1)
     for x0, y0, x1, y1 in STRIP_CLEARED:
@@ -949,7 +948,7 @@ def main():
     rows, cols = TALL_PAGE * UP, ref.shape[1] * UP
     hand = Hand(reading, (rows, cols))
     for line, start, size, words in WRITING:
-        end = hand.write(line, start, size * BODY, words)
+        end = hand.write(line, start, size, words)
         if DEBUG:
             print(f"{end:6.0f}  {words}")
     if DEBUG:
