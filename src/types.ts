@@ -19,7 +19,7 @@ export type Social = {
 export type Badge = {
   src: string
   alt: string
-  backdrop: string
+  backdrop: { color: string; image?: string }
 }
 
 export type Like = {
