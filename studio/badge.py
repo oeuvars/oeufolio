@@ -9,9 +9,9 @@
 Everything that is not changed is the reference's own pixels, so the holder, the ring, the light on the
 vinyl and the card are the photograph's and not a likeness of them. Three things are done to it:
 
-- The page behind the holder is taken out. Where only vinyl lies over the page, the image keeps the vinyl
-  as a film (see veil), so it is see-through on whatever page it is laid on, and on a white one it reads
-  as the photograph does.
+- The page behind the holder is taken out. Where only vinyl lies over the page, the image keeps how much
+  the vinyl darkens or lightens it and nothing else, so the vinyl is see-through on whatever page it is
+  laid on, and on a white one it reads as the photograph does.
 - The portrait is replaced inside the print's own outline, which sits a little askew in its printed box.
 - The words in REWRITTEN are rubbed out to bare card and put back in the reference's own letters, lifted
   and set in a new order. That goes for the type, the dot-matrix stamp and the handwriting. A letter the
@@ -37,10 +37,7 @@ UP = 2  # output pixels to one of the reference's
 # All in the reference's pixels.
 HOLDER = (105, 15, 620, 882, 22)
 RING = (345, 0, 442, 18)  # the part of the ring that stands clear of the holder
-# The line the ring's wire runs along, down its left side, round and up its right.
-WIRE = ((361.5, -2), (362, 28), (366, 42), (376, 58), (388, 70), (399, 73), (410, 68), (420, 55), (426, 40), (425, 22), (417, 6), (412, -2))
 CARD = (162, 195, 577, 850)
-OWN = 0.56  # the grey of the vinyl's own light, where it turns the page's aside
 # The corners of the portrait print, clockwise from the top left. It was stuck down by hand.
 PRINT = ((274.2, 372.0), (456.8, 373.4), (458.4, 600.2), (271.4, 601.0))
 BLANK = (478, 385, 566, 595)  # bare card, to take paper grain from
@@ -108,16 +105,7 @@ def inside(X, Y, x0, y0, x1, y1, soft=1.0, r=0.0):
 
 
 def veil(ref):
-    """What the vinyl puts between the eye and the page, as a film: its grey, and how much of it covers.
-
-    Over the white page of the photograph, vinyl that reads darker than the page could be a dark glass or a
-    pale haze, and one photograph cannot tell them apart. They part company on any other page. A weld, a
-    ridge or a frosted patch does not darken what is behind it: it turns the page's light aside and shows
-    its own instead, a silvery grey. So wherever the vinyl is darker than the page it is taken to be that
-    grey, OWN, covering as much as it takes to read as it does in the photograph. Over white that comes to
-    the photograph exactly. Over a dark or coloured page the welds go silver and the fused parts go milky,
-    as vinyl does, where a dark glass would only dirty the colour.
-    The card's own shadow, beside it, is the one thing under the vinyl that is truly a darkening."""
+    """What the vinyl does to the page, as a black or white film and how much of it."""
     lum = ref.mean(axis=-1)
     rows, cols = lum.shape
     Y, X = np.mgrid[0:rows, 0:cols].astype(np.float64)
@@ -125,14 +113,13 @@ def veil(ref):
     bare = (X < 92) | (X > 634) | (Y > 893)
     a, b, c = np.linalg.lstsq(np.column_stack((np.ones(bare.sum()), X[bare], Y[bare])), lum[bare], rcond=None)[0]
     page = np.clip(a + b * X + c * Y, 0, 0.995)
-    cx0, cy0, cx1, cy1 = CARD
-    shadow = np.maximum(inside(X + 0.5, Y + 0.5, cx0 - 12, cy0 - 4, cx0 + 3, cy1 + 4, 3.0), inside(X + 0.5, Y + 0.5, cx0 - 6, cy0 - 16, cx1 + 6, cy0 + 3, 3.0))
-    own = np.minimum(OWN * (1 - shadow), lum)
-    grey = np.where(lum > page, 1.0, own)
-    cover = np.where(lum > page, (lum - page) / (1 - page), (page - lum) / (page - own))
+    darker = np.clip(1 - lum / page, 0, 1)
+    lighter = np.clip((lum - page) / (1 - page), 0, 1)
+    white = (lum > page).astype(np.float64)
+    amount = np.where(lum > page, lighter, darker)
     x0, y0, x1, y1, r = HOLDER
     kept = np.maximum(inside(X + 0.5, Y + 0.5, x0 - 2, y0 - 2, x1 + 2, y1 + 2, 1.5, r + 2), inside(X + 0.5, Y + 0.5, *RING, 1.5))
-    return grey, np.clip(cover, 0, 1) * kept
+    return white, amount * kept
 
 
 def paper(card, X, Y):
@@ -429,27 +416,13 @@ def main():
     card = np.clip(enlarged(ref, Image.Resampling.LANCZOS), 0, 1)
     card = portrait(words(card, X, Y, ref), X, Y)
 
-    grey, cover = veil(ref)
-    amount = np.clip(enlarged(cover), 0, 1)
-    white = np.clip(enlarged(grey * cover) / np.maximum(amount, 1e-4), 0, 1)
+    white, amount = veil(ref)
+    amount = np.clip(enlarged(amount), 0, 1)
+    white = np.clip(enlarged(white * veil(ref)[1]) / np.maximum(amount, 1e-4), 0, 1)
 
-    # The card stays solid: it is the photograph as it is.
+    # The card, and a few pixels of the vinyl round it, stay solid: they are the photograph as it is.
     x0, y0, x1, y1 = CARD
-    solid = inside(X, Y, (x0 - 1.5) * UP, (y0 - 1.5) * UP, (x1 + 1.5) * UP, (y1 + 1.5) * UP, 2.0)
-    # So does the ring. It is steel, and a film would let the page's colour into it.
-    lum = ref.mean(axis=-1)
-    rows_, cols_ = lum.shape
-    gy, gx = np.mgrid[0:rows_, 0:cols_] + 0.5
-    near = np.full(lum.shape, 1e9)
-    for (ax, ay), (bx, by) in zip(WIRE, WIRE[1:]):
-        t = np.clip(((gx - ax) * (bx - ax) + (gy - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2), 0, 1)
-        near = np.minimum(near, np.hypot(gx - ax - t * (bx - ax), gy - ay - t * (by - ay)))
-    # Along the wire, whatever is not the grey of the vinyl behind it is steel: its darks and its highlights.
-    behind = np.where(gy < HOLDER[1] + 3, 0.96, 0.83)
-    wire = (near < 9.5) & ((lum < behind - 0.07) | ((lum > behind + 0.07) & (near < 5.5)))
-    wire = ndimage.binary_closing(np.pad(wire, 6, mode="edge"), iterations=3)[6:-6, 6:-6]
-    wire = (blurred(ndimage.binary_fill_holes(wire).astype(np.float64), 1.6) > 0.5) & (near < 9.5)
-    solid = np.maximum(solid, np.clip(enlarged(blurred(wire.astype(np.float64), 0.7)) * 2.2 - 0.5, 0, 1))
+    solid = inside(X, Y, (x0 - 5) * UP, (y0 - 5) * UP, (x1 + 5) * UP, (y1 + 5) * UP, 3.0)
     alpha = solid + (1 - solid) * amount
     colour = (card * solid[..., None] + white[..., None] * ((1 - solid) * amount)[..., None]) / np.maximum(alpha, 1e-4)[..., None]
 
