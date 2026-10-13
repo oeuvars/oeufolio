@@ -13,29 +13,10 @@ export const profile: Profile = {
     backdrop: { color: '#e3d3c1' },
     alt: 'An ID card in a clear vinyl holder on a steel ring. It reads The Performer, Drop 25, product-first engineer, Cybership. Name: Anurag Das. Occupation: Engineer. Shade: T3 Warm. The holder of this card is an official performer for me. 02-03X.',
   },
-  likes: [
-    {
-      title: 'Electric guitar',
-      tag: 'Strings',
-      note: 'Loud, preferably.',
-    },
-    {
-      title: 'Wet shaving',
-      tag: 'Ritual',
-      note: 'A slow morning ritual, done properly.',
-      details: ['Merkur razor', 'Proraso', 'Clubman aftershave'],
-    },
-    {
-      title: 'Arsenal',
-      tag: 'Football',
-      note: 'Up the Gunners.',
-    },
-    {
-      title: 'Cats',
-      tag: 'Company',
-      note: 'Chief supervisors of everything I build.',
-    },
-  ],
+  letter: {
+    src: '/objects/letter.avif',
+    alt: "A handwritten letter on a cream card, dated Oct 2026, too late. Hello younger me, I must admit I was quite excited to send a letter to you! Hopefully this survives its backwards journey (let alone the years in between). I also must admit that you will find all of it stupid for quite some time yet, so that probably explains the excitement. And I play an electric guitar now, which is loud, preferably. I wet shave too. It's actually stupid how long I take with a Merkur razor, Proraso and Clubman aftershave. Simply put, I am a bore. Hopefully I make sense someday. Apart from that, I've been trying to watch Arsenal win and shout up the Gunners in general. Especially since the cats became chief supervisors... are there any movies or music you've been particularly enjoying? I'd love to know! I've been occupied with loud guitars and slow mornings. Quite the combination... Cheers, Anurag. Drawn in the margins: an envelope melting, with the question, can a letter age? Someone at a laptop: one of my favorite videos to put on is a full Arsenal match. Up the Gunners. Someone in bed with a hand over their face: I lose sleep over it. A lecturer holding something up to a class: why feel the need to use foam when this soap exists? The class: who let you in here. Who are you. And someone face down on the floor: I can't believe this is who I grow up to be... life is so unfair!",
+  },
   experience: [
     {
       period: '2024 to now',

@@ -22,11 +22,9 @@ export type Badge = {
   backdrop: { color: string; image?: string }
 }
 
-export type Like = {
-  title: string
-  tag: string
-  note: string
-  details?: string[]
+export type Letter = {
+  src: string
+  alt: string
 }
 
 export type Role = {
@@ -53,7 +51,7 @@ export type Profile = {
   handle: string
   nav: NavItem[]
   badge: Badge
-  likes: Like[]
+  letter: Letter
   experience: Role[]
   works: Work[]
   extras: { plates: Plate[]; playlist: Playlist }
