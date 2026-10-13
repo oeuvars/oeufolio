@@ -10,7 +10,7 @@ type DollhouseProps = {
 
 /** The render's size in pixels. */
 const WIDTH = 2600
-const HEIGHT = 1470
+const HEIGHT = 1578
 
 /**
  * The building (studio/dollhouse.py): a model of a house cut open at the front, standing at night in the
@@ -57,7 +57,7 @@ export function Dollhouse({ roles }: DollhouseProps) {
         width={WIDTH}
         height={HEIGHT}
         draggable={false}
-        className="relative left-1/2 -mt-[8cqw] block h-auto w-[187cqw] max-w-none origin-bottom -translate-x-1/2 select-none md:-mt-[min(8cqw,6.4vh)] md:w-[min(187cqw,150vh)]"
+        className="relative left-1/2 -mt-[15.8cqw] block h-auto w-[187cqw] max-w-none origin-bottom -translate-x-1/2 select-none md:-mt-[min(15.8cqw,12.6vh)] md:w-[min(187cqw,150vh)]"
       />
       <ol className="sr-only">
         {roles.map((role) => (

@@ -660,6 +660,8 @@ def backdrop(distance, colour, low, high, step, seed):
 backdrop(150, "#3d4870", 24, 44, 26, 3)
 backdrop(105, "#2f395d", 16, 29, 17, 5)
 backdrop(70, "#222a48", 9, 17, 9, 8)
+# The page's picture has this much more sky over FRAME_H, for the moon and its glow to stand in.
+PAGE_SKY = 1.2
 # The camera, which looks level from this height. The tall frame is the same view with the lens shifted up.
 # The page grows its picture out of the strip's by these measures, which src/components/house.ts repeats.
 EYE, AWAY = FRAME_H / 2 - 1.05, 27
@@ -676,11 +678,12 @@ def sky(across, up, depth):
     return (across * grows, depth, EYE + (up - EYE) * grows), grows
 
 
-def moon(across, up, size):
+def moon(across, up, size, reach=3.2):
     """The moon, at this place in the frame and this big: a photograph of the full moon (studio/assets/
     moon.png) on a disc turned to the camera, shining of itself. A ball this far off the lens's axis would
     be drawn out into an egg, and the photograph is already of a ball. Round it is the glow it makes in
-    the air."""
+    the air, which is gone by reach times the moon's radius: that has to fall inside the frame, or the
+    frame's edge shows as a line across it."""
     place, grows = sky(across, up, 170)
     radius = size * grows
     disc = bpy.data.materials.new("moon")
@@ -707,18 +710,18 @@ def moon(across, up, size):
     where, away, thin = nodes.new("ShaderNodeTexCoord"), nodes.new("ShaderNodeVectorMath"), nodes.new("ShaderNodeMapRange")
     away.operation = "LENGTH"
     thin.interpolation_type = "SMOOTHERSTEP"
-    thin.inputs["From Min"].default_value, thin.inputs["From Max"].default_value = radius * 0.85, radius * 3.2
+    thin.inputs["From Min"].default_value, thin.inputs["From Max"].default_value = radius * 0.85, radius * reach
     thin.inputs["To Min"].default_value, thin.inputs["To Max"].default_value = 0.3, 0
     links.new(where.outputs["Object"], away.inputs[0])
     links.new(away.outputs["Value"], thin.inputs["Value"])
     links.new(thin.outputs["Result"], shader.inputs["Alpha"])
-    bpy.ops.mesh.primitive_circle_add(radius=radius * 3.3, fill_type="NGON", vertices=96, location=(place[0], place[1] + 0.5, place[2]), rotation=(math.pi / 2, 0, 0))
+    bpy.ops.mesh.primitive_circle_add(radius=radius * (reach + 0.1), fill_type="NGON", vertices=96, location=(place[0], place[1] + 0.5, place[2]), rotation=(math.pi / 2, 0, 0))
     bpy.context.object.data.materials.append(halo)
 
 
 # On the page it is rising clear of the roof's left shoulder. On the strip it rides high over the house.
 if not STRIP:
-    moon(-6.6, FRAME_H - 2.45, 0.78)
+    moon(-6.6, FRAME_H - 1.95, 0.78, reach=2.4)
 if STRIP:
     moon(-1.3, STRIP_FOOT + STRIP_H * 0.64, 2.0)
     heavens, star = random.Random(21), paint("#f4f1e4", glow=5)
@@ -753,7 +756,7 @@ scene.world = world
 
 # A long lens from well back and square on, so the rooms keep their depth and nothing leans.
 distance = AWAY
-wide, tall = (STRIP_W, STRIP_H) if STRIP else (FRAME_W, FRAME_H)
+wide, tall = (STRIP_W, STRIP_H) if STRIP else (FRAME_W, FRAME_H + PAGE_SKY)
 bpy.ops.object.camera_add(location=(0, -distance, EYE), rotation=(math.pi / 2, 0, 0))
 scene.camera = bpy.context.object
 scene.camera.data.sensor_width = 36
