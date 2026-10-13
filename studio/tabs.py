@@ -6,9 +6,9 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
-    prs       a Blackstar Debut's colours: its cream tolex, with PRS's mark and four of the birds PRS
-              inlays down its fretboards let in in the oxblood of its panel, and a band of its red
-              grille cloth round it under Blackstar's badge
+    prs       a Blackstar Debut's colours: its cream tolex, with PRS's mark let in in the oxblood of its
+              panel beside a length of PRS fretboard, rosewood, fretted, with four of its birds in
+              abalone, and a band of the amplifier's red grille cloth round it under Blackstar's badge
     apple     platinum, with the six-colour apple let into it over the drilled grille of a Mac Studio
     van       a Turkish Van's own: white, auburn at head and tail as the breed is, and her mark, the cat
               asleep on her back and stretched out
@@ -249,6 +249,17 @@ def pearl(sheet, mask):
         sheet.paint(mask * np.clip(streaks(shape, seed, 26, 20), 0, 2) * 0.2, tint)
 
 
+def abalone(sheet, mask):
+    """Abalone shell, as PRS cuts its birds from: pearl, with the sea's green and blue running through it
+    in patches and a little pink where they turn."""
+    shape = sheet.height.shape
+    sheet.paint(mask, "#dcebe2")
+    pearl(sheet, mask)
+    for seed, tint, amount in ((81, "#3fae98", 0.55), (82, "#5c86d6", 0.4), (83, "#e3a2c2", 0.25)):
+        sheet.paint(mask * np.clip(streaks(shape, seed, 22, 14), 0, 2) * amount, tint)
+    sheet.finish(mask, rough=0.08, coat=1.0)
+
+
 def moulded(name, height, colour, rough, coat, dress, **surface):
     """A piece of plastic cut to the paper tab. dress paints what it carries on its sheet, given the
     sheet and the distance in from the plastic's edge, and returns whatever else is fixed to it."""
@@ -396,23 +407,34 @@ def prs(name, height):
     oxblood = "#7a3f46"
 
     def dress(sheet, edge):
+        X, Y = sheet.X, sheet.Y
         shape = sheet.height.shape
-        # PRS's mark runs down one side. Down the other fly four of the birds, in the order the
-        # fretboard has them. Both are let into the tolex flush.
-        mark, _ = placed(sheet, artwork("logos/prs"), 0.98, 1.2, 2.1, 5.7, turn=1)
-        inlaid = mark
-        birds = []
-        for i, bird in enumerate(strewn(artwork("logos/prs-birds"))[4:8]):
-            birds.append(placed(sheet, bird, 2.32, 1.12 + 1.18 * i, 3.3, 2.12 + 1.18 * i)[0])
-            inlaid = np.maximum(inlaid, birds[-1])
-        # Tolex: a fine leather grain pressed into the cream, everywhere but the inlays.
+        # PRS's mark runs down one side, let into the tolex flush.
+        mark, _ = placed(sheet, artwork("logos/prs"), 0.96, 1.2, 2.04, 5.7, turn=1)
+        # Down the other runs a length of fretboard, cut off where the piece's own edge slants.
+        board = sheet.mask(box(X, Y, 2.26, 0.9, 3.36, 5.9, 0.06)) * sheet.mask(0.2 + edge)
+        # Tolex: a fine leather grain pressed into the cream, everywhere but what is let into it.
         grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
-        bare = 1 - np.clip(blur(inlaid, 2.0) * 3, 0, 1)
+        bare = 1 - np.clip(blur(np.maximum(mark, board), 2.0) * 3, 0, 1)
         sheet.height += 0.0045 * bare * grain
         sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
         sheet.rgb *= (1 - 0.03 * bare * np.clip(grain, -1, 1))[..., None]
-        for cover in (mark, *birds):
-            inlay(sheet, cover, oxblood, rough=0.18, coat=0.9)
+        inlay(sheet, mark, oxblood, rough=0.18, coat=0.9)
+        # Rosewood: dark, its grain running the length of the neck, oiled and not lacquered.
+        inlay(sheet, board, "#3b241a", rough=0.36, coat=0.15)
+        figure = streaks(shape[::-1], 74, 180, 1.4).T
+        sheet.rgb *= (1 + board * 0.22 * np.clip(figure, -1.5, 1.5))[..., None]
+        sheet.height += board * 0.0006 * figure
+        # Four of the birds, in the order the fretboard has them, each in its own fret.
+        for i, bird in enumerate(strewn(artwork("logos/prs-birds"))[4:8]):
+            flying, _ = placed(sheet, bird, 2.38, 1.2 + 1.18 * i, 3.24, 2.06 + 1.18 * i)
+            abalone(sheet, flying)
+        # Fret wire: nickel, standing off the board as a rounded bead.
+        wire = np.min([np.abs(Y - (1.04 + 1.18 * i)) for i in range(5)], axis=0)
+        fret = sheet.mask(wire - 0.05) * board
+        sheet.paint(fret, "#d6d6d0")
+        sheet.finish(fret, rough=0.3, metal=1.0, coat=0.0)
+        sheet.height += 0.016 * board * np.clip(1 - (wire / 0.05) ** 2, 0, 1)
         return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
 
     return {"card": 1.2}, moulded(name, height, "#e6cdab", 0.4, 0.12, dress, subsurface=0.03)
