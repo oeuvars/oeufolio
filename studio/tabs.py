@@ -261,7 +261,7 @@ def abalone(sheet, mask):
     # It is cut and let in, so a hairline shows all round it.
     seam = np.clip(1 - np.abs(mask - 0.5) * 2, 0, 1)
     sheet.press(blur(seam, 1.2), 0.005)
-    sheet.rgb *= (1 - 0.5 * blur(seam, 0.8))[..., None]
+    sheet.rgb *= (1 - 0.2 * blur(seam, 0.8))[..., None]
 
 
 def moulded(name, height, colour, rough, coat, dress, **surface):
@@ -423,7 +423,9 @@ def prs(name, height):
         sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
         sheet.rgb *= (1 - 0.03 * bare * np.clip(grain, -1, 1))[..., None]
         inlay(sheet, mark, oxblood, rough=0.18, coat=0.9)
+        # Each bird is bordered in the same oxblood, a line wide enough to find it by on the cream.
         for bird in birds:
+            inlay(sheet, ramp(0.1, 0.22, blur(bird, 5.0)), oxblood, rough=0.18, coat=0.9)
             abalone(sheet, bird)
         return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
 
