@@ -71,7 +71,7 @@ export function SiteShell({ children }: SiteShellProps) {
             <Link
               to="/"
               aria-label={profile.handle}
-              className="display vertical ml-[1.1rem] self-start whitespace-nowrap text-[min(6.4vh,5vw)] no-underline"
+              className="display vertical ml-[1.1rem] mt-[3vh] self-start whitespace-nowrap text-[min(6.4vh,5vw)] no-underline"
             >
               {profile.handle}_01-0{count}
             </Link>
@@ -175,7 +175,7 @@ export function SiteShell({ children }: SiteShellProps) {
               </span>
             </div>
             <div className="card flex flex-col items-center justify-between bg-[#141311] py-[3vh] text-[#efe6cb]">
-              <img src="/photos/street.jpg" alt="" className="absolute inset-0 size-full object-cover opacity-55" />
+              <img src="/photos/street.jpg" alt="" className="absolute inset-0 size-full object-cover opacity-70 [filter:hue-rotate(75deg)_saturate(0.55)_brightness(0.55)_contrast(1.1)]" />
               <span
                 aria-hidden
                 className="absolute inset-[0.5rem] border-2 border-[#d8b24a] [clip-path:polygon(0_0.9rem,0.9rem_0,calc(100%-0.9rem)_0,100%_0.9rem,100%_calc(100%-0.9rem),calc(100%-0.9rem)_100%,0.9rem_100%,0_calc(100%-0.9rem))]"
