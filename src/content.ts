@@ -10,7 +10,7 @@ export const profile: Profile = {
   ],
   badge: {
     src: '/objects/badge.avif',
-    alt: 'An ID card in a clear vinyl holder on a steel ring. The card reads The Performer, with a portrait of Anurag Das.',
+    alt: 'An ID card in a clear vinyl holder on a steel ring. It reads The Performer, Drop 25. Name: Anurag Das. Occupation: Engineer. Shade: T3 Warm.',
   },
   likes: [
     {
