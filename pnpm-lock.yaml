@@ -20,9 +20,6 @@ importers:
       '@fontsource/domine':
         specifier: ^5.3.0
         version: 5.3.0
-      '@fontsource/gochi-hand':
-        specifier: ^5.3.0
-        version: 5.3.0
       '@fontsource/martel':
         specifier: ^5.3.0
         version: 5.3.0
@@ -162,9 +159,6 @@ packages:
 
   '@fontsource/domine@5.3.0':
     resolution: {integrity: sha512-rzEcXp1qmmChcoah9FamFoFshGsxkCEHOQ4FQTzUpIWstRz5k/34Jdc6+z/NTzM5izm5UfD8TOd1Cqfgz4w3BA==}
-
-  '@fontsource/gochi-hand@5.3.0':
-    resolution: {integrity: sha512-IW6Xo3wbZuTLyx7hZzIr7+VSQwQ3oEiLZRphBnuNVaK+dhdxwYw57/r1NVi8x1ubX4OYyCG2S04mH6tLhanIsQ==}
 
   '@fontsource/martel@5.3.0':
     resolution: {integrity: sha512-E/L2GnnmYkcjgt6IMN9ISgr2ldDzSeO1J+aTMwWsOy+Ti4EEC8B9RHiU32kUMGiyI9Ot8JLzQ4FA39HH1tFfbQ==}
@@ -1256,8 +1250,6 @@ snapshots:
   '@fontsource-variable/jost@5.3.0': {}
 
   '@fontsource/domine@5.3.0': {}
-
-  '@fontsource/gochi-hand@5.3.0': {}
 
   '@fontsource/martel@5.3.0': {}
 

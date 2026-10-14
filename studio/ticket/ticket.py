@@ -15,8 +15,8 @@ is not in ~/Documents/oeusume.
 
 Every measure is in the ticket's em, from src/components/ticket/ticket.json, which the page reads too. What is
 printed comes from the page's own type, captured by plate.mjs into studio/ticket/art as one plate per ink
-(plate-<ink>.png), so the words in the photograph sit under the page's live words, and from ink.py's plates of the
-picture (river-<ink>.png for the ticket, river-tower-<ink>.png for the strip's).
+(plate-<ink>.png), so the words in the photograph sit under the page's live words; from hand.py's note in the
+reference's own handwriting (hand.png); and from ink.py's plates of the picture (river-<ink>.png for the ticket, river-tower-<ink>.png for the strip's).
 """
 
 import argparse
@@ -71,7 +71,14 @@ def plate(sheet, ink, view, x0=0.0, y0=0.0, scale=1.0):
     path = os.path.join(ART, f"plate-{ink}.png")
     if os.path.exists(path):
         stored = pixels_of(path)[..., :3].astype(np.float64)
-        out = placed(sheet, 1 - stored.mean(axis=-1), x0, y0, W * scale, H * scale)
+        out = printer(sheet, placed(sheet, 1 - stored.mean(axis=-1), x0, y0, W * scale, H * scale), seed={"k": 5, "red": 7, "teal": 9}[ink], scale=scale)
+    if ink == "k":
+        # The note along the foot, in the reference's own hand (hand.py), printed with the rest of the black.
+        nx, ny, nw, nh = TICKET["note"]
+        hand = pixels_of(os.path.join(ART, "hand.png"))[..., 0].astype(np.float64)
+        written = placed(sheet, hand, x0 + nx * scale, y0 + ny * scale, nw * scale, nh * scale)
+        # A marker's line is already as heavy as it will be: it only wicks a little into the card.
+        out = np.maximum(out, np.clip(blur(written, 0.6 * sheet.ppe * scale / 96) * 1.15, 0, 1))
     art = pixels_of(os.path.join(ART, f"{view}-{ink}.png"))[..., 0].astype(np.float64)
     ax, ay, aw, ah = TICKET["art"]
     rows, cols = art.shape
@@ -96,6 +103,27 @@ def line(sheet, a, b):
     return ((sheet.X - ax) * (by - ay) - (sheet.Y - ay) * (bx - ax)) / length
 
 
+def printer(sheet, m, seed, scale=1.0):
+    """The type as a printer puts it on card, not as a screen draws it. The ink spreads into the card, so every
+    stroke is heavier than the type it was set in and the small counters half close; its edge follows the fibres it
+    soaked into and is nowhere crisp. The drum or ribbon never inks evenly: slow patches are lighter, a faint band
+    runs across the feed, and solids have pinholes where it missed. Stray specks of ink land round the letters."""
+    rows, cols = m.shape
+    px = sheet.ppe * scale / 96  # the measures below are in pixels of the full-size ticket's sheet
+    fibres = cloud((rows, cols), seed, falloff=0.5)
+    fibres /= max(1e-6, np.abs(fibres).max())
+    gained = smooth(0.16, 0.4, blur(m, 2.1 * px) + 0.12 * fibres)
+    # The ink is dense where it lies thick and thins only at its edges, where it wicked out into the card.
+    wicked = np.maximum(gained * 0.92, blur(gained, 0.9 * px))
+    wicked = smooth(0.0, 0.55, wicked)
+    patches = np.clip(cloud((rows, cols), seed + 1, falloff=1.4) * 0.05 + 0.97, 0.85, 1.0)
+    band = 1 - 0.05 * smooth(0.55, 1.0, np.sin(2 * np.pi * sheet.Y / (1.7 * scale)) * 0.5 + 0.5)
+    holes = smooth(2.3, 2.8, cloud((rows, cols), seed + 2, falloff=0.15))
+    near = smooth(0.02, 0.2, blur(m, 7 * px)) * (1 - smooth(0.2, 0.5, gained))
+    specks = smooth(2.9, 3.3, cloud((rows, cols), seed + 3, falloff=0.12)) * near
+    return np.clip(wicked * patches * band * (1 - 0.85 * holes) + 0.8 * specks, 0, 1)
+
+
 def riso(sheet, plates, seed, scale=1.0):
     """Print the plates as a risograph does, one pass per ink. Each ink goes down through its stencil a little off
     true from the others; it is translucent, so it multiplies with whatever is under it; it is thin and soaks into
@@ -111,7 +139,7 @@ def riso(sheet, plates, seed, scale=1.0):
         m = np.roll(m, (round(dy * scale * sheet.ppe), round(dx * scale * sheet.ppe)), axis=(0, 1))
         fibres = cloud((rows, cols), seed + 10 * i, falloff=0.55)
         fibres /= max(1e-6, np.abs(fibres).max())
-        m = smooth(0.3, 0.6, blur(m, 0.9) + 0.08 * fibres)
+        m = np.clip(blur(m, 0.5) + 0.05 * fibres * (m > 0.05), 0, 1)
         rim = np.clip(blur(m, 0.6) - blur(m, 2.6), 0, 1)
         # Black goes down dense; the colours thinner, and mottled across a solid.
         mottle = 1.0 if name == "k" else np.clip(cloud((rows, cols), seed + 10 * i + 1, falloff=1.2) * 0.07 + 0.93, 0.8, 1)
