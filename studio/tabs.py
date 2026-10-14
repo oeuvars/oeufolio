@@ -46,7 +46,7 @@ import numpy as np  # noqa: E402
 from mathutils import Matrix  # noqa: E402
 
 import stage as stage_module  # noqa: E402
-from paint import blur, box, cloud, linear, ramp, segment, streaks  # noqa: E402
+from paint import blur, cloud, linear, ramp, segment, streaks  # noqa: E402
 from solids import fillet, principled, prism, rect  # noqa: E402
 from stage import Stage  # noqa: E402
 from stock import Sheet, fit, pixels_of  # noqa: E402
@@ -364,38 +364,86 @@ def lacoste(name, height):
     return {}, moulded(name, height, "#f1eee6", 0.3, 0.25, dress, subsurface=0.08)
 
 
+def relief(name, height, x0, y0, w, h, z0, material):
+    """A solid raised from a height map, rows from the top, laid over x0..x0+w, y0..y0+h in rem and
+    standing on z0. Only where the map stands up is there anything, so the map's outline is the solid's,
+    and its slopes are the solid's walls."""
+    rows, cols = height.shape
+    gx, gy = np.meshgrid(x0 + (np.arange(cols) + 0.5) * w / cols, y0 + (np.arange(rows) + 0.5) * h / rows)
+    verts = np.column_stack((gx.ravel(), -gy.ravel(), z0 + height.ravel()))
+    index = np.arange(rows * cols).reshape(rows, cols)
+    corners = (index[1:, :-1], index[1:, 1:], index[:-1, 1:], index[:-1, :-1])
+    live = np.min([height[1:, :-1], height[1:, 1:], height[:-1, 1:], height[:-1, :-1]], axis=0) > 0.002
+    faces = np.column_stack([corner[live] for corner in corners])
+    used, faces = np.unique(faces, return_inverse=True)
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts[used].tolist(), [], faces.reshape(-1, 4).tolist())
+    mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
+    mesh.materials.append(material)
+    return clad(STAGE.add(name, mesh), x0, y0, w, h)
+
+
+def badge(name, mark, cx, cy, wide, z0):
+    """Blackstar's badge as it is fixed to the Debut's grille: the name in raised white letters on a
+    black plate cut close round them, the plate's edge following the letters' tops and feet, standing
+    proud of the cloth."""
+    tall = wide * mark.shape[0] / mark.shape[1]
+    pad = 0.07 * tall / 0.3
+    w, h = wide + 2 * pad, tall + 2 * pad
+    x0, y0 = cx - w / 2, cy - h / 2
+    sheet = Sheet(w, h, "#0d0d0f", rough=0.22, density=5)
+    letters, _ = placed(sheet, mark, pad, pad, w - pad, h - pad)
+    grown = blur(letters, 0.045 * sheet.ppe) > 0.04
+    # Down each column the plate runs from the highest point of the letters to the lowest, so it fills
+    # their counters and the gaps between them, and its edge rises and falls with them.
+    rows = np.arange(grown.shape[0])[:, None]
+    top = np.where(grown.any(axis=0), np.argmax(grown, axis=0), grown.shape[0])
+    foot = np.where(grown.any(axis=0), grown.shape[0] - 1 - np.argmax(grown[::-1], axis=0), -1)
+    plate = ((rows >= top) & (rows <= foot)).astype(np.float64)
+    plate = np.clip(blur(plate, 0.012 * sheet.ppe) * 1.6 - 0.3, 0, 1)
+    face = np.clip(blur(letters, 0.004 * sheet.ppe), 0, 1)
+    sheet.paint(face, "#efeeea")
+    sheet.finish(face, rough=0.32, coat=0.25)
+    sheet.finish(plate * (1 - face), rough=0.2, coat=0.8)
+    # Only the shading of the solid itself: the map below is the solid, not a bump laid on it.
+    sheet.height[:] = 0.0
+    finish = skin(sheet, f"{name}-badge", specular=0.5)
+    return relief(f"{name}-badge", 0.035 * plate + 0.03 * face, x0, y0, w, h, z0 - 0.001, finish)
+
+
 def amp(name, y0, y1, mark):
-    """A band off the front of a Blackstar Debut clamped round the piece: its oxblood grille cloth between
-    two beads of cream piping, with the maker's badge on it, white letters on a black plate."""
+    """A band off the front of a Blackstar Debut clamped round the piece: its oxblood grille cloth, from a
+    photograph of the amplifier's own (studio/assets/blackstar/grille), between two beads of cream piping,
+    with the maker's badge on it."""
     lap = 0.05
     x0, x1 = NEAR - lap, WIDTH - FAR + lap
     w, h = x1 - x0, y1 - y0
-    sheet = Sheet(w, h, "#4a1612", rough=0.78, density=3)
-    X, Y = sheet.X, sheet.Y
+    sheet = Sheet(w, h, "#7a2c24", rough=0.85, density=6)
+    X = sheet.X
+    # The photograph at the amplifier's own scale, where its badge is as wide as the one here.
+    wide = 2.3
+    per_rem = 415 / wide
+    cloth = artwork("blackstar/grille")[..., :3]
+    rows, cols = round(h * per_rem), round(w * per_rem)
+    r0, c0 = (cloth.shape[0] - rows) // 2, (cloth.shape[1] - cols) // 2
+    tone = np.clip(fit(cloth[r0 : r0 + rows, c0 : c0 + cols], *sheet.height.shape), 0, 1)
+    sheet.rgb[:] = decoded(tone)
+    # The threads stand where the photograph is light and the weave sinks where it is dark.
+    lum = tone.mean(axis=-1)
+    weave = lum - blur(lum, 0.06 * sheet.ppe)
+    sheet.height += 0.012 * np.clip(weave / max(weave.std(), 1e-6), -2.5, 2.5) / 2.5
+    sheet.rough += 0.08 * np.clip(-weave / max(weave.std(), 1e-6), 0, 2)
     # It is bent round the piece, so it falls away at each side.
     sheet.height -= 0.08 * (1 - np.clip(np.minimum(X, w - X) / 0.5, 0, 1)) ** 2
-    piping = np.minimum(np.abs(Y - 0.16), np.abs(Y - (h - 0.16)))
-    word, _ = placed(sheet, mark, 0.4, 0.5, w - 0.4, h - 0.5)
-    lettered = np.argwhere(word > 0.1)
-    (r0, c0), (r1, c1) = lettered.min(axis=0) / sheet.ppe, lettered.max(axis=0) / sheet.ppe
-    badge = sheet.mask(box(X, Y, c0 - 0.15, r0 - 0.13, c1 + 0.15, r1 + 0.13, 0.07))
-    # Grille cloth: threads woven over and under each other, the ones lying across a shade lighter.
-    pitch = 0.095
-    u, v = X / pitch, Y / pitch
-    across = (np.floor(u) + np.floor(v)) % 2 == 0
-    thread = np.where(across, np.cos(np.pi * (v % 1 - 0.5)), np.cos(np.pi * (u % 1 - 0.5)))
-    woven = (1 - sheet.mask(piping - 0.07)) * (1 - np.clip(blur(badge, 1.5) * 2, 0, 1))
-    sheet.paint(woven * across * thread * 0.9, "#b0625a")
-    sheet.paint(woven * ~across * thread * 0.85, "#8a3f37")
-    sheet.height += 0.013 * woven * thread
-    sheet.paint(sheet.mask(piping - 0.05), "#f0dfc8")
-    sheet.height += 0.022 * np.sqrt(np.clip(1 - (piping / 0.05) ** 2, 0, 1))
-    sheet.finish(sheet.mask(piping - 0.05), rough=0.3, coat=0.3)
-    printed(sheet, badge, "#17171a", rough=0.14, coat=0.8, proud=0.02)
-    printed(sheet, word, "#f4f2ec", rough=0.2, coat=0.6, proud=0.012)
-    cloth = skin(sheet, f"{name}-cloth", wear=(("SurfaceImperfections003", 6, 0.05, 0),), specular=0.4)
-    band = prism(STAGE, f"{name}-amp", rect(x0, y0, x1, y1, 0.06, 4), 0.0, THICK + 0.05, cloth, bevel=0.045, segments=4)
-    return clad(band, x0, y0, w, h)
+    fabric = skin(sheet, f"{name}-cloth", sheen=0.4, specular=0.3)
+    top = THICK + 0.05
+    band = clad(prism(STAGE, f"{name}-amp", rect(x0, y0, x1, y1, 0.06, 4), 0.0, top, fabric, bevel=0.045, segments=4), x0, y0, w, h)
+    tolex = principled(f"{name}-piping", "#efe0c6", rough=0.36, coat_weight=0.3, coat_roughness=0.2)
+    beads = [
+        prism(STAGE, f"{name}-piping-{i}", rect(x0, y - 0.05, x1, y + 0.05, 0.04, 4), top - 0.04, top + 0.05, tolex, bevel=0.049, segments=8)
+        for i, y in enumerate((y0 + 0.16, y1 - 0.16))
+    ]
+    return [band, *beads, badge(name, mark, (x0 + x1) / 2, (y0 + y1) / 2, wide, top)]
 
 
 def prs(name, height):
@@ -430,7 +478,7 @@ def prs(name, height):
             sheet.paint(wood * np.clip(figure, 0, 1) * 0.5, "#4a2a20")
             sheet.paint(wood * np.clip(-figure, 0, 1) * 0.6, "#140a08")
             nacre(sheet, shell)
-        return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
+        return amp(name, 6.1, 8.3, artwork("logos/blackstar"))
 
     # The birds' outlines are fine, so the sheet is drawn finer than the others.
     return {"card": 1.2}, moulded(name, height, "#e6cdab", 0.4, 0.12, dress, density=7, subsurface=0.03)
