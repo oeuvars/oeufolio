@@ -33,7 +33,7 @@ type Tone = {
   tab: string
 }
 
-const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c', tab: '/objects/tab-tagheuer.avif' }
+const spineTone: Tone = { band: '#eeede8', bandInk: '#1d1d1b', panel: '#eeede8', panelInk: '#1d1d1b', tab: '/objects/tab-tagheuer.avif' }
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
@@ -317,23 +317,11 @@ export function SiteShell({ children }: SiteShellProps) {
       >
         {!mobile && (
           <aside className="strip" style={stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine })}>
-            <div className="absolute inset-y-0 left-0 flex flex-col py-[3vh]" style={{ right: band }}>
-              <Link
-                to="/"
-                aria-label={profile.handle}
-                className="display vertical ml-[1.1rem] self-start whitespace-nowrap text-[min(6.4vh,5vw)] no-underline"
-              >
-                {profile.handle}_01-0{count}
-              </Link>
-              <div className="mt-auto ml-[1.1rem] flex items-end gap-[0.9rem]">
-                <p className="caption vertical leading-[1.7] whitespace-nowrap">
-                  Product Studies:
-                  <br />
-                  Type · Image · Craft
-                </p>
-              </div>
-              <p className="caption mt-[1.4rem] ml-[1.1rem] !font-bold">FILE_01//</p>
-            </div>
+            {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
+                lamps (studio/signal). Its post runs on down past the foot of the strip, so a short window cuts it there. */}
+            <Link to="/" aria-label={profile.handle} className="absolute inset-y-0 left-0" style={{ right: band }}>
+              <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
+            </Link>
             <Tab label="Home" shape={tabShape(0)} to="/" current={false} src={spineTone.tab} />
           </aside>
         )}
