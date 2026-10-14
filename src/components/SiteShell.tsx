@@ -86,9 +86,10 @@ function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, nu
 }
 
 /**
- * A strip's edge, as the style that carries it: its surface, and what shows past the surface, both from one
- * tear. Paper tears ragged, its core fraying out past the surface in its own colour. Leather is cut, and worn:
- * its edge wanders slowly and is bitten here and there, and past its grain shows its own edge, burnished dark.
+ * A strip's edge, as the style that carries it: where its surface ends, and where the stuff under the surface
+ * ends, a little further out, both from one tear. Paper tears ragged, its core fraying out past the surface a
+ * shade lighter than whatever is on it. Leather is cut, and worn: its edge wanders slowly and is bitten here
+ * and there, and past its grain shows its own edge, burnished dark.
  */
 function torn(seed: number, calm: Array<[number, number]> = [], leather = false) {
   if (leather) {
@@ -355,22 +356,27 @@ export function SiteShell({ children }: SiteShellProps) {
   const skinFrom = lefts[skin] + overlap
   // Its tab is cut from the same leather and stands out past the strip's edge, so the cut runs on over it.
   const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin)) + protrude
+  // The strip before the mat is torn, so the mat shows through the tear: the cut starts where the tear can
+  // reach, and the paper left of the tear, its frayed core with it, is put back by the tear's own mask.
   const column =
-    'linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)'
+    `linear-gradient(to right, #000 calc(var(--mat-from) * 1px - ${TEAR_WIDTH}px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)`
   const grainCut = {
-    '--grain-cut': `${column}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
+    '--grain-cut': `${column}, ${(tears[mat - 1] as Record<string, string>)['--torn-core']}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
     '--grain-cut-size': [
       '100% 100%',
+      `${TEAR_WIDTH}px ${TEAR_LENGTH}px`,
       `${tabWidth}px ${paperHeight}px`,
       `${tabWidth + 2 * pieceMargin}px ${tabBefore.shape.height + 2 * pieceMargin}px`,
       `${tabWidth + 2 * pieceMargin}px ${tabOwn.shape.height + 2 * pieceMargin}px`,
     ].join(', '),
     '--grain-cut-position': [
       '0 0',
+      `calc(var(--mat-from) * 1px - ${TEAR_WIDTH}px) 0`,
       `calc(var(--mat-from) * 1px - ${band}px) ${tabBefore.top - paper.reach}px`,
       `calc(var(--mat-from) * 1px - ${band + pieceMargin}px) ${tabBefore.top - pieceMargin}px`,
       `calc(var(--mat-to) * 1px - ${band + pieceMargin}px) ${tabOwn.top - pieceMargin}px`,
     ].join(', '),
+    '--grain-cut-repeat': 'no-repeat, repeat-y, no-repeat, no-repeat, no-repeat',
   }
 
   return (
@@ -408,19 +414,14 @@ export function SiteShell({ children }: SiteShellProps) {
             className="strip"
             style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7) }}
           >
-            {/* Past the tear the paper's core shows, and the print on it, a shade lighter. */}
-            <div
-              aria-hidden
-              className="torn torn-core"
-              style={{ backgroundImage: 'linear-gradient(rgb(255 255 255 / 0.07)), url(/objects/signal.avif)', backgroundSize: 'cover', backgroundPosition: 'top', backgroundBlendMode: 'normal, multiply' }}
-            />
-            <div aria-hidden className="torn torn-surface" />
+            <div aria-hidden className="torn" />
             {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
                 lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down
                 past the foot of the strip, so a short window cuts it there. */}
             <Link to="/" aria-label={profile.handle} className="torn">
               <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
             </Link>
+            <div aria-hidden className="torn-fray" />
           </aside>
         )}
 
@@ -436,8 +437,7 @@ export function SiteShell({ children }: SiteShellProps) {
               transition={transition}
               style={{ ...stripStyle(pageTones[i], i + 1, stack - i), ...tears[i] }}
             >
-              <div aria-hidden className={`torn torn-core ${pageTones[i].fills || pageTones[i].roll ? 'torn-leather' : ''}`} />
-              <div aria-hidden className="torn torn-surface" />
+              <div aria-hidden className="torn" />
               <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills || pageTones[i].roll ? 'panel-hangs' : ''}`}>
                 {pageTones[i].surface && (
                   <div
@@ -489,6 +489,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 ) : null}
                 {!open && <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
+              <div aria-hidden className={`torn-fray ${pageTones[i].fills || pageTones[i].roll ? 'torn-fray-leather' : ''}`} />
               {(pageTones[i].fills || pageTones[i].roll) && <div aria-hidden className="torn torn-wear" />}
               <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} surface={pageTones[i].surface} />
             </motion.section>

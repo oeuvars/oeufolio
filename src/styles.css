@@ -144,7 +144,7 @@
     mask-image: var(--grain-cut);
     mask-size: var(--grain-cut-size);
     mask-position: var(--grain-cut-position);
-    mask-repeat: no-repeat;
+    mask-repeat: var(--grain-cut-repeat, no-repeat);
   }
 
   .display {
@@ -215,11 +215,10 @@
   }
 
   /* A strip's paper, torn down its edge (SiteShell's tear): the strip is only the shadow's, and its paper
-     is cut to the tear, its pale core showing past the surface in a fringe. A page that runs out to the
-     strip's edge is torn with it. */
+     is cut to the tear. A page or a print that runs out to the strip's edge is torn with it. */
   .torn,
   .panel-hangs {
-    mask-image: linear-gradient(#000, #000), var(--torn-surface);
+    mask-image: linear-gradient(#000, #000), var(--torn-core);
     mask-size:
       calc(100% - 16px) 100%,
       16px 1600px;
@@ -235,15 +234,23 @@
     background-color: var(--band);
   }
 
-  /* Past a paper's torn surface its core shows, frayed, in the paper's own colour a shade lighter. */
-  .torn-core {
-    mask-image: linear-gradient(#000, #000), var(--torn-core);
-    background-color: color-mix(in oklab, var(--band), #fff 7%);
+  /* Past the surface the paper's core shows in a fringe, a shade lighter than what is on it, so a print or a
+     page keeps its own colour right out to the tear. */
+  .torn-fray {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: rgb(255 255 255 / 0.08);
+    mask-image: var(--torn-core), var(--torn-surface);
+    mask-size: 16px 1600px;
+    mask-position: right top;
+    mask-repeat: repeat-y;
+    mask-composite: subtract;
   }
 
   /* Leather's cut edge, past its grain: the edge itself, burnished dark with handling. */
-  .torn-leather {
-    background-color: color-mix(in oklab, var(--panel), #000 62%);
+  .torn-fray-leather {
+    background-color: rgb(14 5 3 / 0.62);
   }
 
   /* And the grain darkens toward the edge, where hands have worn and oiled it, but not where a tab grows out. */
