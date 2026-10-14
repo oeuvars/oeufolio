@@ -31,12 +31,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
 sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, HERE)
 
 import bmesh  # noqa: E402
 import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
+import key  # noqa: E402
 import stage as stage_module  # noqa: E402
 from solids import finish, lathe, principled, prism, rect, spun, torus, worn  # noqa: E402
 from stage import Stage  # noqa: E402
@@ -47,7 +49,7 @@ PANEL = "#651415"
 PROP = 0.068  # em to the millimetre: the props' scale, film.py's too
 AT = (3.7, 1.7)  # where the middle of the body lies, in the spread's em
 TURN = 80  # degrees, anticlockwise from lying level: the top cover to the left, as the photograph has it
-EXPOSURE = 0.1
+EXPOSURE = -1.0
 
 L, H, D = 138.0, 75.0, 33.5  # the body: long, high, deep
 END = 15.0  # the radius its two ends are rounded to, seen from above
@@ -424,7 +426,7 @@ STAGE = Stage(OUT, args.proofs, scale=args.scale, samples=args.samples)
 STAGE.clear()
 camera()
 x0, y0, x1, y1 = bounds()
-BLEED = 2.0
+BLEED = 3.4  # room for the key light's shadow, which falls about two em off the body
 json.dump({"box": [round(v, 4) for v in (x0 - BLEED, y0 - BLEED, x1 - x0 + 2 * BLEED, y1 - y0 + 2 * BLEED)]}, open(PLACE, "w"))
 # Over it hangs a ring softbox round the stand's lens, as a camera is lit for its photograph: chrome and glass show
 # only what is round them, and here that is one broad even light all round, with the dark of the stand's lens in
@@ -462,4 +464,5 @@ for name, inner, outer, z, glow in (("softbox", 9.0, 34.0, 40.0, 0.45), ("stand-
     panel.visible_shadow = False
     panel.visible_diffuse = False
     panel.visible_volume_scatter = False
-STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=0.8, exposure=EXPOSURE, lens=False, sharp=2.0)
+key.add()
+STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=0.95, exposure=EXPOSURE, lens=False, sharp=2.0)

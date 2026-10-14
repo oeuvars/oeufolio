@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { profile } from '../../content'
 import camera from './camera.json'
 import { Print } from './Print'
-import roll from './roll.json'
 import ticket from './ticket.json'
 
 const [W, H] = ticket.size
@@ -20,14 +19,11 @@ const STAMPS_H = STAMP_H * ticket.stamps.views.length + 2 * STAMPS_BLEED
 const STAMPS_TOP = FRAME_H - STAMPS_H - 0.5
 const GAP = 0
 /**
- * What else lies on the leather, each photographed under the same light with its shadow, and placed by the box its
+ * What else lies on the leather, photographed under the same light with its shadow, and placed by the box its
  * photograph covers in the spread's em: a Leica M3 on its back at the top (studio/ticket/leica.py), lying over the
- * ticket's edge, and a roll of the old film below, its end run out flat (studio/ticket/film.py roll).
+ * ticket's edge.
  */
-const PROPS = [
-  { src: '/objects/ticket-camera.avif', box: camera.box },
-  { src: '/objects/ticket-roll.avif', box: roll.box },
-]
+const PROPS = [{ src: '/objects/ticket-camera.avif', box: camera.box }]
 const SPREAD_W = STAMPS_W + GAP + FRAME_W
 
 /**
@@ -36,8 +32,7 @@ const SPREAD_W = STAMPS_W + GAP + FRAME_W
  * followed where they are printed. It is as tall as the page lets it be and never wider than the page. Copying
  * the email address has the conductor punch it: a second photograph, taken under the same light with the hole
  * through it, takes the first one's place, and the leather shows through the hole. Beside it lies a strip of three Indian
- * stamps printed in the same inks, each its own picture of the same river; above them a camera, and below the ticket a
- * roll of old film.
+ * stamps printed in the same inks, each its own picture of the same river, and above them a camera.
  */
 export function Ticket() {
   const [copied, setCopied] = useState(false)
