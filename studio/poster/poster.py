@@ -15,7 +15,9 @@ passages are lifted off the wall first, and the title is laid over the old one a
 of a lit sign, its letters soft, glowing, and broken into the dots of the screen it was shown on. New grain goes over
 the whole, at the new size, so the scaled-up picture reads as film again.
 
-Writes public/objects/poster.avif.
+Writes public/objects/poster.avif, and public/objects/poster-strip.avif for the work strip folded: the poster's
+middle column of windows, the full height of it, with the sign's light across it but none of the passages, which
+come with the page when the strip opens.
 """
 
 import argparse
@@ -30,6 +32,8 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 SCALE = 3
 # The passages' boxes in the reference's pixels (left, top, right, bottom), a little past their ink.
 PASSAGES = [(305, 302, 398, 450), (512, 374, 642, 448), (100, 484, 302, 558), (300, 622, 530, 706)]
+# The folded strip's column, in the reference's pixels: the windows stacked down its middle.
+STRIP = (300, 594)
 # The type's colour: the passages are printed a warm white, the sign is a cold one.
 INK = np.array([0.93, 0.91, 0.87])
 SIGN = np.array([0.90, 0.91, 0.92])
@@ -107,23 +111,28 @@ def main():
     glow = np.clip(glow, 0, 1)[..., None] * SIGN
     picture = 1 - (1 - picture) * (1 - glow)
 
+    strip = picture
+
     # The new passages go on in the old ones' place, a touch soft, as print on a print is. They are printed as the
     # reference prints them, as a difference: white on the dark wall, dark where they run into the sign's glow, and
     # gone under its letters.
     ink = ndimage.gaussian_filter(plate("body.png", size), 0.45 * SCALE) * (1 - np.clip(1.4 * letters, 0, 1))
     picture = picture * (1 - ink[..., None]) + np.abs(picture - INK) * ink[..., None]
 
-    # Grain at the new size, a little stronger in the middle tones, as film's is.
+    # Grain at the new size, a little stronger in the middle tones, as film's is. Both pictures take the same grain.
     rng = np.random.default_rng(7)
     grain = ndimage.gaussian_filter(rng.standard_normal(shape).astype(np.float32), 0.7)
-    luma = picture @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-    picture = picture + (0.035 + 0.05 * luma * (1 - luma))[..., None] * grain[..., None]
-
-    out = Image.fromarray((np.clip(picture, 0, 1) * 255 + 0.5).astype(np.uint8))
-    out.save(os.path.join(ROOT, "public", "objects", "poster.avif"), quality=82, subsampling="4:4:4", speed=2)
-    if args.proof:
-        os.makedirs(args.proof, exist_ok=True)
-        out.save(os.path.join(args.proof, "poster.png"))
+    left, right = (x * SCALE for x in STRIP)
+    for name, image in (("poster", picture), ("poster-strip", strip)):
+        luma = image @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+        image = image + (0.035 + 0.05 * luma * (1 - luma))[..., None] * grain[..., None]
+        if name == "poster-strip":
+            image = image[:, left:right]
+        out = Image.fromarray((np.clip(image, 0, 1) * 255 + 0.5).astype(np.uint8))
+        out.save(os.path.join(ROOT, "public", "objects", f"{name}.avif"), quality=82, subsampling="4:4:4", speed=2)
+        if args.proof:
+            os.makedirs(args.proof, exist_ok=True)
+            out.save(os.path.join(args.proof, f"{name}.png"))
 
 
 if __name__ == "__main__":

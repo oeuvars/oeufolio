@@ -3,6 +3,11 @@ export type NavItem = {
   label: string
 }
 
+/** Which version of a page to show, when it is not the first: the work page's poster is v 2. */
+export type VersionSearch = {
+  v?: 2
+}
+
 export type Social = {
   label: string
   href: string

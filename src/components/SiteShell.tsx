@@ -1,12 +1,13 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { MotionConfig, motion, useReducedMotion } from 'motion/react'
 import type { CSSProperties } from 'react'
-import { useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 
 import { profile } from '../content'
-import type { NavItem } from '../types'
+import type { NavItem, VersionSearch } from '../types'
 import { Art } from './Art'
 import { Badge } from './Badge'
+import { POSTER } from './house'
 import { Desk } from './mat/Desk'
 import { useStackMetrics } from './useStackMetrics'
 
@@ -170,6 +171,8 @@ type TabProps = {
   label: string
   shape: TabShape
   to?: NavItem['to']
+  /** The version of the page to open, if not its first (the work page's poster). */
+  search?: VersionSearch
   current?: boolean
   /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
   src: string
@@ -211,7 +214,7 @@ function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, current, src, footless, leather, surface }: TabProps) {
+function Tab({ label, shape, to, search, current, src, footless, leather, surface }: TabProps) {
   const { reach, path } = tabOutline(shape, footless)
   const hide = useId()
   const cut = useId()
@@ -290,6 +293,7 @@ function Tab({ label, shape, to, current, src, footless, leather, surface }: Tab
   return (
     <Link
       to={to}
+      search={search}
       activeOptions={{ exact: true }}
       aria-label={label}
       aria-current={current ? 'page' : undefined}
@@ -307,6 +311,13 @@ type SiteShellProps = {
 
 export function SiteShell({ children }: SiteShellProps) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const poster = useRouterState({ select: (state) => state.location.pathname === '/work' && Number((state.location.search as { v?: unknown }).v) === 2 })
+  // The version of the work page last open: its strip shows that version folded, and opens to it again.
+  const [workPoster, setWorkPoster] = useState(false)
+  useEffect(() => {
+    if (pathname === '/work') setWorkPoster(poster)
+  }, [pathname, poster])
+  const searchOf = (to: NavItem['to']): VersionSearch | undefined => (to === '/work' && workPoster ? { v: 2 } : undefined)
   const index = Math.max(
     0,
     profile.nav.findIndex((item) => item.to === pathname),
@@ -333,11 +344,17 @@ export function SiteShell({ children }: SiteShellProps) {
   const gaps = mobile ? count - 1 : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
   // strip shows only its roll, so it folds narrower than the rest.
-  const folded = (i: number) => (pageTones[i].bleeds ? 1.5 * strip : pageTones[i].roll ? (mobile ? 0.7 * strip : contact) : strip)
-  const shut = profile.nav.reduce((sum, _, i) => (i === index ? sum : sum + folded(i)), 0)
-  const openWidth = metrics.width - fixed - shut + gaps * overlap
+  const folds = (i: number) => (pageTones[i].bleeds ? 1.5 * strip : pageTones[i].roll ? (mobile ? 0.7 * strip : contact) : strip)
+  // How wide a strip is open: the room the others leave it, folded.
+  const roomFor = (i: number) => metrics.width - fixed - profile.nav.reduce((sum, _, j) => (j === i ? sum : sum + folds(j)), 0) + gaps * overlap
+  // The work page's poster stands the window's height, and its strip opens only as wide as the poster: the room
+  // left over is shared among the folded strips.
+  const room = roomFor(index)
+  const openWidth = poster && !mobile ? Math.min(room, (metrics.height * POSTER.width) / POSTER.height + overlap + band) : room
+  const spare = (room - openWidth) / (count - 1)
+  const folded = (i: number) => folds(i) + spare
   // How wide a strip is when its page is open, whichever page is open now.
-  const openWidthOf = (i: number) => (i === index ? openWidth : openWidth + folded(i) - folded(index))
+  const openWidthOf = (i: number) => (i === index ? openWidth : roomFor(i))
   // A page laid out as it is when open, at the width it is then.
   const page = (i: number): CSSProperties => ({ width: openWidthOf(i) - band, minWidth: 0, paddingLeft: overlap + protrude + 16 })
   // The desk lies under its strip and goes with the strip's tab: it is laid at the width it has open, its
@@ -478,7 +495,7 @@ export function SiteShell({ children }: SiteShellProps) {
                     // A picture page folds back into its strip's picture, which has to be there at once to take over.
                     transition={{ duration: pageTones[i].bleeds && !open ? 0 : 0.35 }}
                   >
-                    <Art index={i} open={open} />
+                    <Art index={i} open={open} poster={workPoster} />
                   </motion.div>
                 )}
 
@@ -503,7 +520,7 @@ export function SiteShell({ children }: SiteShellProps) {
                     <div className="grid flex-1 content-center py-[4vh]">{children}</div>
                   </motion.div>
                 ) : null}
-                {!open && <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
+                {!open && <Link to={item.to} search={searchOf(item.to)} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
               {edgeOf(pageTones[i]) === 'worn' && (
                 <>
@@ -511,7 +528,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <div aria-hidden className="torn torn-wear" />
                 </>
               )}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} surface={pageTones[i].surface} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} surface={pageTones[i].surface} />
             </motion.section>
           )
         })}

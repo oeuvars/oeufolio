@@ -5,14 +5,11 @@ import { Masthead } from '../components/Masthead'
 import { Poster } from '../components/Poster'
 import { Reveal } from '../components/Reveal'
 import { profile } from '../content'
-
-type WorkSearch = {
-  v?: 2
-}
+import type { VersionSearch } from '../types'
 
 /** Two versions of the page: the building (the default), and the poster at /work?v=2. */
 export const Route = createFileRoute('/work')({
-  validateSearch: (search: Record<string, unknown>): WorkSearch => (Number(search.v) === 2 ? { v: 2 } : {}),
+  validateSearch: (search: Record<string, unknown>): VersionSearch => (Number(search.v) === 2 ? { v: 2 } : {}),
   component: Work,
 })
 
