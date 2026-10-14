@@ -73,6 +73,14 @@ EXPOSURE = 0.1
 # The lamp's plate: how bright the bulb is, in watts, and how much of the room's light is left at night.
 BULB = 300000.0
 NIGHT_ROOM = 0.025
+# Someone looking at the desk has their eye this far over the middle of it, so the acrylic case shows them the
+# lamp's mirror image where the light from the lamp bounces up to that eye, not straight up as the overhead
+# camera would have it. The lamp's shade is open this wide at the bottom, the bulb in it this wide, and
+# what they give off is to the bulb's own light as GLINT is.
+EYE = 100.0
+SHADE_R = 2.6
+BULB_R = 0.9
+GLINT = (40.0, 5.0)
 LAMP_EXPOSURE = 0.0
 # The window's share of the light on the mat by day, the rest being the room's. Its size and distance in em.
 KEY_SHARE = 0.6
@@ -283,6 +291,62 @@ class Desk:
         return bulb
 
 
+    def glint(self):
+        """The lamp as the acrylic case mirrors it to someone looking at the desk: a hot bulb in the warm
+        mouth of its shade. It hangs over the point of the desk where that reflection lies, the overhead
+        camera's reflections go straight up to it, and only the card and its case see it."""
+        x, y, height = self.layout["lamp"]
+        cx, cy = self.w / 2, self.h / 2
+        # A flat mirror puts the lamp's image as far under the desk as the lamp is over it.
+        near = EYE / (EYE + height)
+        at = (cx + (x - cx) * near, -(cy + (y - cy) * near), height)
+        r = SHADE_R * near
+        panel = bpy.data.meshes.new("glint")
+        panel.from_pydata([(-r, -r, 0), (r, -r, 0), (r, r, 0), (-r, r, 0)], [], [(0, 1, 2, 3)])
+        panel.uv_layers.new().data.foreach_set("uv", [0, 0, 1, 0, 1, 1, 0, 1])
+        glow = self.stage.add("glint", panel)
+        glow.location = at
+        glow.visible_camera = False
+        glow.visible_shadow = False
+        glow.visible_diffuse = False
+        material = bpy.data.materials.new("glint")
+        material.use_nodes = True
+        nodes, links = material.node_tree.nodes, material.node_tree.links
+        nodes.clear()
+        coord = nodes.new("ShaderNodeTexCoord")
+        centre = nodes.new("ShaderNodeVectorMath")
+        centre.operation = "DISTANCE"
+        centre.inputs[1].default_value = (0.5, 0.5, 0)
+        links.new(coord.outputs["UV"], centre.inputs[0])
+        # The bulb, then the lit inside of the shade out to its rim.
+        bulb = nodes.new("ShaderNodeMapRange")
+        bulb.interpolation_type = "SMOOTHSTEP"
+        bulb.inputs["From Min"].default_value = 0.5 * BULB_R / SHADE_R
+        bulb.inputs["From Max"].default_value = 0.25 * BULB_R / SHADE_R
+        bulb.inputs["To Min"].default_value = GLINT[1]
+        bulb.inputs["To Max"].default_value = GLINT[0]
+        links.new(centre.outputs["Value"], bulb.inputs["Value"])
+        mouth = nodes.new("ShaderNodeMapRange")
+        mouth.interpolation_type = "SMOOTHSTEP"
+        mouth.inputs["From Min"].default_value = 0.5
+        mouth.inputs["From Max"].default_value = 0.44
+        links.new(centre.outputs["Value"], mouth.inputs["Value"])
+        emit = nodes.new("ShaderNodeEmission")
+        emit.inputs["Color"].default_value = (1.0, 0.74, 0.46, 1)
+        links.new(bulb.outputs[0], emit.inputs["Strength"])
+        clear = nodes.new("ShaderNodeBsdfTransparent")
+        mix = nodes.new("ShaderNodeMixShader")
+        links.new(mouth.outputs[0], mix.inputs[0])
+        links.new(clear.outputs[0], mix.inputs[1])
+        links.new(emit.outputs[0], mix.inputs[2])
+        out = nodes.new("ShaderNodeOutputMaterial")
+        links.new(mix.outputs[0], out.inputs["Surface"])
+        panel.materials.append(material)
+        glow.light_linking.receiver_collection = self.props["card"][1]
+        glow.light_linking.blocker_collection = self.props["card"][1]
+        return glow
+
+
 def middle_of(anchor, frame):
     """Where the middle of a shot's frame is on the plate."""
     fx, fy, fw, fh = frame
@@ -459,6 +523,8 @@ def main():
             obj.hide_render = True
         room.default_value = NIGHT_ROOM
         desk.lamp(BULB)
+        if "card" in desk.props:
+            desk.glint()
         # The map: a white mat, with everything on it unseen but still in the way of the light.
         show(everything, False)
         floor.visible_camera = True
