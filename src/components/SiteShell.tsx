@@ -147,11 +147,12 @@ function Tab({ label, shape, to, current, src, footless, leather }: TabProps) {
       </svg>
       {leather && (
         // The leather is the mat's, so it is in the mat's light: the lamp's, the dusk's and the dark. The mat
-        // lends this its hour, its lamp and where its map of the lamp's light lies (mat/Mat.tsx).
+        // lends this its hour, its lamp and where its map of the lamp's light lies (mat/Mat.tsx). The clip
+        // isolates what is in it, so the layers multiply on white and the whole multiplies the leather.
         <div
           aria-hidden
           data-mat-light
-          className="pointer-events-none absolute left-0"
+          className="pointer-events-none absolute left-0 bg-white mix-blend-multiply"
           style={{ top: -reach, width, height: shape.height + 2 * reach, clipPath: `url(#${cut})` }}
         >
           <div
