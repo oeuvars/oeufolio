@@ -52,15 +52,30 @@ def acrylic():
     links.new(coord.outputs["Object"], mapping.inputs["Vector"])
     links.new(mapping.outputs["Vector"], marks.inputs["Vector"])
     links.new(marks.outputs["Color"], dull.inputs[0])
-    links.new(dull.outputs[0], shader.inputs["Roughness"])
+    # The face is polished. The rounded edges, where the case was cut and buffed, are a little less so, and
+    # catch the lamp as a soft sheen along them rather than a hairline.
+    facing = nodes.new("ShaderNodeLayerWeight")
+    facing.inputs["Blend"].default_value = 0.3
+    # How far the surface leans from flat: nothing on the top, a few degrees where the edge begins to round.
+    shape = nodes.new("ShaderNodeNewGeometry")
+    upright = nodes.new("ShaderNodeSeparateXYZ")
+    links.new(shape.outputs["Normal"], upright.inputs[0])
+    buffed = nodes.new("ShaderNodeMapRange")
+    buffed.interpolation_type = "SMOOTHSTEP"
+    buffed.inputs["From Min"].default_value = 0.9998
+    buffed.inputs["From Max"].default_value = 0.99
+    buffed.inputs["To Max"].default_value = 0.15
+    links.new(upright.outputs["Z"], buffed.inputs["Value"])
+    rough = nodes.new("ShaderNodeMath")
+    links.new(dull.outputs[0], rough.inputs[0])
+    links.new(buffed.outputs[0], rough.inputs[1])
+    links.new(rough.outputs[0], shader.inputs["Roughness"])
     haze = nodes.new("ShaderNodeBsdfDiffuse")
     milky = nodes.new("ShaderNodeMixShader")
     milky.inputs[0].default_value = 0.01
     links.new(shader.outputs[0], milky.inputs[1])
     links.new(haze.outputs[0], milky.inputs[2])
     # The shadow: clear through the flat, darker where the surface turns away.
-    facing = nodes.new("ShaderNodeLayerWeight")
-    facing.inputs["Blend"].default_value = 0.3
     rim = nodes.new("ShaderNodeMath")
     rim.operation = "MULTIPLY_ADD"
     rim.inputs[1].default_value = -0.75
@@ -68,10 +83,45 @@ def acrylic():
     links.new(facing.outputs["Facing"], rim.inputs[0])
     clear = nodes.new("ShaderNodeBsdfTransparent")
     links.new(rim.outputs[0], clear.inputs["Color"])
+    # Seen from above, the rounded edges bend the view through them so far that it turns back inside the
+    # block, onto the dark underside of the case: they outline it with a dark band all round, as a slab's
+    # edges do in a photograph. The page shows through the rest.
+    edge = nodes.new("ShaderNodeMapRange")
+    edge.interpolation_type = "SMOOTHSTEP"
+    edge.inputs["From Min"].default_value = 0.3
+    edge.inputs["From Max"].default_value = 0.85
+    edge.inputs["To Max"].default_value = 0.55
+    links.new(facing.outputs["Facing"], edge.inputs["Value"])
     path = nodes.new("ShaderNodeLightPath")
+    seen = nodes.new("ShaderNodeMath")
+    seen.operation = "MULTIPLY"
+    links.new(edge.outputs[0], seen.inputs[0])
+    links.new(path.outputs["Is Camera Ray"], seen.inputs[1])
+    dark = nodes.new("ShaderNodeBsdfDiffuse")
+    dark.inputs["Color"].default_value = (0.03, 0.035, 0.032, 1)
+    outline = nodes.new("ShaderNodeMixShader")
+    links.new(seen.outputs[0], outline.inputs[0])
+    links.new(milky.outputs[0], outline.inputs[1])
+    links.new(dark.outputs[0], outline.inputs[2])
+    # The sheen on the edges lies over the dark band, not under it.
+    sheen = nodes.new("ShaderNodeBsdfGlossy")
+    sheen.inputs["Color"].default_value = (1.0, 1.0, 1.0, 1)
+    links.new(rough.outputs[0], sheen.inputs["Roughness"])
+    fresnel = nodes.new("ShaderNodeFresnel")
+    fresnel.inputs["IOR"].default_value = 1.49
+    over = nodes.new("ShaderNodeMath")
+    over.operation = "MULTIPLY"
+    links.new(fresnel.outputs[0], over.inputs[0])
+    links.new(seen.outputs[0], over.inputs[1])
+    edged = nodes.new("ShaderNodeAddShader")
+    lit = nodes.new("ShaderNodeMixShader")
+    links.new(over.outputs[0], lit.inputs[0])
+    links.new(sheen.outputs[0], lit.inputs[2])
+    links.new(outline.outputs[0], edged.inputs[0])
+    links.new(lit.outputs[0], edged.inputs[1])
     either = nodes.new("ShaderNodeMixShader")
     links.new(path.outputs["Is Shadow Ray"], either.inputs[0])
-    links.new(milky.outputs[0], either.inputs[1])
+    links.new(edged.outputs[0], either.inputs[1])
     links.new(clear.outputs[0], either.inputs[2])
     links.new(either.outputs[0], nodes["Material Output"].inputs["Surface"])
     return material
