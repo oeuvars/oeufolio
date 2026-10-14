@@ -2,7 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow>=11.3", "scipy"]
 # ///
-"""Cuts the Turkish Vans out of their photographs (studio/signal/art/cats, credited in CREDITS.md), for print.py to
+"""Cuts the van-patterned cats out of their photographs (studio/signal/art/cats, credited in CREDITS.md), for print.py to
 lay along the signal's post:
 
     uv run studio/signal/cats.py
@@ -25,7 +25,7 @@ from scipy import ndimage
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CATS = os.path.join(HERE, "art", "cats")
-WHITE = 0.93
+WHITE = 0.97
 
 
 def mask(source):
@@ -47,7 +47,7 @@ def cut(name, file):
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     rgb[..., 1] = np.minimum(g, np.maximum(r, b))
     # The photographs were taken in all kinds of light. The white of each cat's coat is set to the same white,
-    # a little under the paper's, so the coat prints as a light screen and not as bare paper.
+    # the white of the sun on the signal.
     fur = np.percentile(rgb[alpha > 0.5], 92, axis=0)
     rgb = np.clip(rgb * (WHITE / fur), 0, 1)
     # And the auburn of the head and tail pushed up to the red a Van's is, which the screen would otherwise lose.
@@ -63,12 +63,14 @@ def cut(name, file):
 for name, file in {
     "walk": "walk.png",
     "ledge": "ledge.jpg",
-    "back": "back.jpg",
-    "loaf": "loaf.jpg",
-    "sit": "sit.jpg",
-    "momo": "momo.jpg",
     "sleep": "sleep.jpg",
     "sniff": "sniff.jpg",
-    "paw": "paw.jpg",
+    "bw-walk": "bw-walk.jpg",
+    "bw-stroll": "bw-stroll.jpg",
+    "nap": "nap.jpg",
+    "tabby": "tabby.jpg",
+    "lounge": "lounge.jpg",
+    "bw-sit": "bw-sit.jpg",
+    "roof": "roof.jpg",
 }.items():
     cut(name, file)

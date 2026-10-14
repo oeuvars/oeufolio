@@ -407,15 +407,16 @@ def main():
 
     signal()
 
-    # An overcast day: soft light from the sky, and the sun through thin cloud from high on the left.
+    # A clear day: blue light from the sky in every shadow, and the sun from high on the left.
     world = bpy.data.worlds.new("sky")
     world.use_nodes = True
-    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.75, 0.78, 0.82, 1)
-    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.7
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.36, 0.55, 0.95, 1)
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.85
     scene.world = world
     sun = bpy.data.lights.new("sun", "SUN")
-    sun.energy = 4.2
-    sun.angle = math.radians(8)
+    sun.energy = 4.6
+    sun.color = (1.0, 0.95, 0.87)
+    sun.angle = math.radians(1.5)
     sun_obj = bpy.data.objects.new("sun", sun)
     sun_obj.rotation_euler = (math.radians(50), math.radians(-28), math.radians(-30))
     bpy.context.collection.objects.link(sun_obj)

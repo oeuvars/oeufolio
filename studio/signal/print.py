@@ -5,10 +5,12 @@
 """Prints the signal (studio/signal/render.py) as the references are printed: a coarse four-colour halftone in
 loud colour, the dots a little ragged where the ink spread into the paper and the inks a hair out of register.
 
-First the Turkish Vans (studio/signal/cats.py) are pasted down the post, as the poster's eyes were pasted into its
+First the van-patterned cats (studio/signal/cats.py) are pasted down the post, as the poster's eyes were pasted into its
 signal. The post is their floor: the picture is turned a quarter round for them, so their up is the strip's right and
-they walk, sit and sleep along the strip's length, each on the post's edge, some with a tail hung over it. Each is
-cut round with a dark line, as the eyed sunflower is, so the white cats hold their shape on the white paper.
+they walk, sit and sleep along the strip's length, each on the post's edge, some with a tail hung over it. All of it
+stands against a clear sky, deep blue overhead and paler down the strip. The sky wraps a little way round each cat's
+edge, as daylight does round fur, and its blue goes into the cats' shadows as it does into the signal's, so the cats
+were photographed in the same air as the signal.
 
     uv run studio/signal/print.py [--proof DIR]
 
@@ -30,6 +32,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 UP = 3
 PITCH = 6.0  # the screen's ruling, in the picture's pixels
+SENT = 360  # the width the page is sent
 # Each ink as what it lets through of white light, its screen angle and how far it sits out of register.
 INKS = {
     "cyan": ((0.0, 0.6, 0.88), 15, (0.6, -0.4)),
@@ -49,24 +52,36 @@ def separate(rgb):
 
 
 # Down the post from the signal: each cat, how tall it stands off the post as a share of the picture's width, how
-# far down its cut-out its feet are (below that its tail hangs over the post), and whether it faces up the post.
+# far down its cut-out its feet are (below that its tail hangs over the post), and whether it is mirrored, so that
+# they face up and down the post by turns.
 CATS = [
     ("ledge", 0.5, 0.62, True),
+    ("bw-walk", 0.72, 1.0, False),
+    ("nap", 0.24, 0.95, False),
     ("walk", 0.5, 1.0, True),
-    ("sleep", 0.27, 0.86, False),
-    ("sit", 0.55, 0.98, True),
-    ("loaf", 0.36, 0.95, False),
-    ("back", 0.52, 0.6, True),
-    ("paw", 0.34, 0.7, False),
-    ("sniff", 0.32, 0.95, True),
-    ("momo", 0.55, 0.98, False),
+    ("tabby", 0.52, 0.97, False),
+    ("lounge", 0.3, 0.9, True),
+    ("sleep", 0.27, 0.86, True),
+    ("bw-sit", 0.5, 0.97, False),
+    ("bw-stroll", 0.64, 1.0, False),
+    ("sniff", 0.32, 0.95, False),
+    ("roof", 0.5, 0.97, True),
 ]
 GAP = 0.05  # between one cat and the next, as a share of the width
-KEYLINE = 3  # the line cut round each cat, in pixels
+SKY_TOP = np.array([0.13, 0.38, 0.75], dtype=np.float32)
+SKY_LOW = np.array([0.58, 0.78, 0.95], dtype=np.float32)
+SHADE = np.array([-0.1, -0.02, 0.1], dtype=np.float32)  # how the sky turns a shadow, the darker the more
 
 
-def lay_cats(signal):
-    """Pastes the cats down the post of the signal, an RGBA image, and returns it."""
+def sky(h, w):
+    """The sky down the picture, a colour per row: deepest at the top, palest where the tallest screen ends."""
+    t = np.clip(np.arange(h, dtype=np.float32) / (9 * w), 0, 1)[:, None] ** 0.85
+    return SKY_TOP * (1 - t) + SKY_LOW * t
+
+
+def lay_cats(signal, air):
+    """Pastes the cats down the post of the signal, an RGBA image, under the sky air, a colour per row, and returns
+    it."""
     w = signal.width
     alpha = np.asarray(signal.getchannel("A"), dtype=np.float32) / 255 > 0.5
     across = alpha.sum(axis=1)
@@ -79,11 +94,11 @@ def lay_cats(signal):
     lean = np.degrees(np.arctan(slope))
     out = signal.copy()
     y = rows[0] + 0.12 * w
-    for name, tall, ground, up in CATS:
+    for name, tall, ground, mirror in CATS:
         cat = Image.open(os.path.join(HERE, "art", "cats", f"{name}-cut.png"))
         scale = tall * w / (ground * cat.height)
         cat = cat.resize((round(cat.width * scale), round(cat.height * scale)), Image.LANCZOS)
-        if up:
+        if mirror:
             cat = cat.transpose(Image.FLIP_LEFT_RIGHT)
         length = cat.width
         # A quarter turn clockwise: the cat's up is the strip's right, its feet on a line down the strip.
@@ -97,21 +112,23 @@ def lay_cats(signal):
         feet = np.array([np.cos(a) * d[0] + np.sin(a) * d[1], -np.sin(a) * d[0] + np.cos(a) * d[1]]) + np.array(cat.size) / 2
         centre = y + length / 2
         at = (round(edge(centre) - 0.035 * w - feet[0]), round(centre - feet[1]))
-        # The cut line, then the cat on it.
-        shape = np.asarray(cat.getchannel("A"), dtype=np.float32) / 255
-        line = ndimage.grey_dilation(shape, footprint=disc(KEYLINE))
-        keyline = Image.fromarray(np.dstack([np.full_like(line, 22), np.full_like(line, 22), np.full_like(line, 24), line * 255]).astype(np.uint8), "RGBA")
-        out.alpha_composite(keyline, dest=(max(at[0], 0), at[1]), source=(max(-at[0], 0), 0))
-        out.alpha_composite(cat, dest=(max(at[0], 0), at[1]), source=(max(-at[0], 0), 0))
+        out.alpha_composite(daylight(cat, air[np.clip(at[1] + np.arange(cat.height), 0, len(air) - 1)]), dest=(max(at[0], 0), at[1]), source=(max(-at[0], 0), 0))
         y += length + GAP * w
         if y > signal.height:
             break
     return out
 
 
-def disc(radius):
-    ys, xs = np.mgrid[-radius : radius + 1, -radius : radius + 1]
-    return xs * xs + ys * ys <= radius * radius
+def daylight(cat, behind):
+    """Puts a cat in the signal's light: the sky's blue in its shadows, and the sky behind it wrapped round its edge.
+    behind is the sky's colour on each of its rows."""
+    c = np.asarray(cat, dtype=np.float32) / 255
+    rgb, a = c[..., :3], c[..., 3]
+    lum = rgb.mean(axis=2, keepdims=True)
+    rgb = np.clip(rgb * (1 + (1 - lum) * SHADE), 0, 1)
+    wrap = (np.clip(ndimage.gaussian_filter(1 - a, 2.5) * 1.8, 0, 1) * a * 0.6)[..., None]
+    rgb = rgb * (1 - wrap) + behind[:, None, :] * wrap
+    return Image.fromarray((np.dstack([rgb, a]) * 255).astype(np.uint8), "RGBA")
 
 
 def screen(cover, angle, offset, rng):
@@ -136,9 +153,11 @@ def main():
     parser.add_argument("--proof")
     args = parser.parse_args()
 
-    image = np.asarray(lay_cats(Image.open(args.source).convert("RGBA")), dtype=np.float32) / 255
+    signal = Image.open(args.source).convert("RGBA")
+    air = sky(signal.height, signal.width)
+    image = np.asarray(lay_cats(signal, air), dtype=np.float32) / 255
     alpha = image[..., 3:]
-    rgb = image[..., :3] * alpha + (1 - alpha)
+    rgb = image[..., :3] * alpha + air[:, None, :] * (1 - alpha)
     # A press gains contrast and pushes colour: the dark paint goes deep and the lamps stay bright.
     rgb = np.clip((rgb - 0.5) * 1.12 + 0.5, 0, 1)
     grey = rgb.mean(axis=2, keepdims=True)
@@ -155,11 +174,13 @@ def main():
     printed = np.asarray(Image.fromarray((np.clip(paper, 0, 1) * 255).astype(np.uint8)).resize((w, h), Image.LANCZOS), dtype=np.float32) / 255
 
     out = Image.fromarray((printed * 255).astype(np.uint8), "RGB")
+    # The spine shows it about 250 pixels wide on a dense screen. Sent any larger, the screened sky only weighs more.
+    out = out.resize((SENT, round(out.height * SENT / out.width)), Image.LANCZOS)
     if args.proof:
         os.makedirs(args.proof, exist_ok=True)
         out.save(os.path.join(args.proof, "signal-print.png"))
         return
-    out.save(os.path.join(ROOT, "public", "objects", "signal.avif"), quality=68, subsampling="4:4:4", speed=4)
+    out.save(os.path.join(ROOT, "public", "objects", "signal.avif"), quality=62, subsampling="4:4:4", speed=4)
 
 
 main()
