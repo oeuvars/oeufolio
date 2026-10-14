@@ -435,30 +435,52 @@ def prs(name, height):
 
 
 def apple(name, height):
-    def dress(sheet, edge):
-        X, Y = sheet.X, sheet.Y
-        badge, colour = placed(sheet, artwork("logos/apple"), MIDDLE - 0.98, 1.35, MIDDLE + 0.98, 3.75)
-        sheet.rgb += badge[..., None] * (colour - sheet.rgb)
-        sheet.finish(badge, rough=0.12, coat=0.9)
-        # The badge is let into the case, and sits in a shallow well of its own.
-        sheet.press(blur(np.clip(badge * 2, 0, 1), 2.0), 0.006)
-        # The grille of a Mac Studio: round holes drilled close, each row half a step from the last.
-        # Only whole holes are drilled, so the field stops clean inside the piece's edge.
-        top, foot, pitch, bore = 4.75, 8.6, 0.2, 0.062
-        row = np.round(Y / (pitch * 0.866))
-        col = np.round(X / pitch - 0.5 * (row % 2))
-        cx, cy = (col + 0.5 * (row % 2)) * pitch, row * pitch * 0.866
-        rows = np.clip((cy * sheet.ppe).astype(int), 0, Y.shape[0] - 1)
-        cols = np.clip((cx * sheet.ppe).astype(int), 0, Y.shape[1] - 1)
-        drilled = (cy > top) & (cy < foot) & (edge[rows, cols] < -0.42)
-        hole = sheet.mask(np.hypot(X - cx, Y - cy) - bore) * drilled
-        # Each is countersunk a little, then goes down into the dark of the case.
-        sheet.press(blur(hole, 2.2), 0.02)
-        sheet.press(blur(hole, 0.7), 0.07)
-        sheet.paint(hole, "#0b0b0b")
-        sheet.finish(hole, rough=0.7, coat=0.0)
-
-    return {}, moulded(name, height, "#dcdcd8", 0.1, 0.8, dress, subsurface=0.1)
+    """A slab of a Mac Studio's case. It is milled from one block of aluminium, bead blasted to an even
+    satin and anodised clear, so it shines softly and all of a piece, with no grain to it. The milling
+    leaves a chamfer round the top that is cut with a diamond, and that alone is bright as a mirror."""
+    sheet = Sheet(WIDTH, height, "#d4d6d9", rough=0.34, density=3)
+    X, Y = sheet.X, sheet.Y
+    sheet.metal[:] = 1.0
+    shape = outline(height)
+    edge = within(X, Y, shape)
+    # The face is milled flat. The chamfer is cut shallow, so it looks up at the light over the desk.
+    chamfer = 0.11
+    sheet.height -= 0.028 * np.clip(1 + edge / chamfer, 0, 1)
+    sheet.finish(ramp(-chamfer - 0.012, -chamfer + 0.004, edge), rough=0.04)
+    badge, colour = placed(sheet, artwork("logos/apple"), MIDDLE - 0.98, 1.35, MIDDLE + 0.98, 3.75)
+    # The badge is enamel, let into a pocket milled for it and glazed over.
+    sheet.rgb += badge[..., None] * (colour - sheet.rgb)
+    sheet.finish(badge, rough=0.1, metal=0.0, coat=1.0)
+    sheet.press(blur(np.clip(badge * 2, 0, 1), 1.2), 0.004)
+    # The grille of a Mac Studio: round holes drilled close, each row half a step from the last.
+    # Only whole holes are drilled, so the field stops clean inside the piece's edge.
+    top, foot, pitch, bore = 4.75, 8.6, 0.2, 0.062
+    row = np.round(Y / (pitch * 0.866))
+    col = np.round(X / pitch - 0.5 * (row % 2))
+    cx, cy = (col + 0.5 * (row % 2)) * pitch, row * pitch * 0.866
+    rows = np.clip((cy * sheet.ppe).astype(int), 0, Y.shape[0] - 1)
+    cols = np.clip((cx * sheet.ppe).astype(int), 0, Y.shape[1] - 1)
+    drilled = (cy > top) & (cy < foot) & (edge[rows, cols] < -0.42)
+    reach = np.hypot(X - cx, Y - cy)
+    hole = sheet.mask(reach - bore) * drilled
+    # The drill leaves a bright little chamfer round each hole, then the bore goes down into the dark.
+    lip = sheet.mask(reach - bore - 0.016) * drilled - hole
+    sheet.press(blur(lip, 0.8), 0.012)
+    sheet.finish(lip, rough=0.08)
+    sheet.press(blur(hole, 0.4), 0.07)
+    sheet.paint(hole, "#060606")
+    sheet.finish(hole, rough=0.8, metal=0.0)
+    # Bead blasting is even, but never perfectly: the satin drifts a touch, and a hand has held it.
+    sheet.rough += 0.02 * np.clip(cloud(sheet.height.shape, 7, falloff=2.0), -2, 2)
+    aluminium = skin(
+        sheet,
+        f"{name}-aluminium",
+        wear=(("Fingerprints009", 6, 0.06, 0), ("Scratches003", 5, 0.03, 0.0002)),
+        specular=0.5,
+        coat_rough=0.04,
+    )
+    case = prism(STAGE, name, shape, 0.0, THICK, aluminium, bevel=0.035, segments=3)
+    return {"card": 1.6}, [clad(case, 0, 0, WIDTH, height)]
 
 
 def van(name, height):
