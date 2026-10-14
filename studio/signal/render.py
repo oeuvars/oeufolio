@@ -20,7 +20,7 @@ import sys
 
 import bmesh
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.join(HERE, "art")
@@ -29,12 +29,14 @@ WIDTH = 0.36  # across the housing
 DEPTH = 0.22  # front to back
 CELL = 0.40  # the height of one section
 LENS = 0.15  # radius of the lamp opening
-VISOR = 0.25  # how far the visor reaches at its top
+VISOR = 0.21  # how far the visor reaches at its top
 POST = 0.06  # radius of the post
 FRONT = -DEPTH / 2 - 0.028  # the face of the doors
+MOUTH = FRONT - 0.012 - VISOR - 0.01  # just out past the visors, where the flowers stand
 ASPECT = 11  # the picture's height over its width: taller than the spine ever is, so it is only cut at the foot
 YAW = math.radians(24)  # the camera stands this far round to the signal's left
 PITCH = math.radians(9)  # and looks up at it by this much
+LEAN = math.radians(2.5)  # and is tilted, so the signal leans into the strip as the poster's does
 
 
 def mesh_object(name, verts, faces, material=None):
@@ -179,7 +181,7 @@ def smooth(edge0, edge1, x):
     return t * t * (3 - 2 * t)
 
 
-def rose(at, radius, material):
+def rose(at, across, material):
     """A rose in full bloom seen from the front: petals set round the heart one golden angle apart, the inner ones
     wrapped close and upright, the outer ones opening out wide, broad and rounded, their edges rolled back."""
     verts, faces, shades = [], [], []
@@ -223,7 +225,7 @@ def rose(at, radius, material):
                 normal = er * math.cos(gamma) - ez * math.sin(gamma)
                 ripple = 0.012 * math.sin(7 * u + 3 * k) * vv**2
                 p = er * r + ez * z + et * side - normal * (inward - ripple)
-                verts.append(tuple(p * radius + Vector(at)))
+                verts.append(tuple(p + Vector(at)))
                 deep = (1 - t) ** 1.6
                 edge = smooth(0.7, 1.0, vv) * 0.25
                 shades.append((0.5 - 0.44 * deep - edge * 0.5 * (0.42 - 0.34 * deep), 0.012 * (1 - deep), 0.03 - 0.018 * deep))
@@ -238,10 +240,10 @@ def rose(at, radius, material):
     solid = obj.modifiers.new("thick", "SOLIDIFY")
     solid.thickness = 0.0012
     obj.modifiers.new("smooth", "SUBSURF").levels = 1
-    # Its heart toward the camera, scaled to the opening it fills.
+    # Its heart toward the camera, as wide as across.
     lo = min(v.co.x for v in obj.data.vertices)
     hi = max(v.co.x for v in obj.data.vertices)
-    fit = 2 * LENS * 1.04 / (hi - lo)
+    fit = across / (hi - lo)
     pivot = Vector(at)
     obj.data.transform(Matrix.Translation(-pivot))
     obj.data.transform(Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Scale(fit, 4))
@@ -312,6 +314,13 @@ def lamp_light(at, colour, power):
     bpy.context.collection.objects.link(obj)
 
 
+def lamps(at, colour):
+    """A lamp's light: one in the visor behind its flower, filling the visor with colour, and its glow thrown back on
+    the flower from the visor's mouth, so the flower is lit in the colour it stands for."""
+    lamp_light((at[0], FRONT - 0.07, at[2]), colour, 6)
+    lamp_light((at[0], MOUTH - 0.07, at[2] + 0.03), colour, 3)
+
+
 def signal():
     green = paint()
     recess = dark()
@@ -338,7 +347,7 @@ def signal():
         primitive("cylinder", recess, radius=LENS, depth=0.01, location=(0, FRONT + 0.002, mid), rotation=(math.radians(90), 0, 0), vertices=96)
         # The lens's bezel, then the visor bolted round it, open underneath.
         ring(f"bezel{n}", (0, FRONT + 0.002, mid), LENS + 0.012, 0.018, 0.014, green)
-        ring(f"visor{n}", (0, FRONT - 0.012, mid), LENS + 0.01, VISOR, 0.005, green, start=-52, sweep=284, longer=0.55)
+        ring(f"visor{n}", (0, FRONT - 0.012, mid), LENS + 0.01, VISOR, 0.005, green, start=-52, sweep=284, longer=0.3)
         for h in (mid + CELL * 0.3, mid - CELL * 0.3):
             lug = primitive("cylinder", green, radius=0.014, depth=0.055, location=(-WIDTH / 2 - 0.004, -DEPTH / 2 - 0.006, h), vertices=24)
             bevel(lug, 0.004)
@@ -346,23 +355,23 @@ def signal():
         box(f"wing{n}", (0.008, 0.012, 0.05), (WIDTH / 2 - 0.004, -DEPTH / 2 - 0.04, mid), green, 0.003)
 
     stop = -CELL * 0.5
-    rose((0, FRONT - 0.006, stop), 1.0, rose_material())
-    lamp_light((0, FRONT - 0.16, stop + 0.04), (1.0, 0.12, 0.08), 3)
+    rose((0, MOUTH + 0.08, stop), 0.35, rose_material())
+    lamps((0, 0, stop), (1.0, 0.1, 0.06))
 
     wait = -CELL * 1.5
-    disc("sunflower", (0, FRONT - 0.008, wait), 2 * (LENS + 0.008), picture("sunflower", "sunflower.png", 0.3), sag=0.05)
-    lamp_light((0, FRONT - 0.16, wait + 0.04), (1.0, 0.55, 0.1), 3)
+    disc("sunflower", (0, MOUTH + 0.04, wait), 0.41, picture("sunflower", "sunflower.png", 0.3), sag=0.06)
+    lamps((0, 0, wait), (1.0, 0.5, 0.06))
 
     go = -CELL * 2.5
-    pad = 2 * (LENS - 0.004)
-    disc("lily", (0, FRONT - 0.006, go), pad, picture("lily", "lily.png", 0.45), sag=0.008)
+    pad = 0.34
+    disc("lily", (0, MOUTH + 0.05, go), pad, picture("lily", "lily.png", 0.8), sag=0.012)
     # The Victoria's pad turns up a rim all round it, red on the outside.
     rim = node_material("rim")
     rim[3].inputs["Base Color"].default_value = (0.42, 0.04, 0.02, 1)
     rim[3].inputs["Roughness"].default_value = 0.45
     rim[3].inputs["Sheen Weight"].default_value = 0.4
-    ring("rim", (0, FRONT - 0.004, go), pad / 2 - 0.002, 0.026, 0.004, rim[0])
-    lamp_light((0, FRONT - 0.16, go + 0.04), (0.25, 1.0, 0.35), 3)
+    ring("rim", (0, MOUTH + 0.06, go), pad / 2 - 0.004, 0.032, 0.004, rim[0], segments=160)
+    lamps((0, 0, go), (0.15, 1.0, 0.3))
 
 
 def main():
@@ -419,7 +428,7 @@ def main():
     toward = Vector((math.sin(YAW) * math.cos(PITCH), math.cos(YAW) * math.cos(PITCH), math.sin(PITCH)))
     target = Vector((0, 0, -1.5 * CELL))
     camera.location = target - toward * 30
-    camera.rotation_euler = toward.to_track_quat("-Z", "Y").to_euler()
+    camera.rotation_euler = (toward.to_track_quat("-Z", "Y") @ Quaternion((0, 0, 1), LEAN)).to_euler()
     cam.clip_end = 100
 
     # Frame the head: its widest reach across the picture with a little room, and about as much room over its top as
@@ -436,7 +445,7 @@ def main():
     up = camera.matrix_world.to_3x3() @ Vector((0, 1, 0))
     xs = [(p - camera.location).dot(right) for p in points]
     ys = [(p - camera.location).dot(up) for p in points]
-    span = (max(xs) - min(xs)) / 0.86
+    span = (max(xs) - min(xs)) / 0.96
     cam.ortho_scale = span * ASPECT
     cam.shift_x = (max(xs) + min(xs)) / 2 / cam.ortho_scale
     cam.shift_y = (max(ys) + 0.2 * span - cam.ortho_scale / 2) / cam.ortho_scale

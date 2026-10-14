@@ -2,8 +2,8 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow>=11.3", "scipy"]
 # ///
-"""Prints the signal (studio/signal/render.py) as the references are printed: a coarse four-colour halftone, the
-dots ragged where the ink spread into the paper, the inks a hair out of register, and a grain over the dark ones.
+"""Prints the signal (studio/signal/render.py) as the references are printed: a coarse four-colour halftone in
+loud colour, the dots a little ragged where the ink spread into the paper and the inks a hair out of register.
 
     uv run studio/signal/print.py [--proof DIR]
 
@@ -37,7 +37,8 @@ INKS = {
 def separate(rgb):
     """Splits a colour into cyan, magenta, yellow and black, the black taking all of the grey, so a dark colour is
     black with one or two inks in its gaps and not a scatter of all three."""
-    k = 1 - rgb.max(axis=2)
+    # The black runs heavy, so the dark paint prints as a solid with only small holes in it.
+    k = np.clip((1 - rgb.max(axis=2)) * 1.25, 0, 1) ** 0.85
     rest = np.clip((1 - rgb - k[..., None]) / np.maximum(1 - k[..., None], 1e-3), 0, 1)
     return {"cyan": rest[..., 0], "magenta": rest[..., 1], "yellow": rest[..., 2], "black": k}
 
@@ -54,7 +55,7 @@ def screen(cover, angle, offset, rng):
     fibre = ndimage.gaussian_filter(rng.standard_normal((h, w)).astype(np.float32), UP * 0.7)
     fibre /= fibre.std()
     # Only where there is ink to spread: blank paper takes none.
-    level = (spot + 1) / 2 + 0.06 * fibre * np.sqrt(np.clip(cover * (1 - cover) * 4, 0, 1))
+    level = (spot + 1) / 2 + 0.025 * fibre * np.sqrt(np.clip(cover * (1 - cover) * 4, 0, 1))
     return np.where(cover > 0.015, np.clip((level - (1 - cover)) * UP * 2.2 + 0.5, 0, 1), 0)
 
 
@@ -70,7 +71,7 @@ def main():
     # A press gains contrast and pushes colour: the dark paint goes deep and the lamps stay bright.
     rgb = np.clip((rgb - 0.5) * 1.12 + 0.5, 0, 1)
     grey = rgb.mean(axis=2, keepdims=True)
-    rgb = np.clip(grey + (rgb - grey) * 1.25, 0, 1)
+    rgb = np.clip(grey + (rgb - grey) * 1.45, 0, 1)
     h, w = rgb.shape[:2]
     big = np.asarray(Image.fromarray((rgb * 255).astype(np.uint8)).resize((w * UP, h * UP), Image.BICUBIC), dtype=np.float32) / 255
 
@@ -81,10 +82,6 @@ def main():
         dots = screen(cover, angle, offset, rng)
         paper *= 1 - dots[..., None] * (1 - np.array(through, dtype=np.float32))
     printed = np.asarray(Image.fromarray((np.clip(paper, 0, 1) * 255).astype(np.uint8)).resize((w, h), Image.LANCZOS), dtype=np.float32) / 255
-    # A coarse grain where the ink lies heavy, as on the poster's dark signal.
-    heavy = 1 - printed.mean(axis=2, keepdims=True)
-    grain = ndimage.gaussian_filter(rng.standard_normal((h, w)).astype(np.float32), 0.6)[..., None]
-    printed = np.clip(printed * (1 + 0.32 * heavy * grain / grain.std()), 0, 1)
 
     out = Image.fromarray((printed * 255).astype(np.uint8), "RGB")
     if args.proof:
