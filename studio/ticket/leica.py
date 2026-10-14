@@ -3,8 +3,9 @@ stand under the same light, so its shadow falls as the ticket's does. Run from t
 
     blender -b --factory-startup -P studio/ticket/leica.py -- [--scale 0.5] [--samples 64] [--proofs DIR]
 
-It is modelled in millimetres from the camera itself, as the photograph the page was given shows it: the body a
-slab 138 by 77 by 33.5 mm with its two ends rounded, the lower part wrapped in black vulcanite with its fine
+It is modelled in millimetres from the camera itself, as a photograph straight on to an M3's front shows it
+(leica_face.py), and that photograph is laid on the front of the model, so its chrome, vulcanite, engraving and glass
+are the real camera's: the body a slab 138 by 75 by 33.5 mm with its two ends rounded, the lower part wrapped in black vulcanite with its fine
 pebbled grain, the top cover and bottom plate satin chrome; on the front of the top cover the three windows, the
 big viewfinder window and the frosted one that lights the framelines close together at one end and the small
 rangefinder window further along; the bayonet flange with the lens on it, and below the windows the self-timer
@@ -33,6 +34,7 @@ sys.path.insert(0, os.path.join(OEUSUME, "studio"))
 
 import bmesh  # noqa: E402
 import bpy  # noqa: E402
+import numpy as np  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 import stage as stage_module  # noqa: E402
@@ -42,56 +44,72 @@ from stage import Stage  # noqa: E402
 OUT = os.path.join(ROOT, "public", "objects")
 PLACE = os.path.join(ROOT, "src", "components", "ticket", "camera.json")
 PANEL = "#651415"
-PROP = 0.095  # em to the millimetre: the props' scale, film.py's too
-AT = (3.9, 1.4)  # where the middle of the body lies, in the spread's em
+PROP = 0.068  # em to the millimetre: the props' scale, film.py's too
+AT = (3.7, 1.7)  # where the middle of the body lies, in the spread's em
 TURN = 80  # degrees, anticlockwise from lying level: the top cover to the left, as the photograph has it
 EXPOSURE = 0.1
 
-L, H, D = 138.0, 77.0, 33.5  # the body: long, high, deep
+L, H, D = 138.0, 75.0, 33.5  # the body: long, high, deep
 END = 15.0  # the radius its two ends are rounded to, seen from above
-TOP = 50.5  # where the top cover starts, up from the bottom
-LENS = (66.0, 34.0)  # the lens's axis on the front
+TOP = 55.0  # where the top cover starts, up from the bottom
+LENS = (78.7, 33.5)  # the lens's axis on the front
 FRONT = D  # the front face, up off the leather as the camera lies
 
 
 # Materials.
 
 
-def chrome(name="chrome", rough=0.17):
-    m = principled(name, (0.8, 0.79, 0.77), rough=rough, metal=1.0)
-    worn(m, "Fingerprints009", 30, 0.12)
-    worn(m, "Scratches003", 45, 0.06)
+def chrome(name="chrome", rough=0.2):
+    """Leica's satin chrome: bright, but not a mirror, its finish a fine matte that blurs what it reflects, a little
+    uneven across a surface, polished brighter on the edges where hands have rubbed it for decades, and marked with
+    fingerprints and hairline scratches."""
+    m = principled(name, (0.9, 0.89, 0.86), rough=rough, metal=1.0)
+    nodes, links = m.node_tree.nodes, m.node_tree.links
+    shader = nodes["Principled BSDF"]
+    coord = nodes.new("ShaderNodeTexCoord")
+    speckle = nodes.new("ShaderNodeTexNoise")
+    speckle.inputs["Scale"].default_value = 6.0
+    speckle.inputs["Detail"].default_value = 8.0
+    links.new(coord.outputs["Object"], speckle.inputs["Vector"])
+    uneven = nodes.new("ShaderNodeMapRange")
+    uneven.inputs["To Min"].default_value = rough - 0.05
+    uneven.inputs["To Max"].default_value = rough + 0.07
+    links.new(speckle.outputs["Fac"], uneven.inputs["Value"])
+    # Rubbed bright on the edges: where the surface turns most sharply it is smoother.
+    geometry = nodes.new("ShaderNodeNewGeometry")
+    edge = nodes.new("ShaderNodeMapRange")
+    edge.inputs["From Min"].default_value = 0.5
+    edge.inputs["From Max"].default_value = 0.56
+    edge.inputs["To Min"].default_value = 0.0
+    edge.inputs["To Max"].default_value = 0.12
+    links.new(geometry.outputs["Pointiness"], edge.inputs["Value"])
+    polished = nodes.new("ShaderNodeMath")
+    polished.operation = "SUBTRACT"
+    polished.use_clamp = True
+    links.new(uneven.outputs["Result"], polished.inputs[0])
+    links.new(edge.outputs["Result"], polished.inputs[1])
+    links.new(polished.outputs[0], shader.inputs["Roughness"])
+    # The satin's own grain, as a faint bump.
+    grit = nodes.new("ShaderNodeTexNoise")
+    grit.inputs["Scale"].default_value = 140.0
+    links.new(coord.outputs["Object"], grit.inputs["Vector"])
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Distance"].default_value = 0.004
+    links.new(grit.outputs["Fac"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], shader.inputs["Normal"])
+    worn(m, "Fingerprints009", 30, 0.06)
+    worn(m, "Scratches003", 25, 0.07)
     return m
 
 
-def turned(name="turned", rough=0.14):
+def turned(name="turned", rough=0.16):
     return spun(chrome(name, rough), 0.6)
 
 
 def vulcanite():
-    """Black vulcanite, its grain a close field of small rounded pebbles, matte with a little sheen on their tops."""
-    m = principled("vulcanite", (0.016, 0.015, 0.014), rough=0.62)
-    nodes, links = m.node_tree.nodes, m.node_tree.links
-    coord = nodes.new("ShaderNodeTexCoord")
-    cells = nodes.new("ShaderNodeTexVoronoi")
-    cells.feature = "DISTANCE_TO_EDGE"
-    cells.inputs["Scale"].default_value = 1.4
-    cells.inputs["Randomness"].default_value = 1.0
-    links.new(coord.outputs["Object"], cells.inputs["Vector"])
-    shoulder = nodes.new("ShaderNodeMapRange")
-    shoulder.inputs["From Max"].default_value = 0.18
-    links.new(cells.outputs["Distance"], shoulder.inputs["Value"])
-    bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Distance"].default_value = 0.08
-    bump.inputs["Strength"].default_value = 0.8
-    links.new(shoulder.outputs["Result"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], nodes["Principled BSDF"].inputs["Normal"])
-    rough = nodes.new("ShaderNodeMapRange")
-    rough.inputs["To Min"].default_value = 0.72
-    rough.inputs["To Max"].default_value = 0.5
-    links.new(shoulder.outputs["Result"], rough.inputs["Value"])
-    links.new(rough.outputs["Result"], nodes["Principled BSDF"].inputs["Roughness"])
-    return m
+    """Black vulcanite: hard rubber moulded with a fine leathery grain. On the front its grain is the photograph's
+    own; here it is only the black, matte, a shade shinier on the worn tops."""
+    return principled("vulcanite", (0.012, 0.0115, 0.011), rough=0.7, specular_ior_level=0.25)
 
 
 def knurled(name, count):
@@ -132,33 +150,8 @@ def knurled(name, count):
     return m
 
 
-def dark_glass(name="window"):
-    """A window into the dark of the finder: black, and as glossy as glass, so it shows only what it reflects."""
-    return principled(name, (0.004, 0.004, 0.005), rough=0.02, specular_ior_level=0.6, coat_weight=1.0, coat_roughness=0.0)
 
 
-def frosted():
-    """The frosted window that lights the framelines: milky, ribbed, catching the light through it."""
-    m = principled("frosted", (0.62, 0.63, 0.6), rough=0.42, subsurface_weight=0.3)
-    nodes, links = m.node_tree.nodes, m.node_tree.links
-    coord = nodes.new("ShaderNodeTexCoord")
-    wave = nodes.new("ShaderNodeTexWave")
-    wave.inputs["Scale"].default_value = 1.2
-    links.new(coord.outputs["Object"], wave.inputs["Vector"])
-    bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Distance"].default_value = 0.05
-    links.new(wave.outputs["Fac"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], nodes["Principled BSDF"].inputs["Normal"])
-    return m
-
-
-def coated():
-    """The front element: clear glass with an anti-reflection coat, which colours what it reflects."""
-    m = principled("coated", (1, 1, 1), rough=0.0, transmission_weight=1.0, ior=1.62)
-    shader = m.node_tree.nodes["Principled BSDF"]
-    shader.inputs["Thin Film Thickness"].default_value = 330
-    shader.inputs["Thin Film IOR"].default_value = 1.38
-    return m
 
 
 # Geometry, in the camera's own millimetres: x along the body, y up it from the bottom, z out of its front.
@@ -207,106 +200,181 @@ def upright(name, cx, profile, material, steps=64):
     return obj
 
 
-def engrave(text, cx, cy, radius, start, size, z, material, sweep=None):
-    """Letters round a ring on the front, reading clockwise from the angle start (degrees, from the top), each
-    upright to the ring, as a lens's maker's ring is engraved."""
-    letters = []
-    step = size * 0.78 / radius
-    for i, char in enumerate(text):
-        if char == " ":
-            continue
-        curve = bpy.data.curves.new(f"letter-{len(letters)}", "FONT")
-        curve.body = char
-        curve.size = size
-        curve.align_x = "CENTER"
-        curve.align_y = "CENTER"
-        obj = STAGE.add(f"letter-{len(letters)}", curve)
-        obj.data.materials.append(material)
-        a = math.radians(90 - start) - i * step
-        obj.location = (cx + radius * math.cos(a), cy + radius * math.sin(a), z)
-        obj.rotation_euler = (0, 0, a - math.radians(90))
-        letters.append(obj)
-    return letters
+
+
+
+
+# The face: the photograph straightened to the front (leica_face.py), PX_PER_MM, with its margins.
+FACE = os.path.join(HERE, "art", "leica-front.png")
+FACE_MARGIN, FACE_TOP = 12.0, 14.0  # as leica_face.py has them
+# The photograph is taken straight on to the front, from far off, so the face is laid on straight down; SLANT would
+# lean it, for a photograph that looked down at the camera.
+SLANT = 0.0
+PIVOT = None  # the empty all of the camera hangs from, in whose space the face is laid on
+
+
+def faced(material, metal=None, rough=None, relief=0.012, image="leica-front.png"):
+    """Lay the photograph on a material, on the faces that look out of the front as the photograph did: the colour
+    there is the photograph's, its fine detail a faint relief; where a face turns away, to the sides, the material's
+    own colour takes over. metal and rough are what the photographed surface is, where it is shown."""
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    shader = nodes["Principled BSDF"]
+    coord = nodes.new("ShaderNodeTexCoord")
+    coord.object = PIVOT
+    split = nodes.new("ShaderNodeSeparateXYZ")
+    links.new(coord.outputs["Object"], split.inputs["Vector"])
+    u = nodes.new("ShaderNodeMath")
+    u.operation = "MULTIPLY_ADD"
+    u.inputs[1].default_value = 1 / (L + 2 * FACE_MARGIN)
+    u.inputs[2].default_value = FACE_MARGIN / (L + 2 * FACE_MARGIN)
+    links.new(split.outputs["X"], u.inputs[0])
+    lift = nodes.new("ShaderNodeMath")
+    lift.operation = "MULTIPLY_ADD"
+    lift.inputs[1].default_value = -SLANT
+    lift.inputs[2].default_value = SLANT * FRONT
+    links.new(split.outputs["Z"], lift.inputs[0])
+    y = nodes.new("ShaderNodeMath")
+    y.operation = "ADD"
+    links.new(split.outputs["Y"], y.inputs[0])
+    links.new(lift.outputs[0], y.inputs[1])
+    v = nodes.new("ShaderNodeMath")
+    v.operation = "MULTIPLY_ADD"
+    tall = H + FACE_MARGIN + FACE_TOP
+    v.inputs[1].default_value = 1 / tall
+    v.inputs[2].default_value = FACE_MARGIN / tall
+    links.new(y.outputs[0], v.inputs[0])
+    uv = nodes.new("ShaderNodeCombineXYZ")
+    links.new(u.outputs[0], uv.inputs["X"])
+    links.new(v.outputs[0], uv.inputs["Y"])
+    photo = nodes.new("ShaderNodeTexImage")
+    photo.image = bpy.data.images.get(image) or bpy.data.images.load(os.path.join(os.path.dirname(FACE), image))
+    photo.interpolation = "Cubic"
+    photo.extension = "EXTEND"
+    links.new(uv.outputs[0], photo.inputs["Vector"])
+    # How squarely a face looks out of the front, which is up as the camera lies.
+    geometry = nodes.new("ShaderNodeNewGeometry")
+    up = nodes.new("ShaderNodeSeparateXYZ")
+    links.new(geometry.outputs["Normal"], up.inputs["Vector"])
+    front = nodes.new("ShaderNodeMapRange")
+    front.interpolation_type = "SMOOTHSTEP"
+    front.inputs["From Min"].default_value = 0.35
+    front.inputs["From Max"].default_value = 0.8
+    links.new(up.outputs["Z"], front.inputs["Value"])
+
+    def blend(socket, value, kind="RGBA"):
+        mix = nodes.new("ShaderNodeMix")
+        mix.data_type = kind
+        a, b = (6, 7) if kind == "RGBA" else (2, 3)
+        if socket.is_linked:
+            links.new(socket.links[0].from_socket, mix.inputs[a])
+        elif kind == "RGBA":
+            mix.inputs[a].default_value = socket.default_value
+        else:
+            mix.inputs[a].default_value = socket.default_value
+        if isinstance(value, (int, float)):
+            mix.inputs[b].default_value = value
+        else:
+            links.new(value, mix.inputs[b])
+        links.new(front.outputs["Result"], mix.inputs[0])
+        links.new(mix.outputs[2 if kind == "RGBA" else 0], socket)
+
+    blend(shader.inputs["Base Color"], photo.outputs["Color"])
+    if metal is not None:
+        blend(shader.inputs["Metallic"], metal, "FLOAT")
+    if rough is not None:
+        blend(shader.inputs["Roughness"], rough, "FLOAT")
+    # The photograph's fine detail as relief: the vulcanite's grain, the engraving, the knurls.
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Distance"].default_value = relief
+    links.new(photo.outputs["Color"], bump.inputs["Height"])
+    links.new(front.outputs["Result"], bump.inputs["Strength"])
+    normal = shader.inputs["Normal"]
+    if normal.is_linked:
+        links.new(normal.links[0].from_socket, bump.inputs["Normal"])
+    links.new(bump.outputs["Normal"], normal)
+    return material
+
+
+def lens_glass():
+    """The front element. Glass is not lit as a surface is: what shows in it is what lies behind it, down in the lens,
+    the black of the barrel and the coloured reflections of the coated elements, which is what the photograph shows
+    there; so that is given out as it was photographed, and over it only the glass's own thin, sharp reflection of
+    the studio, curved with its surface."""
+    material = principled("lens-glass", (0, 0, 0), rough=0.03, specular_ior_level=0.05)
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    faced(material, relief=0.0)
+    shader = nodes["Principled BSDF"]
+    photo = next(n for n in nodes if n.type == "TEX_IMAGE")
+    shader.inputs["Base Color"].links and links.remove(shader.inputs["Base Color"].links[0])
+    shader.inputs["Base Color"].default_value = (0, 0, 0, 1)
+    # Given out at the strength that develops back to the photograph's own tones.
+    strength = 1 / (float(stage_module.GAIN.mean()) * 2.0**EXPOSURE)
+    links.new(photo.outputs["Color"], shader.inputs["Emission Color"])
+    shader.inputs["Emission Strength"].default_value = strength
+    return material
 
 
 def camera():
+    global PIVOT
+    PIVOT = bpy.data.objects.new("leica", None)
+    bpy.context.scene.collection.objects.link(PIVOT)
     parts_before = set(bpy.data.objects)
-    satin, bright = chrome(), turned()
-    skin = vulcanite()
-    black = principled("black", (0.012, 0.012, 0.012), rough=0.35)
-    paint = principled("fill", (0.86, 0.86, 0.82), rough=0.55)
-    glass = dark_glass()
+    satin = faced(chrome(), metal=0.75, rough=0.3, image="leica-body.png")
+    bright = faced(turned(), metal=0.75, rough=0.28)
+    skin = faced(vulcanite(), metal=0.0, rough=0.72, relief=0.008, image="leica-body.png")
+    black = faced(principled("black", (0.012, 0.012, 0.012), rough=0.35), metal=0.0, rough=0.4)
+    glass = faced(principled("glass", (0.01, 0.01, 0.01), rough=0.05, coat_weight=0.35, coat_roughness=0.02), metal=0.0, rough=0.08, relief=0.0)
 
-    # The body: the vulcanite between the plates, a hair inside them, then the chrome top cover and bottom plate.
-    slab("body", 2.5, TOP, 0.35, skin, bevel=0)
+    # The body, measured off the photograph: the vulcanite between the plates, a hair inside them, then the chrome
+    # top cover and bottom plate.
+    slab("body", 5.5, TOP, 0.35, skin, bevel=0)
     slab("top", TOP, H, 0.0, satin, bevel=1.6)
-    slab("bottom", 0.0, 2.5, 0.0, satin, bevel=0.8)
+    slab("bottom", 0.0, 5.5, 0.0, satin, bevel=0.8)
 
-    # The windows on the front of the top cover, each in a chrome bezel, and the line engraved under them.
-    for name, (x, y, w, h), material in (
-        ("finder", (115.0, 64.0, 16.5, 13.0), glass),
-        ("frames", (90.0, 64.5, 14.0, 11.0), frosted()),
-        ("range", (42.0, 64.0, 9.5, 9.5), glass),
-    ):
-        frontal(f"{name}-bezel", rect(x - w / 2 - 1.2, y - h / 2 - 1.2, x + w / 2 + 1.2, y + h / 2 + 1.2, r=1.6), FRONT - 0.2, FRONT + 0.7, bright, bevel=0.4)
-        frontal(f"{name}-glass", rect(x - w / 2, y - h / 2, x + w / 2, y + h / 2, r=0.8), FRONT - 0.2, FRONT + 0.75, material)
+    # The three windows on the front of the top cover, each in its chrome bezel, where the photograph has them.
+    for name, (x, y, w, h) in (("finder", (116.7, 68.5, 19.7, 13.0)), ("frames", (89.3, 68.4, 15.5, 11.2)), ("range", (44.9, 69.1, 8.7, 6.2))):
+        frontal(f"{name}-bezel", rect(x - w / 2 - 1.4, y - h / 2 - 1.4, x + w / 2 + 1.4, y + h / 2 + 1.4, r=1.6), FRONT - 0.2, FRONT + 0.9, bright, bevel=0.45)
+        frontal(f"{name}-glass", rect(x - w / 2, y - h / 2, x + w / 2, y + h / 2, r=0.8), FRONT - 0.2, FRONT + 0.6, glass)
 
-    # The bayonet flange and the lens release, the self-timer lever and the frame selector below the windows.
+    # The lens, ring above ring off the bayonet flange: the scale ring, the focusing ring, the aperture ring, the
+    # barrel, the black front ring round the glass, and the glass, curved, in its throat. Seen from straight above,
+    # only the front ring, the barrel's lip and the flange round it show, as they do on a Summicron. Each ring is
+    # open in the middle, so nothing lies over the glass but the glass. The engraving, the scales and what the
+    # glass reflects are the photograph's.
     cx, cy = LENS
-    disc("flange", cx, cy, [(0, 0), (0, 25.0), (1.2, 25.0), (1.6, 24.4), (1.6, 0)], bright)
-    disc("release", cx + 26.5, cy + 15.0, [(0, 0), (0, 3.4), (2.6, 3.4), (3.0, 3.0), (3.0, 0)], bright, steps=48)
-    disc("selector-hub", 38.0, 46.0, [(0, 0), (0, 5.0), (1.6, 5.0), (2.0, 4.6), (2.0, 0)], bright, steps=48)
-    frontal("selector", rect(36.6, 46.0, 39.4, 58.0, r=1.2), FRONT + 1.2, FRONT + 2.4, bright, bevel=0.5)
-    disc("timer-hub", 21.0, 34.0, [(0, 0), (0, 4.2), (1.4, 4.2), (1.8, 3.8), (1.8, 0)], bright, steps=48)
-    frontal("timer", rect(19.8, 18.0, 22.2, 34.0, r=1.2), FRONT + 1.0, FRONT + 2.2, bright, bevel=0.5)
-    disc("timer-tip", 21.0, 18.5, [(0, 0), (0, 3.0), (2.8, 3.0), (3.2, 2.6), (3.2, 0)], bright, steps=48)
+    disc("flange", cx, cy, [(0, 0), (0, 26.4), (1.2, 26.4), (1.6, 25.8), (1.6, 0)], bright)
+    disc("scale", cx, cy, [(1.6, 20.5), (1.6, 24.8), (7.0, 24.8), (7.4, 24.6), (7.4, 20.5)], bright, caps=False)
+    disc("focus", cx, cy, [(7.4, 20.5), (7.4, 24.6), (16.0, 24.6), (16.4, 24.4), (16.4, 20.5)], bright, steps=180, caps=False)
+    disc("aperture", cx, cy, [(16.4, 20.5), (16.4, 24.4), (21.5, 24.4), (21.9, 24.3), (21.9, 20.5)], bright, steps=120, caps=False)
+    disc("barrel", cx, cy, [(21.9, 20.5), (21.9, 25.2), (27.6, 25.2), (28.2, 24.6), (28.2, 21.4)], bright, caps=False)
+    disc("bezel", cx, cy, [(28.2, 17.4), (28.6, 17.4), (28.6, 21.4), (28.2, 21.4)], black, caps=False)
+    disc("throat", cx, cy, [(28.6, 17.4), (26.0, 17.2), (24.0, 17.0)], black, caps=False)
+    disc("element", cx, cy, [(24.0, 0), (24.0, 17.0), (25.0, 17.0), (26.6, 12.8), (27.6, 6.9), (27.95, 0)], lens_glass(), steps=128)
 
-    # The lens, ring above ring off the flange: the scale ring, the knurled focusing ring, the aperture ring, the
-    # barrel, and the black front ring round the glass.
-    disc("scale", cx, cy, [(1.6, 0), (1.6, 23.2), (7.0, 23.2), (7.4, 22.9), (7.4, 0)], bright)
-    disc("focus", cx, cy, [(7.4, 0), (7.4, 25.6), (16.0, 25.6), (16.4, 25.2), (16.4, 0)], knurled("focus", 90), steps=180)
-    disc("aperture", cx, cy, [(16.4, 0), (16.4, 24.4), (21.5, 24.4), (21.9, 24.0), (21.9, 0)], knurled("aperture", 30), steps=120)
-    disc("barrel", cx, cy, [(21.9, 0), (21.9, 22.6), (27.6, 22.6), (28.2, 22.0), (28.2, 0)], bright)
-    disc("bezel", cx, cy, [(28.2, 16.2), (28.6, 16.2), (28.6, 21.6), (28.2, 22.0)], black, caps=False)
-    # Inside the bezel: a black throat going down into the lens, the elements behind the front one and the iris
-    # between them, and the front element bulging in the throat.
-    disc("throat", cx, cy, [(28.6, 16.2), (25.0, 15.6), (12.0, 13.0), (12.0, 0)], black, caps=False)
-    disc("iris", cx, cy, [(17.0, 6.5), (17.0, 13.5), (17.3, 13.5), (17.3, 6.5), (17.0, 6.5)], black, caps=False)
-    disc("rear", cx, cy, [(18.5, 0), (18.5, 12.6), (19.2, 12.6), (20.4, 9.0), (20.8, 0)], coated(), steps=96)
-    disc("middle", cx, cy, [(21.5, 0), (21.5, 13.8), (22.2, 13.8), (22.6, 10.0), (22.0, 0)], coated(), steps=96)
-    disc("element", cx, cy, [(24.6, 0), (24.6, 15.4), (25.6, 15.4), (26.9, 11.5), (27.8, 6.5), (28.1, 0)], coated(), steps=128)
-    engrave("SUMMICRON f=5cm 1:2  No 1234567", cx, cy, 18.9, -20, 1.55, FRONT + 28.62, paint)
-    engrave("ERNST LEITZ GMBH WETZLAR", cx, cy, 18.9, 162, 1.55, FRONT + 28.62, paint)
-    # Distance and aperture marks on the step of each ring, filled black.
-    for k in range(-4, 5):
-        a = math.radians(90 + k * 9)
-        r0 = 23.6
-        x, y = cx + r0 * math.cos(a), cy + r0 * math.sin(a)
-        frontal(f"tick-{k}", rect(x - 0.18, y - 0.9, x + 0.18, y + 0.9), FRONT + 7.4, FRONT + 7.45, black)
-
-    # Along the top, seen from above in profile: the rewind knob, the shoe, the speed dial, the release, the lever.
-    upright("rewind", 22.0, [(0, 0), (0, 8.0), (2.0, 8.0), (2.0, 9.5), (8.0, 9.5), (8.5, 9.0), (8.5, 0)], knurled("rewind", 40))
-    frontal("shoe", rect(60.0, H, 80.0, H + 1.5), 7.0, D - 7.0, satin, bevel=0.3)
-    upright("dial", 104.0, [(0, 0), (0, 11.0), (4.5, 11.0), (5.0, 10.5), (5.0, 0)], knurled("dial", 60))
-    upright("release", 118.0, [(0, 0), (0, 4.5), (5.5, 4.5), (6.0, 3.6), (6.0, 0)], bright)
-    frontal("lever", rect(121.0, H + 2.0, 139.0, H + 5.5, r=1.6), D / 2 - 1.2, D / 2 + 1.2, satin, bevel=0.6)
+    # Along the top, seen from above in profile: the advance lever and the release, the speed dial, the shoe, the
+    # rewind knob.
+    upright("release", 24.5, [(0, 0), (0, 8.0), (3.5, 8.0), (4.0, 7.5), (4.0, 2.0), (6.0, 2.0), (6.0, 0)], bright)
+    frontal("lever", rect(26.0, H + 3.0, 50.0, H + 5.0, r=1.0), D / 2 - 1.2, D / 2 + 1.2, satin, bevel=0.5)
+    upright("dial", 51.0, [(0, 0), (0, 8.5), (4.5, 8.5), (5.0, 8.0), (5.0, 0)], knurled("dial", 60))
+    frontal("shoe", rect(62.0, H, 84.0, H + 1.5), 7.0, D - 7.0, satin, bevel=0.3)
+    upright("rewind", 134.2, [(0, 0), (0, 3.8), (7.0, 3.8), (7.5, 3.4), (7.5, 0)], knurled("rewind", 40))
 
     # The lugs at either end, and on the far one the strap: its split ring, the leather keeper, the cord.
     for x in (-1.8, L + 1.8):
         lug = torus(STAGE, f"lug-{x:.0f}", 2.6, 0.9, bright, steps=48, around=12)
-        lug.location = (x, 62.0, D / 2)
+        lug.location = (x, 59.0, D / 2)
         lug.rotation_euler = (0, math.radians(90), 0)
     ring_ = torus(STAGE, "split-ring", 5.0, 0.7, bright, steps=64, around=12)
-    ring_.location = (L + 6.5, 62.0, 2.0)
+    ring_.location = (L + 6.5, 59.0, 2.0)
     strap = principled("strap", (0.02, 0.018, 0.016), rough=0.55)
     keeper = lathe(STAGE, "keeper", [(0, 0), (0, 3.4), (15.0, 3.4), (15.0, 0)], strap, steps=32, axis="X")
-    keeper.location = (L + 12.0, 62.0, 3.4)
+    keeper.location = (L + 12.0, 59.0, 3.4)
     cord = bpy.data.curves.new("cord", "CURVE")
     cord.dimensions = "3D"
     cord.bevel_depth = 2.0
     cord.bevel_resolution = 4
     spline = cord.splines.new("BEZIER")
-    path = [(L + 27.0, 62.0, 2.0), (L + 55.0, 57.0, 2.0), (L + 95.0, 70.0, 2.0), (L + 130.0, 66.0, 2.0)]
+    path = [(L + 27.0, 59.0, 2.0), (L + 55.0, 54.0, 2.0), (L + 95.0, 67.0, 2.0), (L + 130.0, 63.0, 2.0)]
     spline.bezier_points.add(len(path) - 1)
     for point, co in zip(spline.bezier_points, path):
         point.co = co
@@ -315,8 +383,7 @@ def camera():
     STAGE.add("cord", cord)
 
     # Gather it all, and lay it where the page wants it, at the props' scale.
-    pivot = bpy.data.objects.new("leica", None)
-    bpy.context.scene.collection.objects.link(pivot)
+    pivot = PIVOT
     for obj in set(bpy.data.objects) - parts_before - {pivot}:
         if obj.parent is None:
             obj.parent = pivot
@@ -359,18 +426,40 @@ camera()
 x0, y0, x1, y1 = bounds()
 BLEED = 2.0
 json.dump({"box": [round(v, 4) for v in (x0 - BLEED, y0 - BLEED, x1 - x0 + 2 * BLEED, y1 - y0 + 2 * BLEED)]}, open(PLACE, "w"))
-# The stand's own camera hangs over it, dark, and the front element and the finder windows face straight up at it:
-# what they show is that dark, ringed with the room. It is seen only in reflections, and casts nothing.
-over = bpy.data.meshes.new("stand-camera")
-bm = bmesh.new()
-bmesh.ops.create_circle(bm, cap_ends=True, radius=9.0, segments=64)
-bm.to_mesh(over)
-bm.free()
-over.materials.append(principled("stand-camera", (0.003, 0.003, 0.003), rough=0.6))
-above = STAGE.add("stand-camera", over)
-above.location = ((x0 + x1) / 2, -(y0 + y1) / 2, 60.0)
-above["stand"] = "shadowless"
-above.visible_camera = False
-above.visible_shadow = False
-above.visible_diffuse = False
+# Over it hangs a ring softbox round the stand's lens, as a camera is lit for its photograph: chrome and glass show
+# only what is round them, and here that is one broad even light all round, with the dark of the stand's lens in
+# its middle, right over the lens below, so the lens looks back at it as a dark eye ringed with light. Only what
+# reflects or refracts sees it: it lights nothing and casts nothing.
+lens_at = bpy.data.objects["element"].matrix_world.translation
+cast = 1 / stage_module.GAIN
+for name, inner, outer, z, glow in (("softbox", 9.0, 34.0, 40.0, 0.45), ("stand-lens", 0.0, 9.0, 40.05, 0.0)):
+    panel_mesh = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    angles = np.linspace(0, 2 * math.pi, 96, endpoint=False)
+    if inner > 0:
+        near = [bm.verts.new((lens_at.x + inner * math.cos(t), lens_at.y + inner * math.sin(t), z)) for t in angles]
+        far = [bm.verts.new((lens_at.x + outer * math.cos(t), lens_at.y + outer * math.sin(t), z)) for t in angles]
+        for i in range(96):
+            j = (i + 1) % 96
+            bm.faces.new((near[i], far[i], far[j], near[j]))
+    else:
+        bm.faces.new([bm.verts.new((lens_at.x + outer * math.cos(t), lens_at.y + outer * math.sin(t), z)) for t in angles])
+    bm.to_mesh(panel_mesh)
+    bm.free()
+    light = bpy.data.materials.new(name)
+    light.use_nodes = True
+    nodes = light.node_tree.nodes
+    nodes.clear()
+    emit = nodes.new("ShaderNodeEmission")
+    emit.inputs["Color"].default_value = (*(cast / cast.max()), 1.0)
+    emit.inputs["Strength"].default_value = glow
+    out = nodes.new("ShaderNodeOutputMaterial")
+    light.node_tree.links.new(emit.outputs[0], out.inputs["Surface"])
+    panel_mesh.materials.append(light)
+    panel = STAGE.add(name, panel_mesh)
+    panel["stand"] = "shadowless"
+    panel.visible_camera = False
+    panel.visible_shadow = False
+    panel.visible_diffuse = False
+    panel.visible_volume_scatter = False
 STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=0.8, exposure=EXPOSURE, lens=False, sharp=2.0)

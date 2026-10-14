@@ -307,7 +307,8 @@ export function SiteShell({ children }: SiteShellProps) {
   // The same goes for a strip whose panel is a surface of its own, the ticket's leather: a second column, cut the same way.
   const skin = pageTones.findIndex((tone) => tone.surface)
   const skinFrom = lefts[skin] + overlap
-  const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin))
+  // Its tab is cut from the same leather and stands out past the strip's edge, so the cut runs on over it.
+  const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin)) + protrude
   const column =
     'linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)'
   const grainCut = {

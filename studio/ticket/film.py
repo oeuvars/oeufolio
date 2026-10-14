@@ -63,9 +63,9 @@ TAIL = {"length": 8.4, "outer": 1.15, "inner": 0.85, "flare": -0.09, "skew": -0.
 # page's spread (Ticket.tsx: the stamps from 0 to 6.6 across, the ticket after them, 29.85 down): where the middle
 # of the roll lies, the radius of its innermost and outermost turns and the gap between turns, how far its middle
 # has crept up out of it, which way its free end runs off, and how much of that end lies flat before it curls.
-PROP = 0.095
-ROLL = {"at": (9.9, 32.7), "inner": 1.05, "outer": 2.7, "gap": 0.26, "creep": 0.32, "heading": (1.0, 0.16), "twist": 4.5, "flat": 4.6}
-ROLL_END = {"length": 3.4, "outer": 0.42, "inner": 0.3, "flare": 0.1, "creep": 0.02}
+PROP = 0.068
+ROLL = {"at": (10.6, 31.6), "inner": 0.78, "outer": 1.35, "gap": 0.19, "creep": 0.06, "heading": (1.0, 0.16), "twist": 3.2, "flat": 2.6}
+ROLL_END = {"length": 2.4, "outer": 0.3, "inner": 0.22, "flare": 0.1, "creep": 0.02}
 
 
 def smooth(lo, hi, x):
@@ -146,8 +146,10 @@ def roll_mesh(length):
     w = 35 * PROP
     inner, outer, gap = ROLL["inner"], ROLL["outer"], ROLL["gap"]
     turns = (outer - inner) / gap
-    theta = np.linspace(0, 2 * math.pi * turns, 30000)
-    f = theta / theta[-1]
+    # Only the outermost turn is modelled as film: the turns inside it are wound tight and are the solid wound()
+    # lays down. The last turn has sprung a little loose of them.
+    theta = np.linspace(2 * math.pi * (turns - 0.8), 2 * math.pi * turns, 6000)
+    f = theta / (2 * math.pi * turns)
     radius = inner + (outer - inner) * f + 0.06 * np.sin(0.8 * theta) + 0.03 * np.sin(1.9 * theta + 1.0) + 0.22 * smooth(theta[-1] - 4.5, theta[-1], theta)
     plan = np.column_stack((radius * np.cos(theta) * 1.03, radius * np.sin(theta) * 0.97))
     base = 0.02 + ROLL["creep"] * (1 - f) ** 2 + 0.01 * np.sin(5 * theta)
@@ -192,6 +194,79 @@ def roll_mesh(length):
     # The print runs from the free end, so the frames that show are its first; inward it repeats.
     printed = (total - s) * WIDTH / w
     return verts, printed
+
+
+def wound(stage):
+    """The turns of film wound tight on the core: from above, a disc of the film's edges stacked side by side, dark
+    and faintly glossy, ringed finely where one turn lies against the next, each turn a shade lighter or darker than
+    its neighbour as they caught the light; the middle crept up a little out of the roll, and in it the core, dark
+    plastic, a hole through it for the spindle."""
+    w = 35 * PROP
+    inner, outer = ROLL["inner"], ROLL["outer"] - 0.05
+    edge = bpy.data.materials.new("wound")
+    edge.use_nodes = True
+    nodes, links = edge.node_tree.nodes, edge.node_tree.links
+    shader = nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (0.03, 0.026, 0.022, 1)
+    shader.inputs["Roughness"].default_value = 0.5
+    shader.inputs["Specular IOR Level"].default_value = 0.25
+    coord = nodes.new("ShaderNodeTexCoord")
+    radial = nodes.new("ShaderNodeVectorMath")
+    radial.operation = "LENGTH"
+    flat = nodes.new("ShaderNodeVectorMath")
+    flat.operation = "MULTIPLY"
+    flat.inputs[1].default_value = (1, 1, 0)
+    links.new(coord.outputs["Object"], flat.inputs[0])
+    links.new(flat.outputs[0], radial.inputs[0])
+    along = nodes.new("ShaderNodeCombineXYZ")
+    links.new(radial.outputs["Value"], along.inputs["X"])
+    turns = nodes.new("ShaderNodeTexNoise")
+    turns.inputs["Scale"].default_value = 110.0
+    turns.inputs["Detail"].default_value = 6.0
+    links.new(along.outputs[0], turns.inputs["Vector"])
+    shade = nodes.new("ShaderNodeMapRange")
+    shade.inputs["To Min"].default_value = 0.6
+    shade.inputs["To Max"].default_value = 1.6
+    links.new(turns.outputs["Fac"], shade.inputs["Value"])
+    tint = nodes.new("ShaderNodeVectorMath")
+    tint.operation = "SCALE"
+    tint.inputs[0].default_value = (0.011, 0.009, 0.007)
+    links.new(shade.outputs["Result"], tint.inputs["Scale"])
+    links.new(tint.outputs[0], shader.inputs["Base Color"])
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Distance"].default_value = 0.004
+    links.new(turns.outputs["Fac"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], shader.inputs["Normal"])
+    core = bpy.data.materials.new("core")
+    core.use_nodes = True
+    shader = core.node_tree.nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (0.018, 0.017, 0.016, 1)
+    shader.inputs["Roughness"].default_value = 0.55
+    for name, r0, r1, rise, material in (("wound", inner - 0.02, outer, ROLL["creep"], edge), ("core", 0.38, inner - 0.02, ROLL["creep"] + 0.04, core)):
+        mesh = bpy.data.meshes.new(name)
+        bm = bmesh.new()
+        steps, bands = 160, 24
+        rings = []
+        # The bottom, then the top from the inside out, falling from the crept-up middle to the outer turn.
+        bottom_in = [bm.verts.new((r0 * math.cos(a), r0 * math.sin(a), 0.02)) for a in np.linspace(0, 2 * math.pi, steps, endpoint=False)]
+        rings.append(bottom_in)
+        for k in range(bands + 1):
+            r = r0 + (r1 - r0) * k / bands
+            z = 0.02 + w + rise * (1 - k / bands) ** 2
+            rings.append([bm.verts.new((r * math.cos(a), r * math.sin(a), z)) for a in np.linspace(0, 2 * math.pi, steps, endpoint=False)])
+        rings.append([bm.verts.new((r1 * math.cos(a), r1 * math.sin(a), 0.02)) for a in np.linspace(0, 2 * math.pi, steps, endpoint=False)])
+        for ra, rb in zip(rings, rings[1:] + rings[:1]):
+            for i in range(steps):
+                j = (i + 1) % steps
+                bm.faces.new((ra[i], ra[j], rb[j], rb[i]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(mesh)
+        bm.free()
+        mesh.materials.append(material)
+        for poly in mesh.polygons:
+            poly.use_smooth = True
+        obj = stage.add(name, mesh)
+        obj.location = (ROLL["at"][0], -ROLL["at"][1], 0)
 
 
 def principled_edge():
@@ -303,29 +378,7 @@ def film(stage, shape):
         thick.offset = 0.0
         thick.material_offset_rim = 1
         mesh.materials.append(principled_edge())
-        # The core it was wound on, still in the middle: dark plastic, a hole through it for the spindle.
-        core = bpy.data.materials.new("core")
-        core.use_nodes = True
-        shader = core.node_tree.nodes["Principled BSDF"]
-        shader.inputs["Base Color"].default_value = (0.07, 0.068, 0.065, 1)
-        shader.inputs["Roughness"].default_value = 0.45
-        hub = bpy.data.meshes.new("core")
-        bm = bmesh.new()
-        r_out, r_in, tall = ROLL["inner"] - 0.06, 0.38, 35 * PROP + ROLL["creep"] + 0.05
-        rings = []
-        for z, r in ((0.02, r_in), (0.02, r_out), (tall, r_out), (tall, r_in)):
-            rings.append([bm.verts.new((ROLL["at"][0] + r * math.cos(a), -ROLL["at"][1] + r * math.sin(a), z)) for a in np.linspace(0, 2 * math.pi, 96, endpoint=False)])
-        for ra, rb in zip(rings, rings[1:] + rings[:1]):
-            for i in range(96):
-                j = (i + 1) % 96
-                bm.faces.new((ra[i], ra[j], rb[j], rb[i]))
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        bm.to_mesh(hub)
-        bm.free()
-        hub.materials.append(core)
-        for poly in hub.polygons:
-            poly.use_smooth = True
-        stage.add("core", hub)
+        wound(stage)
         # The turns stand on their edges and throw a soft shadow on the leather. The page places the photograph by
         # the box it covers, in the spread's em.
         bleed = 1.5
