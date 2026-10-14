@@ -2,10 +2,25 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Dollhouse } from '../components/Dollhouse'
 import { Masthead } from '../components/Masthead'
+import { Poster } from '../components/Poster'
 import { Reveal } from '../components/Reveal'
 import { profile } from '../content'
 
-export const Route = createFileRoute('/work')({ component: Work })
+type WorkSearch = {
+  v?: 2
+}
+
+/** Two versions of the page: the building (the default), and the poster at /work?v=2. */
+export const Route = createFileRoute('/work')({
+  validateSearch: (search: Record<string, unknown>): WorkSearch => (Number(search.v) === 2 ? { v: 2 } : {}),
+  component: Work,
+})
+
+function Work() {
+  const { v } = Route.useSearch()
+
+  return v === 2 ? <Poster /> : <Building />
+}
 
 /**
  * Where I've worked, as the poster for a film about it: a title, and coming up behind it a picture of a
@@ -14,7 +29,7 @@ export const Route = createFileRoute('/work')({ component: Work })
  * over to it: the ones undone here are SiteShell's padding round a page, and the band beside it. The title
  * is sized off a sheet no wider than lets the whole building show at once.
  */
-function Work() {
+function Building() {
   const { experience } = profile
 
   return (

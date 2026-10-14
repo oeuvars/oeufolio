@@ -1,0 +1,142 @@
+<!doctype html>
+<!--
+  The poster's type, set where the reference poster sets it, in its 736 x 981 pixels: type.mjs photographs it at
+  three times that for poster.py to print. Two plates, shown one at a time by the class on <body>: the glowing
+  title ("title") and the four italic passages ("body"), white on black.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: "EB Garamond";
+        src: url("fonts/EBGaramond-Italic.ttf");
+        font-style: italic;
+        font-weight: 400 800;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 736px;
+        height: 981px;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
+      }
+      .title,
+      .body {
+        position: absolute;
+        inset: 0;
+        visibility: hidden;
+      }
+      body.title .title,
+      body.body .body {
+        visibility: visible;
+      }
+      /* Each word sits on its baseline at (left, top). */
+      .word {
+        position: absolute;
+        font-family: "Helvetica Neue";
+        font-weight: 500;
+        font-size: var(--size);
+        letter-spacing: var(--track, 0);
+        line-height: 0;
+        white-space: nowrap;
+      }
+      /* Each passage is set line for line as the reference sets it, every line pulled out to the measure,
+         the last one too. Its top is its first baseline. */
+      .passage {
+        position: absolute;
+        font-family: "EB Garamond";
+        font-style: italic;
+        font-weight: var(--weight, 500);
+        font-size: var(--size);
+        line-height: var(--lead);
+        font-kerning: normal;
+        font-variant-ligatures: common-ligatures;
+      }
+      .passage > div {
+        height: var(--lead);
+        text-align: justify;
+        text-align-last: justify;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body class="title">
+    <div class="title">
+      <div class="word" id="human">human</div>
+      <div class="word" id="experience">experience</div>
+    </div>
+    <div class="body">
+      <div class="passage" id="frankenstein">
+        <div>I do know that for</div>
+        <div>the sympathy of one</div>
+        <div>living being, I</div>
+        <div>would make peace</div>
+        <div>with all. I have love</div>
+        <div>in me the likes of</div>
+        <div>which you can</div>
+        <div>scarcely imagine</div>
+        <div>and rage the likes of</div>
+        <div>which you would</div>
+        <div>not believe. If I</div>
+        <div>cannot satisfy the</div>
+        <div>one, I will indulge</div>
+        <div>the other.</div>
+      </div>
+      <div class="passage" id="looking">
+        <div>something that explains why</div>
+        <div>you still went looking for me</div>
+        <div>through all of this noise, and</div>
+        <div>why, no matter what, i still</div>
+        <div>want to be here with you. i</div>
+        <div>will always, always, want to</div>
+        <div>be here with you.</div>
+      </div>
+      <div class="passage" id="time">
+        <div>a baby is being held, a girl is running outside,</div>
+        <div>her mother is calling her back in, a man and a</div>
+        <div>woman are fighting, another are laying</div>
+        <div>together, a dog is barking, an old woman is</div>
+        <div>forgetting, her daughter reminds her, dinner is</div>
+        <div>placed on the table, breakfast is cleared off the</div>
+        <div>table. time passes like this.</div>
+      </div>
+      <div class="passage" id="lighthouse">
+        <div>she had known happiness, exquisite happiness, intense</div>
+        <div>happiness, and it silvered the rough waves a little</div>
+        <div>more brightly, as daylight faded, and the blue went</div>
+        <div>out of the sea and it rolled in waves of pure lemon</div>
+        <div>which curved and swelled and broke upon the beach</div>
+        <div>and the ecstasy burst in her eyes and waves of pure</div>
+        <div>delight raced over the floor of her mind and she felt, it</div>
+        <div>is enough! it is enough!</div>
+      </div>
+    </div>
+    <script>
+      // Lays each piece where it sits in the reference, in its pixels: type.mjs passes type.json in.
+      window.lay = async (layout) => {
+        await document.fonts.ready;
+        const over = [];
+        for (const [id, spec] of Object.entries(layout)) {
+          const node = document.getElementById(id);
+          for (const [key, value] of Object.entries(spec.vars ?? {})) node.style.setProperty(`--${key}`, value);
+          node.style.left = `${spec.left}px`;
+          node.style.width = spec.width ? `${spec.width}px` : "";
+          // The first baseline goes at spec.baseline: see where it falls and move the block by the difference.
+          node.style.top = "0px";
+          const probe = document.createElement("span");
+          probe.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
+          const line = node.firstElementChild ?? node;
+          line.prepend(probe);
+          const fall = probe.getBoundingClientRect().top - node.getBoundingClientRect().top;
+          probe.remove();
+          node.style.top = `${spec.baseline - fall}px`;
+          for (const row of node.children) if (row.scrollWidth > row.clientWidth + 0.5) over.push(`${id}: ${row.textContent}`);
+        }
+        return over;
+      };
+    </script>
+  </body>
+</html>
