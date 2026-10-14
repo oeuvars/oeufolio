@@ -1,4 +1,4 @@
-"""What is stuck on the folder tabs: six pieces, one on each paper tab, each for something I like and
+"""What is stuck on the folder tabs: five pieces, one on each page's paper tab, each for something I like and
 carrying its maker's mark, the way stickers end up on everything a kid owns.
 
     tagheuer  the Carrera CBN2012's own strap: glossy dark brown alligator, padded and stitched in brown,
@@ -11,14 +11,12 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               amplifier's red grille cloth round it under Blackstar's badge
     apple     a Mac Studio's bead-blasted aluminium, with the six-colour apple let into it over the case's
               drilled grille
-    van       a Turkish Van's own: white, auburn at head and tail as the breed is, and her mark, the cat
-              asleep on her back and stretched out
 
 Uses the copy stand from the oeusume studio. Run from the repository root:
 
     blender -b --factory-startup -P studio/tabs.py -- [tab ...] [--scale 0.5] [--samples 64] [--proofs DIR]
 
-Writes public/objects/tab-<name>.avif for each tab named, or for all six. Set OEUSUME if that checkout
+Writes public/objects/tab-<name>.avif for each tab named, or for all five. Set OEUSUME if that checkout
 is not in ~/Documents/oeusume.
 
 The frame is the paper tab SiteShell cuts, in the page's own rem, so the render lies straight over it. A
@@ -27,7 +25,7 @@ none sits quite true. Each is a solid with a rounded edge, and the plastic ones 
 shape. A piece's colours, its marks and the texture of its surface are painted as a sheet and laid over
 the solid from above.
 
-The marks are the makers' own, from studio/assets/logos. The cat's is drawn in studio/cat.svg.
+The marks are the makers' own, from studio/assets/logos.
 """
 
 import argparse
@@ -229,13 +227,6 @@ def inlay(sheet, mask, colour, rough=0.16, coat=0.7):
     seam = np.clip(1 - np.abs(mask - 0.5) * 2, 0, 1)
     sheet.press(blur(seam, 1.2), 0.004)
     sheet.rgb *= (1 - 0.18 * blur(seam, 0.8))[..., None]
-
-
-def swirl(sheet, mask, seed, light, dark, amount=0.35, stretch=0.5):
-    """Slow swirls of a lighter and a darker shade, as celluloid, acetate and fur have."""
-    turn = cloud(sheet.height.shape, seed, falloff=2.2, stretch=stretch)
-    sheet.paint(mask * np.clip(turn, 0, 1.6) * amount, light)
-    sheet.paint(mask * np.clip(-turn, 0, 1.6) * amount, dark)
 
 
 def nacre(sheet, mask):
@@ -576,22 +567,6 @@ def apple(name, height):
     return {"card": 1.4}, [case]
 
 
-def van(name, height):
-    def dress(sheet, edge):
-        # The breed's own pattern: colour on the head and on the tail, and white between.
-        head, tail = stripe(sheet, 0.0, 2.2), stripe(sheet, height - 2.3, height)
-        for seed, cap in ((17, head), (18, tail)):
-            inlay(sheet, cap, "#a4552b")
-            swirl(sheet, cap, seed, "#c9824c", "#6a2f15", amount=0.5, stretch=0.8)
-        # A Van's tail is ringed in a darker auburn.
-        for y in (height - 1.82, height - 1.38, height - 0.94):
-            sheet.paint(stripe(sheet, y - 0.06, y + 0.06) * 0.75, "#5e2a13")
-        mark, colour = placed(sheet, artwork("cat"), MIDDLE - 1.2, 2.5, MIDDLE + 1.2, height - 2.6)
-        printed(sheet, mark, colour, rough=0.2, coat=0.6, proud=0.006)
-
-    return {}, moulded(name, height, "#f3efe4", 0.18, 0.5, dress, subsurface=0.06)
-
-
 def decoded(tone):
     """A photograph's sRGB tones as linear light."""
     return np.where(tone <= 0.04045, tone / 12.92, ((tone + 0.055) / 1.055) ** 2.4)
@@ -728,12 +703,11 @@ def tagheuer(name, height):
 # its strip), which lights the piece's edges from below, how the piece was set down (see stuck), and what
 # builds it.
 TABS = {
-    "tagheuer": (11, "#bfa391", (0.5, 0.0, 0.02), tagheuer),
     "lacoste": (10, "#e3d3c1", (0.9, 0.02, -0.03), lacoste),
     "proraso": (10, "#d9d4c2", (-0.7, -0.02, 0.02), proraso),
     "apple": (10, "#1e2740", (0.5, 0.03, 0.03), apple),
     "prs": (10, "#7a8597", (-1.0, 0.0, -0.02), prs),
-    "van": (11.5, "#8a8b78", (0.6, -0.03, 0.0), van),
+    "tagheuer": (11.5, "#8a8b78", (0.5, 0.0, 0.02), tagheuer),
 }
 
 

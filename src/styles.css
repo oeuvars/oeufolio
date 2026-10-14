@@ -215,6 +215,35 @@
     filter: drop-shadow(5px 0 7px rgb(0 0 0 / 0.38));
   }
 
+  /* The spine's paper, torn down its edge (SiteShell's tear): the strip is only the shadow's, and its paper
+     is cut to the tear, its pale core showing past the surface in a fringe. */
+  .strip-torn {
+    background-color: transparent;
+  }
+
+  .torn {
+    position: absolute;
+    inset: 0;
+    background-color: var(--band);
+    mask-image: linear-gradient(#000, #000), var(--torn);
+    mask-size:
+      calc(100% - 16px) 100%,
+      16px 520px;
+    mask-position:
+      left top,
+      right top;
+    mask-repeat: no-repeat, repeat-y;
+  }
+
+  .torn-surface {
+    --torn: var(--torn-surface);
+  }
+
+  .torn-core {
+    --torn: var(--torn-core);
+    background-color: #f9f8f3;
+  }
+
   .panel {
     position: absolute;
     top: 3.1vh;

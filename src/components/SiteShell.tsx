@@ -33,13 +33,54 @@ type Tone = {
   tab: string
 }
 
-const spineTone: Tone = { band: '#eeede8', bandInk: '#1d1d1b', panel: '#eeede8', panelInk: '#1d1d1b', tab: '/objects/tab-tagheuer.avif' }
+// The spine has no tab. Its edge is torn instead, down its whole length.
+const spineTone: Omit<Tone, 'tab'> = { band: '#eeede8', bandInk: '#1d1d1b', panel: '#eeede8', panelInk: '#1d1d1b' }
+
+/**
+ * A strip of paper's torn edge, as a mask that repeats down the edge: solid to the left of the tear, clear to
+ * its right. The tear wanders in and out at a few scales at once, and it comes back to where it began, so
+ * one length of it meets the next without a seam. reach is how far the tear wanders, in px, and fray how
+ * much the finest scale shakes it.
+ */
+function tear(seed: number, width: number, length: number, reach: number, fray: number) {
+  let state = seed
+  const random = () => {
+    state = (state + 0x6d2b79f5) | 0
+    let t = Math.imul(state ^ (state >>> 15), 1 | state)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+  const scales = [
+    { every: 60, amount: 0.55 },
+    { every: 14, amount: 0.3 },
+    { every: 3, amount: fray },
+  ].map(({ every, amount }) => {
+    const knots = Array.from({ length: Math.round(length / every) }, random)
+    return (y: number) => {
+      const at = (y / length) * knots.length
+      const i = Math.floor(at)
+      const f = at - i
+      const ease = f * f * (3 - 2 * f)
+      return amount * (knots[i % knots.length] * (1 - ease) + knots[(i + 1) % knots.length] * ease)
+    }
+  })
+  const points = Array.from({ length: length + 1 }, (_, y) => {
+    const x = width - 1 - reach * scales.reduce((sum, scale) => sum + scale(y), 0)
+    return `${x.toFixed(2)} ${y}`
+  })
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${length}" viewBox="0 0 ${width} ${length}"><path d="M0 0 L${points.join(' L')} L0 ${length} Z"/></svg>`
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+}
+
+// The paper's pale core tears out past its surface in a ragged fringe, so two tears lie one over the other.
+const tornSurface = tear(7, 16, 520, 11, 0.2)
+const tornCore = tear(7, 16, 520, 7, 0.55)
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
-  { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-van.avif' },
+  { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
@@ -53,7 +94,7 @@ const PAGE = '@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,
 const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 const instant = { duration: 0 } as const
 
-function stripStyle(tone: Tone, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties {
+function stripStyle(tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties {
   return {
     '--band': tone.band,
     '--band-ink': tone.bandInk,
@@ -258,7 +299,7 @@ export function SiteShell({ children }: SiteShellProps) {
   const matTo = lefts[mat] + (mat === index ? openWidth : folded(mat))
   const tabWidth = band + protrude
   const pieceMargin = (tabMargin * tabWidth) / tabSpan
-  const tabBefore = { shape: tabShape(mat), top: tabTops[mat] * metrics.rem, src: (mat > 0 ? pageTones[mat - 1] : spineTone).tab }
+  const tabBefore = { shape: tabShape(mat), top: tabTops[mat] * metrics.rem, src: pageTones[mat - 1].tab }
   const tabOwn = { shape: tabShape(mat + 1), top: tabTops[mat + 1] * metrics.rem, src: pageTones[mat].tab }
   const paper = tabOutline(tabBefore.shape)
   const paperHeight = tabBefore.shape.height + 2 * paper.reach
@@ -316,13 +357,17 @@ export function SiteShell({ children }: SiteShellProps) {
         transition={transition}
       >
         {!mobile && (
-          <aside className="strip" style={stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine })}>
+          <aside
+            className="strip strip-torn"
+            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), '--torn-surface': tornSurface, '--torn-core': tornCore } as CSSProperties}
+          >
+            <div aria-hidden className="torn torn-core" />
+            <div aria-hidden className="torn torn-surface" />
             {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
                 lamps (studio/signal). Its post runs on down past the foot of the strip, so a short window cuts it there. */}
             <Link to="/" aria-label={profile.handle} className="absolute inset-y-0 left-0" style={{ right: band }}>
               <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
             </Link>
-            <Tab label="Home" shape={tabShape(0)} to="/" current={false} src={spineTone.tab} />
           </aside>
         )}
 
