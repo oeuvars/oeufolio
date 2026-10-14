@@ -98,9 +98,12 @@ function torn(seed: number, calm: Array<[number, number]> = [], leather = false)
       { every: 2, amount: fine },
     ]
     const nicks = { count: 9, depth: 2.2 }
+    // The wear eases out where the edge runs straight, as the tear does, so it never runs on into a tab.
+    const quiet = calm.map(([from, to]) => `#000 ${from - 36}px, transparent ${from}px, transparent ${to}px, #000 ${to + 36}px`)
     return {
       '--torn-surface': tear(seed, 6, grain(0.02), calm, nicks),
       '--torn-core': tear(seed, 4.4, grain(0.1), calm, nicks),
+      '--torn-calm': `linear-gradient(to bottom, #000 0, ${quiet.join(', ')}, #000 100%)`,
     } as CSSProperties
   }
   const grain = (fray: number) => [
@@ -405,7 +408,12 @@ export function SiteShell({ children }: SiteShellProps) {
             className="strip"
             style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7) }}
           >
-            <div aria-hidden className="torn torn-core" />
+            {/* Past the tear the paper's core shows, and the print on it, a shade lighter. */}
+            <div
+              aria-hidden
+              className="torn torn-core"
+              style={{ backgroundImage: 'linear-gradient(rgb(255 255 255 / 0.07)), url(/objects/signal.avif)', backgroundSize: 'cover', backgroundPosition: 'top', backgroundBlendMode: 'normal, multiply' }}
+            />
             <div aria-hidden className="torn torn-surface" />
             {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
                 lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down

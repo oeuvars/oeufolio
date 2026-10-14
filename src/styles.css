@@ -246,7 +246,7 @@
     background-color: color-mix(in oklab, var(--panel), #000 62%);
   }
 
-  /* And the grain darkens toward the edge, where hands have worn and oiled it. */
+  /* And the grain darkens toward the edge, where hands have worn and oiled it, but not where a tab grows out. */
   .torn-wear {
     pointer-events: none;
     background-color: transparent;
@@ -256,6 +256,17 @@
       color-mix(in oklab, var(--panel) 45%, transparent) 6px,
       transparent 18px
     );
+    mask-image: var(--torn-calm), linear-gradient(#000, #000), var(--torn-surface);
+    mask-size:
+      100% 100%,
+      calc(100% - 16px) 100%,
+      16px 1600px;
+    mask-position:
+      left top,
+      left top,
+      right top;
+    mask-repeat: no-repeat, no-repeat, repeat-y;
+    mask-composite: intersect, add;
   }
 
   .panel {
