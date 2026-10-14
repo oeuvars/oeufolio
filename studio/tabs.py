@@ -47,7 +47,6 @@ from mathutils import Matrix  # noqa: E402
 
 import stage as stage_module  # noqa: E402
 from paint import blur, box, cloud, linear, ramp, segment, streaks  # noqa: E402
-from objects.fob import spaced  # noqa: E402
 from solids import fillet, principled, prism, rect  # noqa: E402
 from stage import Stage  # noqa: E402
 from stock import Sheet, fit, pixels_of  # noqa: E402
@@ -589,7 +588,7 @@ def clasp(name, left, right, top, bottom, point):
     steel = skin(
         sheet,
         f"{name}-steel",
-        wear=(("Scratches003", 2.5, 0.03, 0.0002), ("Fingerprints009", 4, 0.025, 0)),
+        wear=(("Fingerprints009", 4, 0.02, 0),),
         specular=0.5,
     )
     cover = clad(prism(STAGE, f"{name}-clasp", outline, 0.04, THICK + 0.1, steel, bevel=0.14, segments=2), x0, top, w, h)
@@ -601,123 +600,80 @@ def clasp(name, left, right, top, bottom, point):
     return [cover, *buttons]
 
 
-def stitched(sheet, points, thread, length, width, slant):
-    """Fine saddle stitching, as a watch strap has: each stitch a short lean of waxed thread lying in a
-    crease, its ends gone into holes no wider than the thread. objects.fob's holes are cut for a thicker
-    thread, and at this size they string the stitches up like beads."""
-    colour = linear(thread)
-    for x, y, heading in points:
-        dx, dy = math.cos(heading + slant) * length / 2, math.sin(heading + slant) * length / 2
-        rows, cols = sheet.window(x - 0.2, y - 0.2, x + 0.2, y + 0.2)
-        X, Y = sheet.X[rows, cols], sheet.Y[rows, cols]
-        for ex, ey in ((x - dx, y - dy), (x + dx, y + dy)):
-            hole = np.exp(-((np.hypot(X - ex, Y - ey) / (0.5 * width)) ** 2))
-            sheet.rgb[rows, cols] *= 1 - 0.55 * hole[..., None]
-            sheet.height[rows, cols] -= 0.01 * hole
-        core = segment(X, Y, x - dx, y - dy, x + dx, y + dy)
-        cord = sheet.mask(core - width / 2)
-        crown = np.sqrt(np.clip(1 - (core / (width / 2)) ** 2, 0, 1))
-        along = (X - x) * math.cos(heading + slant) + (Y - y) * math.sin(heading + slant)
-        ply = 0.88 + 0.12 * np.sin((along + core) * 2 * math.pi / 0.045)
-        sheet.rgb[rows, cols] += cord[..., None] * (colour * (ply * (0.82 + 0.18 * crown))[..., None] - sheet.rgb[rows, cols])
-        sheet.height[rows, cols] += 0.022 * crown * cord
-        sheet.rough[rows, cols] += cord * (0.6 - sheet.rough[rows, cols])
+def lit(cx, cy, bands):
+    """Strip lights over the set that only a reflection sees: no light from them falls on anything, and
+    the camera cannot see them. Polished steel shows what is round it, and under one even card it can
+    only be one even grey. A watch is lit for its photograph with long strips, so its steel carries
+    bright bands with dark between them, and so does this. bands is (offset across, width, strength)."""
+    for i, (across, width, strength) in enumerate(bands):
+        panel = bpy.data.meshes.new(f"strip-{i}")
+        panel.from_pydata([(-width / 2, -30, 0), (width / 2, -30, 0), (width / 2, 30, 0), (-width / 2, 30, 0)], [], [(0, 1, 2, 3)])
+        glow = bpy.data.materials.new(f"strip-{i}")
+        glow.use_nodes = True
+        nodes = glow.node_tree.nodes
+        nodes.clear()
+        emit = nodes.new("ShaderNodeEmission")
+        emit.inputs["Strength"].default_value = strength
+        out = nodes.new("ShaderNodeOutputMaterial")
+        glow.node_tree.links.new(emit.outputs[0], out.inputs["Surface"])
+        panel.materials.append(glow)
+        strip = STAGE.add(f"strip-{i}", panel)
+        strip["stand"] = "room"
+        strip.location = (cx + across, cy, 30)
+        for seen in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission", "visible_volume_scatter"):
+            setattr(strip, seen, False)
 
 
-def alligator(X, Y, left, right, seed):
-    """Alligator hide as a watch strap is cut from it: a column of big squarish scales down the middle,
-    narrower ones either side and small ones at the edges. Each column's creases wander, and each row's
-    run a little aslant, never quite meeting the next column's. Returns how far each point lies from the
-    nearest crease, and a number for each scale to vary its tone by."""
-    rng = np.random.default_rng(seed)
-    middle, half = (left + right) / 2, (right - left) / 2
-    lines = [-1.2, -0.84, -0.45, 0.45, 0.84, 1.2]
-    spacing = {0: (0.18, 0.3), 1: (0.32, 0.5), 2: (0.62, 0.95), 3: (0.32, 0.5), 4: (0.18, 0.3)}
-    bounds = []
-    for k, at in enumerate(lines):
-        p1, p2 = rng.uniform(0, 2 * math.pi, 2)
-        bounds.append(middle + at * half / 1.2 + 0.05 * np.sin(Y * 0.9 + p1) + 0.025 * np.sin(Y * 2.6 + p2))
-    gap = np.full(X.shape, np.inf)
-    scale = np.zeros(X.shape)
-    for col in range(5):
-        a, b = bounds[col], bounds[col + 1]
-        inside = (X >= a) & (X < b)
-        gap = np.where(inside, np.minimum(X - a, b - X), gap)
-        centre = (a + b) / 2
-        y, rows, low, high = -rng.uniform(0, 0.5), [], *spacing[col]
-        while y < Y.max() + 1:
-            rows.append((y, rng.uniform(-0.22, 0.22), rng.uniform(0, 1)))
-            y += rng.uniform(low, high)
-        nearest = np.full(X.shape, np.inf)
-        below = np.zeros(X.shape)
-        for y0, slant, tone in rows:
-            off = Y - (y0 + slant * (X - centre))
-            nearest = np.minimum(nearest, np.abs(off) / math.hypot(1, slant))
-            below = np.where(off > 0, tone, below)
-        gap = np.where(inside, np.minimum(gap, nearest), gap)
-        scale = np.where(inside, below, scale)
-    # Outside the outer lines lie only slivers, under the stitching.
-    outside = (X < bounds[0]) | (X >= bounds[-1])
-    gap = np.where(outside, np.minimum(np.abs(X - bounds[0]), np.abs(X - bounds[-1])), gap)
-    return gap, scale
+def hide(rows):
+    """A length of the FC6483's hide, from TAG Heuer's own photograph of the strap, taken square on above
+    and below the watch's case (studio/assets/tagheuer, each drawn out to the strap's width row by row).
+    The photograph holds less strap than the tab does, so the two pieces are laid end to end and then
+    again turned over side to side, each join feathered."""
+    top, bottom = artwork("tagheuer/strap-top")[..., :3], artwork("tagheuer/strap-bottom")[..., :3]
+    pieces = [top, bottom, top[:, ::-1], bottom[:, ::-1]]
+    feather = 24
+    out = pieces[0]
+    for piece in pieces[1:]:
+        if out.shape[0] >= rows:
+            break
+        fade = np.linspace(0, 1, feather)[:, None, None]
+        joined = out[-feather:] * (1 - fade) + piece[:feather] * fade
+        out = np.concatenate([out[:-feather], joined, piece[feather:]])
+    return out[:rows]
 
 
 def tagheuer(name, height):
     """TAG Heuer's own strap for the Carrera chronograph CBN2012 (FC6483): dark brown alligator, its big
-    scales down the middle and smaller ones at the sides, polished to a gloss, padded high, and stitched
-    in a brown only a little lighter than the hide. It runs down the tab through the steel folding clasp
-    it closes with, and on past it to its tail."""
-    left, right, head, foot = 0.86, 3.38, 0.8, height - 0.85
-    middle, seam = (left + right) / 2, 0.16
-    shape = fillet([(left, head, 0.08), (right, head, 0.08), (right, foot - 0.9, 1.0), (middle, foot, 1.0), (left, foot - 0.9, 1.0)], steps=16)
-    sewn = fillet(
-        [
-            (left + seam, head + seam, 0.05),
-            (right - seam, head + seam, 0.05),
-            (right - seam, foot - 0.92, 0.86),
-            (middle, foot - 1.2 * seam, 0.86),
-            (left + seam, foot - 0.92, 0.86),
-        ],
-        steps=12,
-    )
-    sheet = Sheet(WIDTH, height, "#3d1c15", rough=0.2, density=6)
+    scales down the middle and smaller ones at the sides, polished to a gloss, padded high, stitched in a
+    brown only a little lighter than the hide. Cut to the paper tab's shape, as the plastic pieces are,
+    and closed across by the steel folding clasp it is sold with."""
+    shape = outline(height)
+    across, stretch = WIDTH - FAR - NEAR, 1.25
+    top, foot = HEAD, height - HEAD
+    sheet = Sheet(WIDTH, height, "#3a1d17", rough=0.3, density=6)
     X, Y = sheet.X, sheet.Y
-    shape_px = sheet.height.shape
     edge = within(X, Y, shape)
-    # Padded: it stands highest down its middle and falls to a thin edge.
-    sheet.height -= 0.13 * (1 - np.clip(-edge / 0.7, 0, 1)) ** 2
-    # Hide is not ruled: every crease wanders a little.
-    wander = np.clip(cloud(shape_px, 64, falloff=1.6), -2, 2)
-    gap, tone = alligator(X + 0.025 * wander, Y + 0.03 * np.roll(wander, 37, axis=0), left, right, 61)
-    # Each scale is flat on top and rolls over at its edges into a crease cut deep and narrow.
-    sheet.height += 0.022 * ramp(0.0, 0.09, gap) ** 0.7
-    crease = np.exp(-((gap / 0.016) ** 2))
-    sheet.press(crease, 0.012)
-    # No two scales take the dye alike, and it pools darkest in the creases.
-    sheet.rgb *= (0.86 + 0.28 * tone)[..., None]
-    sheet.ink(np.exp(-((gap / 0.035) ** 2)), "#140806", 0.6)
-    sheet.rough += np.exp(-((gap / 0.03) ** 2)) * 0.3
-    sheet.coat[:] = 0.85 * np.clip(gap / 0.06, 0, 1)
-    # The polished hide still has the fine wrinkles of skin across each scale.
-    wrinkle = np.clip(cloud(shape_px, 62, falloff=0.9), -2.5, 2.5) / 2.5
-    sheet.height += 0.0005 * wrinkle
-    sheet.rough += 0.04 * np.clip(cloud(shape_px, 63, falloff=1.4), -2, 2)
-    # The edge is painted, a near black brown, and polished.
-    paint = ramp(-0.07, -0.03, edge)
-    sheet.paint(paint, "#1a0c08")
-    sheet.finish(paint, rough=0.25)
-    sheet.press(np.exp(-((within(X, Y, sewn) / 0.05) ** 2)), 0.012)
-    stitched(sheet, spaced(sewn, 0.16), "#7d5c48", length=0.12, width=0.042, slant=0.25)
-    leather = skin(
-        sheet,
-        f"{name}-alligator",
-        wear=(("SurfaceImperfections003", 9, 0.06, 0),),
-        sheen=0.1,
-        specular=0.5,
-        coat_rough=0.07,
-    )
+    rows, cols = sheet.window(NEAR, top, WIDTH - FAR, foot)
+    h, w = sheet.rgb[rows, cols].shape[:2]
+    per_em = 420 / across
+    photo = hide(round((foot - top) * per_em / stretch))
+    tone = np.clip(fit(photo, h, w), 0, 1)
+    sheet.rgb[rows, cols] = np.where(tone <= 0.04045, tone / 12.92, ((tone + 0.055) / 1.055) ** 2.4)
+    # The photograph has the hide's relief in it: its creases are its darkest lines. Pressed in, they
+    # catch this room's light as well as the one it was photographed in.
+    lum = sheet.rgb.mean(axis=-1)
+    detail = lum - blur(lum, 8.0)
+    sheet.height += 0.006 * np.clip(detail / max(detail.std(), 1e-6), -3, 3) / 3
+    # Padded: it stands highest down its middle and rolls down to its edges.
+    sheet.height -= 0.1 * (1 - np.clip(-edge / 0.6, 0, 1)) ** 2
+    sheet.rough[:] = 0.42
+    sheet.coat[:] = 0.06
+    leather = skin(sheet, f"{name}-alligator", specular=0.15, coat_rough=0.2)
     strap = clad(prism(STAGE, name, shape, 0.0, THICK - 0.02, leather, bevel=0.1, segments=6), 0, 0, WIDTH, height)
-    return {"card": 1.6}, [strap, *clasp(name, left, right, 3.7, 5.55, 6.05)]
+    # The clasp closes over the first join in the hide.
+    lock = top + 282 * stretch / per_em - 0.75
+    lit(WIDTH / 2, -height / 2, ((-3.2, 1.6, 7.0), (-1.2, 0.35, 3.0), (2.6, 0.9, 4.0)))
+    return {"card": 0.5}, [strap, *clasp(name, NEAR + 0.12, WIDTH - FAR - 0.12, lock, lock + 1.85, lock + 2.35)]
 
 
 # Each tab: the height in rem of the paper tab (SiteShell's tabHeights), that paper's colour (the band of
