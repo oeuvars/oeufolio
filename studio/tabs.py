@@ -7,8 +7,8 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
     prs       a Blackstar Debut's colours: its cream tolex, with four of the outline birds PRS inlays down
-              its fretboards let into it, abalone round rosewood, and a band of the amplifier's red grille
-              cloth round it under Blackstar's badge
+              its fretboards let into it one under another, mother-of-pearl in rosewood, and a band of the
+              amplifier's red grille cloth round it under Blackstar's badge
     apple     a Mac Studio's bead-blasted aluminium, with the six-colour apple let into it over the case's
               drilled grille
     van       a Turkish Van's own: white, auburn at head and tail as the breed is, and her mark, the cat
@@ -238,21 +238,21 @@ def swirl(sheet, mask, seed, light, dark, amount=0.35, stretch=0.5):
     sheet.paint(mask * np.clip(-turn, 0, 1.6) * amount, dark)
 
 
-def abalone(sheet, mask):
-    """Abalone shell, as PRS cuts its birds from, at its darkest: the sea's green and blue in patches,
-    lit and shadowed, with a little purple where they turn."""
+def nacre(sheet, mask):
+    """Mother-of-pearl, as PRS cuts its outline birds from: a cream white with a faint grain running
+    through it, and a sheen of pink and green where the light catches its layers."""
     shape = sheet.height.shape
-    sheet.paint(mask, "#4f9f92")
-    figure = np.clip(streaks(shape, 61, 34, 13) + 0.7 * streaks(shape, 62, 12, 30), -2, 2) / 2
-    sheet.paint(mask * np.clip(figure, 0, 1) * 0.55, "#a9e3d3")
-    sheet.paint(mask * np.clip(-figure, 0, 1) * 0.6, "#174f55")
-    for seed, tint, amount in ((81, "#0f7f6c", 0.7), (82, "#2c50b6", 0.6), (83, "#b24a8e", 0.4)):
-        sheet.paint(mask * np.clip(streaks(shape, seed, 22, 14), 0, 2) * amount, tint)
-    sheet.finish(mask, rough=0.08, coat=1.0)
+    sheet.paint(mask, "#ece6d0")
+    figure = np.clip(streaks(shape, 61, 18, 5) + 0.6 * streaks(shape, 62, 7, 12), -2, 2) / 2
+    sheet.paint(mask * np.clip(figure, 0, 1) * 0.5, "#fbf8ec")
+    sheet.paint(mask * np.clip(-figure, 0, 1) * 0.35, "#cfc6aa")
+    for seed, tint, amount in ((81, "#e9d3d6", 0.35), (82, "#d3e4d6", 0.3)):
+        sheet.paint(mask * np.clip(streaks(shape, seed, 12, 9), 0, 2) * amount, tint)
+    sheet.finish(mask, rough=0.1, coat=1.0)
     # It is cut and let in, so a hairline shows all round it.
     seam = np.clip(1 - np.abs(mask - 0.5) * 2, 0, 1)
-    sheet.press(blur(seam, 1.2), 0.005)
-    sheet.rgb *= (1 - 0.2 * blur(seam, 0.8))[..., None]
+    sheet.press(blur(seam, 1.0), 0.004)
+    sheet.rgb *= (1 - 0.25 * blur(seam, 0.7))[..., None]
 
 
 def moulded(name, height, colour, rough, coat, dress, density=3, **surface):
@@ -401,18 +401,22 @@ def amp(name, y0, y1, mark):
 def prs(name, height):
     def dress(sheet, edge):
         shape = sheet.height.shape
-        # Four of PRS's outline birds, in the order the fretboard has them: the falcon at the third fret,
-        # the harrier at the fifth, the tern at the ninth and Cooper's hawk at the twelfth. Each is cut as
-        # an outline of shell, and the rosewood shows through the middle of it. Traced from photographs
-        # of a 513's neck (legallyblindbirding.net), where the shell is white; here it is abalone.
+        # Four of PRS's outline birds, in the order the fretboard has them: the peregrine falcon at the
+        # third fret, the harrier at the fifth, the tern at the ninth and Cooper's hawk at the twelfth.
+        # Traced from photographs of a 513's neck (legallyblindbirding.net), all to one scale, the
+        # strings' spacing in each photograph. Each is mother-of-pearl let into a piece of the neck's
+        # rosewood cut to the bird's shape, so the wood shows inside the bird and in a hairline round it.
+        # They run down the middle of the piece one under another, as they do down a neck.
         art = strewn(artwork("logos/prs-outline-birds"))
-        birds = []
-        for i, bird in enumerate(art):
-            x = MIDDLE + (-0.55 if i % 2 == 0 else 0.55)
-            y = 1.55 + 1.13 * i
-            cover, colour = placed(sheet, bird, x - 0.8, y - 0.8, x + 0.8, y + 0.8)
+        top, foot, gap = 0.6, 5.92, 0.1
+        scale = (foot - top - gap * (len(art) - 1)) / sum(bird.shape[0] for bird in art)
+        birds, y = [], top
+        for bird in art:
+            h, w = bird.shape[0] * scale, bird.shape[1] * scale
+            cover, colour = placed(sheet, bird, MIDDLE - w / 2, y, MIDDLE + w / 2, y + h)
             shell = cover * np.clip(colour[..., 0] * 1.6, 0, 1)
             birds.append((cover, shell, cover - shell))
+            y += h + gap
         # Tolex: a fine leather grain pressed into the cream, everywhere but what is let into it.
         grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
         bare = 1 - np.clip(blur(np.max([cover for cover, _, _ in birds], axis=0), 2.0) * 3, 0, 1)
@@ -422,10 +426,10 @@ def prs(name, height):
         figure = np.clip(streaks(shape, 71, 40, 2), -2, 2) / 2
         for cover, shell, wood in birds:
             # The rosewood, dark and oiled, its grain running down the neck.
-            inlay(sheet, wood, "#2c1713", rough=0.34, coat=0.3)
+            inlay(sheet, cover, "#2a1512", rough=0.34, coat=0.3)
             sheet.paint(wood * np.clip(figure, 0, 1) * 0.5, "#4a2a20")
             sheet.paint(wood * np.clip(-figure, 0, 1) * 0.6, "#140a08")
-            abalone(sheet, shell)
+            nacre(sheet, shell)
         return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
 
     # The birds' outlines are fine, so the sheet is drawn finer than the others.
