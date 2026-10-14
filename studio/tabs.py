@@ -267,10 +267,10 @@ def abalone(sheet, mask):
     sheet.rgb *= (1 - 0.2 * blur(seam, 0.8))[..., None]
 
 
-def moulded(name, height, colour, rough, coat, dress, **surface):
+def moulded(name, height, colour, rough, coat, dress, density=3, **surface):
     """A piece of plastic cut to the paper tab. dress paints what it carries on its sheet, given the
     sheet and the distance in from the plastic's edge, and returns whatever else is fixed to it."""
-    sheet = Sheet(WIDTH, height, colour, rough=rough, density=3)
+    sheet = Sheet(WIDTH, height, colour, rough=rough, density=density)
     sheet.coat[:] = coat
     shape = outline(height)
     edge = within(sheet.X, sheet.Y, shape)
@@ -411,28 +411,37 @@ def amp(name, y0, y1, mark):
 
 
 def prs(name, height):
-    oxblood = "#7a3f46"
-
     def dress(sheet, edge):
         shape = sheet.height.shape
-        # PRS's mark runs down one side. Down the other fly four of the birds, in the order the
-        # fretboard has them. All are let into the tolex flush.
-        mark, _ = placed(sheet, artwork("logos/prs"), 0.98, 1.2, 2.1, 5.7, turn=1)
-        birds = [placed(sheet, bird, 2.32, 1.12 + 1.18 * i, 3.3, 2.12 + 1.18 * i)[0] for i, bird in enumerate(strewn(artwork("logos/prs-birds"))[4:8])]
+        # Four of PRS's outline birds, in the order the fretboard has them: the falcon at the third fret,
+        # the harrier at the fifth, the tern at the ninth and Cooper's hawk at the twelfth. Each is cut as
+        # an outline of shell, and the rosewood shows through the middle of it. Traced from photographs
+        # of a 513's neck (legallyblindbirding.net), where the shell is white; here it is abalone.
+        art = strewn(artwork("logos/prs-outline-birds"))
+        birds = []
+        for i, bird in enumerate(art):
+            x = MIDDLE + (-0.55 if i % 2 == 0 else 0.55)
+            y = 1.55 + 1.13 * i
+            cover, colour = placed(sheet, bird, x - 0.8, y - 0.8, x + 0.8, y + 0.8)
+            shell = cover * np.clip(colour[..., 0] * 1.6, 0, 1)
+            birds.append((cover, shell, cover - shell))
         # Tolex: a fine leather grain pressed into the cream, everywhere but what is let into it.
         grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
-        bare = 1 - np.clip(blur(np.max([mark, *birds], axis=0), 2.0) * 3, 0, 1)
+        bare = 1 - np.clip(blur(np.max([cover for cover, _, _ in birds], axis=0), 2.0) * 3, 0, 1)
         sheet.height += 0.0045 * bare * grain
         sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
         sheet.rgb *= (1 - 0.03 * bare * np.clip(grain, -1, 1))[..., None]
-        inlay(sheet, mark, oxblood, rough=0.18, coat=0.9)
-        # Each bird is bordered in the same oxblood, a line wide enough to find it by on the cream.
-        for bird in birds:
-            inlay(sheet, ramp(0.1, 0.22, blur(bird, 5.0)), oxblood, rough=0.18, coat=0.9)
-            abalone(sheet, bird)
+        figure = np.clip(streaks(shape, 71, 40, 2), -2, 2) / 2
+        for cover, shell, wood in birds:
+            # The rosewood, dark and oiled, its grain running down the neck.
+            inlay(sheet, wood, "#2c1713", rough=0.34, coat=0.3)
+            sheet.paint(wood * np.clip(figure, 0, 1) * 0.5, "#4a2a20")
+            sheet.paint(wood * np.clip(-figure, 0, 1) * 0.6, "#140a08")
+            abalone(sheet, shell)
         return [amp(name, 6.1, 8.3, artwork("logos/blackstar"))]
 
-    return {"card": 1.2}, moulded(name, height, "#e6cdab", 0.4, 0.12, dress, subsurface=0.03)
+    # The birds' outlines are fine, so the sheet is drawn finer than the others.
+    return {"card": 1.2}, moulded(name, height, "#e6cdab", 0.4, 0.12, dress, density=7, subsurface=0.03)
 
 
 def drill(case, centres, bore, sink, depth, material):
@@ -603,9 +612,9 @@ def hamilton(name, height):
 TABS = {
     "hamilton": (11, "#bfa391", (0.5, 0.0, 0.02), hamilton),
     "lacoste": (10, "#e3d3c1", (0.9, 0.02, -0.03), lacoste),
-    "proraso": (10, "#7a8597", (-0.7, -0.02, 0.02), proraso),
+    "proraso": (10, "#d9d4c2", (-0.7, -0.02, 0.02), proraso),
     "apple": (10, "#1e2740", (0.5, 0.03, 0.03), apple),
-    "prs": (10, "#d9d4c2", (-1.0, 0.0, -0.02), prs),
+    "prs": (10, "#7a8597", (-1.0, 0.0, -0.02), prs),
     "van": (11.5, "#8a8b78", (0.6, -0.03, 0.0), van),
 }
 
