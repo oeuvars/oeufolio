@@ -21,6 +21,7 @@ Writes public/objects/ticket-film.avif. Set OEUSUME if that checkout is not in ~
 """
 
 import argparse
+import json
 import math
 import os
 import sys
@@ -38,6 +39,7 @@ from stage import Stage  # noqa: E402
 
 ART = os.path.join(HERE, "art")
 OUT = os.path.join(ROOT, "public", "objects")
+COIL_JSON = os.path.join(ROOT, "src", "components", "ticket", "coil.json")
 PANEL = "#651415"  # the leather it lies on (leather.py), which lights it from below
 WIDTH = 4.4  # 35 mm, in em, as reel.py has it
 EXPOSURE = 0.3
@@ -51,6 +53,12 @@ TINT = 0.72  # how much light the clear base lets through, as reel.py prints it
 # and how far its turns creep sideways, in em a turn.
 HEAD = {"length": 10.6, "outer": 0.85, "inner": 0.5, "flare": 0.12, "skew": 0.07, "creep": 0.05}
 TAIL = {"length": 8.4, "outer": 1.15, "inner": 0.85, "flare": -0.09, "skew": -0.11, "creep": -0.04}
+# The coil on the open page, in the em of the page's spread (Ticket.tsx: the stamps from 0 to 6.6 across, the
+# ticket after them, 29.85 down): where its head lies, rolled up tight, which way the coil runs, how many turns it
+# makes, how far it reaches out to either side of its run and how high it stands as it starts and as it ends, and how
+# far it runs on for each turn.
+COIL = {"start": (3.4, -4.2), "axis": (0.3, 0.95), "turns": 2.6, "reach": (3.0, 2.3), "stand": (2.3, 1.5), "pitch": 6.0}
+COIL_HEAD = {"length": 7.0, "outer": 0.75, "inner": 0.45, "flare": 0.0, "creep": 0.03}
 
 
 def smooth(lo, hi, x):
@@ -118,6 +126,68 @@ def film_mesh(length):
         verts[r, :, 1] = page
         # Lying on the leather: never below it, the troughs of its waves just touching.
         verts[r, :, 2] = 0.02 + height
+    return verts, s
+
+
+def coil_mesh(length):
+    """The film for the open page: its head rolled up tight where it was cut, and from there the film springs out in
+    loose turns, a spiral run along the leather, each turn sagging under its own weight so it is wider than it is
+    tall, the turns shrinking and no two alike; the rest of it lies flat where the last turn lets it down. Points
+    are in the spread's em, y down, z up off the leather."""
+    a = np.array(COIL["axis"], dtype=np.float64)
+    a /= np.linalg.norm(a)
+    n = np.array([-a[1], a[0]])
+    start = np.array(COIL["start"], dtype=np.float64)
+    phi = np.linspace(0, 2 * math.pi * COIL["turns"], 40000)
+    f = phi / phi[-1]
+    reach = (COIL["reach"][0] + (COIL["reach"][1] - COIL["reach"][0]) * f) * (1 + 0.07 * np.sin(1.7 * phi + 0.4))
+    stand = (COIL["stand"][0] + (COIL["stand"][1] - COIL["stand"][0]) * f) * (1 + 0.08 * np.sin(1.3 * phi + 1.1))
+    run = np.concatenate(([0], np.cumsum(np.diff(phi) * COIL["pitch"] / (2 * math.pi) * (1 + 0.12 * np.sin(0.9 * phi[1:])))))
+    plan = start + a * run[:, None] + n * (reach * np.sin(phi))[:, None]
+    helix = np.column_stack((plan, stand * (1 - np.cos(phi)) / 2))
+    step = np.linalg.norm(np.diff(helix, axis=0), axis=1)
+    along = np.concatenate(([0], np.cumsum(step)))
+    axis3 = np.array([a[0], a[1], 0.0])
+
+    def across(t):
+        w = axis3 - (t @ axis3)[:, None] * t
+        return w / np.linalg.norm(w, axis=1)[:, None]
+
+    tangent = np.gradient(helix, axis=0)
+    tangent /= np.linalg.norm(tangent, axis=1)[:, None]
+    widths = across(tangent)
+    # The head: back from where the coil starts, the film rolls up on itself, round the line across the film there.
+    back = -tangent[0].copy()
+    back[2] = 0
+    back /= np.linalg.norm(back)
+    sigma = np.arange(0, COIL_HEAD["length"], 0.005)
+    t, z, _ = roll(COIL_HEAD, 0.5, sigma)
+    head = helix[0] + back * t[:, None] + np.array([0, 0, 1.0]) * z[:, None]
+    head = head[::-1]
+    head_along = COIL_HEAD["length"] - sigma[::-1]
+    # The tail: on from where the last turn comes down, flat along the leather.
+    on = tangent[-1].copy()
+    on[2] = 0
+    on /= np.linalg.norm(on)
+    rest = length - COIL_HEAD["length"] - along[-1]
+    if rest <= 0:
+        sys.exit(f"The coil needs {COIL_HEAD['length'] + along[-1]:.1f} em of film and the print is {length:.1f}")
+    sigma = np.linspace(0, rest, 400)
+    tail = helix[-1] + on * sigma[:, None]
+    points = np.concatenate((head[:-1], helix, tail[1:]))
+    where = np.concatenate((head_along[:-1], COIL_HEAD["length"] + along, COIL_HEAD["length"] + along[-1] + sigma[1:]))
+    side = np.concatenate((np.repeat(widths[:1], len(head) - 1, 0), widths, np.repeat(widths[-1:], len(tail) - 1, 0)))
+    cols = int(length / STEP) + 1
+    s = np.linspace(0, length, cols)
+    centre = np.column_stack([np.interp(s, where, points[:, k]) for k in range(3)])
+    w = np.column_stack([np.interp(s, where, side[:, k]) for k in range(3)])
+    w /= np.linalg.norm(w, axis=1)[:, None]
+    rows = ACROSS + 1
+    u = np.linspace(-0.5, 0.5, rows) * WIDTH
+    verts = centre[None, :, :] + u[:, None, None] * w[None, :, :]
+    # Nowhere under the leather: where a turn leans so that an edge would dip, the whole line across lifts.
+    low = verts[..., 2].min(axis=0)
+    verts[..., 2] += np.maximum(0, 0.02 - low)[None, :]
     return verts, s
 
 
@@ -190,12 +260,12 @@ def material():
     return mat
 
 
-def film(stage):
+def film(stage, shape):
     length = bpy.data.images.load(os.path.join(ART, "reel.png")).size[1] / 96  # reel.py draws at 96 pixels to the em
-    verts, s = film_mesh(length)
+    verts, s = (coil_mesh if shape == "coil" else film_mesh)(length)
     nr, nc = verts.shape[:2]
-    top, left = verts[..., 1].min(), verts[..., 0].min()
-    world = np.stack((verts[..., 0] - left, -(verts[..., 1] - top), verts[..., 2]), -1)
+    left, top = verts[..., 0].min(), verts[..., 1].min()
+    world = np.stack((verts[..., 0], -verts[..., 1], verts[..., 2]), -1)
     index = np.arange(nr * nc).reshape(nr, nc)
     faces = np.stack((index[:-1, :-1], index[:-1, 1:], index[1:, 1:], index[1:, :-1]), -1).reshape(-1, 4)
     mesh = bpy.data.meshes.new("film")
@@ -209,13 +279,22 @@ def film(stage):
     mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
     mesh.materials.append(material())
     strip = stage.add("film", mesh)
-    # Clear acetate leaves no shadow to speak of: what of it stops light, the silver, is already as dark as its shadow.
     w = verts[..., 0].max() - left
     h = verts[..., 1].max() - top
-    return stage.shoot("ticket-film", (0, 0, w, h), bleed=0.5, exposure=EXPOSURE, lens=False, mat_through_glass=False, shadowless=(strip,))
+    if shape == "coil":
+        # The turns stand off the leather and throw a soft shadow on it, the silver darker than the clear base. The
+        # page places the photograph by the box it covers, in the spread's em.
+        bleed = 1.5
+        box = [round(v, 4) for v in (left - bleed, top - bleed, w + 2 * bleed, h + 2 * bleed)]
+        json.dump({"box": box}, open(COIL_JSON, "w"))
+        return stage.shoot("ticket-coil", (left, top, w, h), bleed=bleed, shadow=0.55, exposure=EXPOSURE, lens=False, mat_through_glass=False)
+    # Lying flat, clear acetate leaves no shadow to speak of: what of it stops light, the silver, is already as dark
+    # as its shadow.
+    return stage.shoot("ticket-film", (left, top, w, h), bleed=0.5, exposure=EXPOSURE, lens=False, mat_through_glass=False, shadowless=(strip,))
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("shape", nargs="?", choices=("strip", "coil"), default="strip")
 parser.add_argument("--scale", type=float, default=1.0)
 parser.add_argument("--samples", type=int, default=160)
 parser.add_argument("--proofs")
@@ -225,4 +304,4 @@ if args.proofs:
 stage_module.MAT = PANEL
 STAGE = Stage(OUT, args.proofs, scale=args.scale, samples=args.samples)
 STAGE.clear()
-film(STAGE)
+film(STAGE, args.shape)
