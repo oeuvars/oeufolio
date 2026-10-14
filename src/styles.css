@@ -235,9 +235,27 @@
     background-color: var(--band);
   }
 
+  /* Past a paper's torn surface its core shows, frayed, in the paper's own colour a shade lighter. */
   .torn-core {
     mask-image: linear-gradient(#000, #000), var(--torn-core);
-    background-color: #f9f8f3;
+    background-color: color-mix(in oklab, var(--band), #fff 7%);
+  }
+
+  /* Leather's cut edge, past its grain: the edge itself, burnished dark with handling. */
+  .torn-leather {
+    background-color: color-mix(in oklab, var(--panel), #000 62%);
+  }
+
+  /* And the grain darkens toward the edge, where hands have worn and oiled it. */
+  .torn-wear {
+    pointer-events: none;
+    background-color: transparent;
+    background-image: linear-gradient(
+      to left,
+      color-mix(in oklab, var(--panel), #000 55%) 0,
+      color-mix(in oklab, var(--panel) 45%, transparent) 6px,
+      transparent 18px
+    );
   }
 
   .panel {

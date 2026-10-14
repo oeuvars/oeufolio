@@ -40,14 +40,17 @@ const spineTone: Omit<Tone, 'tab'> = { band: '#eeede8', bandInk: '#1d1d1b', pane
 const TEAR_WIDTH = 16
 const TEAR_LENGTH = 1600
 
+type Grain = Array<{ every: number; amount: number }>
+
 /**
- * A strip of paper's torn edge, as a mask that repeats down the edge: solid to the left of the tear, clear to
- * its right. The tear wanders in and out at a few scales at once, and it comes back to where it began, so
- * one length of it meets the next without a seam. Each seed tears it differently. reach is how far the tear
- * wanders, in px, and fray how much the finest scale shakes it. Along calm, spans of the edge from and to
- * in px, the edge runs straight, easing out of the tear and back into it, where a tab grows out of it.
+ * A strip's torn or worn edge, as a mask that repeats down the edge: solid to the left of the edge, clear to
+ * its right. The edge wanders in and out at a few scales at once, grain giving each scale's length in px and
+ * its share of reach, the most in px it wanders. It comes back to where it began, so one length of it meets
+ * the next without a seam. Each seed tears it differently. nicks is how many small bites are out of each
+ * length, and how deep, in px. Along calm, spans of the edge from and to in px, the edge runs straight,
+ * easing out of the tear and back into it, where a tab grows out of it.
  */
-function tear(seed: number, reach: number, fray: number, calm: Array<[number, number]> = []) {
+function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, number]> = [], nicks = { count: 0, depth: 0 }) {
   let state = seed
   const random = () => {
     state = (state + 0x6d2b79f5) | 0
@@ -55,11 +58,7 @@ function tear(seed: number, reach: number, fray: number, calm: Array<[number, nu
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
-  const scales = [
-    { every: 60, amount: 0.55 },
-    { every: 14, amount: 0.3 },
-    { every: 3, amount: fray },
-  ].map(({ every, amount }) => {
+  const scales = grain.map(({ every, amount }) => {
     const knots = Array.from({ length: Math.round(TEAR_LENGTH / every) }, random)
     return (y: number) => {
       const at = (y / TEAR_LENGTH) * knots.length
@@ -69,6 +68,7 @@ function tear(seed: number, reach: number, fray: number, calm: Array<[number, nu
       return amount * (knots[i % knots.length] * (1 - ease) + knots[(i + 1) % knots.length] * ease)
     }
   })
+  const bites = Array.from({ length: nicks.count }, () => ({ at: random() * TEAR_LENGTH, wide: 3 + 5 * random(), deep: nicks.depth * (0.5 + random()) }))
   const ramp = 36
   const settled = (y: number) =>
     calm.reduce((least, [from, to]) => {
@@ -77,17 +77,38 @@ function tear(seed: number, reach: number, fray: number, calm: Array<[number, nu
       return Math.min(least, f * f * (3 - 2 * f))
     }, 1)
   const points = Array.from({ length: TEAR_LENGTH + 1 }, (_, y) => {
-    const x = TEAR_WIDTH - reach * settled(y) * scales.reduce((sum, scale) => sum + scale(y), 0)
+    const bitten = bites.reduce((sum, { at, wide, deep }) => sum + deep * Math.max(0, 1 - ((y - at) / wide) ** 2), 0)
+    const x = TEAR_WIDTH - settled(y) * (reach * scales.reduce((sum, scale) => sum + scale(y), 0) + bitten)
     return `${x.toFixed(2)} ${y}`
   })
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${TEAR_WIDTH}" height="${TEAR_LENGTH}" viewBox="0 0 ${TEAR_WIDTH} ${TEAR_LENGTH}"><path d="M0 0 L${points.join(' L')} L0 ${TEAR_LENGTH} Z"/></svg>`
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
-/** A strip's torn edge, as the style that carries it: its surface, and the paper's pale core torn out past
- * the surface in a ragged fringe, both from one tear. */
-function torn(seed: number, calm: Array<[number, number]> = []) {
-  return { '--torn-surface': tear(seed, 11, 0.2, calm), '--torn-core': tear(seed, 7, 0.55, calm) } as CSSProperties
+/**
+ * A strip's edge, as the style that carries it: its surface, and what shows past the surface, both from one
+ * tear. Paper tears ragged, its core fraying out past the surface in its own colour. Leather is cut, and worn:
+ * its edge wanders slowly and is bitten here and there, and past its grain shows its own edge, burnished dark.
+ */
+function torn(seed: number, calm: Array<[number, number]> = [], leather = false) {
+  if (leather) {
+    const grain = (fine: number) => [
+      { every: 110, amount: 0.55 },
+      { every: 30, amount: 0.3 },
+      { every: 2, amount: fine },
+    ]
+    const nicks = { count: 9, depth: 2.2 }
+    return {
+      '--torn-surface': tear(seed, 6, grain(0.02), calm, nicks),
+      '--torn-core': tear(seed, 4.4, grain(0.1), calm, nicks),
+    } as CSSProperties
+  }
+  const grain = (fray: number) => [
+    { every: 60, amount: 0.55 },
+    { every: 14, amount: 0.3 },
+    { every: 3, amount: fray },
+  ]
+  return { '--torn-surface': tear(seed, 11, grain(0.2), calm), '--torn-core': tear(seed, 7, grain(0.55), calm) } as CSSProperties
 }
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
@@ -288,7 +309,7 @@ export function SiteShell({ children }: SiteShellProps) {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
-    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]])
+    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], pageTones[i].fills || pageTones[i].roll)
   })
   const fixed = mobile ? 0 : spine + end
   const gaps = mobile ? count - 1 : count + 1
@@ -387,8 +408,9 @@ export function SiteShell({ children }: SiteShellProps) {
             <div aria-hidden className="torn torn-core" />
             <div aria-hidden className="torn torn-surface" />
             {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
-                lamps (studio/signal). Its post runs on down past the foot of the strip, so a short window cuts it there. */}
-            <Link to="/" aria-label={profile.handle} className="absolute inset-y-0 left-0" style={{ right: band }}>
+                lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down
+                past the foot of the strip, so a short window cuts it there. */}
+            <Link to="/" aria-label={profile.handle} className="torn">
               <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
             </Link>
           </aside>
@@ -406,7 +428,7 @@ export function SiteShell({ children }: SiteShellProps) {
               transition={transition}
               style={{ ...stripStyle(pageTones[i], i + 1, stack - i), ...tears[i] }}
             >
-              <div aria-hidden className="torn torn-core" />
+              <div aria-hidden className={`torn torn-core ${pageTones[i].fills || pageTones[i].roll ? 'torn-leather' : ''}`} />
               <div aria-hidden className="torn torn-surface" />
               <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills || pageTones[i].roll ? 'panel-hangs' : ''}`}>
                 {pageTones[i].surface && (
@@ -459,6 +481,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 ) : null}
                 {!open && <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
+              {(pageTones[i].fills || pageTones[i].roll) && <div aria-hidden className="torn torn-wear" />}
               <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} surface={pageTones[i].surface} />
             </motion.section>
           )
