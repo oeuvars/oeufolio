@@ -8,8 +8,8 @@ tickets for the strip. Run from the repository root, after studio/ticket/ink.py 
 
     blender -b --factory-startup -P studio/ticket/ticket.py -- [ticket punched roll ...] [--scale 0.5] [--samples 64] [--proofs DIR]
 
-Writes public/objects/ticket.avif, the ticket and the shadow it leaves; public/objects/ticket-punched.avif, the
-corner of it the conductor punched, to lay over the first; and public/objects/ticket-roll.avif, the roll. Uses the
+Writes public/objects/ticket.avif, the ticket and the shadow it leaves; public/objects/ticket-punched.avif, the same
+with the conductor's punch through it, for the page to show in its place; and public/objects/ticket-roll.avif, the roll. Uses the
 copy stand from the oeusume studio, so it is lit as every other object on the site is. Set OEUSUME if that checkout
 is not in ~/Documents/oeusume.
 
@@ -23,7 +23,6 @@ import argparse
 import json
 import math
 import os
-import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +40,7 @@ from stock import Sheet, drift, fit, pixels_of  # noqa: E402
 TICKET = json.load(open(os.path.join(ROOT, "src", "components", "ticket", "ticket.json")))
 W, H = TICKET["size"]
 BLEED = TICKET["bleed"]
-PANEL = "#10150f"  # the contact page's panel, which the ticket lies on and which lights it from below
+PANEL = "#861812"  # the red leather the ticket lies on (leather.py), which lights it from below
 CARD = "#f6f5f0"  # bright white uncoated card
 # The four riso inks, in the order the press laid them down, and how far each pass landed off true, in em.
 INKS = (("yellow", "#ffd23f", (0.035, -0.02)), ("teal", "#0f8b8d", (-0.025, 0.03)), ("red", "#ff4a3d", (0.02, 0.025)), ("k", "#121212", (0.0, 0.0)))
@@ -267,38 +266,6 @@ def ticket(punched):
     return STAGE.shoot("ticket-punched" if punched else "ticket", (0, 0, W, H), bleed=BLEED, shadow=0.75, sharp=SHARP, exposure=EXPOSURE)
 
 
-def patch():
-    """Cut the punched corner out of the punched photograph, to lay over the unpunched one. Where the punch went
-    through, the photograph shows nothing, and laid over the unpunched one that would show card: there it is filled
-    with the panel the ticket lies on, in the card's shadow. Its edge is feathered, so it melts into the photograph
-    under it."""
-    x, y, w, h = TICKET["patch"]
-    density = 48 * SHARP * STAGE.scale
-    script = f"""
-from PIL import Image
-import numpy as np
-path = {os.path.join(OUT, "ticket-punched.avif")!r}
-whole = {os.path.join(OUT, "ticket.avif")!r}
-x0, y0 = round(({x} + {BLEED}) * {density}), round(({y} + {BLEED}) * {density})
-x1, y1 = x0 + round({w} * {density}), y0 + round({h} * {density})
-crop = np.asarray(Image.open(path).convert("RGBA")).astype(np.float32)[y0:y1, x0:x1] / 255
-under = np.asarray(Image.open(whole).convert("RGBA")).astype(np.float32)[y0:y1, x0:x1] / 255
-hole = np.array({[c / 255 * 0.6 for c in bytes.fromhex(PANEL[1:])]}, dtype=np.float32)
-a = crop[..., 3:]
-rgb = crop[..., :3] * a + hole * (1 - a)
-alpha = np.maximum(a[..., 0], under[..., 3])
-feather = 0.35 * {density}
-rows, cols = crop.shape[:2]
-ry = np.minimum(np.arange(rows), np.arange(rows)[::-1]) / feather
-rx = np.minimum(np.arange(cols), np.arange(cols)[::-1]) / feather
-fade = np.clip(np.minimum.outer(ry, rx), 0, 1)
-alpha *= fade * fade * (3 - 2 * fade)
-Image.fromarray((np.clip(np.dstack((rgb, alpha)), 0, 1) * 255 + 0.5).astype(np.uint8)).save(path, quality=95, subsampling="4:4:4", speed=2)
-print("PATCH", cols, rows)
-"""
-    subprocess.run(["uv", "run", "--quiet", "--with", "pillow>=11.3", "--with", "numpy", "python", "-I", "-c", script], check=True)
-
-
 def roll():
     """The roll: the same ticket at a third of the size, again and again, each joined to the next where their
     bites meet, so that the bites there are whole round holes. Its picture is its own: a look up the near tower."""
@@ -321,7 +288,7 @@ def roll():
     return STAGE.shoot("ticket-roll", (0, (h - shown) / 2, w, shown), bleed=0.5, shadow=0.75, sharp=1.0, exposure=EXPOSURE)
 
 
-SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: (ticket(True), patch()), "roll": roll}
+SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "roll": roll}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("shots", nargs="*")

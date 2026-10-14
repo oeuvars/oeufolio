@@ -22,6 +22,9 @@ type Tone = {
   /** The page is a ticket off a roll, lying on a panel that takes the whole strip, band and all. Folded, its strip
    * is only as wide as the roll, narrower than the others. */
   roll?: boolean
+  /** What the panel is made of: a photographed square of it that repeats (studio/ticket/leather.py). It is not
+   * paper, so the sheet's grain and creases are cut away over it. */
+  surface?: string
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
   /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
@@ -34,7 +37,7 @@ const pageTones: Tone[] = [
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
-  { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', roll: true, tab: '/objects/tab-van.avif' },
+  { band: '#8a8b78', bandInk: '#20241a', panel: '#6e1410', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-van.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
@@ -204,7 +207,12 @@ export function SiteShell({ children }: SiteShellProps) {
   const paper = tabOutline(tabBefore.shape)
   const paperHeight = tabBefore.shape.height + 2 * paper.reach
   const paperMask = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-paper.reach} ${tabWidth} ${paperHeight}" preserveAspectRatio="none"><path d="${paper.path}"/></svg>`
-  const column = 'linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0)'
+  // The same goes for a strip whose panel is a surface of its own, the ticket's leather: a second column, cut the same way.
+  const skin = pageTones.findIndex((tone) => tone.surface)
+  const skinFrom = lefts[skin] + overlap
+  const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin))
+  const column =
+    'linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)'
   const grainCut = {
     '--grain-cut': `${column}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
     '--grain-cut-size': [
@@ -248,7 +256,7 @@ export function SiteShell({ children }: SiteShellProps) {
         style={{ '--band-w': `${band}px`, '--protrude': `${protrude}px`, ...grainCut } as CSSProperties}
         initial={false}
         // The cut follows the mat's strip as it slides: both are on the same spring.
-        animate={{ '--mat-from': matFrom, '--mat-to': matTo }}
+        animate={{ '--mat-from': matFrom, '--mat-to': matTo, '--skin-from': skinFrom, '--skin-to': skinTo }}
         transition={transition}
       >
         {!mobile && (
@@ -287,6 +295,17 @@ export function SiteShell({ children }: SiteShellProps) {
               style={stripStyle(pageTones[i], i + 1, stack - i)}
             >
               <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills || pageTones[i].roll ? 'panel-hangs' : ''}`}>
+                {pageTones[i].surface && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      // The hide falls off a little into shadow toward the edges of the light.
+                      backgroundImage: `radial-gradient(120% 85% at 50% 42%, transparent 50%, rgb(20 2 1 / 0.45)), url(${pageTones[i].surface})`,
+                      backgroundSize: '100% 100%, 256px 256px',
+                    }}
+                  />
+                )}
                 {pageTones[i].hangs ? (
                   <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
                 ) : (
