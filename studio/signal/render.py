@@ -4,9 +4,6 @@ root, after studio/signal/cut.py:
 
     blender -b --factory-startup -P studio/signal/render.py -- [--scale 1] [--samples 128]
 
-Down the post below it live Turkish Vans (van.py), built and furred in the same scene and stood on the post as on a
-floor, so the one sun and sky light them and they shade the post.
-
 Writes studio/signal/art/signal.png, the render on clear ground, for studio/signal/print.py to screen.
 
 Metres. x runs across the face of the signal, y away from the camera, z up. The head is a cast aluminium housing of
@@ -26,8 +23,6 @@ import bpy
 from mathutils import Matrix, Quaternion, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-import van  # noqa: E402  (beside this file, which Blender does not put on the path)
 ART = os.path.join(HERE, "art")
 
 WIDTH = 0.36  # across the housing
@@ -379,59 +374,13 @@ def signal():
     lamps((0, 0, go), (0.15, 1.0, 0.3))
 
 
-# Down the post from the signal: each Van's pose, its coat, its eyes and whether it faces up the post toward the signal.
-# The post is their floor: each stands on the side of it the camera sees as its right edge, so their up is the
-# strip's right and they sit, walk and sleep along the strip's length.
-COLONY = [
-    ("hang", "auburn", 0, True),
-    ("walk", "black", 1, True),
-    ("sleep", "auburn", 0, False),
-    ("sit", "cream", 2, False),
-    ("stretch", "auburn", 0, True),
-    ("loaf", "black", 1, False),
-    ("sit", "auburn", 1, True),
-    ("sleep", "cream", 0, True),
-    ("walk", "auburn", 2, False),
-    ("loaf", "auburn", 0, True),
-    ("sit", "black", 1, False),
-    ("stretch", "cream", 2, False),
-    ("sleep", "black", 0, False),
-    ("hang", "auburn", 1, True),
-]
-COLONY_GAP = 0.05  # between one cat and the next, in metres
-
-
-def colony(top):
-    """Stands the Vans down the post from the height top. The camera sees the post's right edge where the post's
-    side faces square across its view, so a cat stands with its up that way and its length along the post, and its
-    left, where its tail is laid, toward the camera."""
-    out = Vector((math.cos(YAW), -math.sin(YAW), 0))
-    z = top
-    for i, (pose, coat, eye, up) in enumerate(COLONY):
-        back, front = van.POSES[pose]["span"]
-        # Facing down the post the cat's left would be away from the camera, so it is built mirrored.
-        cat = van.build(f"van{i}", pose, coat, mirror=not up, eye=eye)
-        ahead = Vector((0, 0, 1 if up else -1))
-        left = out.cross(ahead)
-        # Its length along the post runs down from z: facing up, its nose is at the top; facing down, its tail.
-        middle = z - front if up else z + back
-        foot = Vector((0, 0, middle)) + out * (POST - 0.006)
-        cat.matrix_world = Matrix((
-            (ahead.x, left.x, out.x, foot.x),
-            (ahead.y, left.y, out.y, foot.y),
-            (ahead.z, left.z, out.z, foot.z),
-            (0, 0, 0, 1),
-        ))
-        z -= (front - back) + COLONY_GAP
-
-
 def main():
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     parser = argparse.ArgumentParser()
     parser.add_argument("--scale", type=float, default=1.0)
     parser.add_argument("--samples", type=int, default=128)
     parser.add_argument("--out", default=os.path.join(ART, "signal.png"))
-    # The cats' fur is heavy; when the GPU is busy with another render it will not fit, and the CPU has the room.
+    # When the GPU is busy with another render the picture may not fit beside it; the CPU has the room.
     parser.add_argument("--cpu", action="store_true")
     args = parser.parse_args(argv)
 
@@ -504,9 +453,6 @@ def main():
     # A little left of the middle: the strip's right edge is torn, and the tear takes the last of the picture.
     cam.shift_x = ((max(xs) + min(xs)) / 2 + 0.05 * span) / cam.ortho_scale
     cam.shift_y = (max(ys) + 0.2 * span - cam.ortho_scale / 2) / cam.ortho_scale
-
-    # The cats after the framing, so the framing is the signal's alone.
-    colony(-3 * CELL - 0.3)
 
     scene.render.filepath = args.out
     bpy.ops.render.render(write_still=True)
