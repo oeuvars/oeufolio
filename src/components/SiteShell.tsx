@@ -40,14 +40,19 @@ const spineTone: Omit<Tone, 'tab'> = { band: '#eeede8', bandInk: '#1d1d1b', pane
 const TEAR_WIDTH = 16
 const TEAR_LENGTH = 1600
 
+type Grain = Array<{ every: number; amount: number }>
+
 /**
- * A strip of paper's torn edge, as a mask that repeats down the edge: solid to the left of the tear, clear to
- * its right. The tear wanders in and out at a few scales at once, and it comes back to where it began, so
- * one length of it meets the next without a seam. Each seed tears it differently. reach is how far the tear
- * wanders, in px, and fray how much the finest scale shakes it. Along calm, spans of the edge from and to
- * in px, the edge runs straight, easing out of the tear and back into it, where a tab grows out of it.
+ * A strip's torn or worn edge, as a mask that repeats down the edge: solid to the left of the edge, clear to
+ * its right. The edge wanders in and out at a few scales at once, grain giving each scale's length in px and
+ * its share of reach, the most in px it wanders. It comes back to where it began, so one length of it meets
+ * the next without a seam. Each seed tears it differently. Along calm, spans of the edge from and to in px,
+ * the edge runs straight, easing out of the tear and back into it, where a tab grows out of it. outward tears
+ * the paper out past the strip's edge, its deepest bites coming back only as far as the edge, for a strip over
+ * something that starts right at its edge, so the tear never uncovers what is not there; the edge is then at
+ * the mask's left, and the mask lies just past the strip.
  */
-function tear(seed: number, reach: number, fray: number, calm: Array<[number, number]> = []) {
+function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, number]> = [], outward = false) {
   let state = seed
   const random = () => {
     state = (state + 0x6d2b79f5) | 0
@@ -55,11 +60,8 @@ function tear(seed: number, reach: number, fray: number, calm: Array<[number, nu
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
-  const scales = [
-    { every: 60, amount: 0.55 },
-    { every: 14, amount: 0.3 },
-    { every: 3, amount: fray },
-  ].map(({ every, amount }) => {
+  const most = grain.reduce((sum, { amount }) => sum + amount, 0)
+  const scales = grain.map(({ every, amount }) => {
     const knots = Array.from({ length: Math.round(TEAR_LENGTH / every) }, random)
     return (y: number) => {
       const at = (y / TEAR_LENGTH) * knots.length
@@ -77,18 +79,53 @@ function tear(seed: number, reach: number, fray: number, calm: Array<[number, nu
       return Math.min(least, f * f * (3 - 2 * f))
     }, 1)
   const points = Array.from({ length: TEAR_LENGTH + 1 }, (_, y) => {
-    const x = TEAR_WIDTH - reach * settled(y) * scales.reduce((sum, scale) => sum + scale(y), 0)
+    const wander = scales.reduce((sum, scale) => sum + scale(y), 0)
+    const x = outward ? settled(y) * reach * (most - wander) : TEAR_WIDTH - settled(y) * reach * wander
     return `${x.toFixed(2)} ${y}`
   })
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${TEAR_WIDTH}" height="${TEAR_LENGTH}" viewBox="0 0 ${TEAR_WIDTH} ${TEAR_LENGTH}"><path d="M0 0 L${points.join(' L')} L0 ${TEAR_LENGTH} Z"/></svg>`
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
-/** A strip's torn edge, as the style that carries it: its surface, and the paper's pale core torn out past
- * the surface in a ragged fringe, both from one tear. */
-function torn(seed: number, calm: Array<[number, number]> = []) {
-  return { '--torn-surface': tear(seed, 11, 0.2, calm), '--torn-core': tear(seed, 7, 0.55, calm) } as CSSProperties
+/** How a strip's edge was made: paper torn, leather worn at a cut edge, or a mat cut clean. */
+type Edge = 'torn' | 'worn' | 'cut'
+
+/**
+ * A strip's edge, as the style that carries it: where its surface ends, and where the stuff under the surface
+ * ends, a little further out, both from one tear. Paper tears ragged, its core fraying out past the surface in
+ * the colour of whatever is on it. Leather is cut, and worn only a little: its edge wanders slowly, and past
+ * its grain shows its own edge, burnished dark. A mat is cut clean and straight, so it has no style at all.
+ */
+function torn(seed: number, calm: Array<[number, number]>, edge: Edge, outward = false): CSSProperties {
+  if (edge === 'cut') return {}
+  if (edge === 'worn') {
+    const grain = (fine: number) => [
+      { every: 140, amount: 0.65 },
+      { every: 40, amount: 0.35 },
+      { every: 4, amount: fine },
+    ]
+    // The wear eases out where the edge runs straight, as the tear does, so it never runs on into a tab.
+    const quiet = calm.map(([from, to]) => `#000 ${from - 36}px, transparent ${from}px, transparent ${to}px, #000 ${to + 36}px`)
+    return {
+      '--torn-surface': tear(seed, 3, grain(0), calm),
+      '--torn-core': tear(seed, 2.2, grain(0.08), calm),
+      '--torn-calm': `linear-gradient(to bottom, #000 0, ${quiet.join(', ')}, #000 100%)`,
+    } as CSSProperties
+  }
+  const grain = (fray: number) => [
+    { every: 60, amount: 0.55 },
+    { every: 14, amount: 0.3 },
+    { every: 3, amount: fray },
+  ]
+  return { '--torn-surface': tear(seed, 11, grain(0.2), calm, outward), '--torn-core': tear(seed, 7, grain(0.55), calm, outward) } as CSSProperties
 }
+
+/** How a strip's own edge was made. */
+const edgeOf = (tone: Tone): Edge => (tone.fills ? 'cut' : tone.roll ? 'worn' : 'torn')
+
+/** Whether a strip's page covers the whole strip, band and all. */
+const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll)
+
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
@@ -283,12 +320,14 @@ export function SiteShell({ children }: SiteShellProps) {
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
   // Each page's edge is torn its own way, and runs straight where its tab grows out of it, so the tab's
-  // eased joins meet a straight edge.
+  // eased joins meet a straight edge. Open, the mat is laid from the edge of the strip before it, and it cannot
+  // be laid any wider without moving everything on it, so that strip's tear reaches out over the mat instead.
+  const reachesOver = (i: number) => Boolean(pageTones[i + 1]?.fills)
   const tears = pageTones.map((_, i) => {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
-    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]])
+    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(pageTones[i]), reachesOver(i))
   })
   const fixed = mobile ? 0 : spine + end
   const gaps = mobile ? count - 1 : count + 1
@@ -331,22 +370,27 @@ export function SiteShell({ children }: SiteShellProps) {
   const skinFrom = lefts[skin] + overlap
   // Its tab is cut from the same leather and stands out past the strip's edge, so the cut runs on over it.
   const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin)) + protrude
+  // The strip before the mat tears out over it: the paper on the mat past that strip's edge, its frayed core
+  // with it, is put back by the tear's own mask.
   const column =
-    'linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)'
+    `linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)`
   const grainCut = {
-    '--grain-cut': `${column}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
+    '--grain-cut': `${column}, ${(tears[mat - 1] as Record<string, string>)['--torn-core']}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
     '--grain-cut-size': [
       '100% 100%',
+      `${TEAR_WIDTH}px ${TEAR_LENGTH}px`,
       `${tabWidth}px ${paperHeight}px`,
       `${tabWidth + 2 * pieceMargin}px ${tabBefore.shape.height + 2 * pieceMargin}px`,
       `${tabWidth + 2 * pieceMargin}px ${tabOwn.shape.height + 2 * pieceMargin}px`,
     ].join(', '),
     '--grain-cut-position': [
       '0 0',
+      'calc(var(--mat-from) * 1px) 0',
       `calc(var(--mat-from) * 1px - ${band}px) ${tabBefore.top - paper.reach}px`,
       `calc(var(--mat-from) * 1px - ${band + pieceMargin}px) ${tabBefore.top - pieceMargin}px`,
       `calc(var(--mat-to) * 1px - ${band + pieceMargin}px) ${tabOwn.top - pieceMargin}px`,
     ].join(', '),
+    '--grain-cut-repeat': 'no-repeat, repeat-y, no-repeat, no-repeat, no-repeat',
   }
 
   return (
@@ -382,10 +426,9 @@ export function SiteShell({ children }: SiteShellProps) {
         {!mobile && (
           <aside
             className="strip"
-            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7) }}
+            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7, [], 'torn') }}
           >
-            <div aria-hidden className="torn torn-core" />
-            <div aria-hidden className="torn torn-surface" />
+            <div aria-hidden className="torn" />
             {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
                 lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down
                 past the foot of the strip, so a short window cuts it there. */}
@@ -401,15 +444,15 @@ export function SiteShell({ children }: SiteShellProps) {
           return (
             <motion.section
               key={item.to}
-              className="strip"
+              className={`strip ${reachesOver(i) ? 'strip-reaches' : ''}`}
               initial={false}
               animate={{ left: lefts[i], width: open ? openWidth : folded(i) }}
               transition={transition}
               style={{ ...stripStyle(pageTones[i], i + 1, stack - i), ...tears[i] }}
             >
-              <div aria-hidden className="torn torn-core" />
-              <div aria-hidden className="torn torn-surface" />
-              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills || pageTones[i].roll ? 'panel-hangs' : ''}`}>
+              {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
+              {!hangs(pageTones[i]) && <div aria-hidden className="torn" />}
+              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(pageTones[i]) ? 'panel-hangs' : ''}`}>
                 {pageTones[i].surface && (
                   <div
                     aria-hidden
@@ -427,7 +470,9 @@ export function SiteShell({ children }: SiteShellProps) {
                   <motion.div
                     aria-hidden
                     className="absolute inset-y-0"
-                    style={{ left: overlap, width: folded(i) - band - overlap }}
+                    // A picture runs on under the strip before it as far as that strip's tear can bite, so the tear
+                    // never uncovers bare panel.
+                    style={pageTones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - band - overlap + TEAR_WIDTH } : { left: overlap, width: folded(i) - band - overlap }}
                     initial={false}
                     animate={{ opacity: open ? 0 : 1 }}
                     // A picture page folds back into its strip's picture, which has to be there at once to take over.
@@ -460,6 +505,12 @@ export function SiteShell({ children }: SiteShellProps) {
                 ) : null}
                 {!open && <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
+              {edgeOf(pageTones[i]) === 'worn' && (
+                <>
+                  <div aria-hidden className="torn-fray" />
+                  <div aria-hidden className="torn torn-wear" />
+                </>
+              )}
               <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} surface={pageTones[i].surface} />
             </motion.section>
           )
