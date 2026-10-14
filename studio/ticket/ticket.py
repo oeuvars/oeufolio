@@ -32,9 +32,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
 sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, HERE)
 
 import numpy as np  # noqa: E402
 
+import key as key_light  # noqa: E402
 import stage as stage_module  # noqa: E402
 from paint import blur, box, cloud, disc, segment  # noqa: E402
 from stage import Stage  # noqa: E402
@@ -53,6 +55,7 @@ ART = os.path.join(HERE, "art")
 OUT = os.path.join(ROOT, "public", "objects")
 SHARP = 1.5  # the page shows the ticket at up to 72 pixels to its em
 EXPOSURE = 0.3  # matte white card reads grey at the stand's usual exposure
+KEYED = -1.1  # the stops taken off what the key lamp (key.py) lights, which is about twice the stand's room again
 
 
 def placed(sheet, coverage, x0, y0, w, h):
@@ -292,15 +295,20 @@ def ticket(punched):
     carried(sheet, printed, 21)
     sheet.soften(0.06, 0.02)
     build(sheet, "ticket", warp(drift(W, H, 0.1, 11)))
-    return STAGE.shoot("ticket-punched" if punched else "ticket", (0, 0, W, H), bleed=BLEED, shadow=0.75, sharp=SHARP, exposure=EXPOSURE)
+    key_light.add((W / 2, -H / 2))
+    return STAGE.shoot("ticket-punched" if punched else "ticket", (0, 0, W, H), bleed=BLEED, shadow=0.85, sharp=SHARP, exposure=EXPOSURE + KEYED)
 
 
-def stamps():
+def stamps(key="stamps"):
     """The strip of stamps beside the ticket: three Indian stamps still joined, each its own picture of the same river,
     printed in the ticket's four inks, with the country and the value along the foot (stamps.py's plates). The
     perforations run between them, whole round holes, and round the strip's edge, where it was torn off the sheet,
-    as the teeth the holes leave. Mint and lying flat, but for the curl gummed paper takes."""
-    spec = TICKET["stamps"]
+    as the teeth the holes leave. Mint and lying flat, but for the curl gummed paper takes.
+
+    key "coil" is the folded strip's: ten of the same stamps off a coil, as stamps for machines come, perforated only
+    between one stamp and the next, their long sides cut straight."""
+    spec = {**TICKET["stamps"], **TICKET[key]}
+    coil = key == "coil"
     sw, sh = spec["size"]
     ax, ay, aw, ah = spec["art"]
     radius, pitch = spec["perf"]
@@ -313,7 +321,7 @@ def stamps():
         for i, view in enumerate(spec["views"]):
             art = cover(pixels_of(os.path.join(ART, f"{view}-{name}.png"))[..., 0].astype(np.float64), aw, ah)
             m = np.maximum(m, placed(sheet, art, ax, i * sh + ay, aw, ah))
-        path = os.path.join(ART, f"stamps-{name}.png")
+        path = os.path.join(ART, f"{key}-{name}.png")
         if os.path.exists(path):
             typed = pixels_of(path)[..., 0].astype(np.float64)
             m = np.maximum(m, printer(sheet, placed(sheet, typed, 0, 0, w, h), seed={"k": 31, "red": 33}[name], scale=0.5))
@@ -325,17 +333,19 @@ def stamps():
     for k in range(across + 1):
         for i in range(count + 1):
             sheet.punch(disc(sheet.X, sheet.Y, k * w / across, i * sh, radius))
-    for k in range(down * count + 1):
+    for k in range(0 if coil else down * count + 1):
         for x in (0, w):
             sheet.punch(disc(sheet.X, sheet.Y, x, k * sh / down, radius))
-    carried(sheet, printed, 41, scale=0.4, folded=False)
+    carried(sheet, printed, 41 if not coil else 47, scale=0.4, folded=False)
     sheet.soften(0.02, 0.008)
-    wave = drift(w, h, 0.1, 43)
-    build(sheet, "ticket-stamps", lambda x, y: wave(x, y) + 0.04 * ((x - w / 2) / w) ** 2)
-    return STAGE.shoot("ticket-stamps", (0, 0, w, h), bleed=0.5, shadow=0.75, sharp=SHARP, exposure=EXPOSURE)
+    wave = drift(w, h, 0.1 if not coil else 0.25, 43)
+    name = f"ticket-{key}"
+    build(sheet, name, lambda x, y: wave(x, y) + 0.04 * ((x - w / 2) / w) ** 2)
+    key_light.add((w / 2, -h / 2))
+    return STAGE.shoot(name, (0, 0, w, h), bleed=1.6, shadow=0.85, sharp=SHARP if not coil else 1.0, exposure=EXPOSURE + KEYED)
 
 
-SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "stamps": stamps}
+SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "stamps": stamps, "coil": lambda: stamps("coil")}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("shots", nargs="*")

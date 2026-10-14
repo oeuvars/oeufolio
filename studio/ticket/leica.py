@@ -15,7 +15,7 @@ the focusing ring knurled, the black front ring engraved and filled white, and i
 coated, so it throws back the studio in violet and amber. A leather strap is on the lug at the far end, with its
 keeper, and runs off the leather.
 
-The model is scaled to the props' scale (PROP, em to the millimetre, shared with film.py), turned and laid where
+The model is scaled to the props' scale (PROP, em to the millimetre, the stamps' scale too), turned and laid where
 the page wants it in the spread's em, and the box the photograph covers is written to src/components/ticket/
 camera.json for the page to place it by. Writes public/objects/ticket-camera.avif. Set OEUSUME if that checkout is
 not in ~/Documents/oeusume.
@@ -46,7 +46,7 @@ from stage import Stage  # noqa: E402
 OUT = os.path.join(ROOT, "public", "objects")
 PLACE = os.path.join(ROOT, "src", "components", "ticket", "camera.json")
 PANEL = "#651415"
-PROP = 0.068  # em to the millimetre: the props' scale, film.py's too
+PROP = 0.068  # em to the millimetre: the props' scale
 AT = (3.7, 1.7)  # where the middle of the body lies, in the spread's em
 TURN = 80  # degrees, anticlockwise from lying level: the top cover to the left, as the photograph has it
 EXPOSURE = -1.0
@@ -426,8 +426,9 @@ STAGE = Stage(OUT, args.proofs, scale=args.scale, samples=args.samples)
 STAGE.clear()
 camera()
 x0, y0, x1, y1 = bounds()
-BLEED = 3.4  # room for the key light's shadow, which falls about two em off the body
-json.dump({"box": [round(v, 4) for v in (x0 - BLEED, y0 - BLEED, x1 - x0 + 2 * BLEED, y1 - y0 + 2 * BLEED)]}, open(PLACE, "w"))
+BLEED = 4.0  # room for the key light's shadow to fade out entirely before the frame's edge
+# The box the photograph covers, and where the middle of the body lies, both in the spread's em.
+json.dump({"box": [round(v, 4) for v in (x0 - BLEED, y0 - BLEED, x1 - x0 + 2 * BLEED, y1 - y0 + 2 * BLEED)], "at": list(AT)}, open(PLACE, "w"))
 # Over it hangs a ring softbox round the stand's lens, as a camera is lit for its photograph: chrome and glass show
 # only what is round them, and here that is one broad even light all round, with the dark of the stand's lens in
 # its middle, right over the lens below, so the lens looks back at it as a dark eye ringed with light. Only what
@@ -464,5 +465,5 @@ for name, inner, outer, z, glow in (("softbox", 9.0, 34.0, 40.0, 0.45), ("stand-
     panel.visible_shadow = False
     panel.visible_diffuse = False
     panel.visible_volume_scatter = False
-key.add()
-STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=0.95, exposure=EXPOSURE, lens=False, sharp=2.0)
+key.add(((x0 + x1) / 2, -(y0 + y1) / 2))
+STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=1.0, exposure=EXPOSURE, lens=False, sharp=2.0)

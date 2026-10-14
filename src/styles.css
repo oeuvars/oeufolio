@@ -252,6 +252,9 @@
     mask-position: right top;
     mask-repeat: repeat-y;
     mask-composite: subtract;
+    /* Where the tear's tile begins both masks are solid, and their soft edges there would leave a hairline down the
+       whole strip: the fray only ever lies near the edge, so the start of the tile is cut away. */
+    clip-path: inset(0 0 0 calc(100% - 12px));
   }
 
   /* And the grain darkens toward the edge, where hands have worn and oiled it, but not where a tab grows out. */

@@ -10,7 +10,8 @@ Each stamp is an Indian one, as the stamp sheets in the reference's feed are eac
 the country in Devanagari and in English along its foot, in black, and its value in rupees beside them, in
 vermilion. The type is the page's own, from the font files the page loads: Martel for the Devanagari, the rupee
 sign and the figures, Domine for the Latin. Writes studio/ticket/art/stamps-k.png and stamps-red.png, white where the ink prints,
-the whole strip (ticket.json's "stamps") at PX_PER_EM. ticket.py prints them.
+the whole strip (ticket.json's "stamps") at PX_PER_EM, and coil-k.png and coil-red.png for the folded strip's long
+run of the same stamps (ticket.json's "coil"). ticket.py prints them.
 """
 
 import json
@@ -28,8 +29,10 @@ DIGITS = os.path.join(FONTS, "martel", "files", "martel-latin-800-normal.woff")
 DOMINE = os.path.join(FONTS, "domine", "files", "domine-latin-700-normal.woff")
 
 
-def main():
-    spec = TICKET["stamps"]
+def plates_for(key):
+    """The type for one run of stamps in ticket.json: "stamps", the strip beside the ticket, or "coil", the long run
+    down the folded strip. A run gives its own pictures and values and takes its stamps' size from "stamps"."""
+    spec = {**TICKET["stamps"], **TICKET[key]}
     sw, sh = spec["size"]
     ax, ay, aw, ah = spec["art"]
     count = len(spec["views"])
@@ -56,8 +59,9 @@ def main():
         right -= draw["red"].textlength(rupees, font=value) + 0.03 * em
         draw["red"].text((right, base + 0.04 * em), "₹", font=sign, fill=255, anchor="rs")
     for ink, plate in plates.items():
-        plate.save(os.path.join(HERE, "art", f"stamps-{ink}.png"))
-    print("wrote", count, "stamps,", f"{size[0]} x {size[1]} px")
+        plate.save(os.path.join(HERE, "art", f"{key}-{ink}.png"))
+    print("wrote", count, key, f"{size[0]} x {size[1]} px")
 
 
-main()
+for key in ("stamps", "coil"):
+    plates_for(key)
