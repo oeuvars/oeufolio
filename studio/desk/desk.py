@@ -71,8 +71,8 @@ STAND_INS = {"reel": ("reel",)}
 DENSITY = 32
 EXPOSURE = 0.1
 # The lamp's plate: how bright the bulb is, in watts, and how much of the room's light is left at night.
-BULB = 260000.0
-NIGHT_ROOM = 0.02
+BULB = 300000.0
+NIGHT_ROOM = 0.025
 LAMP_EXPOSURE = 0.0
 # The window's share of the light on the mat by day, the rest being the room's. Its size and distance in em.
 KEY_SHARE = 0.6
@@ -268,7 +268,7 @@ class Desk:
         source = bpy.data.lights.new("bulb", "SPOT")
         source.energy = power
         source.color = (1.0, 0.74, 0.46)
-        source.spot_size = math.radians(124)
+        source.spot_size = math.radians(138)
         source.spot_blend = 1.0
         source.shadow_soft_size = 2.5
         bulb = self.stage.add("bulb", source)

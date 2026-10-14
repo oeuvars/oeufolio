@@ -208,18 +208,17 @@ def tag(stage):
     sheet.finish(np.clip(near, 0, 1) * handled * sheet.mask(SEAM - X), rough=0.3)
     sheet.rgb *= (1 + 0.05 * cloud(shape, 52, falloff=2.0))[..., None]
 
-    # The name goes in before the stitching, blind stamped: a hot brass die pressed into the grain without foil.
-    # The heat darkens the leather where it bites and burnishes the floor of each letter smooth, and the
-    # leather beside the walls is pushed up a little.
-    r0, r1, c0, c1 = (round(v * sheet.ppe) for v in (2.1, 2.1 + 4.2, 1.15, 1.15 + 11.5))
+    # The name goes in before the stitching, blind stamped as a leather goods maker does it: a small brass die
+    # in Geist Mono capitals, set a touch tighter than the face, pressed shallow into the grain without foil in the bottom left
+    # corner of the stitched panel. It shows by its crisp walls catching the light, the floor of each letter a
+    # shade darker and a little smoother than the grain round it, where the warm die has set the leather.
+    r0, r1, c0, c1 = (round(v * sheet.ppe) for v in (6.35, 6.35 + 1.2, 1.15, 1.15 + 6.0))
     name = np.zeros(shape)
     name[r0:r1, c0:c1] = fit(pixels_of(os.path.join(ART, "tag-anurag.png"))[..., 3:].astype(np.float64), r1 - r0, c1 - c0)[..., 0]
-    floor = blur(name, 1.2)
-    sheet.press(floor, 0.055)
-    sheet.height += 0.006 * np.clip(blur(name, 4.0) - floor, 0, 1)
-    scorched = np.clip(blur(name, 0.8) * (0.85 + 0.15 * cloud(shape, 53, falloff=1.4)), 0, 1)
-    sheet.rgb *= (1 - 0.42 * scorched)[..., None]
-    sheet.finish(scorched, rough=0.24)
+    sheet.press(blur(name, 0.6), 0.02)
+    set_ = blur(name, 0.5)
+    sheet.rgb *= (1 - 0.14 * set_)[..., None]
+    sheet.finish(set_, rough=0.3)
 
     # Lacoste's crocodile on the tab, in its own colours, standing a hair proud of the leather as it does on the
     # brand's own leather goods.

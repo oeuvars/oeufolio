@@ -13,7 +13,7 @@ export function StripMat() {
       className="mat @container absolute inset-y-0 left-0 w-[calc(100%+var(--band-w))] overflow-hidden before:pointer-events-none before:absolute before:inset-0 before:bg-mat-grain before:bg-size-[220px_220px] before:opacity-20 before:mix-blend-multiply"
     >
       <Rulers cut />
-      <img src="/objects/mat/desk-tall.avif" alt="" draggable={false} className="absolute -top-[455cqw] -left-[15cqw] w-[222cqw] max-w-none" />
+      <img src="/objects/mat/desk-tall.avif" alt="" draggable={false} className="absolute top-[105cqw] -left-[15cqw] w-[140cqw] max-w-none" />
     </div>
   )
 }
