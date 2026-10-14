@@ -44,7 +44,7 @@ export const profile: Profile = {
   socials: [
     { label: 'GitHub', href: 'https://github.com/oeuvars' },
     { label: 'X', href: 'https://x.com/oeuvars' },
-    { label: 'LinkedIn', href: 'https://linkedin.com/in/oeuvars' },
+    { label: 'Instagram', href: 'https://instagram.com/oeuvars' },
   ],
   email: 'sudo@anurag.gg',
 }

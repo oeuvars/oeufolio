@@ -4,19 +4,20 @@ are: each ink a stencil laid down on its own pass, translucent, so where two ove
 and never quite in register with the others. It has bites along both ends and a notch either side of the line it was
 meant to tear along. It has been carried: folded once along the tear line, its top corner dog-eared and put back,
 its edges a little scuffed. Then the same ticket with the conductor's punch through it, and a roll of the small
-tickets for the strip. Run from the repository root, after studio/ticket/ink.py and studio/ticket/plate.mjs:
+tickets for the strip, and the strip of stamps that lies beside the ticket. Run from the repository root, after studio/ticket/ink.py and studio/ticket/plate.mjs:
 
-    blender -b --factory-startup -P studio/ticket/ticket.py -- [ticket punched roll ...] [--scale 0.5] [--samples 64] [--proofs DIR]
+    blender -b --factory-startup -P studio/ticket/ticket.py -- [ticket punched roll stamps ...] [--scale 0.5] [--samples 64] [--proofs DIR]
 
 Writes public/objects/ticket.avif, the ticket and the shadow it leaves; public/objects/ticket-punched.avif, the same
-with the conductor's punch through it, for the page to show in its place; and public/objects/ticket-roll.avif, the roll. Uses the
+with the conductor's punch through it, for the page to show in its place; and public/objects/ticket-roll.avif, the roll; and public/objects/ticket-stamps.avif, the stamps. Uses the
 copy stand from the oeusume studio, so it is lit as every other object on the site is. Set OEUSUME if that checkout
 is not in ~/Documents/oeusume.
 
 Every measure is in the ticket's em, from src/components/ticket/ticket.json, which the page reads too. What is
 printed comes from the page's own type, captured by plate.mjs into studio/ticket/art as one plate per ink
 (plate-<ink>.png), so the words in the photograph sit under the page's live words; from hand.py's note in the
-reference's own handwriting (hand.png); and from ink.py's plates of the picture (river-<ink>.png for the ticket, river-tower-<ink>.png for the strip's).
+reference's own handwriting (hand.png); from cats.py's cats, one for each link (cat-<name>.png); and from ink.py's
+plates of the picture (river-<ink>.png for the ticket, river-tower-<ink>.png for the strip's).
 """
 
 import argparse
@@ -40,7 +41,7 @@ from stock import Sheet, drift, fit, pixels_of  # noqa: E402
 TICKET = json.load(open(os.path.join(ROOT, "src", "components", "ticket", "ticket.json")))
 W, H = TICKET["size"]
 BLEED = TICKET["bleed"]
-PANEL = "#861812"  # the red leather the ticket lies on (leather.py), which lights it from below
+PANEL = "#651415"  # the red leather the ticket lies on (leather.py), which lights it from below
 CARD = "#f6f5f0"  # bright white uncoated card
 # The four riso inks, in the order the press laid them down, and how far each pass landed off true, in em.
 INKS = (("yellow", "#ffd23f", (0.035, -0.02)), ("teal", "#0f8b8d", (-0.025, 0.03)), ("red", "#ff4a3d", (0.02, 0.025)), ("k", "#121212", (0.0, 0.0)))
@@ -62,6 +63,16 @@ def placed(sheet, coverage, x0, y0, w, h):
     return np.clip(out, 0, 1)
 
 
+def cover(art, w, h):
+    """The middle of a picture, cut to the shape of a w by h box, as background-size: cover cuts it."""
+    rows, cols = art.shape
+    if w / h < cols / rows:
+        keep = round(rows * w / h)
+        return art[:, (cols - keep) // 2 : (cols - keep) // 2 + keep]
+    keep = round(cols * h / w)
+    return art[(rows - keep) // 2 : (rows - keep) // 2 + keep]
+
+
 def plate(sheet, ink, view, x0=0.0, y0=0.0, scale=1.0):
     """What one ink prints on one ticket, laid at x0, y0 on the sheet and scaled: the type plate.mjs captured for it,
     if the type is printed in it, and ink.py's plate of the picture named by view, cut to fill the picture's box as
@@ -78,16 +89,16 @@ def plate(sheet, ink, view, x0=0.0, y0=0.0, scale=1.0):
         written = placed(sheet, hand, x0 + nx * scale, y0 + ny * scale, nw * scale, nh * scale)
         # A marker's line is already as heavy as it will be: it only wicks a little into the card.
         out = np.maximum(out, np.clip(blur(written, 0.6 * sheet.ppe * scale / 96) * 1.15, 0, 1))
+        # The cats where the usernames would be (cats.py). They are pen drawings, as the note is: printed as their
+        # lines were drawn, a little heavier where the ink wicked, and not thinned and broken as type is.
+        for entry in TICKET["cats"]:
+            bx, by, bw, bh = entry["box"]
+            cat = pixels_of(os.path.join(ART, f"cat-{entry['cat']}.png"))[..., 0].astype(np.float64)
+            drawn = placed(sheet, cat, x0 + bx * scale, y0 + by * scale, bw * scale, bh * scale)
+            out = np.maximum(out, np.clip(blur(drawn, 0.6 * sheet.ppe * scale / 96) * 1.4, 0, 1))
     art = pixels_of(os.path.join(ART, f"{view}-{ink}.png"))[..., 0].astype(np.float64)
     ax, ay, aw, ah = TICKET["art"]
-    rows, cols = art.shape
-    if aw / ah < cols / rows:
-        keep = round(rows * aw / ah)
-        art = art[:, (cols - keep) // 2 : (cols - keep) // 2 + keep]
-    else:
-        keep = round(cols * ah / aw)
-        art = art[(rows - keep) // 2 : (rows - keep) // 2 + keep]
-    return np.maximum(out, placed(sheet, art, x0 + ax * scale, y0 + ay * scale, aw * scale, ah * scale))
+    return np.maximum(out, placed(sheet, cover(art, aw, ah), x0 + ax * scale, y0 + ay * scale, aw * scale, ah * scale))
 
 
 def smooth(lo, hi, x):
@@ -288,7 +299,47 @@ def roll():
     return STAGE.shoot("ticket-roll", (0, (h - shown) / 2, w, shown), bleed=0.5, shadow=0.75, sharp=1.0, exposure=EXPOSURE)
 
 
-SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "roll": roll}
+def stamps():
+    """The strip of stamps beside the ticket: three Indian stamps still joined, each its own picture of the same river,
+    printed in the ticket's four inks, with the country and the value along the foot (stamps.py's plates). The
+    perforations run between them, whole round holes, and round the strip's edge, where it was torn off the sheet,
+    as the teeth the holes leave. Mint and lying flat, but for the curl gummed paper takes."""
+    spec = TICKET["stamps"]
+    sw, sh = spec["size"]
+    ax, ay, aw, ah = spec["art"]
+    radius, pitch = spec["perf"]
+    count = len(spec["views"])
+    w, h = sw, sh * count
+    sheet = card(w, h, 29)
+    plates = {}
+    for name, _, _ in INKS:
+        m = np.zeros(sheet.height.shape)
+        for i, view in enumerate(spec["views"]):
+            art = cover(pixels_of(os.path.join(ART, f"{view}-{name}.png"))[..., 0].astype(np.float64), aw, ah)
+            m = np.maximum(m, placed(sheet, art, ax, i * sh + ay, aw, ah))
+        path = os.path.join(ART, f"stamps-{name}.png")
+        if os.path.exists(path):
+            typed = pixels_of(path)[..., 0].astype(np.float64)
+            m = np.maximum(m, printer(sheet, placed(sheet, typed, 0, 0, w, h), seed={"k": 31, "red": 33}[name], scale=0.5))
+        plates[name] = m
+    printed = riso(sheet, plates, 37, scale=0.5)
+    # The perforations: a row of holes along every line between stamps and along every edge, spaced evenly on each.
+    across = round(w / pitch)
+    down = round(sh / pitch)
+    for k in range(across + 1):
+        for i in range(count + 1):
+            sheet.punch(disc(sheet.X, sheet.Y, k * w / across, i * sh, radius))
+    for k in range(down * count + 1):
+        for x in (0, w):
+            sheet.punch(disc(sheet.X, sheet.Y, x, k * sh / down, radius))
+    carried(sheet, printed, 41, scale=0.4, folded=False)
+    sheet.soften(0.02, 0.008)
+    wave = drift(w, h, 0.1, 43)
+    build(sheet, "ticket-stamps", lambda x, y: wave(x, y) + 0.04 * ((x - w / 2) / w) ** 2)
+    return STAGE.shoot("ticket-stamps", (0, 0, w, h), bleed=0.5, shadow=0.75, sharp=SHARP, exposure=EXPOSURE)
+
+
+SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "roll": roll, "stamps": stamps}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("shots", nargs="*")

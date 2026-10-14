@@ -38,7 +38,7 @@ const pageTones: Tone[] = [
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
-  { band: '#8a8b78', bandInk: '#20241a', panel: '#6e1410', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-van.avif' },
+  { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-van.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
@@ -336,7 +336,7 @@ export function SiteShell({ children }: SiteShellProps) {
                     className="pointer-events-none absolute inset-0"
                     style={{
                       // The hide falls off a little into shadow toward the edges of the light.
-                      backgroundImage: `radial-gradient(120% 85% at 50% 42%, transparent 50%, rgb(20 2 1 / 0.45)), url(${pageTones[i].surface})`,
+                      backgroundImage: `radial-gradient(120% 85% at 50% 42%, transparent 50%, rgb(20 2 1 / 0.3)), url(${pageTones[i].surface})`,
                       backgroundSize: '100% 100%, 256px 256px',
                     }}
                   />

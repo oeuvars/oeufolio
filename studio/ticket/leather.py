@@ -38,11 +38,14 @@ from stock import Sheet  # noqa: E402
 
 OUT = os.path.join(ROOT, "public", "objects")
 TILE = 8.0  # the square the page repeats, in em
-PEBBLE = 0.3  # the mean distance between pebbles, in em: at the ticket's scale, about a millimetre and a half
-DEPTH = 0.03  # how far a pebble's crown stands above the crease, in em
-DYE = "#9c1d15"  # the red on the crowns
-POOLED = "#4a0906"  # the red the dye dries to in the creases
+PEBBLE = 0.13  # the mean distance between pebbles, in em: at the ticket's scale, about two thirds of a millimetre
+DEPTH = 0.028  # how far a pebble's crown stands above the crease, in em
+DYE = "#e0080f"  # the red on the crowns, as the dye reflects it: a strong red that reflects almost no green or blue
+POOLED = "#500006"  # the red the dye dries to in the creases
+# The hide is lit dimly, as a dark red is: under the stand's usual light the white the finish reflects would grey the
+# red. Two stops down, the photograph comes out the deep crimson of the colour reference, about #651415.
 QUALITY = 86
+EXPOSURE = -2.05
 
 
 def smooth(lo, hi, x):
@@ -60,11 +63,11 @@ def voronoi(n, seed):
     size = TILE / cells
     gx, gy = np.meshgrid(np.arange(cells), np.arange(cells))
     pts = (np.stack([gx.ravel(), gy.ravel()], 1) + 0.5 + rng.uniform(-0.4, 0.4, (cells * cells, 2))) * size
-    weight = (rng.random(cells * cells) ** 1.5 * 0.32 * size).reshape(cells, cells)
+    weight = (rng.random(cells * cells) ** 2.0 * 0.55 * size).reshape(cells, cells)
     ax = (np.arange(n) + 0.5) * TILE / n
     X, Y = np.meshgrid(ax, ax)
-    X = X + cloud((n, n), seed + 1, falloff=1.7) * 0.12 * size
-    Y = Y + cloud((n, n), seed + 2, falloff=1.7) * 0.12 * size
+    X = X + cloud((n, n), seed + 1, falloff=1.5) * 0.3 * size
+    Y = Y + cloud((n, n), seed + 2, falloff=1.5) * 0.3 * size
     f1 = np.full((n, n), np.inf)
     f2 = np.full((n, n), np.inf)
     ci = np.floor(X / size).astype(int)
@@ -88,48 +91,48 @@ def grain(n):
     """The hide's relief, how deep each point lies in a crease (0 on a crown, 1 at the bottom of a crease), and
     where the pores are, all n by n and seamless."""
     f1, f2 = voronoi(n, 7)
-    edge = (f2 - f1) / PEBBLE  # 0 where two pebbles meet, growing toward each pebble's middle
-    edge = np.clip(edge, 0, None)
-    # Each pebble a soft dome: rounded up from the crease, and falling away a little from its middle.
-    # Each pebble rounds up out of the crease over a short shoulder, then swells gently toward its middle. The shoulder
-    # is saturated before the line inside a cell where its second neighbour changes, so no ridge shows across it.
-    shoulder = smooth(0.0, 0.2, edge)
-    bulge = 1 - np.clip((f1 + 0.1 * PEBBLE) / (0.75 * PEBBLE), 0, 1) ** 2
-    dome = shoulder * (0.3 + 0.7 * blur(bulge, 1.5))
-    crease = 1 - smooth(0.0, 0.1, edge)
-    # Long creases where the hide flexed: thin, shallow valleys along the zero lines of a slow noise.
-    flex = cloud((n, n), 5, falloff=2.0, stretch=1.8)
-    long = (1 - smooth(0.0, 0.05, np.abs(flex))) * smooth(0.0, 0.7, cloud((n, n), 6, falloff=1.6))
-    # Pores: small soft pits, scattered.
-    pits = smooth(0.45, 0.8, blur(smooth(2.6, 3.2, cloud((n, n), 9, falloff=0.1)), 1.2) * 3)
-    height = blur(DEPTH * (dome - 0.3 * long - 0.15 * pits) + 0.002 * cloud((n, n), 13, falloff=1.4), 1.0)
-    return height, np.clip(crease + 0.6 * long, 0, 1), pits
+    edge = np.clip((f2 - f1) / PEBBLE, 0, None)  # 0 where two pebbles meet, growing toward each pebble's middle
+    # Each pebble a rounded dome, rising out of the crease over a soft shoulder and swelling toward its middle, so
+    # the light falls broad across its crown and shades its far side, and never glints along the crease's rim.
+    bulge = 1 - np.clip(f1 / (0.75 * PEBBLE), 0, 1) ** 2
+    dome = smooth(0.0, 0.45, edge) * (0.45 + 0.55 * bulge)
+    crease = 1 - smooth(0.0, 0.14, edge)
+    # Here and there a longer, shallow crease across the pebbles, where the hide flexed on the animal: a soft valley
+    # along the zero line of a slow noise, shown only in patches.
+    line = 1 - smooth(0.0, 0.05, np.abs(cloud((n, n), 5, falloff=1.6, stretch=1.8)))
+    long = blur(line * smooth(0.2, 0.9, cloud((n, n), 105, falloff=1.7)), 1.5)
+    # Pores, and the fine roughness of the grain's face.
+    pits = smooth(0.5, 0.85, blur(smooth(2.5, 3.1, cloud((n, n), 9, falloff=0.1)), 0.8) * 3)
+    face = blur(cloud((n, n), 13, falloff=0.6), 0.6)
+    height = DEPTH * (blur(dome, 1.0) - 0.5 * long - 0.25 * pits + 0.03 * face) + 0.002 * cloud((n, n), 15, falloff=1.6)
+    return height, crease, pits, long
 
 
 def leather(stage, proof=None):
     sheet = Sheet(TILE * 3, TILE * 3, DYE, rough=0.5, density=2)
     rows, cols = sheet.height.shape
     n = rows // 3
-    height, crease, pits = grain(n)
+    height, crease, pits, long = grain(n)
     tile = lambda a: np.tile(a, (3, 3))[:rows, :cols]  # noqa: E731
-    height, crease, pits = tile(height), tile(crease), tile(pits)
-    # Colour: the dye on the crowns, darker where it pooled, a slow mottle across the hide as no hide takes dye evenly.
-    mottle = tile(cloud((n, n), 21, falloff=1.9))
-    top = linear(DYE) * (1 + 0.06 * mottle)[..., None]
+    height, crease, pits, long = tile(height), tile(crease), tile(pits), tile(long)
+    # Colour: the dye on the crowns, darker where it pooled, and a faint unevenness, as no hide takes dye evenly.
+    mottle = tile(cloud((n, n), 21, falloff=1.2))
+    top = linear(DYE) * (1 + 0.05 * mottle)[..., None]
     pool = linear(POOLED)
-    dark = np.clip(0.55 * blur(crease, 1.5) + 0.25 * pits, 0, 1)[..., None]
+    dark = np.clip(0.85 * blur(crease, 0.6) + 0.3 * long + 0.4 * pits, 0, 1)[..., None]
     sheet.rgb = top * (1 - dark) + pool * dark
     sheet.height = height
-    # The finish: smooth and bright on the crowns, matte in the creases and pores.
-    sheet.rough = 0.5 + 0.25 * np.clip(crease + pits, 0, 1)
+    # The finish: a satin wax, worn a little smoother on the crowns, matte in the creases and pores. No sheen: that is
+    # the fuzz of velvet, and it greys the red.
+    sheet.rough = 0.5 + 0.3 * np.clip(crease + long + pits, 0, 1)
     sheet.coat = 0.0 * crease
     if proof:
         np.save(os.path.join(proof, "leather-albedo.npy"), sheet.rgb[:n, :n].astype(np.float32))
     # The sheet is three squares across and the frame the middle one, so the square meets itself on every side. The
     # lens is left out: it leans the light across the frame, which would show as a step where two squares meet.
-    # The fine texture of the grain's surface, pores and all, from a scan of real hide, faint, one tile to the square.
-    sheet.build(stage, "leather", thickness=0.1, scan="Leather037", scan_size=TILE / 4, scan_normal=0.5, scan_rough=0.3, sheen=0.35, specular=0.4, coat_rough=0.4, at=(-TILE, -TILE))
-    stage.shoot("leather", (0, 0, TILE, TILE), exposure=0.35, lens=False, sharp=2.0)
+    # The scan of real hide only varies the shine: its relief is a coarser grain than this one, and would show through.
+    sheet.build(stage, "leather", thickness=0.1, scan="Leather037", scan_size=TILE / 4, scan_normal=0.0, scan_rough=0.2, specular=0.5, at=(-TILE, -TILE))
+    stage.shoot("leather", (0, 0, TILE, TILE), exposure=EXPOSURE, lens=False, sharp=2.0)
 
 
 parser = argparse.ArgumentParser()

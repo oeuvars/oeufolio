@@ -9,21 +9,23 @@ const [W, H] = ticket.size
 const B = ticket.bleed
 const FRAME_W = W + 2 * B
 const FRAME_H = H + 2 * B
-// The roll's photograph, in the ticket's em: one small ticket wide, with the margin the render leaves round it, and as
-// tall as the run of tickets it shows. It stands beside the ticket, as the small tickets do in the reference.
-const ROLL_BLEED = 0.5
-const ROLL_W = W * ticket.roll.scale + 2 * ROLL_BLEED
-const ROLL_H = H * ticket.roll.scale * ticket.roll.shown + 2 * ROLL_BLEED
-const GAP = 0.6
-const SPREAD_W = ROLL_W + GAP + FRAME_W
+// The stamps' photograph, in the ticket's em: the strip, with the margin the render leaves round it. It lies beside the
+// ticket, as the small pieces of print do in the reference, low, clear of the tab of the strip before.
+const STAMPS_BLEED = 0.5
+const [STAMP_W, STAMP_H] = ticket.stamps.size
+const STAMPS_W = STAMP_W + 2 * STAMPS_BLEED
+const STAMPS_H = STAMP_H * ticket.stamps.views.length + 2 * STAMPS_BLEED
+const STAMPS_TOP = FRAME_H - STAMPS_H - 2
+const GAP = 0
+const SPREAD_W = STAMPS_W + GAP + FRAME_W
 
 /**
  * The contact page: a risograph-printed cinema ticket lying on the page, photographed (studio/ticket/ticket.py), with what
  * is printed on it laid over the photograph in the same type and left clear, so the words can be selected and
  * followed where they are printed. It is as tall as the page lets it be and never wider than the page. Copying
  * the email address has the conductor punch it: a second photograph, taken under the same light with the hole
- * through it, takes the first one's place, and the wood shows through the hole. Beside it stands a run of the small tickets off the same roll,
- * their own picture a look up the bridge's tower, cut off top and bottom by the page.
+ * through it, takes the first one's place, and the leather shows through the hole. Beside it lies a strip of three Indian
+ * stamps printed in the same inks, each its own picture of the same river.
  */
 export function Ticket() {
   const [copied, setCopied] = useState(false)
@@ -46,13 +48,13 @@ export function Ticket() {
       transition={{ type: 'spring', stiffness: 120, damping: 20, mass: 1 }}
     >
       <div className="flex items-stretch select-none" style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, gap: `${GAP}em` }}>
-        <div aria-hidden className="relative shrink-0 overflow-hidden" style={{ width: `${ROLL_W}em`, height: `${FRAME_H}em` }}>
+        <div aria-hidden className="relative shrink-0" style={{ width: `${STAMPS_W}em`, height: `${FRAME_H}em` }}>
           <img
-            src="/objects/ticket-roll.avif"
+            src="/objects/ticket-stamps.avif"
             alt=""
             draggable={false}
             className="absolute left-0 max-w-none"
-            style={{ width: `${ROLL_W}em`, height: `${ROLL_H}em`, top: `${(FRAME_H - ROLL_H) / 2}em` }}
+            style={{ width: `${STAMPS_W}em`, height: `${STAMPS_H}em`, top: `${STAMPS_TOP}em` }}
           />
         </div>
         <div className="relative shrink-0" style={{ width: `${FRAME_W}em`, height: `${FRAME_H}em` }}>

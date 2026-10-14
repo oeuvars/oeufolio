@@ -2,12 +2,13 @@
 in front with someone standing in it under an umbrella, and the low line of the city behind. Run from the
 repository root:
 
-    blender -b --factory-startup -P studio/ticket/river.py -- [--view main|tower] [--size 1600] [--samples 64]
+    blender -b --factory-startup -P studio/ticket/river.py -- [--view main|tower|boat|span] [--size 1600] [--samples 64]
 
 Writes studio/ticket/art/river.exr, a multilayer EXR with the light, the normals, the depth and which kind of thing
 each pixel is, and studio/ticket/art/river.json, where the horizon falls. studio/ticket/ink.py draws from them.
 --view tower writes river-tower.exr and river-tower.json instead: the picture on the small tickets of the strip, a
-look up the near tower from the water by its pier.
+look up the near tower from the water by its pier. --view boat and --view span are two of the stamps' pictures:
+the boat close to, and the suspended span from far down the river.
 
 Metres. x runs along the bridge, y across the river away from the camera, z up. The bridge is a balanced cantilever,
 as the real one is: two towers 82 m above the piers, anchor arms back to the banks, cantilever arms reaching out
@@ -311,7 +312,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--size", type=int, default=1600)
     parser.add_argument("--samples", type=int, default=64)
-    parser.add_argument("--view", choices=("main", "tower"), default="main")
+    parser.add_argument("--view", choices=("main", "tower", "boat", "span"), default="main")
     args = parser.parse_args(argv)
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -393,6 +394,21 @@ def main():
         camera.location = (-30.0, -95.0, 3.0)
         up = (Vector((-60.0, 0.0, 62.0)) - camera.location).normalized()
         camera.rotation_euler = up.to_track_quat("-Z", "Y").to_euler()
+    elif args.view == "boat":
+        # A stamp's: behind the boat and off to its side, low on the water, the one under the umbrella standing
+        # against the bridge far off.
+        optics.lens = 50
+        back = Vector((forward.x, forward.y, 0)).normalized()
+        camera.location = at - back * 17 - right * 4 + Vector((0, 0, 1.8 - at.z))
+        look = Vector((at.x, at.y, 3.2)) + back * 40 - camera.location
+        camera.rotation_euler = look.normalized().to_track_quat("-Z", "Y").to_euler()
+    elif args.view == "span":
+        # A stamp's: from far down the river with a long lens, the suspended span bowed across the middle.
+        optics.lens = 135
+        mid = -60.0 + SPAN / 2
+        camera.location = (mid - 40, -620.0, 2.4)
+        look = Vector((mid, 0.0, DECK + 16)) - Vector(camera.location)
+        camera.rotation_euler = look.normalized().to_track_quat("-Z", "Y").to_euler()
 
     name = "river" if args.view == "main" else f"river-{args.view}"
     os.makedirs(ART, exist_ok=True)
