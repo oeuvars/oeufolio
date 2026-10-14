@@ -33,16 +33,21 @@ type Tone = {
   tab: string
 }
 
-// The spine has no tab. Its edge is torn instead, down its whole length.
+// The spine has no tab. Its edge is torn down its whole length, as every strip's is.
 const spineTone: Omit<Tone, 'tab'> = { band: '#eeede8', bandInk: '#1d1d1b', panel: '#eeede8', panelInk: '#1d1d1b' }
+
+// A torn edge's mask: how wide it is and how long one length of it runs before it repeats, in px.
+const TEAR_WIDTH = 16
+const TEAR_LENGTH = 1600
 
 /**
  * A strip of paper's torn edge, as a mask that repeats down the edge: solid to the left of the tear, clear to
  * its right. The tear wanders in and out at a few scales at once, and it comes back to where it began, so
- * one length of it meets the next without a seam. reach is how far the tear wanders, in px, and fray how
- * much the finest scale shakes it.
+ * one length of it meets the next without a seam. Each seed tears it differently. reach is how far the tear
+ * wanders, in px, and fray how much the finest scale shakes it. Along calm, spans of the edge from and to
+ * in px, the edge runs straight, easing out of the tear and back into it, where a tab grows out of it.
  */
-function tear(seed: number, width: number, length: number, reach: number, fray: number) {
+function tear(seed: number, reach: number, fray: number, calm: Array<[number, number]> = []) {
   let state = seed
   const random = () => {
     state = (state + 0x6d2b79f5) | 0
@@ -55,26 +60,35 @@ function tear(seed: number, width: number, length: number, reach: number, fray: 
     { every: 14, amount: 0.3 },
     { every: 3, amount: fray },
   ].map(({ every, amount }) => {
-    const knots = Array.from({ length: Math.round(length / every) }, random)
+    const knots = Array.from({ length: Math.round(TEAR_LENGTH / every) }, random)
     return (y: number) => {
-      const at = (y / length) * knots.length
+      const at = (y / TEAR_LENGTH) * knots.length
       const i = Math.floor(at)
       const f = at - i
       const ease = f * f * (3 - 2 * f)
       return amount * (knots[i % knots.length] * (1 - ease) + knots[(i + 1) % knots.length] * ease)
     }
   })
-  const points = Array.from({ length: length + 1 }, (_, y) => {
-    const x = width - 1 - reach * scales.reduce((sum, scale) => sum + scale(y), 0)
+  const ramp = 36
+  const settled = (y: number) =>
+    calm.reduce((least, [from, to]) => {
+      const away = Math.max(from - y, y - to, 0) / ramp
+      const f = Math.min(away, 1)
+      return Math.min(least, f * f * (3 - 2 * f))
+    }, 1)
+  const points = Array.from({ length: TEAR_LENGTH + 1 }, (_, y) => {
+    const x = TEAR_WIDTH - reach * settled(y) * scales.reduce((sum, scale) => sum + scale(y), 0)
     return `${x.toFixed(2)} ${y}`
   })
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${length}" viewBox="0 0 ${width} ${length}"><path d="M0 0 L${points.join(' L')} L0 ${length} Z"/></svg>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${TEAR_WIDTH}" height="${TEAR_LENGTH}" viewBox="0 0 ${TEAR_WIDTH} ${TEAR_LENGTH}"><path d="M0 0 L${points.join(' L')} L0 ${TEAR_LENGTH} Z"/></svg>`
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
-// The paper's pale core tears out past its surface in a ragged fringe, so two tears lie one over the other.
-const tornSurface = tear(7, 16, 520, 11, 0.2)
-const tornCore = tear(7, 16, 520, 7, 0.55)
+/** A strip's torn edge, as the style that carries it: its surface, and the paper's pale core torn out past
+ * the surface in a ragged fringe, both from one tear. */
+function torn(seed: number, calm: Array<[number, number]> = []) {
+  return { '--torn-surface': tear(seed, 11, 0.2, calm), '--torn-core': tear(seed, 7, 0.55, calm) } as CSSProperties
+}
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
@@ -268,6 +282,14 @@ export function SiteShell({ children }: SiteShellProps) {
 
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
+  // Each page's edge is torn its own way, and runs straight where its tab grows out of it, so the tab's
+  // eased joins meet a straight edge.
+  const tears = pageTones.map((_, i) => {
+    const shape = tabShape(i + 1)
+    const top = tabTops[i + 1] * metrics.rem
+    const { reach } = tabOutline(shape)
+    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]])
+  })
   const fixed = mobile ? 0 : spine + end
   const gaps = mobile ? count - 1 : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
@@ -359,8 +381,8 @@ export function SiteShell({ children }: SiteShellProps) {
       >
         {!mobile && (
           <aside
-            className="strip strip-torn"
-            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), '--torn-surface': tornSurface, '--torn-core': tornCore } as CSSProperties}
+            className="strip"
+            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7) }}
           >
             <div aria-hidden className="torn torn-core" />
             <div aria-hidden className="torn torn-surface" />
@@ -382,8 +404,10 @@ export function SiteShell({ children }: SiteShellProps) {
               initial={false}
               animate={{ left: lefts[i], width: open ? openWidth : folded(i) }}
               transition={transition}
-              style={stripStyle(pageTones[i], i + 1, stack - i)}
+              style={{ ...stripStyle(pageTones[i], i + 1, stack - i), ...tears[i] }}
             >
+              <div aria-hidden className="torn torn-core" />
+              <div aria-hidden className="torn torn-surface" />
               <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills || pageTones[i].roll ? 'panel-hangs' : ''}`}>
                 {pageTones[i].surface && (
                   <div
