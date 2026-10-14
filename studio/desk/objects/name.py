@@ -1,18 +1,19 @@
 """A bunch of keys. A stitched leather key tag, racing green lapped over a tan tab, has the name blind
-stamped into the green, and the tab carries Lacoste's crocodile. A steel split ring leans through its brass eyelet and through the tip of a
-Ferrari 458 Italia key, copied button side up from photographs of a used one: a red lacquered shell,
-a black rubber pad of three buttons and a laser cut blade. The key carries no maker's mark."""
+stamped into the green, and the tab carries Lacoste's crocodile. A steel split ring leans through its brass
+eyelet and round the brass bar of a Ferrari key fob in its frame: a red lacquered body in dark gunmetal, with
+carbon fibre twill round it. The fob carries no maker's mark."""
 
 import math
 import os
 
 import bmesh
+import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
-from paint import blur, box, cloud, cover, disc, linear, ramp, segment, streaks
-from solids import finish, lathe, principled, rect, worn
-from stock import Sheet, fit, pixels_of, sample
+from paint import blur, box, cloud, cover, disc, linear, ramp, segment
+from solids import finish, lathe, principled, prism, rect, worn
+from stock import Sheet, fit, pixels_of
 
 W, H = 30.0, 9.625
 ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "art")
@@ -34,26 +35,19 @@ THICK = 0.6
 RING, WIRE, LEAN = 1.9, 0.105, math.radians(35)
 LEVEL = math.radians(20)
 
-# The key, measured off the photographs in units of the width of its head. Along is from the tip the ring
-# goes through towards the blade, and each profile is one half of an outline: (along, half width).
-KEY_W = 6.1
-KEY_TURN = 26.0
-SHELL = (
-    (0, 0), (0.012, 0.072), (0.05, 0.149), (0.1, 0.217), (0.15, 0.27), (0.25, 0.35), (0.35, 0.405), (0.5, 0.458),
-    (0.65, 0.487), (0.8, 0.5), (0.95, 0.494), (1.03, 0.472), (1.085, 0.43), (1.125, 0.35), (1.148, 0.22),
-    (1.155, 0.1), (1.156, 0),
-)  # fmt: skip
-PAD = (
-    (0.285, 0), (0.29, 0.04), (0.305, 0.08), (0.34, 0.13), (0.4, 0.2), (0.5, 0.28), (0.6, 0.333), (0.7, 0.362),
-    (0.8, 0.374), (0.87, 0.372), (0.93, 0.345), (0.98, 0.29), (1.02, 0.2), (1.043, 0.1), (1.05, 0),
-)  # fmt: skip
-HEAD = 1.156 * KEY_W
-BORE = (0.112 * KEY_W, 0.07 * KEY_W)  # the hole for the ring: how far from the tip, and its radius
-BLADE, SHANK, STEM = 0.945 * KEY_W, 0.2 * KEY_W, 0.7
-# The halves of the shell part at PART above the mat, the lacquered half rises to TOP,
-# and the ring crosses the hole just under the lip, at RING_Z.
-PART, TOP, RING_Z = 0.75, 1.9, 1.3
-MARGIN = 0.1
+# The fob: a Ferrari key fob in its frame, as on the newer cars. A lacquered red body sits in a dark gunmetal
+# frame with a gap of carbon fibre twill round it, and a brass bar spans a notch in the top of the frame for
+# the ring. Measured off a photograph, in em, from the middle of the bar, the fob hanging along x.
+FOB_TURN = 22.0
+FRAME = (-0.25, 7.15, 2.8)  # from, to, half its width
+WALL = 0.5
+FRAME_H = 1.0
+FRAME_R = 1.3
+BODY_GAP = 0.18
+BODY_TOP = 1.3
+BAR_R, BAR_HALF = 0.14, 1.4
+# The ring crosses the bar this high above the mat.
+RING_Z = 0.6
 
 
 def spaced(outline, pitch, closed=True):
@@ -93,54 +87,6 @@ def stitch(sheet, points, thread="#e6dabb", length=0.27, width=0.09, slant=0.26)
         sheet.height[rows, cols] += 0.04 * crown * cord
         sheet.rough[rows, cols] += cord * (0.62 - sheet.rough[rows, cols])
         sheet.metal[rows, cols] *= 1 - cord
-
-
-def spline(points, steps=8, closed=True):
-    """A smooth curve through the points."""
-    count = len(points)
-    out = []
-    for i in range(count if closed else count - 1):
-        if closed:
-            p0, p1, p2, p3 = (points[(i + k - 1) % count] for k in range(4))
-        else:
-            p0, p1, p2, p3 = (points[min(count - 1, max(0, i + k - 1))] for k in range(4))
-        for s in range(steps):
-            t = s / steps
-            out.append(
-                tuple(
-                    0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (3 * b - a - 3 * c + d) * t**3)
-                    for a, b, c, d in zip(p0, p1, p2, p3)
-                )
-            )
-    return out if closed else out + [points[-1]]
-
-
-def polygon(X, Y, points):
-    """Signed distance to a closed outline. Negative inside."""
-    d = np.full(X.shape, np.inf)
-    inside = np.zeros(X.shape, dtype=bool)
-    for (ax, ay), (bx, by) in zip(points, points[1:] + points[:1]):
-        d = np.minimum(d, segment(X, Y, ax, ay, bx, by))
-        if ay != by:
-            inside ^= ((ay > Y) != (by > Y)) & (X < ax + (bx - ax) * (Y - ay) / (by - ay))
-    return np.where(inside, -d, d)
-
-
-def traced(sheet, points, width):
-    """Coverage of a line of the given width drawn through the points."""
-    d = np.full(sheet.X.shape, np.inf)
-    for (ax, ay), (bx, by) in zip(points, points[1:]):
-        d = np.minimum(d, segment(sheet.X, sheet.Y, ax, ay, bx, by))
-    return sheet.mask(d - width / 2)
-
-
-def moulded(sheet, z):
-    """A warp for Sheet.build that follows a height painted on the sheet's own grid."""
-
-    def warp(x, y):
-        return sample(z[..., None], np.asarray(x) * sheet.ppe - 0.5, np.asarray(y) * sheet.ppe - 0.5)[..., 0]
-
-    return warp
 
 
 def lay(obj, at, turn):
@@ -281,7 +227,7 @@ def tag(stage):
 
 
 def ring(stage, tag_z):
-    """The split ring, leaning through the eyelet. Returns where in the frame it crosses the key's hole."""
+    """The split ring, leaning through the eyelet. Returns where in the frame it crosses the fob's bar."""
     reach = RING * math.sin(LEAN)
     height = reach + WIRE * (1 + math.cos(LEAN))
     across = Vector((math.cos(LEVEL), -math.sin(LEVEL), 0))
@@ -291,7 +237,7 @@ def ring(stage, tag_z):
     def on(turn):
         return RING * (math.cos(turn) * across + math.sin(turn) * up)
 
-    # The leather hangs from the low side of the ring and the key from the other end of its level diameter.
+    # The leather hangs from the low side of the ring and the fob from the other end of its level diameter.
     at_tag = math.pi - math.asin((tag_z - height) / reach)
     at_key = math.asin((RING_Z - height) / reach)
     centre = Vector((EYE_AT[0], -EYE_AT[1], tag_z)) - on(at_tag)
@@ -301,211 +247,80 @@ def ring(stage, tag_z):
     return hole.x, -hole.y
 
 
-def marks(sheet, place):
-    """The pictograms moulded into the buttons: an open padlock, a closed one and a car with its boot up.
-    They read the right way up with the blade pointing away."""
-    cut = np.zeros(sheet.height.shape)
-
-    def line(points, width=0.06):
-        nonlocal cut
-        cut = np.maximum(cut, traced(sheet, [place(along, across) for across, along in points], width))
-
-    def padlock(across, along, open_by):
-        body = [(-0.052, -0.058), (0.052, -0.058), (0.052, 0.015), (-0.052, 0.015), (-0.052, -0.058)]
-        line([(across + x, along + y) for x, y in body])
-        bow = [(0.032 * math.cos(a), 0.045 + 0.032 * math.sin(a)) for a in np.linspace(0, math.pi, 13)]
-        shackle = [(0.032, 0.015 if not open_by else 0.038), *bow, (-0.032, 0.015)]
-        line([(across + open_by + x * (-1 if open_by else 1), along + y) for x, y in shackle])
-        line([(across, along - 0.015), (across, along - 0.033)])
-
-    padlock(-0.185, 0.82, -0.045)
-    padlock(0.185, 0.82, 0.0)
-
-    # The car, seen from the side.
-    across, along = 0.0, 0.47
-    body = [
-        (-0.125, -0.022), (-0.122, 0.004), (-0.07, 0.014), (-0.036, 0.044), (0.03, 0.044), (0.062, 0.016),
-        (0.118, 0.01), (0.125, -0.022), (0.096, -0.022),
-    ]  # fmt: skip
-    line([(across + x, along + y) for x, y in body])
-    line([(across + x, along - 0.022) for x in (-0.125, -0.096)])
-    line([(across + x, along - 0.022) for x in (-0.054, 0.054)])
-    for wheel in (-0.075, 0.075):
-        line([(across + wheel + 0.02 * math.cos(a), along - 0.024 + 0.02 * math.sin(a)) for a in np.linspace(0, 2 * math.pi, 17)], 0.04)
-    line([(across + 0.064, along + 0.02), (across + 0.118, along + 0.052)])
-    return cut
+def solid(stage, name, outline, z0, z1, material, cut=(), bevel=0.0):
+    """A prism on an outline, with other prisms cut out of it and its edges rounded, made real as one mesh."""
+    obj = prism(stage, name, outline, z0, z1, material)
+    cutters = []
+    for i, (hole, h0, h1) in enumerate(cut):
+        cutter = prism(stage, f"{name}-cut-{i}", hole, h0, h1, None)
+        boolean = obj.modifiers.new(f"cut-{i}", "BOOLEAN")
+        boolean.operation = "DIFFERENCE"
+        boolean.object = cutter
+        cutters.append(cutter)
+    if bevel:
+        rounded = obj.modifiers.new("round", "BEVEL")
+        rounded.width = bevel
+        rounded.segments = 5
+        rounded.limit_method = "ANGLE"
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    mesh = bpy.data.meshes.new_from_object(obj.evaluated_get(depsgraph))
+    for modifier in list(obj.modifiers):
+        obj.modifiers.remove(modifier)
+    obj.data = mesh
+    for cutter in cutters:
+        bpy.data.objects.remove(cutter)
+    mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
+    return obj
 
 
-def key(stage, hole_at):
-    """The key, built about the hole in its tip and laid with that hole where the ring crosses it."""
-    length, width = HEAD + 2 * MARGIN, KEY_W + 2 * MARGIN
-    middle = KEY_W / 2 + MARGIN
-    hole = (BORE[0] + MARGIN, middle)
+def carbon(stage, outline_box, r, z):
+    """Carbon fibre twill, two by two, under a clear lacquer: tows a little over a millimetre wide, those
+    running one way catching the light and those the other way dark, each rounded across its width."""
+    x0, y0, x1, y1 = outline_box
+    sheet = Sheet(x1 - x0, y1 - y0, "#1d1d20", rough=0.35, density=4)
+    X, Y = sheet.X, sheet.Y
+    tow = 0.2
+    i, j = np.floor(X / tow), np.floor(Y / tow)
+    along = ((i + j) % 4) < 2
+    sheet.paint(along.astype(float), "#2e2e33")
+    across = np.where(along, (Y / tow) % 1, (X / tow) % 1)
+    sheet.height += 0.004 * np.sin(np.pi * across)
+    sheet.coat[:] = 1.0
+    sheet.cut(box(X, Y, 0, 0, x1 - x0, y1 - y0, r))
+    return sheet.build(stage, "carbon", thickness=z, coat_rough=0.05, at=(x0, y0))
 
-    def place(along, across):
-        return along * KEY_W + MARGIN, across * KEY_W + middle
 
-    def outline(half):
-        there = [place(u, -v) for u, v in half]
-        back = [place(u, v) for u, v in half[-2:0:-1]]
-        return spline(there + back)
+def fob(stage, bar_at):
+    """The fob, built about the middle of its bar and laid with the bar where the ring crosses it."""
+    root = stage.add("fob", None)
+    lacquer = principled("fob", "#c8101a", rough=0.18, coat_weight=1.0, coat_roughness=0.03)
+    worn(lacquer, "Fingerprints009", 4, 0.05)
+    gunmetal = worn(principled("frame", (0.16, 0.16, 0.17), rough=0.24, metal=1.0), "Scratches003", 3, 0.12)
+    brass = worn(principled("bar", (0.86, 0.64, 0.3), rough=0.26, metal=1.0), "Scratches003", 3, 0.15)
 
-    shell_edge, pad_edge = outline(SHELL), outline(PAD)
-    shell = Sheet(length, width, "#d0161a", rough=0.07)
-    X, Y = shell.X, shell.Y
-    shape = shell.height.shape
-    edge = polygon(X, Y, shell_edge)
-    opening = polygon(X, Y, pad_edge)
-    bore = disc(X, Y, *hole, BORE[1])
+    f0, f1, half = FRAME
+    outer = rect(f0, -half, f1, half, FRAME_R, 12)
+    inner = rect(f0 + WALL, -half + WALL, f1 - WALL, half - WALL, FRAME_R - WALL, 12)
+    notch = rect(f0 - 1, -BAR_HALF + 0.1, f0 + WALL + 0.05, BAR_HALF - 0.1)
+    frame = solid(stage, "frame", outer, 0.0, FRAME_H, gunmetal, cut=((inner, -1, 3), (notch, -1, 3)), bevel=0.12)
 
-    # The lacquered half is a pebble: it rolls over at the edge, thins towards the tip and is barely crowned.
-    inside = np.clip(-edge, 0, None)
-    roll = (1 - (1 - np.clip(inside / (0.3 * KEY_W), 0, 1)) ** 2.4) ** (1 / 2.4)
-    taper = 0.66 + 0.34 * ramp(0, 0.5 * KEY_W, X - MARGIN)
-    crown = 1 - 0.05 * ((Y - middle) / (KEY_W / 2)) ** 2
-    dome = (TOP - PART) * roll * taper * crown
-    # Past the edge the mesh falls away steeply, so the shading at the edge stays that of a wall.
-    dome = np.where(edge > 0, np.maximum(-6 * edge, 0.05 - PART), dome)
+    i0, i1, ih = f0 + WALL, f1 - WALL, half - WALL
+    bed = carbon(stage, (i0, -ih, i1, ih), FRAME_R - WALL, 0.45)
+    g = BODY_GAP
+    body = solid(stage, "body", rect(i0 + g, -ih + g, i1 - g, ih - g, FRAME_R - WALL - g, 12), 0.1, BODY_TOP, lacquer, bevel=0.42)
 
-    shell.cut(edge)
-    shell.punch(opening)
-    shell.punch(bore)
-    # The lip of the opening for the pad and of the hole for the ring are rounded over.
-    shell.height -= 0.1 * (1 - np.clip(opening / 0.09, 0, 1)) ** 2
-    shell.height -= 0.1 * (1 - np.clip(bore / 0.08, 0, 1)) ** 2
-
-    # The ring has chipped the lacquer off round the hole, down to the pale plastic.
-    ragged = np.clip(cloud(shape, 61, falloff=1.7), -0.7, 1.6)
-    chipped = shell.mask(bore - 0.02 - 0.075 * ragged)
-    shell.paint(chipped * 0.88, "#d2c6ba")
-    shell.finish(chipped, rough=0.55)
-    shell.press(chipped, 0.006)
-
-    # A pocket full of other keys: hairlines, a few nicks and dulled patches on the shoulders.
-    rng = np.random.default_rng(430)
-    lines = np.zeros(shape)
-    for _ in range(22):
-        x, y = rng.uniform(0.4, length - 0.4), rng.uniform(0.4, width - 0.4)
-        turn, bend, half = np.radians(rng.uniform(0, 180)), np.radians(rng.normal(0, 9)), rng.uniform(0.15, 0.7)
-        fine, weight = rng.uniform(0.003, 0.007), rng.uniform(0.3, 1.0)
-        for way, angle in ((-1, turn - bend), (1, turn + bend)):
-            d = segment(X, Y, x, y, x + way * half * np.cos(angle), y + way * half * np.sin(angle), fine)
-            lines = np.maximum(lines, shell.mask(d) * weight)
-    lines *= np.clip(0.5 + 0.6 * cloud(shape, 62, falloff=1.2), 0, 1)
-    shell.rgb += (lines * 0.3)[..., None] * (linear("#e58a84") - shell.rgb)
-    shell.finish(lines, rough=0.5)
-    shell.press(lines, 0.003)
-    nicks = np.zeros(shape)
-    for _ in range(7):
-        x, y, r = rng.uniform(0.5, length - 0.5), rng.uniform(0.5, width - 0.5), rng.uniform(0.012, 0.03)
-        nicks = np.maximum(nicks, shell.mask(disc(X, Y, x, y, r)))
-    shell.paint(nicks * 0.7, "#d9cdc3")
-    shell.press(blur(nicks, 1.0), 0.008)
-    shoulder = (1 - ramp(0.15, 0.9, inside)) * np.clip(cloud(shape, 63, falloff=1.6) - 0.2, 0, 1)
-    shell.finish(np.clip(shoulder, 0, 1) * 0.6, rough=0.34)
-
-    lacquer = shell.build(
-        stage,
-        "shell",
-        thickness=PART + dome.min(),
-        warp=moulded(shell, dome),
-        wear=(("Scratches003", 2.6, 0.1, 0.0006), ("Fingerprints009", 4.2, 0.14, 0), ("SurfaceImperfections003", 5, 0.05, 0)),
-        specular=0.5,
-        at=(-hole[0], -hole[1]),
-        step=0.03,
-    )
-
-    # The rubber pad sits in the opening, a little under the lacquer. Grooves split it into three buttons,
-    # each one a low pillow.
-    pad = Sheet(length, width, "#1b1b1c", rough=0.62)
-    fork, rim = place(0.69, 0), (place(0.52, -0.34), place(0.52, 0.34), place(1.06, 0))
-    grooves = np.minimum.reduce([segment(X, Y, *fork, *end) for end in rim]) - 0.05
-    within = np.clip(np.minimum(-opening, grooves), 0, None)
-    pillow = 0.05 * (1 - (1 - np.clip(within / 0.13, 0, 1)) ** 2) + 0.02 * (1 - (1 - np.clip(within / 0.8, 0, 1)) ** 2)
-    pad.cut(opening - 0.07)
-    cut = marks(pad, place)
-    pad.press(blur(cut, 1.0), 0.025)
-    # Thumbs have polished the crowns of the buttons, and dust has settled in the grooves and the pictograms.
-    polished = np.clip(within / 0.8, 0, 1) ** 2 * np.clip(0.55 + 0.5 * cloud(shape, 64, falloff=2.0), 0, 1)
-    pad.finish(polished, rough=0.4)
-    low = np.clip(1 - within / 0.05, 0, 1)
-    dust = np.clip(np.maximum(low, cut), 0, 1) * np.clip(0.5 + 0.45 * cloud(shape, 65, falloff=2.0), 0, 1)
-    pad.paint(dust * 0.22, "#8d857a")
-    pad.finish(dust, rough=0.8)
-    specks = np.clip(cloud(shape, 66, falloff=0.25) - 3.1, 0, 1)
-    pad.paint(np.clip(specks * 1.5, 0, 0.4), "#a39c90")
-    rubber = pad.build(
-        stage,
-        "pad",
-        thickness=PART,
-        warp=moulded(pad, np.clip(dome - 0.075 + pillow, 0, None)),
-        scan="Rubber004",
-        scan_size=1.6,
-        scan_normal=0.5,
-        scan_rough=0.4,
-        wear=(("SurfaceImperfections003", 3, 0.1, 0),),
-        specular=0.35,
-        at=(-hole[0], -hole[1]),
-        step=0.03,
-    )
-
-    # The blade: nickel silver, its stem under the shell, a wide shank and then the bar the track is milled in.
-    reach, girth = STEM + BLADE, 0.235 * KEY_W + 2 * MARGIN
-    mid, a, b, neck = girth / 2, 0.1175 * KEY_W, 0.0925 * KEY_W, STEM + SHANK
-    bar = Sheet(reach, girth, "#cbc8be", rough=0.34)
-    BX, BY = bar.X, bar.Y
-    grid = bar.height.shape
-    profile = [
-        (0, mid - a), (neck, mid - a), (neck + 0.12, mid - b), (reach - 0.1, mid - b), (reach, mid - b + 0.1),
-        (reach, mid + b - 0.1), (reach - 0.1, mid + b), (neck + 0.12, mid + b), (neck, mid + a), (STEM + 0.62, mid + a),
-        (STEM + 0.55, mid + a - 0.08), (STEM + 0.48, mid + a), (0, mid + a),
-    ]  # fmt: skip
-    bar.cut(polygon(BX, BY, profile))
-    bar.metal[:] = 1.0
-    # Ground along its length, then scored by the lock every time it went in.
-    fine, coarse = streaks(grid, 71, 200, 0.7), streaks(grid, 72, 420, 2.0)
-    bar.height += 0.00015 * fine + 0.0002 * coarse
-    bar.rough += np.clip(0.03 * coarse + 0.02 * fine, -0.1, 0.12)
-    bar.rgb *= (1 + 0.015 * coarse)[..., None]
-    bar.chamfer(0.07, 0.05)
-    # The track, as on the key in the photograph, running out through the end of the blade.
-    waves = (
-        (0.27, -0.19), (0.34, -0.12), (0.41, 0.19), (0.52, 0.48), (0.61, 0.19), (0.7, -0.19), (0.78, 0.0), (0.85, 0.19),
-        (0.93, -0.05), (1.03, -0.42),
-    )  # fmt: skip
-    track = traced(bar, spline([(STEM + s * BLADE, mid + t * b) for s, t in waves], closed=False), 0.33)
-    mouth = bar.mask(box(BX, BY, reach - 0.5, mid - b * 0.85, reach + 1, mid + b * 0.1, 0.05))
-    track = np.maximum(track, mouth * ramp(reach - 0.5, reach - 0.2, BX))
-    bar.press(blur(track, 1.3), 0.09)
-    # The cutter left the floor of the track dull, with its passes still showing across it.
-    bar.paint(track * 0.92, "#453d33")
-    bar.rgb *= (1 + 0.1 * track * streaks(grid, 73, 1.5, 12))[..., None]
-    bar.finish(track, rough=0.62)
-    blade = bar.build(
-        stage,
-        "blade",
-        thickness=PART + 0.05,
-        scan="Metal009",
-        scan_size=9,
-        scan_normal=0.05,
-        scan_rough=0.18,
-        wear=(("Scratches003", 5, 0.2, 0.001), ("SurfaceImperfections003", 7, 0.08, 0)),
-        brushed=0.7,
-        at=(HEAD - STEM - BORE[0], -mid),
-    )
-
-    # The other half of the shell is black and is only a wall from above. Without it the light would get under.
-    black = principled("base", (0.02, 0.02, 0.021), rough=0.45)
-    base = wall(stage, "base", [(x - hole[0], y - hole[1]) for x, y in shell_edge], 0.03, PART + 0.01, black)
-    for part in (lacquer, rubber, blade, base):
-        lay(part, hole_at, KEY_TURN)
-    dark = principled("bore", (0.2, 0.012, 0.014), rough=0.4)
-    sleeve = lathe(stage, "bore", [(0.03, BORE[1]), (1.15, BORE[1])], dark, steps=64, axis="Z", caps=False)
-    sleeve.location = (hole_at[0], -hole_at[1], 0)
+    rod = bmesh.new()
+    bmesh.ops.create_cone(rod, cap_ends=True, segments=48, radius1=BAR_R, radius2=BAR_R, depth=2 * BAR_HALF)
+    bmesh.ops.rotate(rod, verts=rod.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 2, 3, "X"))
+    bar = finish(stage, "bar", rod, brass)
+    bar.location = (0, 0, RING_Z)
+    for part in (frame, bed, body, bar):
+        part.parent = root
+    lay(root, bar_at, FOB_TURN)
 
 
 def bunch(stage):
-    key(stage, ring(stage, tag(stage)))
+    fob(stage, ring(stage, tag(stage)))
     stage.shoot("name", (0, 0, W, H), bleed=2.0, shadow=0.8, sharp=1.25)
 
 

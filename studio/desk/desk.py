@@ -155,6 +155,11 @@ class Desk:
         bpy.context.scene.render.use_persistent_data = True
         floor = stage._room(self.w / 2, -self.h / 2)
         floor.scale = (2, 2, 1)
+        # What lies under clear film or glass is the page's own leather, not this stand-in for it. Seen through
+        # them the floor is left out and the render keeps only their reflections, so the page shows through.
+        floor.visible_transmission = False
+        bpy.context.scene.cycles.film_transparent_glass = True
+        bpy.context.scene.cycles.film_transparent_roughness = 0.3
         for prop, (x, y, r) in self.layout["at"].items():
             self.put(prop, x, y, r)
         self.frame()

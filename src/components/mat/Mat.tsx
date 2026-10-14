@@ -45,7 +45,8 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * map of the lamp's light that the leather, its rules and its rulers are multiplied by.
  */
 export function Mat({ children, className }: MatProps) {
-  const [lit, setLit] = useState(false)
+  // The lamp is on when the page opens. It only shows once the sun is down.
+  const [lit, setLit] = useState(true)
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
@@ -102,6 +103,48 @@ export function Mat({ children, className }: MatProps) {
     watching.observe(board)
     return () => watching.disconnect()
   }, [])
+
+  // The folder tab the page hangs from is cut from this leather (SiteShell's Tab), so it takes the same light:
+  // the hour, the lamp, and the lamp's map laid where it lies over the mat.
+  useEffect(() => {
+    const frame = root.current
+    const board = sheet.current
+    const tab = document.querySelector<HTMLElement>('[data-mat-light]')
+    if (!frame || !board || !tab || !geometry) return
+    const plate = PLATES[geometry.id]
+    const [w, h] = plate.size
+    const [bx, by] = plate.bleed
+    const { em } = geometry
+    const hour = () => {
+      tab.style.setProperty('--day', frame.style.getPropertyValue('--day'))
+      tab.style.setProperty('--warmth', frame.style.getPropertyValue('--warmth'))
+    }
+    const place = () => {
+      const mat = board.getBoundingClientRect()
+      const at = tab.getBoundingClientRect()
+      tab.style.setProperty('--light-at', `${mat.left - at.left + geometry.x - bx * em}px ${mat.top - at.top + geometry.y - by * em}px`)
+    }
+    tab.style.setProperty('--lit', lit ? '1' : '0')
+    tab.style.setProperty('--light-rim', plate.rim)
+    tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
+    tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
+    hour()
+    place()
+    const ticking = new MutationObserver(hour)
+    ticking.observe(frame, { attributes: true, attributeFilter: ['style'] })
+    // The strip slides open after the mat is laid, and the page scrolls under the tab.
+    const moving = new ResizeObserver(place)
+    moving.observe(board)
+    const strip = tab.closest('section')
+    if (strip) moving.observe(strip)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      ticking.disconnect()
+      moving.disconnect()
+      window.removeEventListener('scroll', place, true)
+      for (const name of ['--day', '--warmth', '--lit', '--light-rim', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
+    }
+  }, [geometry, lit])
 
   const plate = geometry && PLATES[geometry.id]
 

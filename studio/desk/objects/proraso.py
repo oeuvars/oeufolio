@@ -240,10 +240,9 @@ def body(stage, material):
     kernel = np.exp(-(np.linspace(-2, 2, 25) ** 2))
     thick = np.convolve(np.pad(thick, 12, mode="edge"), kernel / kernel.sum(), mode="valid")
     b = thick / 2
-    # Neither corner of the crimp is square: one is rounded off, the other was clipped by the jaws.
-    rounded = 0.2 * (1 - np.sqrt(1 - np.clip(1 - along / 0.2, 0, 1) ** 2))
-    clipped = np.clip(0.42 - 0.8 * along, 0, None)
-    wide = FRONT / 2 - (rounded + clipped) / 2
+    # The crimp runs square across the tube, and the jaws leave both its corners very slightly rounded.
+    rounded = 0.12 * (1 - np.sqrt(1 - np.clip(1 - along / 0.12, 0, 1) ** 2))
+    wide = FRONT / 2 - rounded
     lo, hi = b.copy(), wide.copy()
     for _ in range(40):
         a = (lo + hi) / 2
@@ -287,10 +286,10 @@ def body(stage, material):
     push *= ramp(FOLD, FOLD + 0.7, x) * (1 - ramp(LENGTH - 1.8, LENGTH - 0.35, x))
     y, z = y - push * ny / length, z - push * nz / length
     # It lies on the mat and is not quite straight. The crimped end has a wave in it, its edge is not cut
-    # square, and the rounded corner has been bent up off the mat.
-    y = y + (clipped - rounded)[:, None] / 2 + 0.05 * np.sin(1.0 + 4.4 * x / LENGTH) * ramp(0, 5.5, x)
+    # quite straight, and one corner has been bent a little up off the mat.
+    y = y + 0.05 * np.sin(1.0 + 4.4 * x / LENGTH) * ramp(0, 5.5, x)
     z = np.maximum(z + b[:, None], 0.0) + 0.045 * (1 + np.sin(0.8 + 1.25 * round_)) * (1 - ramp(0, 3.0, x))
-    z = z + 0.38 * np.clip(1 - np.hypot(x, y - FRONT / 2) / 1.5, 0, 1) ** 2
+    z = z + 0.2 * np.clip(1 - np.hypot(x, y - FRONT / 2) / 1.5, 0, 1) ** 2
     x = x + 0.05 * np.sin(0.6 + 0.9 * round_) * (1 - ramp(0, 1.4, x))
 
     verts = np.column_stack((x.ravel(), y.ravel(), z.ravel()))

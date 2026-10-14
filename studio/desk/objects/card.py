@@ -1,7 +1,7 @@
 """The business card: 3.5 by 2 inches, risograph-printed on heavy uncoated stock. It lies front up, red with
-the name in cream, two birds, and a car drawn over a strip of flowers, in a clear polypropylene card
-sleeve, sealed on three sides and open at one end. The face is the card's own artwork, art/card.png, rasterised from the print file
-(anurag-card-front.svg)."""
+the name in cream, two birds, and a car drawn over a strip of flowers, inside a clear cast
+acrylic case, as a one-touch card holder is. The face is the card's own artwork, art/card.png, rasterised
+from the print file (anurag-card-front.svg)."""
 
 import math
 import os
@@ -10,7 +10,7 @@ import bpy
 import numpy as np
 
 from paint import cloud, ramp
-from solids import strip_light
+from solids import prism, rect, strip_light
 from stage import ASSETS
 from stock import Sheet, drift
 
@@ -18,25 +18,27 @@ ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "art")
 
 W, H = 14.8, 8.46
 CREAM = "#efe1c4"
-# The sleeve: how far it runs past the card on its three sealed sides and at its open end, and how wide the
-# sealed seam is.
-OVER = 0.3
-OPEN = 0.16
-SEAM = 0.12
+# The case: a block of clear cast acrylic the card lies inside, as a one-touch card holder is. It runs this far
+# past the card all round, stands this high off the mat and its top edge is rounded over this far.
+OVER = 0.45
+CASE_H = 0.5
+ROUND = 0.2
 
 
-def sheet_material(name, seam):
-    """Clear polypropylene, as a card sleeve is: water clear and glossy. The sealed seam is the same film
-    fused, a touch cloudier. Fingers have left faint marks that dull its gloss. Shadow rays pass through
-    almost untouched, as the film is too thin to darken what lies under it."""
-    material = bpy.data.materials.new(name)
+def acrylic():
+    """Clear cast acrylic as its makers measure it: about 92 per cent of light passes, about 4 per cent is
+    reflected at each face seen straight on, rising steeply toward grazing angles, and haze is about one per
+    cent. Face on it is all but invisible. It shows at its polished rounded edges, which see the room at a
+    slant, and as a faint even sheen of what hangs over it, where fingermarks dull the polish. Light falling
+    through its flat faces passes almost whole, but where it falls through the curved edges it is bent away,
+    so its shadow is a dark rim round a clear middle."""
+    material = bpy.data.materials.new("acrylic")
     material.use_nodes = True
     nodes, links = material.node_tree.nodes, material.node_tree.links
     shader = nodes["Principled BSDF"]
     shader.inputs["Base Color"].default_value = (1.0, 1.0, 1.0, 1)
     shader.inputs["Transmission Weight"].default_value = 1.0
     shader.inputs["IOR"].default_value = 1.49
-    base = 0.14 if seam else 0.025
     coord = nodes.new("ShaderNodeTexCoord")
     mapping = nodes.new("ShaderNodeMapping")
     mapping.inputs["Scale"].default_value = (1 / 7, 1 / 7, 1)
@@ -45,72 +47,34 @@ def sheet_material(name, seam):
     marks.image.colorspace_settings.name = "Non-Color"
     dull = nodes.new("ShaderNodeMath")
     dull.operation = "MULTIPLY_ADD"
-    dull.inputs[1].default_value = 0.08
-    dull.inputs[2].default_value = base
+    dull.inputs[1].default_value = 0.12
+    dull.inputs[2].default_value = 0.004
     links.new(coord.outputs["Object"], mapping.inputs["Vector"])
     links.new(mapping.outputs["Vector"], marks.inputs["Vector"])
     links.new(marks.outputs["Color"], dull.inputs[0])
     links.new(dull.outputs[0], shader.inputs["Roughness"])
-    path = nodes.new("ShaderNodeLightPath")
+    haze = nodes.new("ShaderNodeBsdfDiffuse")
+    milky = nodes.new("ShaderNodeMixShader")
+    milky.inputs[0].default_value = 0.01
+    links.new(shader.outputs[0], milky.inputs[1])
+    links.new(haze.outputs[0], milky.inputs[2])
+    # The shadow: clear through the flat, darker where the surface turns away.
+    facing = nodes.new("ShaderNodeLayerWeight")
+    facing.inputs["Blend"].default_value = 0.3
+    rim = nodes.new("ShaderNodeMath")
+    rim.operation = "MULTIPLY_ADD"
+    rim.inputs[1].default_value = -0.75
+    rim.inputs[2].default_value = 0.93
+    links.new(facing.outputs["Facing"], rim.inputs[0])
     clear = nodes.new("ShaderNodeBsdfTransparent")
-    clear.inputs["Color"].default_value = (0.97, 0.97, 0.97, 1)
+    links.new(rim.outputs[0], clear.inputs["Color"])
+    path = nodes.new("ShaderNodeLightPath")
     either = nodes.new("ShaderNodeMixShader")
     links.new(path.outputs["Is Shadow Ray"], either.inputs[0])
-    links.new(shader.outputs[0], either.inputs[1])
+    links.new(milky.outputs[0], either.inputs[1])
     links.new(clear.outputs[0], either.inputs[2])
     links.new(either.outputs[0], nodes["Material Output"].inputs["Surface"])
     return material
-
-
-def sleeve(stage, top, seed):
-    """The film over the card. It lies on the card, a hair clear of it, and drops to the mat over the sealed
-    edges on three sides. At the open end it stops just past the card and does not quite lie down. Film never
-    lies flat: it has a slow wave in it and a few fine crinkles where it has been bent, which is what catches
-    the light. top(x, y) is how high the card's face is there."""
-    rng = np.random.default_rng(seed)
-    step = 0.04
-    xs = np.arange(-OVER, W + OPEN + step / 2, step)
-    ys = np.arange(-OVER, H + OVER + step / 2, step)
-    X, Y = np.meshgrid(xs, ys)
-    face = np.vectorize(top)(np.clip(X, 0, W), np.clip(Y, 0, H))
-    sealed = np.maximum(np.maximum(-X, -Y), Y - H)
-    fall = 1 - ramp(0.0, OVER - SEAM * 0.5, sealed)
-    Z = 0.02 + (face + 0.012) * fall
-    # The open end lifts a little off the mat where it overhangs.
-    Z += 0.03 * ramp(W, W + OPEN, X)
-    wave = sum(
-        rng.uniform(0.003, 0.008) * np.sin(rng.uniform(0, 6.3) + rng.uniform(0.3, 1.2) * X + rng.uniform(0.3, 1.2) * Y)
-        for _ in range(6)
-    )
-    Z += wave
-    # The crinkles: short sharp lines in the film, mostly near its edges, where it has been handled.
-    for _ in range(9):
-        x0 = rng.uniform(0, W)
-        y0 = rng.choice((rng.uniform(0, 1.6), rng.uniform(H - 1.6, H), rng.uniform(0, H)))
-        turn = rng.uniform(0, np.pi)
-        half = rng.uniform(0.4, 1.4)
-        dx, dy = np.cos(turn), np.sin(turn)
-        t = np.clip((X - x0) * dx + (Y - y0) * dy, -half, half)
-        d = np.hypot(X - x0 - t * dx, Y - y0 - t * dy)
-        Z += rng.choice((-1, 1)) * 0.006 * np.exp(-d / 0.05) * (1 - (t / half) ** 2)
-    rows, cols = X.shape
-    verts = np.column_stack((X.ravel(), -Y.ravel(), Z.ravel()))
-    i, k = np.meshgrid(np.arange(rows - 1), np.arange(cols - 1), indexing="ij")
-    a = (i * cols + k).ravel()
-    faces = np.column_stack((a, a + cols, a + cols + 1, a + 1))
-    mesh = bpy.data.meshes.new("sleeve")
-    mesh.from_pydata(verts.tolist(), [], faces.tolist())
-    mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
-    mesh.materials.append(sheet_material("film", False))
-    mesh.materials.append(sheet_material("seam", True))
-    centres = np.array([poly.center for poly in mesh.polygons])
-    edge = np.minimum.reduce((centres[:, 0] + OVER, -centres[:, 1] + OVER, H + OVER + centres[:, 1]))
-    mesh.polygons.foreach_set("material_index", (edge < SEAM).astype(int).tolist())
-    obj = stage.add("sleeve", mesh)
-    film = obj.modifiers.new("film", "SOLIDIFY")
-    film.thickness = 0.012
-    film.offset = -1
-    return obj
 
 
 def face(stage, seed):
@@ -139,11 +103,13 @@ def face(stage, seed):
         sheen=0.25,
         specular=0.25,
     )
-    shell = sleeve(stage, sheet.z, seed + 5)
-    # A soft box over the top right of the card, which only reflections see. The film mirrors it as a broad
-    # glare, broken up by its waves and crinkles, as an overhead photograph of a sleeved card shows.
-    strip_light(stage, "glare", (W * 0.72, -H * 0.3, 30.0), 9.0, 5.0, 1.2, turn=math.radians(-30))
-    stage.shoot("card", (0, 0, W, H), shadowless=(shell,), lens=False)
+    case = prism(stage, "case", rect(-OVER, -OVER, W + OVER, H + OVER, 0.55, 12), 0.0, CASE_H, acrylic(), bevel=ROUND, segments=10)
+    # The window over the desk, which only reflections see. It is many times brighter than the paper it lights,
+    # so even the four per cent the face reflects of it lies across the case as a soft band of glare.
+    window = strip_light(stage, "window", (W * 0.74, -H * 0.36, 40.0), 44.0, 3.2, 5.0, turn=math.radians(58))
+    # Polished acrylic mirrors it with edges, softened only where fingermarks dull the polish.
+    window.data.materials[0].node_tree.nodes["Map Range"].inputs["From Max"].default_value = 0.3
+    stage.shoot("card", (0, 0, W, H), bleed=1.0, shadowless=(case,), lens=False)
 
 
 SHOTS = {"card": lambda stage: face(stage, 90)}

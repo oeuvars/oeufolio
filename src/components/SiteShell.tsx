@@ -1,6 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { MotionConfig, motion, useReducedMotion } from 'motion/react'
 import type { CSSProperties } from 'react'
+import { useId } from 'react'
 
 import { profile } from '../content'
 import type { NavItem } from '../types'
@@ -79,6 +80,8 @@ type TabProps = {
   src: string
   /** The strip's page lies over its band, so the tab has no foot on the band: only what stands out of the strip is paper. */
   footless?: boolean
+  /** The tab is cut from the page's own leather mat, not from paper. */
+  leather?: boolean
 }
 
 /**
@@ -111,8 +114,10 @@ function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, current, src, footless }: TabProps) {
+function Tab({ label, shape, to, current, src, footless, leather }: TabProps) {
   const { reach, path } = tabOutline(shape, footless)
+  const hide = useId()
+  const cut = useId()
   const width = shape.band + shape.protrude
   const margin = (tabMargin * width) / tabSpan
   const inside = (
@@ -125,8 +130,38 @@ function Tab({ label, shape, to, current, src, footless }: TabProps) {
         viewBox={`0 ${-reach} ${width} ${shape.height + 2 * reach}`}
         style={{ top: -reach }}
       >
-        <path d={path} />
+        {leather && (
+          <defs>
+            <pattern id={hide} patternUnits="userSpaceOnUse" width="160" height="160">
+              <rect width="160" height="160" className="fill-mat" />
+              <image href="/objects/mat/leather.avif" width="160" height="160" />
+              {/* The tab grows out of the mat's ruler, so it is as dark as the ruler's band. */}
+              <rect width="160" height="160" fill="black" opacity="0.16" />
+            </pattern>
+            <clipPath id={cut}>
+              <path d={path} transform={`translate(0 ${reach})`} />
+            </clipPath>
+          </defs>
+        )}
+        <path d={path} fill={leather ? `url(#${hide})` : undefined} />
       </svg>
+      {leather && (
+        // The leather is the mat's, so it is in the mat's light: the lamp's, the dusk's and the dark. The mat
+        // lends this its hour, its lamp and where its map of the lamp's light lies (mat/Mat.tsx).
+        <div
+          aria-hidden
+          data-mat-light
+          className="pointer-events-none absolute left-0"
+          style={{ top: -reach, width, height: shape.height + 2 * reach, clipPath: `url(#${cut})` }}
+        >
+          <div
+            className="absolute inset-0 bg-no-repeat opacity-[calc(var(--lit,0)*(1-var(--day,1)))] mix-blend-multiply"
+            style={{ backgroundColor: 'var(--light-rim)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
+          />
+          <div className="absolute inset-0 bg-golden opacity-[calc(var(--warmth,0)*0.5)] mix-blend-multiply" />
+          <div className="absolute inset-0 bg-[rgb(10_14_24)] opacity-[calc((1-var(--day,1))*(1-var(--lit,0))*0.82)] mix-blend-multiply" />
+        </div>
+      )}
       <img
         aria-hidden
         alt=""
@@ -337,7 +372,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} />
             </motion.section>
           )
         })}
