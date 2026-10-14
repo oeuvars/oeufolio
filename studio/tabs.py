@@ -1,15 +1,16 @@
 """What is stuck on the folder tabs: six pieces, one on each paper tab, each for something I like and
 carrying its maker's mark, the way stickers end up on everything a kid owns.
 
-    hamilton  a watch strap: brown top grain leather, padded and saddle stitched, with Hamilton's mark
-              stamped into it
+    tagheuer  TAG Heuer's own Carrera strap: cognac calfskin, padded and saddle stitched in ecru, through
+              its steel folding clasp with the shield engraved in the cover
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
-    prs       a Blackstar Debut's colours: its cream tolex, with PRS's mark let in in the oxblood of its
-              panel beside four of the birds PRS inlays down its fretboards, in abalone as they are
-              there, and a band of the amplifier's red grille cloth round it under Blackstar's badge
-    apple     platinum, with the six-colour apple let into it over the drilled grille of a Mac Studio
+    prs       a Blackstar Debut's colours: its cream tolex, with four of the outline birds PRS inlays down
+              its fretboards let into it, abalone round rosewood, and a band of the amplifier's red grille
+              cloth round it under Blackstar's badge
+    apple     a Mac Studio's bead-blasted aluminium, with the six-colour apple let into it over the case's
+              drilled grille
     van       a Turkish Van's own: white, auburn at head and tail as the breed is, and her mark, the cat
               asleep on her back and stretched out
 
@@ -46,8 +47,7 @@ from mathutils import Matrix  # noqa: E402
 
 import stage as stage_module  # noqa: E402
 from paint import blur, box, cloud, linear, ramp, segment, streaks  # noqa: E402
-from objects.fob import spaced, stitch  # noqa: E402
-from paint import disc  # noqa: E402
+from objects.fob import spaced  # noqa: E402
 from solids import fillet, principled, prism, rect  # noqa: E402
 from stage import Stage  # noqa: E402
 from stock import Sheet, fit, pixels_of  # noqa: E402
@@ -237,17 +237,6 @@ def swirl(sheet, mask, seed, light, dark, amount=0.35, stretch=0.5):
     turn = cloud(sheet.height.shape, seed, falloff=2.2, stretch=stretch)
     sheet.paint(mask * np.clip(turn, 0, 1.6) * amount, light)
     sheet.paint(mask * np.clip(-turn, 0, 1.6) * amount, dark)
-
-
-def pearl(sheet, mask):
-    """Mother of pearl. It is laid down in patches, each catching the light or missing it, and each
-    throws back a little colour of its own."""
-    shape = sheet.height.shape
-    figure = np.clip(streaks(shape, 61, 34, 13) + 0.7 * streaks(shape, 62, 12, 30), -2, 2) / 2
-    sheet.paint(mask * np.clip(figure, 0, 1) * 0.9, "#ffffff")
-    sheet.paint(mask * np.clip(-figure, 0, 1) * 0.5, "#a5a196")
-    for seed, tint in ((63, "#eab4c4"), (64, "#a9dcc0"), (65, "#b3c9f0")):
-        sheet.paint(mask * np.clip(streaks(shape, seed, 26, 20), 0, 2) * 0.2, tint)
 
 
 def abalone(sheet, mask):
@@ -552,65 +541,128 @@ def van(name, height):
     return {}, moulded(name, height, "#f3efe4", 0.18, 0.5, dress, subsurface=0.06)
 
 
-def hamilton(name, height):
-    """No plastic: the long end of a watch strap lying down the tab. Brown top grain leather, padded so
-    it stands highest down its middle, its edges burnished dark, saddle stitched in ecru all round, with
-    holes punched for the buckle's tongue and Hamilton's mark stamped into it blind."""
-    left, right, head, foot = 0.82, 3.42, 0.9, height - 0.85
-    middle, point, seam = (left + right) / 2, 1.05, 0.24
-    shape = fillet([(left, head, 0.14), (right, head, 0.14), (right, foot - point, 0.9), (middle, foot, 0.5), (left, foot - point, 0.9)], steps=14)
+def shield(X, Y, cx, top, w):
+    """TAG Heuer's shield, as it is engraved on the brand's steel: square shoulders, sides that run down
+    and then close to a shallow point, and a rule across it where the name's two words divide. Returns
+    the depth of the cut at each point, deepest on the lines."""
+    h = 1.08 * w
+    left, right, waist = cx - w / 2, cx + w / 2, top + 0.66 * h
+    outline = [(left, top), (right, top), (right, waist), (cx, top + h), (left, waist)]
+    line = np.exp(-((within(X, Y, outline) / (0.018 * w / 0.9)) ** 2))
+    rule = top + 0.4 * h
+    across = segment(X, Y, left + 0.06 * w, rule + 0.02 * w, right - 0.06 * w, rule - 0.02 * w)
+    return np.maximum(line, np.exp(-((across / (0.016 * w / 0.9)) ** 2)) * (within(X, Y, outline) < 0))
+
+
+def clasp(name, left, right, top, bottom, point):
+    """The cover of TAG Heuer's folding clasp, laid over the strap where it closes: one piece of steel,
+    its top polished, its sides chamfered and brushed, its foot cut to a point like the shield it carries.
+    A push-button stands out of each side."""
+    x0, x1 = left - 0.1, right + 0.1
+    w, h = x1 - x0, point - top
+    middle = (x0 + x1) / 2
+    outline = [(x0, top), (x1, top), (x1, bottom), (middle, point), (x0, bottom)]
+    sheet = Sheet(w, h, "#eceded", rough=0.1, density=6)
+    X, Y = sheet.X, sheet.Y
+    sheet.metal[:] = 1.0
+    local = [(x - x0, y - top) for x, y in outline]
+    edge = within(X, Y, local)
+    # The chamfers are brushed across. The polished top crowns a hair, enough to carry a reflection.
+    chamfer = ramp(-0.16, -0.12, edge)
+    sheet.finish(chamfer, rough=0.26)
+    sheet.height -= 0.03 * ((X - w / 2) / (w / 2)) ** 2
+    cut = shield(X, Y, w / 2, 0.3, 0.92)
+    sheet.press(cut, 0.016)
+    sheet.finish(cut, rough=0.4)
+    sheet.rgb *= (1 - 0.45 * cut)[..., None]
+    sheet.rough += 0.01 * np.clip(cloud(sheet.height.shape, 41, falloff=1.8), -2, 2)
+    steel = skin(sheet, f"{name}-steel", wear=(("Scratches003", 3, 0.04, 0.0003), ("Fingerprints009", 5, 0.05, 0)), specular=0.5)
+    cover = clad(prism(STAGE, f"{name}-clasp", outline, 0.04, THICK + 0.1, steel, bevel=0.14, segments=2), x0, top, w, h)
+    pusher = principled(f"{name}-pusher", "#d4d5d7", rough=0.12, metal=1.0)
+    buttons = [
+        prism(STAGE, f"{name}-pusher-{side}", rect(x - 0.1, top + 0.32, x + 0.1, top + 0.86, 0.08, 6), 0.08, THICK - 0.02, pusher, bevel=0.05, segments=3)
+        for side, x in (("left", x0 - 0.03), ("right", x1 + 0.03))
+    ]
+    return [cover, *buttons]
+
+
+def stitched(sheet, points, thread, length, width, slant):
+    """Fine saddle stitching, as a watch strap has: each stitch a short lean of waxed thread lying in a
+    crease, its ends gone into holes no wider than the thread. objects.fob's holes are cut for a thicker
+    thread, and at this size they string the stitches up like beads."""
+    colour = linear(thread)
+    for x, y, heading in points:
+        dx, dy = math.cos(heading + slant) * length / 2, math.sin(heading + slant) * length / 2
+        rows, cols = sheet.window(x - 0.2, y - 0.2, x + 0.2, y + 0.2)
+        X, Y = sheet.X[rows, cols], sheet.Y[rows, cols]
+        for ex, ey in ((x - dx, y - dy), (x + dx, y + dy)):
+            hole = np.exp(-((np.hypot(X - ex, Y - ey) / (0.5 * width)) ** 2))
+            sheet.rgb[rows, cols] *= 1 - 0.55 * hole[..., None]
+            sheet.height[rows, cols] -= 0.01 * hole
+        core = segment(X, Y, x - dx, y - dy, x + dx, y + dy)
+        cord = sheet.mask(core - width / 2)
+        crown = np.sqrt(np.clip(1 - (core / (width / 2)) ** 2, 0, 1))
+        along = (X - x) * math.cos(heading + slant) + (Y - y) * math.sin(heading + slant)
+        ply = 0.88 + 0.12 * np.sin((along + core) * 2 * math.pi / 0.045)
+        sheet.rgb[rows, cols] += cord[..., None] * (colour * (ply * (0.82 + 0.18 * crown))[..., None] - sheet.rgb[rows, cols])
+        sheet.height[rows, cols] += 0.022 * crown * cord
+        sheet.rough[rows, cols] += cord * (0.6 - sheet.rough[rows, cols])
+
+
+def tagheuer(name, height):
+    """TAG Heuer's Carrera strap, the cognac calfskin the brand fits its own chronographs with (BC6670):
+    padded down its middle, saddle stitched in ecru close to each edge, its edges painted dark. It runs
+    down the tab through the steel folding clasp it closes with, and on past it to its tail."""
+    left, right, head, foot = 0.86, 3.38, 0.8, height - 0.85
+    middle, seam = (left + right) / 2, 0.22
+    shape = fillet([(left, head, 0.08), (right, head, 0.08), (right, foot - 0.9, 1.0), (middle, foot, 1.0), (left, foot - 0.9, 1.0)], steps=16)
     sewn = fillet(
         [
-            (left + seam, head + seam, 0.06),
-            (right - seam, head + seam, 0.06),
-            (right - seam, foot - point - 0.06, 0.7),
-            (middle, foot - 1.45 * seam, 0.32),
-            (left + seam, foot - point - 0.06, 0.7),
+            (left + seam, head + seam, 0.05),
+            (right - seam, head + seam, 0.05),
+            (right - seam, foot - 0.92, 0.8),
+            (middle, foot - 1.2 * seam, 0.8),
+            (left + seam, foot - 0.92, 0.8),
         ],
         steps=12,
     )
-    sheet = Sheet(WIDTH, height, "#71421f", rough=0.42, density=3)
+    sheet = Sheet(WIDTH, height, "#a65a2e", rough=0.46, density=4)
     X, Y = sheet.X, sheet.Y
     edge = within(X, Y, shape)
-    sheet.height -= 0.1 * (1 - np.clip(-edge / 0.75, 0, 1)) ** 2
-    # The mark goes in before the stitching: pressed and burnished, with no colour of its own.
-    mark, _ = placed(sheet, artwork("logos/hamilton"), middle - 0.5, 1.75, middle + 0.5, 5.75, turn=1)
-    sheet.press(blur(mark, 1.2), 0.03)
-    sheet.ink(mark, "#1d1916", 0.5)
-    sheet.finish(mark, rough=0.26)
-    sheet.ink(ramp(-0.1, -0.02, edge), "#1d1916", 0.55)
+    # Padded: it stands highest inside the stitching and falls to a thin edge outside it.
+    sheet.height -= 0.12 * (1 - np.clip(-edge / 0.6, 0, 1)) ** 2
+    # Calfskin is never one even tan: the dye takes a little darker in patches and toward the edges.
+    sheet.ink(np.clip(cloud(sheet.height.shape, 51, falloff=1.6), 0, 2) * 0.5, "#6b3416", 0.18)
+    sheet.ink(ramp(-0.5, 0.0, edge), "#5a2c14", 0.3)
+    # The edge is painted, a near black brown, and polished.
+    paint = ramp(-0.07, -0.03, edge)
+    sheet.paint(paint, "#2a160d")
+    sheet.finish(paint, rough=0.3)
     # The stitch line is creased in before the thread goes through.
-    sheet.press(np.exp(-((within(X, Y, sewn) / 0.07) ** 2)), 0.018)
-    stitch(sheet, spaced(sewn, 0.27), thread="#e9dcba", length=0.2, width=0.07)
-    for y in (6.55, 7.3, 8.05, 8.8):
-        hole = disc(X, Y, middle, y, 0.115)
-        sheet.punch(hole)
-        # Round each hole the leather is crushed down, and darkened by the tongue.
-        sheet.press(np.exp(-((hole / 0.09) ** 2)), 0.03)
-        sheet.ink(np.exp(-((hole / 0.07) ** 2)), "#1d1916", 0.5)
+    sheet.press(np.exp(-((within(X, Y, sewn) / 0.06) ** 2)), 0.016)
+    stitched(sheet, spaced(sewn, 0.24), "#e6d9bf", length=0.19, width=0.06, slant=0.12)
     leather = skin(
         sheet,
-        f"{name}-leather",
-        punched=True,
+        f"{name}-calf",
         scan="Leather037",
-        scan_size=5.5,
-        scan_normal=1.5,
-        scan_rough=1.0,
-        wear=(("SurfaceImperfections003", 12, 0.1, 0),),
-        mottle=0.08,
-        sheen=0.15,
+        scan_size=1.8,
+        scan_normal=2.2,
+        scan_rough=0.8,
+        wear=(("SurfaceImperfections003", 12, 0.08, 0),),
+        mottle=0.06,
+        sheen=0.2,
         specular=0.5,
         subsurface=0.03,
     )
-    strap = prism(STAGE, name, shape, 0.0, THICK - 0.02, leather, bevel=0.1, segments=6)
-    return {}, [clad(strap, 0, 0, WIDTH, height)]
+    strap = clad(prism(STAGE, name, shape, 0.0, THICK - 0.02, leather, bevel=0.1, segments=6), 0, 0, WIDTH, height)
+    return {"card": 1.6}, [strap, *clasp(name, left, right, 3.7, 5.55, 6.05)]
 
 
 # Each tab: the height in rem of the paper tab (SiteShell's tabHeights), that paper's colour (the band of
 # its strip), which lights the piece's edges from below, how the piece was set down (see stuck), and what
 # builds it.
 TABS = {
-    "hamilton": (11, "#bfa391", (0.5, 0.0, 0.02), hamilton),
+    "tagheuer": (11, "#bfa391", (0.5, 0.0, 0.02), tagheuer),
     "lacoste": (10, "#e3d3c1", (0.9, 0.02, -0.03), lacoste),
     "proraso": (10, "#d9d4c2", (-0.7, -0.02, 0.02), proraso),
     "apple": (10, "#1e2740", (0.5, 0.03, 0.03), apple),
