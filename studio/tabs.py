@@ -39,6 +39,7 @@ ROOT = os.path.dirname(HERE)
 OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
 sys.path.insert(0, os.path.join(OEUSUME, "studio"))
 
+import bmesh  # noqa: E402
 import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix  # noqa: E402
@@ -434,11 +435,47 @@ def prs(name, height):
     return {"card": 1.2}, moulded(name, height, "#e6cdab", 0.4, 0.12, dress, subsurface=0.03)
 
 
+def drill(case, centres, bore, sink, depth, material):
+    """Drill real holes into a solid from above: each one countersunk, then bored down to a floor.
+    The case keeps the cutter as a live boolean, so the holes go wherever the case is moved."""
+    steps, top = 20, THICK
+    bm = bmesh.new()
+    profile = ((bore + sink + 0.05, top + 0.05), (bore, top - sink), (bore, top - depth))
+    for cx, cy in centres:
+        rings = [
+            [bm.verts.new((cx + r * math.cos(2 * math.pi * i / steps), -cy + r * math.sin(2 * math.pi * i / steps), z)) for i in range(steps)]
+            for r, z in profile
+        ]
+        for upper, lower in zip(rings, rings[1:]):
+            for i in range(steps):
+                j = (i + 1) % steps
+                bm.faces.new((upper[i], upper[j], lower[j], lower[i]))
+        bm.faces.new(rings[0])
+        bm.faces.new(rings[-1][::-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for face in bm.faces:
+        face.smooth = True
+    mesh = bpy.data.meshes.new(f"{case.name}-drill")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(material)
+    cutter = STAGE.add(f"{case.name}-drill", mesh)
+    cutter.hide_render = True
+    cutter.parent = case
+    cut = case.modifiers.new("drill", "BOOLEAN")
+    cut.operation = "DIFFERENCE"
+    cut.object = cutter
+    cut.solver = "EXACT"
+    case.modifiers.move(len(case.modifiers) - 1, 0)
+    return cutter
+
+
 def apple(name, height):
-    """A slab of a Mac Studio's case. It is milled from one block of aluminium, bead blasted to an even
-    satin and anodised clear, so it shines softly and all of a piece, with no grain to it. The milling
-    leaves a chamfer round the top that is cut with a diamond, and that alone is bright as a mirror."""
-    sheet = Sheet(WIDTH, height, "#d4d6d9", rough=0.34, density=3)
+    """A slab of a Mac Studio's case. It is milled from one block of aluminium, bead blasted to a fine
+    even satin and anodised clear, so it shines softly and all of a piece. The milling leaves a chamfer
+    round the top that is cut with a diamond, and that alone is bright as a mirror."""
+    # Aluminium's own reflectance, a little dulled by the anodising.
+    sheet = Sheet(WIDTH, height, "#e4e5e7", rough=0.3, density=8)
     X, Y = sheet.X, sheet.Y
     sheet.metal[:] = 1.0
     shape = outline(height)
@@ -446,41 +483,48 @@ def apple(name, height):
     # The face is milled flat. The chamfer is cut shallow, so it looks up at the light over the desk.
     chamfer = 0.11
     sheet.height -= 0.028 * np.clip(1 + edge / chamfer, 0, 1)
-    sheet.finish(ramp(-chamfer - 0.012, -chamfer + 0.004, edge), rough=0.04)
+    sheet.finish(ramp(-chamfer - 0.012, -chamfer + 0.004, edge), rough=0.05)
+    # The badge is enamel, fired in a pocket milled for it. It sets proud and a little domed, and glazed.
     badge, colour = placed(sheet, artwork("logos/apple"), MIDDLE - 0.98, 1.35, MIDDLE + 0.98, 3.75)
-    # The badge is enamel, let into a pocket milled for it and glazed over.
     sheet.rgb += badge[..., None] * (colour - sheet.rgb)
-    sheet.finish(badge, rough=0.1, metal=0.0, coat=1.0)
-    sheet.press(blur(np.clip(badge * 2, 0, 1), 1.2), 0.004)
+    sheet.finish(badge, rough=0.18, metal=0.0, coat=1.0)
+    sheet.height += 0.012 * blur(badge, 6.0) * badge
+    seam = np.clip(1 - np.abs(badge - 0.5) * 2, 0, 1)
+    sheet.press(blur(seam, 1.0), 0.006)
     # The grille of a Mac Studio: round holes drilled close, each row half a step from the last.
     # Only whole holes are drilled, so the field stops clean inside the piece's edge.
-    top, foot, pitch, bore = 4.75, 8.6, 0.2, 0.062
-    row = np.round(Y / (pitch * 0.866))
-    col = np.round(X / pitch - 0.5 * (row % 2))
-    cx, cy = (col + 0.5 * (row % 2)) * pitch, row * pitch * 0.866
-    rows = np.clip((cy * sheet.ppe).astype(int), 0, Y.shape[0] - 1)
-    cols = np.clip((cx * sheet.ppe).astype(int), 0, Y.shape[1] - 1)
-    drilled = (cy > top) & (cy < foot) & (edge[rows, cols] < -0.42)
-    reach = np.hypot(X - cx, Y - cy)
-    hole = sheet.mask(reach - bore) * drilled
-    # The drill leaves a bright little chamfer round each hole, then the bore goes down into the dark.
-    lip = sheet.mask(reach - bore - 0.016) * drilled - hole
-    sheet.press(blur(lip, 0.8), 0.012)
-    sheet.finish(lip, rough=0.08)
-    sheet.press(blur(hole, 0.4), 0.07)
-    sheet.paint(hole, "#060606")
-    sheet.finish(hole, rough=0.8, metal=0.0)
+    top, foot, pitch, bore, sink = 4.75, 8.6, 0.2, 0.062, 0.011
+    centres = []
+    for row in range(int(top / (pitch * 0.866)) + 1, int(foot / (pitch * 0.866)) + 1):
+        for col in range(int(WIDTH / pitch) + 1):
+            cx, cy = (col + 0.5 * (row % 2)) * pitch, row * pitch * 0.866
+            if top < cy < foot and within(np.array([cx]), np.array([cy]), shape)[0] < -0.42:
+                centres.append((cx, cy))
+    for cx, cy in centres:
+        rows, cols = sheet.window(cx - 0.12, cy - 0.12, cx + 0.12, cy + 0.12)
+        reach = np.hypot(X[rows, cols] - cx, Y[rows, cols] - cy)
+        # The drill leaves only a hairline of bright chamfer. Down the bore is the dark inside of the case.
+        lip = sheet.mask(reach - bore - sink - 0.003) - sheet.mask(reach - bore - 0.002)
+        sheet.rough[rows, cols] += lip * (0.08 - sheet.rough[rows, cols])
+        floor = sheet.mask(reach - bore + 0.003)
+        sheet.rgb[rows, cols] += floor[..., None] * (linear("#030303") - sheet.rgb[rows, cols])
+        sheet.metal[rows, cols] *= 1 - floor
+        sheet.rough[rows, cols] += floor * (0.95 - sheet.rough[rows, cols])
     # Bead blasting is even, but never perfectly: the satin drifts a touch, and a hand has held it.
-    sheet.rough += 0.02 * np.clip(cloud(sheet.height.shape, 7, falloff=2.0), -2, 2)
+    sheet.rough += 0.025 * np.clip(cloud(sheet.height.shape, 7, falloff=2.0), -2, 2)
     aluminium = skin(
         sheet,
         f"{name}-aluminium",
-        wear=(("Fingerprints009", 6, 0.06, 0), ("Scratches003", 5, 0.03, 0.0002)),
+        wear=(("Fingerprints009", 6, 0.08, 0), ("SurfaceImperfections003", 7, 0.04, 0), ("Scratches003", 5, 0.03, 0.0002)),
+        # The blasting's grain, each bead a dent too small to see alone, and seen all together as satin.
+        fibre=0.001,
+        fibre_scale=110,
         specular=0.5,
         coat_rough=0.04,
     )
-    case = prism(STAGE, name, shape, 0.0, THICK, aluminium, bevel=0.035, segments=3)
-    return {"card": 1.6}, [clad(case, 0, 0, WIDTH, height)]
+    case = clad(prism(STAGE, name, shape, 0.0, THICK, aluminium, bevel=0.035, segments=3), 0, 0, WIDTH, height)
+    clad(drill(case, centres, bore, sink, 0.16, aluminium), 0, 0, WIDTH, height)
+    return {"card": 1.4}, [case]
 
 
 def van(name, height):
