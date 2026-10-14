@@ -47,9 +47,12 @@ type Grain = Array<{ every: number; amount: number }>
  * its right. The edge wanders in and out at a few scales at once, grain giving each scale's length in px and
  * its share of reach, the most in px it wanders. It comes back to where it began, so one length of it meets
  * the next without a seam. Each seed tears it differently. Along calm, spans of the edge from and to in px,
- * the edge runs straight, easing out of the tear and back into it, where a tab grows out of it.
+ * the edge runs straight, easing out of the tear and back into it, where a tab grows out of it. outward tears
+ * the paper out past the strip's edge, its deepest bites coming back only as far as the edge, for a strip over
+ * something that starts right at its edge, so the tear never uncovers what is not there; the edge is then at
+ * the mask's left, and the mask lies just past the strip.
  */
-function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, number]> = []) {
+function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, number]> = [], outward = false) {
   let state = seed
   const random = () => {
     state = (state + 0x6d2b79f5) | 0
@@ -57,6 +60,7 @@ function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, nu
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
+  const most = grain.reduce((sum, { amount }) => sum + amount, 0)
   const scales = grain.map(({ every, amount }) => {
     const knots = Array.from({ length: Math.round(TEAR_LENGTH / every) }, random)
     return (y: number) => {
@@ -75,7 +79,8 @@ function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, nu
       return Math.min(least, f * f * (3 - 2 * f))
     }, 1)
   const points = Array.from({ length: TEAR_LENGTH + 1 }, (_, y) => {
-    const x = TEAR_WIDTH - settled(y) * reach * scales.reduce((sum, scale) => sum + scale(y), 0)
+    const wander = scales.reduce((sum, scale) => sum + scale(y), 0)
+    const x = outward ? settled(y) * reach * (most - wander) : TEAR_WIDTH - settled(y) * reach * wander
     return `${x.toFixed(2)} ${y}`
   })
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${TEAR_WIDTH}" height="${TEAR_LENGTH}" viewBox="0 0 ${TEAR_WIDTH} ${TEAR_LENGTH}"><path d="M0 0 L${points.join(' L')} L0 ${TEAR_LENGTH} Z"/></svg>`
@@ -91,7 +96,7 @@ type Edge = 'torn' | 'worn' | 'cut'
  * the colour of whatever is on it. Leather is cut, and worn only a little: its edge wanders slowly, and past
  * its grain shows its own edge, burnished dark. A mat is cut clean and straight, so it has no style at all.
  */
-function torn(seed: number, calm: Array<[number, number]>, edge: Edge): CSSProperties {
+function torn(seed: number, calm: Array<[number, number]>, edge: Edge, outward = false): CSSProperties {
   if (edge === 'cut') return {}
   if (edge === 'worn') {
     const grain = (fine: number) => [
@@ -112,7 +117,7 @@ function torn(seed: number, calm: Array<[number, number]>, edge: Edge): CSSPrope
     { every: 14, amount: 0.3 },
     { every: 3, amount: fray },
   ]
-  return { '--torn-surface': tear(seed, 11, grain(0.2), calm), '--torn-core': tear(seed, 7, grain(0.55), calm) } as CSSProperties
+  return { '--torn-surface': tear(seed, 11, grain(0.2), calm, outward), '--torn-core': tear(seed, 7, grain(0.55), calm, outward) } as CSSProperties
 }
 
 /** How a strip's own edge was made. */
@@ -315,12 +320,14 @@ export function SiteShell({ children }: SiteShellProps) {
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
   // Each page's edge is torn its own way, and runs straight where its tab grows out of it, so the tab's
-  // eased joins meet a straight edge.
+  // eased joins meet a straight edge. Open, the mat is laid from the edge of the strip before it, and it cannot
+  // be laid any wider without moving everything on it, so that strip's tear reaches out over the mat instead.
+  const reachesOver = (i: number) => Boolean(pageTones[i + 1]?.fills)
   const tears = pageTones.map((_, i) => {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
-    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(pageTones[i]))
+    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(pageTones[i]), reachesOver(i))
   })
   const fixed = mobile ? 0 : spine + end
   const gaps = mobile ? count - 1 : count + 1
@@ -363,10 +370,10 @@ export function SiteShell({ children }: SiteShellProps) {
   const skinFrom = lefts[skin] + overlap
   // Its tab is cut from the same leather and stands out past the strip's edge, so the cut runs on over it.
   const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin)) + protrude
-  // The strip before the mat is torn, so the mat shows through the tear: the cut starts where the tear can
-  // reach, and the paper left of the tear, its frayed core with it, is put back by the tear's own mask.
+  // The strip before the mat tears out over it: the paper on the mat past that strip's edge, its frayed core
+  // with it, is put back by the tear's own mask.
   const column =
-    `linear-gradient(to right, #000 calc(var(--mat-from) * 1px - ${TEAR_WIDTH}px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)`
+    `linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)`
   const grainCut = {
     '--grain-cut': `${column}, ${(tears[mat - 1] as Record<string, string>)['--torn-core']}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
     '--grain-cut-size': [
@@ -378,7 +385,7 @@ export function SiteShell({ children }: SiteShellProps) {
     ].join(', '),
     '--grain-cut-position': [
       '0 0',
-      `calc(var(--mat-from) * 1px - ${TEAR_WIDTH}px) 0`,
+      'calc(var(--mat-from) * 1px) 0',
       `calc(var(--mat-from) * 1px - ${band}px) ${tabBefore.top - paper.reach}px`,
       `calc(var(--mat-from) * 1px - ${band + pieceMargin}px) ${tabBefore.top - pieceMargin}px`,
       `calc(var(--mat-to) * 1px - ${band + pieceMargin}px) ${tabOwn.top - pieceMargin}px`,
@@ -437,7 +444,7 @@ export function SiteShell({ children }: SiteShellProps) {
           return (
             <motion.section
               key={item.to}
-              className="strip"
+              className={`strip ${reachesOver(i) ? 'strip-reaches' : ''}`}
               initial={false}
               animate={{ left: lefts[i], width: open ? openWidth : folded(i) }}
               transition={transition}
@@ -463,7 +470,9 @@ export function SiteShell({ children }: SiteShellProps) {
                   <motion.div
                     aria-hidden
                     className="absolute inset-y-0"
-                    style={{ left: overlap, width: folded(i) - band - overlap }}
+                    // A picture runs on under the strip before it as far as that strip's tear can bite, so the tear
+                    // never uncovers bare panel.
+                    style={pageTones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - band - overlap + TEAR_WIDTH } : { left: overlap, width: folded(i) - band - overlap }}
                     initial={false}
                     animate={{ opacity: open ? 0 : 1 }}
                     // A picture page folds back into its strip's picture, which has to be there at once to take over.

@@ -234,6 +234,12 @@
     background-color: var(--band);
   }
 
+  /* A strip whose tear reaches out over the strip after it: its paper runs on past its edge for the tear. */
+  .strip-reaches > .torn,
+  .strip-reaches > .panel-hangs {
+    right: -16px;
+  }
+
   /* Past leather's grain its cut edge shows, burnished dark with handling. Paper's frayed core is the colour
      of what is on it, so it needs nothing laid over it. */
   .torn-fray {
