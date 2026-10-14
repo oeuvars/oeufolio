@@ -45,6 +45,7 @@ from stage import Stage  # noqa: E402
 
 ART = os.path.join(HERE, "art")
 OUT = os.path.join(ROOT, "public", "objects")
+TOP_CORE, TOP_HOLE = 0.516, 0.39  # the core's radius, of the roll's, and the spindle hole's, of the core's (roll_top.py)
 ROLL_JSON = os.path.join(ROOT, "src", "components", "ticket", "roll.json")
 PANEL = "#651415"  # the leather it lies on (leather.py), which lights it from below
 WIDTH = 4.4  # 35 mm, in em, as reel.py has it
@@ -197,76 +198,50 @@ def roll_mesh(length):
 
 
 def wound(stage):
-    """The turns of film wound tight on the core: from above, a disc of the film's edges stacked side by side, dark
-    and faintly glossy, ringed finely where one turn lies against the next, each turn a shade lighter or darker than
-    its neighbour as they caught the light; the middle crept up a little out of the roll, and in it the core, dark
-    plastic, a hole through it for the spindle."""
+    """The turns of film wound tight on the core, as a real roll's are: a photograph of a real 35 mm roll on its
+    orange core, straightened to look straight down at it (roll_top.py), laid on the top of a solid as wide as the
+    roll and as deep as the film, with the spindle hole through it. Its sides are the film's dark edges."""
     w = 35 * PROP
-    inner, outer = ROLL["inner"], ROLL["outer"] - 0.05
-    edge = bpy.data.materials.new("wound")
-    edge.use_nodes = True
-    nodes, links = edge.node_tree.nodes, edge.node_tree.links
+    outer = ROLL["outer"] - 0.05
+    hole = outer * TOP_CORE * TOP_HOLE
+    top = bpy.data.materials.new("wound")
+    top.use_nodes = True
+    nodes, links = top.node_tree.nodes, top.node_tree.links
     shader = nodes["Principled BSDF"]
-    shader.inputs["Base Color"].default_value = (0.03, 0.026, 0.022, 1)
-    shader.inputs["Roughness"].default_value = 0.5
-    shader.inputs["Specular IOR Level"].default_value = 0.25
+    # The photograph already has the film's own sheen in it: little more is added.
+    shader.inputs["Roughness"].default_value = 0.45
+    shader.inputs["Specular IOR Level"].default_value = 0.06
     coord = nodes.new("ShaderNodeTexCoord")
-    radial = nodes.new("ShaderNodeVectorMath")
-    radial.operation = "LENGTH"
-    flat = nodes.new("ShaderNodeVectorMath")
-    flat.operation = "MULTIPLY"
-    flat.inputs[1].default_value = (1, 1, 0)
-    links.new(coord.outputs["Object"], flat.inputs[0])
-    links.new(flat.outputs[0], radial.inputs[0])
-    along = nodes.new("ShaderNodeCombineXYZ")
-    links.new(radial.outputs["Value"], along.inputs["X"])
-    turns = nodes.new("ShaderNodeTexNoise")
-    turns.inputs["Scale"].default_value = 110.0
-    turns.inputs["Detail"].default_value = 6.0
-    links.new(along.outputs[0], turns.inputs["Vector"])
-    shade = nodes.new("ShaderNodeMapRange")
-    shade.inputs["To Min"].default_value = 0.6
-    shade.inputs["To Max"].default_value = 1.6
-    links.new(turns.outputs["Fac"], shade.inputs["Value"])
-    tint = nodes.new("ShaderNodeVectorMath")
-    tint.operation = "SCALE"
-    tint.inputs[0].default_value = (0.011, 0.009, 0.007)
-    links.new(shade.outputs["Result"], tint.inputs["Scale"])
-    links.new(tint.outputs[0], shader.inputs["Base Color"])
-    bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Distance"].default_value = 0.004
-    links.new(turns.outputs["Fac"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], shader.inputs["Normal"])
-    core = bpy.data.materials.new("core")
-    core.use_nodes = True
-    shader = core.node_tree.nodes["Principled BSDF"]
-    shader.inputs["Base Color"].default_value = (0.018, 0.017, 0.016, 1)
-    shader.inputs["Roughness"].default_value = 0.55
-    for name, r0, r1, rise, material in (("wound", inner - 0.02, outer, ROLL["creep"], edge), ("core", 0.38, inner - 0.02, ROLL["creep"] + 0.04, core)):
-        mesh = bpy.data.meshes.new(name)
-        bm = bmesh.new()
-        steps, bands = 160, 24
-        rings = []
-        # The bottom, then the top from the inside out, falling from the crept-up middle to the outer turn.
-        bottom_in = [bm.verts.new((r0 * math.cos(a), r0 * math.sin(a), 0.02)) for a in np.linspace(0, 2 * math.pi, steps, endpoint=False)]
-        rings.append(bottom_in)
-        for k in range(bands + 1):
-            r = r0 + (r1 - r0) * k / bands
-            z = 0.02 + w + rise * (1 - k / bands) ** 2
-            rings.append([bm.verts.new((r * math.cos(a), r * math.sin(a), z)) for a in np.linspace(0, 2 * math.pi, steps, endpoint=False)])
-        rings.append([bm.verts.new((r1 * math.cos(a), r1 * math.sin(a), 0.02)) for a in np.linspace(0, 2 * math.pi, steps, endpoint=False)])
-        for ra, rb in zip(rings, rings[1:] + rings[:1]):
-            for i in range(steps):
-                j = (i + 1) % steps
-                bm.faces.new((ra[i], ra[j], rb[j], rb[i]))
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        bm.to_mesh(mesh)
-        bm.free()
-        mesh.materials.append(material)
-        for poly in mesh.polygons:
-            poly.use_smooth = True
-        obj = stage.add(name, mesh)
-        obj.location = (ROLL["at"][0], -ROLL["at"][1], 0)
+    place = nodes.new("ShaderNodeMapping")
+    place.inputs["Scale"].default_value = (1 / (2 * outer / 0.965), 1 / (2 * outer / 0.965), 1)
+    place.inputs["Location"].default_value = (0.5, 0.5, 0)
+    links.new(coord.outputs["Object"], place.inputs["Vector"])
+    photo = nodes.new("ShaderNodeTexImage")
+    photo.image = bpy.data.images.load(os.path.join(ART, "roll-top.png"))
+    photo.interpolation = "Cubic"
+    photo.extension = "EXTEND"
+    links.new(place.outputs["Vector"], photo.inputs["Vector"])
+    links.new(photo.outputs["Color"], shader.inputs["Base Color"])
+    side = bpy.data.materials.new("wound-side")
+    side.use_nodes = True
+    side.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.02, 0.018, 0.016, 1)
+    side.node_tree.nodes["Principled BSDF"].inputs["Roughness"].default_value = 0.3
+    mesh = bpy.data.meshes.new("wound")
+    bm = bmesh.new()
+    steps = 192
+    angles = np.linspace(0, 2 * math.pi, steps, endpoint=False)
+    rings = [[bm.verts.new((r * math.cos(a), r * math.sin(a), z)) for a in angles] for r, z in ((hole, 0.02), (hole, 0.02 + w), (outer, 0.02 + w), (outer, 0.02))]
+    for k, (ra, rb) in enumerate(zip(rings, rings[1:] + rings[:1])):
+        for i in range(steps):
+            j = (i + 1) % steps
+            bm.faces.new((ra[i], ra[j], rb[j], rb[i])).material_index = 0 if k == 1 else 1
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(top)
+    mesh.materials.append(side)
+    obj = stage.add("wound", mesh)
+    obj.location = (ROLL["at"][0], -ROLL["at"][1], 0)
 
 
 def principled_edge():
