@@ -540,88 +540,81 @@ def van(name, height):
     return {}, moulded(name, height, "#f3efe4", 0.18, 0.5, dress, subsurface=0.06)
 
 
-def shield(X, Y, cx, top, w):
-    """TAG Heuer's shield, as it is engraved on the brand's steel: square shoulders, sides that run down
-    and then close to a shallow point, and a rule across it where the name's two words divide. Returns
-    the depth of the cut at each point, deepest on the lines."""
-    h = 1.08 * w
-    left, right, waist = cx - w / 2, cx + w / 2, top + 0.66 * h
-    outline = [(left, top), (right, top), (right, waist), (cx, top + h), (left, waist)]
-    line = np.exp(-((within(X, Y, outline) / (0.018 * w / 0.9)) ** 2))
-    rule = top + 0.4 * h
-    across = segment(X, Y, left + 0.06 * w, rule + 0.02 * w, right - 0.06 * w, rule - 0.02 * w)
-    return np.maximum(line, np.exp(-((across / (0.016 * w / 0.9)) ** 2)) * (within(X, Y, outline) < 0))
+def decoded(tone):
+    """A photograph's sRGB tones as linear light."""
+    return np.where(tone <= 0.04045, tone / 12.92, ((tone + 0.055) / 1.055) ** 2.4)
 
 
-def clasp(name, left, right, top, bottom, point):
-    """The cover of TAG Heuer's folding clasp, laid over the strap where it closes: one piece of steel,
-    its top polished, its sides chamfered and brushed, its foot cut to a point like the shield it carries.
-    A push-button stands out of each side."""
-    x0, x1 = left - 0.1, right + 0.1
-    w, h = x1 - x0, point - top
-    middle = (x0 + x1) / 2
-    outline = [(x0, top), (x1, top), (x1, bottom), (middle, point), (x0, bottom)]
-    sheet = Sheet(w, h, "#e9eaeb", rough=0.035, density=8)
-    X, Y = sheet.X, sheet.Y
-    shape = sheet.height.shape
+def clasp(name, middle, wide, top):
+    """The cover of TAG Heuer's folding clasp, laid over the strap where it closes. It is cut from TAG
+    Heuer's own photograph of the FC6483's buckle (studio/assets/tagheuer/clasp), turned square to the
+    lens and drawn out to the cover's outline: one piece of steel with its top polished, the shield cut
+    into it, its sides chamfered and its foot drawn to a point. The photograph's steel is the colour of
+    the steel here, so it takes the light the way the steel did when it was photographed. A push-button
+    stands out of each side. Returns the solids and the cover's outline."""
+    photo = artwork("tagheuer/clasp")
+    tall, broad = photo.shape[:2]
+    h = wide * tall / broad
+    side = wide * np.flatnonzero(photo[:, 0, 3] > 0.5).max() / broad
+    x0, x1 = middle - wide / 2, middle + wide / 2
+    outline = [(x0, top), (x1, top), (x1, top + side), (middle, top + h), (x0, top + side)]
+    sheet = Sheet(wide, h, "#d8d9da", rough=0.1, density=14)
+    X = sheet.X
+    tone = np.clip(fit(photo[..., :3], *sheet.height.shape), 0, 1)
+    sheet.rgb[:] = decoded(tone)
     sheet.metal[:] = 1.0
-    local = [(x - x0, y - top) for x, y in outline]
-    edge = within(X, Y, local)
-    # The top is polished to a mirror, and crowned enough that what it mirrors sweeps across it.
-    sheet.height -= 0.06 * ((X - w / 2) / (w / 2)) ** 2
-    # The chamfers are brushed along their length, so each one is a satin band of fine parallel lines.
-    chamfer = ramp(-0.16, -0.12, edge)
-    gy, gx = np.gradient(edge)
-    across = np.abs(gy) / np.maximum(np.hypot(gx, gy), 1e-9)
-    lines = across * streaks(shape, 43, 60, 0.5) + (1 - across) * streaks(shape[::-1], 44, 60, 0.5).T
-    lines = np.clip(lines / max(lines.std(), 1e-9), -2.5, 2.5)
-    sheet.finish(chamfer, rough=0.2)
-    sheet.rough += chamfer * 0.06 * lines
-    sheet.height += chamfer * 0.0006 * lines
-    sheet.rgb *= (1 + chamfer * 0.04 * lines)[..., None]
-    cut = shield(X, Y, w / 2, 0.3, 0.92)
-    sheet.press(cut, 0.016)
-    sheet.finish(cut, rough=0.35)
-    sheet.rgb *= (1 - 0.4 * cut)[..., None]
-    # Polish is never perfect: a faint haze in places, and the hairlines of being worn.
-    sheet.rough += 0.01 * np.clip(cloud(shape, 41, falloff=1.4), 0, 2) * (1 - chamfer)
-    steel = skin(
-        sheet,
-        f"{name}-steel",
-        wear=(("Fingerprints009", 4, 0.02, 0),),
-        specular=0.5,
-    )
-    cover = clad(prism(STAGE, f"{name}-clasp", outline, 0.04, THICK + 0.1, steel, bevel=0.14, segments=2), x0, top, w, h)
-    pusher = principled(f"{name}-pusher", "#e2e3e4", rough=0.06, metal=1.0)
+    # The shield's cut and the chamfers' edges are the photograph's darkest lines. Pressed in, they turn
+    # with the light as the cut does. The polish's faint grain is left in the colour alone.
+    lum = tone.mean(axis=-1)
+    detail = lum - blur(lum, 4.0)
+    sheet.height += 0.004 * np.clip(detail / 0.12, -1, 0)
+    # It is curved across a little, to sit round the wrist.
+    sheet.height -= 0.03 * ((X - wide / 2) / (wide / 2)) ** 2
+    steel = skin(sheet, f"{name}-steel", wear=(("Fingerprints009", 4, 0.015, 0),), specular=0.5)
+    cover = clad(prism(STAGE, f"{name}-clasp", outline, 0.04, THICK + 0.1, steel, bevel=0.1, segments=3), x0, top, wide, h)
+    # The buttons stand out of the cover's sides a little below its top, as long as a third of its side.
+    pusher = principled(f"{name}-pusher", "#d4d5d6", rough=0.08, metal=1.0)
+    near, far = top + 0.08 * wide / 3.4, top + 0.86 * wide / 3.4
     buttons = [
-        prism(STAGE, f"{name}-pusher-{side}", rect(x - 0.1, top + 0.32, x + 0.1, top + 0.86, 0.08, 6), 0.08, THICK - 0.02, pusher, bevel=0.05, segments=3)
-        for side, x in (("left", x0 - 0.03), ("right", x1 + 0.03))
+        prism(STAGE, f"{name}-pusher-{side}", rect(a, near, b, far, 0.08, 6), 0.1, THICK - 0.02, pusher, bevel=0.06, segments=4)
+        for side, a, b in (("left", x0 - 0.16, x0 + 0.04), ("right", x1 - 0.04, x1 + 0.16))
     ]
-    return [cover, *buttons]
+    return [cover, *buttons], outline
 
 
-def lit(cx, cy, bands):
-    """Strip lights over the set that only a reflection sees: no light from them falls on anything, and
-    the camera cannot see them. Polished steel shows what is round it, and under one even card it can
-    only be one even grey. A watch is lit for its photograph with long strips, so its steel carries
-    bright bands with dark between them, and so does this. bands is (offset across, width, strength)."""
-    for i, (across, width, strength) in enumerate(bands):
-        panel = bpy.data.meshes.new(f"strip-{i}")
-        panel.from_pydata([(-width / 2, -30, 0), (width / 2, -30, 0), (width / 2, 30, 0), (-width / 2, 30, 0)], [], [(0, 1, 2, 3)])
-        glow = bpy.data.materials.new(f"strip-{i}")
-        glow.use_nodes = True
-        nodes = glow.node_tree.nodes
-        nodes.clear()
-        emit = nodes.new("ShaderNodeEmission")
-        emit.inputs["Strength"].default_value = strength
-        out = nodes.new("ShaderNodeOutputMaterial")
-        glow.node_tree.links.new(emit.outputs[0], out.inputs["Surface"])
-        panel.materials.append(glow)
-        strip = STAGE.add(f"strip-{i}", panel)
-        strip["stand"] = "room"
-        strip.location = (cx + across, cy, 30)
-        for seen in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission", "visible_volume_scatter"):
-            setattr(strip, seen, False)
+def diffuser(name, over, x0, y0, x1, y1, z, strength):
+    """A diffuser held close over polished steel, as a watch is lit for its photograph. Steel shows only
+    what is round it, and here that is one even light across its top, falling off past its edges, where
+    the chamfers look away from it to the dark room. The diffuser is linked to the steel alone, so nothing
+    else sees it or is lit by it."""
+    panel = bpy.data.meshes.new(f"{name}-diffuser")
+    panel.from_pydata([(x0, -y0, 0), (x1, -y0, 0), (x1, -y1, 0), (x0, -y1, 0)], [], [(0, 3, 2, 1)])
+    glow = bpy.data.materials.new(f"{name}-diffuser")
+    glow.use_nodes = True
+    nodes, links = glow.node_tree.nodes, glow.node_tree.links
+    nodes.clear()
+    emit = nodes.new("ShaderNodeEmission")
+    # The stage warms what it develops, to take the room's cool cast out. This light has no cast to take
+    # out, so it is given the room's, and the steel comes out as grey as it was photographed.
+    cast = 1 / stage_module.GAIN
+    emit.inputs["Color"].default_value = (*(cast / cast.max()), 1.0)
+    emit.inputs["Strength"].default_value = strength
+    clear = nodes.new("ShaderNodeBsdfTransparent")
+    both = nodes.new("ShaderNodeAddShader")
+    out = nodes.new("ShaderNodeOutputMaterial")
+    links.new(emit.outputs[0], both.inputs[0])
+    links.new(clear.outputs[0], both.inputs[1])
+    links.new(both.outputs[0], out.inputs["Surface"])
+    panel.materials.append(glow)
+    sheet = STAGE.add(f"{name}-diffuser", panel)
+    sheet["stand"] = "room"
+    sheet.location.z = z
+    for seen in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission", "visible_volume_scatter"):
+        setattr(sheet, seen, False)
+    steel = bpy.data.collections.new(f"{name}-steel")
+    for obj in over:
+        steel.objects.link(obj)
+    sheet.light_linking.receiver_collection = steel
 
 
 def hide(rows):
@@ -658,7 +651,7 @@ def tagheuer(name, height):
     per_em = 420 / across
     photo = hide(round((foot - top) * per_em / stretch))
     tone = np.clip(fit(photo, h, w), 0, 1)
-    sheet.rgb[rows, cols] = np.where(tone <= 0.04045, tone / 12.92, ((tone + 0.055) / 1.055) ** 2.4)
+    sheet.rgb[rows, cols] = decoded(tone)
     # The photograph has the hide's relief in it: its creases are its darkest lines. Pressed in, they
     # catch this room's light as well as the one it was photographed in.
     lum = sheet.rgb.mean(axis=-1)
@@ -670,10 +663,13 @@ def tagheuer(name, height):
     sheet.coat[:] = 0.06
     leather = skin(sheet, f"{name}-alligator", specular=0.15, coat_rough=0.2)
     strap = clad(prism(STAGE, name, shape, 0.0, THICK - 0.02, leather, bevel=0.1, segments=6), 0, 0, WIDTH, height)
-    # The clasp closes over the first join in the hide.
+    # The clasp closes over the first join in the hide. Its cover stands out past the strap's sides as
+    # far as it does in the photograph.
     lock = top + 282 * stretch / per_em - 0.75
-    lit(WIDTH / 2, -height / 2, ((-3.2, 1.6, 7.0), (-1.2, 0.35, 3.0), (2.6, 0.9, 4.0)))
-    return {"card": 0.5}, [strap, *clasp(name, NEAR + 0.12, WIDTH - FAR - 0.12, lock, lock + 1.85, lock + 2.35)]
+    steel, cover = clasp(name, MIDDLE, 1.13 * across, lock)
+    xs, ys = [x for x, _ in cover], [y for _, y in cover]
+    diffuser(name, steel, min(xs) - 0.3, min(ys) - 0.3, max(xs) + 0.3, max(ys) + 0.3, THICK + 1.2, 1.1)
+    return {"card": 0.5}, [strap, *steel]
 
 
 # Each tab: the height in rem of the paper tab (SiteShell's tabHeights), that paper's colour (the band of
