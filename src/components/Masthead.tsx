@@ -1,25 +1,22 @@
-/** The ink's wear, as SVG filters: worn for the big word, and a lighter wear that small letters survive. */
+/** The ink's wear, as SVG filters: one for the big word, and a lighter one that small letters survive. */
 function Wear() {
   return (
     <svg aria-hidden width="0" height="0" className="absolute">
       <defs>
         {/*
-         * Ink from a worn block: an edge pushed about by the paper, holes where it did not take, thin
-         * scratches run across it, whole patches rubbed thin, and a little bleed round all of it.
+         * Ink from an old block: an edge pushed about a little by the paper, fine pitting where it did not
+         * take, a few places rubbed thinner, and a little bleed round all of it.
          */}
         <filter id="worn" x="-4%" y="-10%" width="108%" height="120%" colorInterpolationFilters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="2" result="edge" />
-          <feDisplacementMap in="SourceGraphic" in2="edge" scale="5" xChannelSelector="R" yChannelSelector="G" result="rough" />
-          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="7" result="grain" />
-          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.4 0 0 0 -0.85" result="taken" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" seed="2" result="edge" />
+          <feDisplacementMap in="SourceGraphic" in2="edge" scale="2.5" xChannelSelector="R" yChannelSelector="G" result="rough" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="7" result="grain" />
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3 0 0 0 -0.45" result="taken" />
           <feComposite in="rough" in2="taken" operator="in" result="pitted" />
-          <feTurbulence type="fractalNoise" baseFrequency="0.004 0.22" numOctaves="2" seed="11" result="streaks" />
-          <feColorMatrix in="streaks" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -14 0 0 0 9.6" result="scratches" />
-          <feComposite in="pitted" in2="scratches" operator="in" result="scratched" />
-          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="4" result="rubbing" />
-          <feColorMatrix in="rubbing" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  5 0 0 0 -1.25" result="kept" />
-          <feComposite in="scratched" in2="kept" operator="in" result="ink" />
-          <feGaussianBlur in="ink" stdDeviation="0.7" result="bleed" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" seed="4" result="rubbing" />
+          <feColorMatrix in="rubbing" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.2 0 0 0 -0.15" result="kept" />
+          <feComposite in="pitted" in2="kept" operator="in" result="ink" />
+          <feGaussianBlur in="ink" stdDeviation="0.6" result="bleed" />
           <feMerge>
             <feMergeNode in="bleed" />
             <feMergeNode in="ink" />
