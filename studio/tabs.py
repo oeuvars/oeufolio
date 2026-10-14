@@ -1,8 +1,8 @@
 """What is stuck on the folder tabs: six pieces, one on each paper tab, each for something I like and
 carrying its maker's mark, the way stickers end up on everything a kid owns.
 
-    tagheuer  TAG Heuer's own Carrera strap: cognac calfskin, padded and saddle stitched in ecru, through
-              its steel folding clasp with the shield engraved in the cover
+    tagheuer  the Carrera CBN2012's own strap: glossy dark brown alligator, padded and stitched in brown,
+              through its steel folding clasp with the shield engraved in the cover
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
@@ -562,23 +562,38 @@ def clasp(name, left, right, top, bottom, point):
     w, h = x1 - x0, point - top
     middle = (x0 + x1) / 2
     outline = [(x0, top), (x1, top), (x1, bottom), (middle, point), (x0, bottom)]
-    sheet = Sheet(w, h, "#eceded", rough=0.1, density=6)
+    sheet = Sheet(w, h, "#e9eaeb", rough=0.035, density=8)
     X, Y = sheet.X, sheet.Y
+    shape = sheet.height.shape
     sheet.metal[:] = 1.0
     local = [(x - x0, y - top) for x, y in outline]
     edge = within(X, Y, local)
-    # The chamfers are brushed across. The polished top crowns a hair, enough to carry a reflection.
+    # The top is polished to a mirror, and crowned enough that what it mirrors sweeps across it.
+    sheet.height -= 0.06 * ((X - w / 2) / (w / 2)) ** 2
+    # The chamfers are brushed along their length, so each one is a satin band of fine parallel lines.
     chamfer = ramp(-0.16, -0.12, edge)
-    sheet.finish(chamfer, rough=0.26)
-    sheet.height -= 0.03 * ((X - w / 2) / (w / 2)) ** 2
+    gy, gx = np.gradient(edge)
+    across = np.abs(gy) / np.maximum(np.hypot(gx, gy), 1e-9)
+    lines = across * streaks(shape, 43, 60, 0.5) + (1 - across) * streaks(shape[::-1], 44, 60, 0.5).T
+    lines = np.clip(lines / max(lines.std(), 1e-9), -2.5, 2.5)
+    sheet.finish(chamfer, rough=0.2)
+    sheet.rough += chamfer * 0.06 * lines
+    sheet.height += chamfer * 0.0006 * lines
+    sheet.rgb *= (1 + chamfer * 0.04 * lines)[..., None]
     cut = shield(X, Y, w / 2, 0.3, 0.92)
     sheet.press(cut, 0.016)
-    sheet.finish(cut, rough=0.4)
-    sheet.rgb *= (1 - 0.45 * cut)[..., None]
-    sheet.rough += 0.01 * np.clip(cloud(sheet.height.shape, 41, falloff=1.8), -2, 2)
-    steel = skin(sheet, f"{name}-steel", wear=(("Scratches003", 3, 0.04, 0.0003), ("Fingerprints009", 5, 0.05, 0)), specular=0.5)
+    sheet.finish(cut, rough=0.35)
+    sheet.rgb *= (1 - 0.4 * cut)[..., None]
+    # Polish is never perfect: a faint haze in places, and the hairlines of being worn.
+    sheet.rough += 0.01 * np.clip(cloud(shape, 41, falloff=1.4), 0, 2) * (1 - chamfer)
+    steel = skin(
+        sheet,
+        f"{name}-steel",
+        wear=(("Scratches003", 2.5, 0.03, 0.0002), ("Fingerprints009", 4, 0.025, 0)),
+        specular=0.5,
+    )
     cover = clad(prism(STAGE, f"{name}-clasp", outline, 0.04, THICK + 0.1, steel, bevel=0.14, segments=2), x0, top, w, h)
-    pusher = principled(f"{name}-pusher", "#d4d5d7", rough=0.12, metal=1.0)
+    pusher = principled(f"{name}-pusher", "#e2e3e4", rough=0.06, metal=1.0)
     buttons = [
         prism(STAGE, f"{name}-pusher-{side}", rect(x - 0.1, top + 0.32, x + 0.1, top + 0.86, 0.08, 6), 0.08, THICK - 0.02, pusher, bevel=0.05, segments=3)
         for side, x in (("left", x0 - 0.03), ("right", x1 + 0.03))
@@ -609,50 +624,97 @@ def stitched(sheet, points, thread, length, width, slant):
         sheet.rough[rows, cols] += cord * (0.6 - sheet.rough[rows, cols])
 
 
+def alligator(X, Y, left, right, seed):
+    """Alligator hide as a watch strap is cut from it: a column of big squarish scales down the middle,
+    narrower ones either side and small ones at the edges. Each column's creases wander, and each row's
+    run a little aslant, never quite meeting the next column's. Returns how far each point lies from the
+    nearest crease, and a number for each scale to vary its tone by."""
+    rng = np.random.default_rng(seed)
+    middle, half = (left + right) / 2, (right - left) / 2
+    lines = [-1.2, -0.84, -0.45, 0.45, 0.84, 1.2]
+    spacing = {0: (0.18, 0.3), 1: (0.32, 0.5), 2: (0.62, 0.95), 3: (0.32, 0.5), 4: (0.18, 0.3)}
+    bounds = []
+    for k, at in enumerate(lines):
+        p1, p2 = rng.uniform(0, 2 * math.pi, 2)
+        bounds.append(middle + at * half / 1.2 + 0.05 * np.sin(Y * 0.9 + p1) + 0.025 * np.sin(Y * 2.6 + p2))
+    gap = np.full(X.shape, np.inf)
+    scale = np.zeros(X.shape)
+    for col in range(5):
+        a, b = bounds[col], bounds[col + 1]
+        inside = (X >= a) & (X < b)
+        gap = np.where(inside, np.minimum(X - a, b - X), gap)
+        centre = (a + b) / 2
+        y, rows, low, high = -rng.uniform(0, 0.5), [], *spacing[col]
+        while y < Y.max() + 1:
+            rows.append((y, rng.uniform(-0.22, 0.22), rng.uniform(0, 1)))
+            y += rng.uniform(low, high)
+        nearest = np.full(X.shape, np.inf)
+        below = np.zeros(X.shape)
+        for y0, slant, tone in rows:
+            off = Y - (y0 + slant * (X - centre))
+            nearest = np.minimum(nearest, np.abs(off) / math.hypot(1, slant))
+            below = np.where(off > 0, tone, below)
+        gap = np.where(inside, np.minimum(gap, nearest), gap)
+        scale = np.where(inside, below, scale)
+    # Outside the outer lines lie only slivers, under the stitching.
+    outside = (X < bounds[0]) | (X >= bounds[-1])
+    gap = np.where(outside, np.minimum(np.abs(X - bounds[0]), np.abs(X - bounds[-1])), gap)
+    return gap, scale
+
+
 def tagheuer(name, height):
-    """TAG Heuer's Carrera strap, the cognac calfskin the brand fits its own chronographs with (BC6670):
-    padded down its middle, saddle stitched in ecru close to each edge, its edges painted dark. It runs
-    down the tab through the steel folding clasp it closes with, and on past it to its tail."""
+    """TAG Heuer's own strap for the Carrera chronograph CBN2012 (FC6483): dark brown alligator, its big
+    scales down the middle and smaller ones at the sides, polished to a gloss, padded high, and stitched
+    in a brown only a little lighter than the hide. It runs down the tab through the steel folding clasp
+    it closes with, and on past it to its tail."""
     left, right, head, foot = 0.86, 3.38, 0.8, height - 0.85
-    middle, seam = (left + right) / 2, 0.22
+    middle, seam = (left + right) / 2, 0.16
     shape = fillet([(left, head, 0.08), (right, head, 0.08), (right, foot - 0.9, 1.0), (middle, foot, 1.0), (left, foot - 0.9, 1.0)], steps=16)
     sewn = fillet(
         [
             (left + seam, head + seam, 0.05),
             (right - seam, head + seam, 0.05),
-            (right - seam, foot - 0.92, 0.8),
-            (middle, foot - 1.2 * seam, 0.8),
-            (left + seam, foot - 0.92, 0.8),
+            (right - seam, foot - 0.92, 0.86),
+            (middle, foot - 1.2 * seam, 0.86),
+            (left + seam, foot - 0.92, 0.86),
         ],
         steps=12,
     )
-    sheet = Sheet(WIDTH, height, "#a65a2e", rough=0.46, density=4)
+    sheet = Sheet(WIDTH, height, "#3d1c15", rough=0.2, density=6)
     X, Y = sheet.X, sheet.Y
+    shape_px = sheet.height.shape
     edge = within(X, Y, shape)
-    # Padded: it stands highest inside the stitching and falls to a thin edge outside it.
-    sheet.height -= 0.12 * (1 - np.clip(-edge / 0.6, 0, 1)) ** 2
-    # Calfskin is never one even tan: the dye takes a little darker in patches and toward the edges.
-    sheet.ink(np.clip(cloud(sheet.height.shape, 51, falloff=1.6), 0, 2) * 0.5, "#6b3416", 0.18)
-    sheet.ink(ramp(-0.5, 0.0, edge), "#5a2c14", 0.3)
+    # Padded: it stands highest down its middle and falls to a thin edge.
+    sheet.height -= 0.13 * (1 - np.clip(-edge / 0.7, 0, 1)) ** 2
+    # Hide is not ruled: every crease wanders a little.
+    wander = np.clip(cloud(shape_px, 64, falloff=1.6), -2, 2)
+    gap, tone = alligator(X + 0.025 * wander, Y + 0.03 * np.roll(wander, 37, axis=0), left, right, 61)
+    # Each scale is flat on top and rolls over at its edges into a crease cut deep and narrow.
+    sheet.height += 0.022 * ramp(0.0, 0.09, gap) ** 0.7
+    crease = np.exp(-((gap / 0.016) ** 2))
+    sheet.press(crease, 0.012)
+    # No two scales take the dye alike, and it pools darkest in the creases.
+    sheet.rgb *= (0.86 + 0.28 * tone)[..., None]
+    sheet.ink(np.exp(-((gap / 0.035) ** 2)), "#140806", 0.6)
+    sheet.rough += np.exp(-((gap / 0.03) ** 2)) * 0.3
+    sheet.coat[:] = 0.85 * np.clip(gap / 0.06, 0, 1)
+    # The polished hide still has the fine wrinkles of skin across each scale.
+    wrinkle = np.clip(cloud(shape_px, 62, falloff=0.9), -2.5, 2.5) / 2.5
+    sheet.height += 0.0005 * wrinkle
+    sheet.rough += 0.04 * np.clip(cloud(shape_px, 63, falloff=1.4), -2, 2)
     # The edge is painted, a near black brown, and polished.
     paint = ramp(-0.07, -0.03, edge)
-    sheet.paint(paint, "#2a160d")
-    sheet.finish(paint, rough=0.3)
-    # The stitch line is creased in before the thread goes through.
-    sheet.press(np.exp(-((within(X, Y, sewn) / 0.06) ** 2)), 0.016)
-    stitched(sheet, spaced(sewn, 0.24), "#e6d9bf", length=0.19, width=0.06, slant=0.12)
+    sheet.paint(paint, "#1a0c08")
+    sheet.finish(paint, rough=0.25)
+    sheet.press(np.exp(-((within(X, Y, sewn) / 0.05) ** 2)), 0.012)
+    stitched(sheet, spaced(sewn, 0.16), "#7d5c48", length=0.12, width=0.042, slant=0.25)
     leather = skin(
         sheet,
-        f"{name}-calf",
-        scan="Leather037",
-        scan_size=1.8,
-        scan_normal=2.2,
-        scan_rough=0.8,
-        wear=(("SurfaceImperfections003", 12, 0.08, 0),),
-        mottle=0.06,
-        sheen=0.2,
+        f"{name}-alligator",
+        wear=(("SurfaceImperfections003", 9, 0.06, 0),),
+        sheen=0.1,
         specular=0.5,
-        subsurface=0.03,
+        coat_rough=0.07,
     )
     strap = clad(prism(STAGE, name, shape, 0.0, THICK - 0.02, leather, bevel=0.1, segments=6), 0, 0, WIDTH, height)
     return {"card": 1.6}, [strap, *clasp(name, left, right, 3.7, 5.55, 6.05)]
