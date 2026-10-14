@@ -3,9 +3,9 @@ import { MotionConfig, motion, useReducedMotion } from 'motion/react'
 import type { CSSProperties } from 'react'
 
 import { profile } from '../content'
+import type { NavItem } from '../types'
 import { Art } from './Art'
 import { Badge } from './Badge'
-import { CopyEmail } from './CopyEmail'
 import { useStackMetrics } from './useStackMetrics'
 
 type Tone = {
@@ -19,6 +19,8 @@ type Tone = {
   bleeds?: boolean
   /** The page is a mat that takes the whole strip, band and all, so its panel has no frame. The band shows only as its tab's paper. */
   fills?: boolean
+  /** The page is a ticket off a roll. Folded, its strip is only as wide as the roll, narrower than the others. */
+  roll?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
   /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
@@ -26,12 +28,12 @@ type Tone = {
 }
 
 const spineTone: Tone = { band: '#bfa391', bandInk: '#3a281c', panel: '#bfa391', panelInk: '#3a281c', tab: '/objects/tab-hamilton.avif' }
-const contactTone: Tone = { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', tab: '/objects/tab-van.avif' }
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-proraso.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#e8b73d', panelInk: '#1d1916', fills: true, tab: '/objects/tab-prs.avif' },
+  { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', roll: true, tab: '/objects/tab-van.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
@@ -67,7 +69,7 @@ type TabShape = {
 type TabProps = {
   label: string
   shape: TabShape
-  to?: '/' | '/likes' | '/work' | '/extras'
+  to?: NavItem['to']
   current?: boolean
   /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
   src: string
@@ -165,17 +167,18 @@ export function SiteShell({ children }: SiteShellProps) {
     profile.nav.findIndex((item) => item.to === pathname),
   )
   const count = profile.nav.length
-  const stack = count + 3
+  const stack = count + 2
   const { metrics, ready } = useStackMetrics()
   const reduced = useReducedMotion()
   const transition = ready && !reduced ? slide : instant
 
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
-  const fixed = mobile ? 0 : spine + contact + end
-  const gaps = (mobile ? count : count + 3) - 1
-  // A strip whose page is a picture is folded half as wide again, to give its own picture room.
-  const folded = (i: number) => (pageTones[i].bleeds ? 1.5 : 1) * strip
+  const fixed = mobile ? 0 : spine + end
+  const gaps = mobile ? count - 1 : count + 1
+  // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
+  // strip shows only its roll, so it folds narrower than the rest.
+  const folded = (i: number) => (pageTones[i].bleeds ? 1.5 * strip : pageTones[i].roll ? (mobile ? 0.7 * strip : contact) : strip)
   const shut = profile.nav.reduce((sum, _, i) => (i === index ? sum : sum + folded(i)), 0)
   const openWidth = metrics.width - fixed - shut + gaps * overlap
   const panelWidth = openWidth - band
@@ -186,7 +189,6 @@ export function SiteShell({ children }: SiteShellProps) {
     lefts.push(cursor)
     cursor += (i === index ? openWidth : folded(i)) - overlap
   }
-  const contactLeft = cursor
 
   // The mat's strip is leather, not paper, so the sheet's grain and creases are cut away over it (styles.css):
   // a column from where the strip before it ends to its own edge. They are put back in the shape of the paper
@@ -310,18 +312,6 @@ export function SiteShell({ children }: SiteShellProps) {
                     transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
                   >
                     <div className="grid flex-1 content-center py-[4vh]">{children}</div>
-                    <footer className="label flex flex-col gap-[0.6em] border-t border-ink/30 pt-[0.9em] md:hidden">
-                      <CopyEmail email={profile.email} />
-                      <ul className="flex gap-[1.2em]">
-                        {profile.socials.map((social) => (
-                          <li key={social.label}>
-                            <a href={social.href} target="_blank" rel="noreferrer" className="link">
-                              {social.label}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </footer>
                   </motion.div>
                 ) : (
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
@@ -332,41 +322,7 @@ export function SiteShell({ children }: SiteShellProps) {
           )
         })}
 
-        {!mobile && (
-          <>
-            <aside
-              className="strip"
-              style={stripStyle(contactTone, count + 1, 2, { left: contactLeft, width: contact })}
-            >
-              <div className="panel flex flex-col items-center justify-between py-[3vh]">
-                <img
-                  src="/photos/street.jpg"
-                  alt=""
-                  className="absolute inset-0 size-full object-cover opacity-80 [filter:hue-rotate(75deg)_saturate(0.55)_brightness(0.6)_contrast(1.1)]"
-                />
-                <span
-                  aria-hidden
-                  className="absolute inset-y-[0.6rem] left-[1.4rem] w-[calc(100%-2.2rem)] border-2 border-r-0 border-[#d8b24a] shadow-[0_0_8px_rgb(216_178_74/0.45)] [clip-path:polygon(0_0,calc(100%-0.5rem)_0,100%_1.4rem,100%_100%,0_100%)]"
-                />
-                <CopyEmail email={profile.email} className="vertical relative mt-[4vh]" />
-                <div className="relative flex flex-col items-center gap-[1.4em]">
-                  <ul className="vertical flex gap-[1.2em]">
-                    {profile.socials.map((social) => (
-                      <li key={social.label}>
-                        <a href={social.href} target="_blank" rel="noreferrer" className="label link">
-                          {social.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <Tab label="Contact" shape={tabShape(count + 1)} src={contactTone.tab} />
-            </aside>
-
-            <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />
-          </>
-        )}
+        {!mobile && <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />}
       </motion.main>
     </MotionConfig>
   )

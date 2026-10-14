@@ -7,6 +7,7 @@ export const profile: Profile = {
     { to: '/likes', label: 'Likes' },
     { to: '/work', label: 'Work' },
     { to: '/extras', label: 'Extras' },
+    { to: '/contact', label: 'Contact' },
   ],
   badge: {
     src: '/objects/badge.avif',

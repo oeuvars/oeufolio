@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ExtrasRouteImport } from './routes/extras'
 import { Route as LikesRouteImport } from './routes/likes'
 import { Route as WorkRouteImport } from './routes/work'
@@ -17,6 +18,11 @@ import { Route as WorkRouteImport } from './routes/work'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExtrasRoute = ExtrasRouteImport.update({
@@ -37,12 +43,14 @@ const WorkRoute = WorkRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/extras': typeof ExtrasRoute
   '/likes': typeof LikesRoute
   '/work': typeof WorkRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/extras': typeof ExtrasRoute
   '/likes': typeof LikesRoute
   '/work': typeof WorkRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/extras': typeof ExtrasRoute
   '/likes': typeof LikesRoute
   '/work': typeof WorkRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/extras' | '/likes' | '/work'
+  fullPaths: '/' | '/contact' | '/extras' | '/likes' | '/work'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/extras' | '/likes' | '/work'
-  id: '__root__' | '/' | '/extras' | '/likes' | '/work'
+  to: '/' | '/contact' | '/extras' | '/likes' | '/work'
+  id: '__root__' | '/' | '/contact' | '/extras' | '/likes' | '/work'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContactRoute: typeof ContactRoute
   ExtrasRoute: typeof ExtrasRoute
   LikesRoute: typeof LikesRoute
   WorkRoute: typeof WorkRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/extras': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContactRoute: ContactRoute,
   ExtrasRoute: ExtrasRoute,
   LikesRoute: LikesRoute,
   WorkRoute: WorkRoute,

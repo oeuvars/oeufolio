@@ -1,5 +1,5 @@
 export type NavItem = {
-  to: '/' | '/likes' | '/work' | '/extras'
+  to: '/' | '/likes' | '/work' | '/extras' | '/contact'
   label: string
 }
 

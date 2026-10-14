@@ -1,5 +1,6 @@
 import { StripHouse } from './StripHouse'
 import { StripMat } from './StripMat'
+import { StripTicket } from './ticket/StripTicket'
 
 type ArtProps = {
   index: number
@@ -23,5 +24,7 @@ export function Art({ index, open }: ArtProps) {
 
   if (index === 2) return <StripHouse open={open} />
 
-  return <StripMat />
+  if (index === 3) return <StripMat />
+
+  return <StripTicket />
 }
