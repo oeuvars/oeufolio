@@ -25,7 +25,9 @@ import argparse
 import json
 import math
 import os
+import subprocess
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -49,7 +51,7 @@ PANEL = "#651415"
 PROP = 0.068  # em to the millimetre: the props' scale
 AT = (3.7, 1.7)  # where the middle of the body lies, in the spread's em
 TURN = 80  # degrees, anticlockwise from lying level: the top cover to the left, as the photograph has it
-EXPOSURE = -1.0
+EXPOSURE = -2.0
 
 L, H, D = 138.0, 75.0, 33.5  # the body: long, high, deep
 END = 15.0  # the radius its two ends are rounded to, seen from above
@@ -414,6 +416,40 @@ def bounds():
     return min(xs), min(ys), max(xs), max(ys)
 
 
+def shadow_photograph():
+    """The camera's shadow as the light really leaves it: the stand's mat, its leather red, photographed with the camera
+    on it, the camera itself kept out of the picture but still standing in the light and throwing it back, and again
+    with the camera taken away. One over the other, pixel by pixel, is how much of the light the camera takes from each
+    point of the leather, and what it puts back: dark and crisp where the body meets it, the penumbra spreading as the
+    lamp is wide, the room's light filling it in from the other side, and the chrome's reflected light, all as
+    rendered. Written as public/objects/ticket-camera-shadow.avif over the same frame as the camera, for the page to
+    multiply into the leather under it."""
+    scene = bpy.context.scene
+    meshes = [obj for obj in scene.objects if obj.type in ("MESH", "CURVE", "FONT") and not obj.get("stand")]
+    for obj in scene.objects:
+        if obj.get("stand") == "mat":
+            obj.visible_camera = True
+    for obj in meshes:
+        obj.visible_camera = False
+    raw = os.path.join(tempfile.gettempdir(), "studio-camera-shadow.exr")
+    samples = max(256, STAGE.samples)
+    with_camera = STAGE._expose(raw, round(100 * STAGE.scale), samples=samples)[..., :3]
+    for obj in meshes:
+        obj.hide_render = True
+    without = STAGE._expose(raw, round(100 * STAGE.scale), samples=samples)[..., :3]
+    ratio = np.clip(with_camera / np.maximum(without, 1e-6), 0, 1)
+    # The page multiplies in its own colour space, not in light: this is the ratio of the light as the screen encodes it.
+    ratio = ratio ** (1 / 2.2)
+    rows, cols = ratio.shape[:2]
+    encoded = np.dstack((ratio, np.ones((rows, cols)))).astype(np.float32)
+    lossless = os.path.join(tempfile.gettempdir(), "studio-ticket-camera-shadow.png")
+    STAGE._save("ticket-camera-shadow", encoded, lossless, "PNG")
+    encoder = os.path.join(OEUSUME, "studio", "encode.py")
+    subprocess.run(["uv", "run", "--quiet", encoder, lossless, os.path.join(OUT, "ticket-camera-shadow.avif")], check=True)
+    os.remove(lossless)
+    print("SHADOW", cols, "x", rows, "darkest", float(ratio.min()))
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--scale", type=float, default=1.0)
 parser.add_argument("--samples", type=int, default=160)
@@ -466,4 +502,7 @@ for name, inner, outer, z, glow in (("softbox", 9.0, 34.0, 40.0, 0.45), ("stand-
     panel.visible_diffuse = False
     panel.visible_volume_scatter = False
 key.add(((x0 + x1) / 2, -(y0 + y1) / 2))
-STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=1.0, exposure=EXPOSURE, lens=False, sharp=2.0)
+# The camera on its own, without the stand's shadow pass: that pass keeps only how dark the shadow is, blurred, and the
+# page would paint it in one flat colour. The shadow is photographed properly below.
+STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=0, exposure=EXPOSURE, lens=False, sharp=2.0)
+shadow_photograph()

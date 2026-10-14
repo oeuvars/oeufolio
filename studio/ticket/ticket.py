@@ -55,7 +55,7 @@ ART = os.path.join(HERE, "art")
 OUT = os.path.join(ROOT, "public", "objects")
 SHARP = 1.5  # the page shows the ticket at up to 72 pixels to its em
 EXPOSURE = 0.3  # matte white card reads grey at the stand's usual exposure
-KEYED = -1.1  # the stops taken off what the key lamp (key.py) lights, which is about twice the stand's room again
+KEYED = -2.5  # the stops taken off what the key lamp (key.py) lights, which is about five times the stand's room again
 
 
 def placed(sheet, coverage, x0, y0, w, h):
@@ -305,7 +305,7 @@ def stamps(key="stamps"):
     perforations run between them, whole round holes, and round the strip's edge, where it was torn off the sheet,
     as the teeth the holes leave. Mint and lying flat, but for the curl gummed paper takes.
 
-    key "coil" is the folded strip's: ten of the same stamps off a coil, as stamps for machines come, perforated only
+    key "coil" is the folded strip's: fourteen of the same stamps off a coil, as stamps for machines come, perforated only
     between one stamp and the next, their long sides cut straight."""
     spec = {**TICKET["stamps"], **TICKET[key]}
     coil = key == "coil"

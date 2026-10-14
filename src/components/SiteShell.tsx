@@ -385,8 +385,9 @@ export function SiteShell({ children }: SiteShellProps) {
   // The same goes for a strip whose panel is a surface of its own, the ticket's leather: a second column, cut the same way.
   const skin = pageTones.findIndex((tone) => tone.surface)
   const skinFrom = lefts[skin] + overlap
-  // Its tab is cut from the same leather and stands out past the strip's edge, so the cut runs on over it.
-  const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin)) + protrude
+  // Its tab is cut from the same leather and stands out past the strip's edge. It is the last strip, so the cut runs on
+  // to the window's edge: over the tab, and over the dark beyond it, so no line is left in the dark where it ends.
+  const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin)) + 4000
   // The strip before the mat tears out over it: the paper on the mat past that strip's edge, its frayed core
   // with it, is put back by the tear's own mask.
   const column =

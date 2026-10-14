@@ -8,12 +8,12 @@ import bpy
 from mathutils import Vector
 
 # Where the light comes from, from the prop: up to the left of the page and well up over it.
-FROM = Vector((-0.75, 0.85, 2.3)).normalized()  # about sixty degrees up: the shadow falls about half the prop's height off it
+FROM = Vector((-0.8, 0.9, 1.6)).normalized()  # about fifty degrees up: the shadow falls about the prop's height off it
 DISTANCE = 34.0  # em from the prop to the lamp
-SIZE = 24.0  # em across the lamp: at that distance it is about forty degrees wide, as a window near a table is
-# Its power, for about twice the light on the leather that the stand's room gives: a lamp of power P lights a
+SIZE = 14.0  # em across the lamp: at that distance about twenty-five degrees wide, a window a little way off
+# Its power, for about four times the light on the leather that the stand's room gives: a lamp of power P lights a
 # surface d off and facing it with about P / (pi d^2).
-POWER = 2.0 * 3.14159 * 3.14159 * DISTANCE**2
+POWER = 4.0 * 3.14159 * 3.14159 * DISTANCE**2
 
 
 def add(at):

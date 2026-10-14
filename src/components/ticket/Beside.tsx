@@ -30,6 +30,15 @@ export function Beside() {
         className="absolute max-w-none"
         style={{ left: `${0.5 - STAMPS_BLEED}em`, width: `${STAMP_W + 2 * STAMPS_BLEED}em`, height: `${STAMPS_H}em`, top: `${STAMPS_TOP}em` }}
       />
+      {/* The camera's shadow, photographed as how much of the light it takes from the leather (leica.py), multiplied
+          into whatever lies under it: the leather, and the ticket's edge where the camera lies over it. */}
+      <img
+        src="/objects/ticket-camera-shadow.avif"
+        alt=""
+        draggable={false}
+        className="absolute z-10 max-w-none mix-blend-multiply"
+        style={{ left: `${CX}em`, top: `${CY}em`, width: `${CW}em`, height: `${CH}em` }}
+      />
       <img
         src="/objects/ticket-camera.avif"
         alt=""
