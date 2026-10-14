@@ -56,35 +56,36 @@ export type Extras = {
 export type PropId =
   | Exclude<LikeProp, 'key'>
   | 'name'
-  | 'particulars'
+  | 'card'
   | 'proraso'
   | 'razor'
-  | 'earpods'
   | 'wallet'
   | 'pick-fin'
   | 'pick-wedge'
 
-/** The centre of an object on the mat, in pixels, and its turn in degrees. */
-export type Slot = {
-  x: number
-  y: number
-  r: number
+/** One rendered picture of the desk: wide for a mat in a window, tall for a phone. */
+export type PlateId = 'wide' | 'tall'
+
+/**
+ * A plate as studio/desk/desk.py renders it, in em of the plate. size is its width and height, bleed how far
+ * the lamp's light map runs past it on each side, lamp where the bulb hangs over it (x, y and its height) and
+ * lampSize how large the lamp is drawn, in em of the plate to one of the lamp's. rim is the colour of the
+ * lamp's light where its map ends. at is where each object lies on it: the middle of its box and its turn in
+ * degrees, clockwise.
+ */
+export type Plate = {
+  size: [number, number]
+  bleed: [number, number]
+  lamp: [number, number, number]
+  lampSize: number
+  rim: string
+  at: Partial<Record<PropId, [number, number, number]>>
 }
 
-export type MatLayout = Partial<Record<PropId, Slot>>
-
-export type Size = {
-  w: number
-  h: number
-}
-
-/** Sunlight over Kolkata at one moment. day and warmth run 0 to 1, dx and dy point along the shadows. */
+/** Sunlight over Kolkata at one moment. day and warmth run 0 to 1. */
 export type Light = {
   day: number
   warmth: number
-  dx: number
-  dy: number
-  reach: number
 }
 
 export type Profile = {

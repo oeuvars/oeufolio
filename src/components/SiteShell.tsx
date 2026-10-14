@@ -32,7 +32,7 @@ const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-proraso.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#e8b73d', panelInk: '#1d1916', fills: true, tab: '/objects/tab-prs.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-prs.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#10150f', panelInk: '#efe6cb', roll: true, tab: '/objects/tab-van.avif' },
 ]
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]

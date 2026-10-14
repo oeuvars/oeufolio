@@ -45,8 +45,8 @@ const STILL = 0.0004
 const degrees = (angle: number) => `${((angle * 180) / Math.PI).toFixed(3)}deg`
 
 /**
- * A pendant lamp hung in the corner of the frame, over the mat: a terracotta shade, a brass lampholder and
- * chain, a clear bulb. The lamp and its chain are each two renders of one set. The first is in the studio's
+ * A pendant lamp hung over the top right of the mat, sized and placed by its holder: a terracotta shade, a
+ * brass lampholder and chain, a clear bulb. The lamp and its chain are each two renders of one set. The first is in the studio's
  * light with the bulb off. The second holds only what the bulb adds and is laid over the first when the lamp
  * is lit. Pressing draws the chain down and tips the lamp. Letting go switches it, and both swing until they
  * settle.
@@ -154,7 +154,7 @@ export function PendantLamp({ lit, onPull }: PendantLampProps) {
       aria-label="Lamp"
       aria-pressed={lit}
       data-lamp
-      className="absolute -top-[4.6em] right-[6cqw] isolate h-[13.6em] w-[9em] cursor-pointer touch-manipulation text-[length:clamp(7px,1.6cqw,22px)]"
+      className="absolute top-0 left-0 isolate h-[13.6em] w-[9em] cursor-pointer touch-manipulation"
       style={{ transformOrigin: `50% ${-CEILING}em` }}
       onClick={pull}
       onPointerDown={(event) => event.button === 0 && hand.current.grip()}

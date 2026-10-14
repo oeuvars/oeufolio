@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 
 import type { Like } from '../../types'
-import { PROP, RENDER, SKIN } from './classes'
+import { PROP, RENDER } from './classes'
 import { playTape } from './tape'
 import { useRevving } from './useRevving'
 
@@ -11,7 +11,8 @@ type RecorderProps = {
 
 /**
  * The industrial design like: a Teenage Engineering TP-7, rendered from a model of its front. The title is
- * the readout on its display, in the render. The reel's hub is its own render so it can turn. Nothing moves
+ * the readout on its display, in the plate. The reel's hub is a layer of its own, by day and by the lamp, so
+ * it can turn. Nothing moves
  * under the pointer. Pressing it plays a few bars off tape, and the reel turns for as long as they last,
  * then runs down.
  */
@@ -31,16 +32,18 @@ export function Recorder({ like }: RecorderProps) {
     <article
       data-prop="recorder"
       data-playing={playing}
-      className={`${PROP} group/recorder z-2 h-[17em] w-[11.875em] [--bleed:3] [--tall:1.4]`}
+      className={`${PROP} group/recorder z-2 h-[17em] w-[11.875em] cursor-pointer`}
       onPointerDown={(event) => (pressedAt.current = { x: event.clientX, y: event.clientY })}
       onClick={play}
     >
-      <i aria-hidden className={`${SKIN} bg-[url(/objects/mat/recorder.avif)]`} />
-      <i
+      <span
         ref={reel}
         aria-hidden
-        className={`${RENDER} absolute top-[1.44em] left-[0.445em] aspect-square w-[10.88em] animate-reel revving bg-[url(/objects/mat/reel.avif)] [--rate:0] group-data-[playing=true]/recorder:[--rate:3]`}
-      />
+        className="absolute top-[1.44em] left-[0.445em] aspect-square w-[10.88em] animate-reel revving [--rate:0] group-data-[playing=true]/recorder:[--rate:3]"
+      >
+        <i className={`${RENDER} absolute inset-0 bg-[url(/objects/mat/desk-wide-reel.avif)] opacity-[calc(1-var(--lamp))] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel.avif)]`} />
+        <i className={`${RENDER} absolute inset-0 bg-[url(/objects/mat/desk-wide-reel-lamp.avif)] opacity-[var(--lamp)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel-lamp.avif)]`} />
+      </span>
       <h2 className="sr-only">
         {like.subject}: {like.title}
       </h2>

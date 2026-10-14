@@ -35,21 +35,8 @@ export function atKolkataMinute(now: Date, minute: number) {
   return new Date(now.getTime() + (minute - current) * 60_000)
 }
 
-// Every object is photographed under one lamp, high and to the top right, so its shadow has to fall down and
-// to the left or it parts company with its highlights. The sun sets how long the shadow is and sways it a
-// little either side of that through the day.
-const FALL = 45 * RAD
-const SWAY = 14 * RAD
-
 export function lightAt(date: Date): Light {
-  const { altitude, azimuth } = sunPosition(date)
-  const elevation = altitude / RAD
+  const elevation = sunPosition(date).altitude / RAD
   const day = smooth(-6, 6, elevation)
-  return {
-    day,
-    warmth: day * (1 - smooth(6, 38, elevation)),
-    dx: -Math.cos(FALL + SWAY * Math.sin(azimuth)),
-    dy: Math.sin(FALL + SWAY * Math.sin(azimuth)),
-    reach: clamp(7 / Math.tan(Math.max(altitude, 6 * RAD)), 4, 46),
-  }
+  return { day, warmth: day * (1 - smooth(6, 38, elevation)) }
 }

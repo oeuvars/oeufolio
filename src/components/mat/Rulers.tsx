@@ -5,7 +5,7 @@ type RulersProps = {
 
 const MARKS = Array.from({ length: 40 }, (_, i) => i * 5)
 const RULER =
-  'pointer-events-none absolute z-1 flex overflow-hidden bg-[color-mix(in_srgb,var(--color-mat)_82%,var(--ink))] font-mono text-[0.56rem]/none font-medium text-ink/80'
+  'pointer-events-none absolute z-1 flex overflow-hidden bg-black/16 font-mono text-[0.56rem]/none font-medium text-ink/80'
 
 /** The mat's rulers: one along each edge, with a plain square where two meet. */
 export function Rulers({ cut }: RulersProps) {

@@ -13,9 +13,8 @@ const STANDS = 'delay-0 duration-150 ease-in'
 const LIES = 'delay-150 duration-200 ease-out'
 const OPEN_STANDS = 'group-aria-expanded/wallet:delay-0 group-aria-expanded/wallet:duration-150 group-aria-expanded/wallet:ease-in'
 const OPEN_LIES = 'group-aria-expanded/wallet:delay-150 group-aria-expanded/wallet:duration-200 group-aria-expanded/wallet:ease-out'
-// How long the whole turn takes, and how far a pointer may travel in a press that still counts as a click.
+// How long the whole turn takes.
 const TURN_MS = 350
-const SLOP = 5
 
 /**
  * A black leather billfold with the fold at the top. A click unfolds it upward: the half underneath stays
@@ -24,28 +23,13 @@ const SLOP = 5
  */
 export function Wallet() {
   const [open, setOpen] = useState(false)
-  // It stays above its neighbours until it has finished closing.
+  // It stays above its neighbours, and its own closed render over the plate's, until it has finished closing.
   const [raised, setRaised] = useState(false)
-  const root = useRef<HTMLButtonElement>(null)
   const lowering = useRef(0)
-  const press = useRef<{ x: number; y: number } | null>(null)
-  const travel = useRef(0)
 
   useEffect(() => () => window.clearTimeout(lowering.current), [])
 
-  const move = (event: React.PointerEvent) => {
-    // Only a pointer the mat is dragging with can carry the wallet. A finger scrolls the page instead.
-    if (!press.current || !root.current?.dataset.held) return
-    travel.current += Math.abs(event.clientX - press.current.x) + Math.abs(event.clientY - press.current.y)
-    press.current = { x: event.clientX, y: event.clientY }
-  }
-  const release = () => {
-    press.current = null
-  }
-  const toggle = (event: React.MouseEvent) => {
-    // The mat drags objects by the same press. A press that carried the wallet somewhere is not a click.
-    // A key press has no pointer, so it always counts.
-    if (event.detail !== 0 && travel.current >= SLOP) return
+  const toggle = () => {
     const next = !open
     setOpen(next)
     window.clearTimeout(lowering.current)
@@ -55,21 +39,13 @@ export function Wallet() {
 
   return (
     <button
-      ref={root}
       type="button"
       data-prop="wallet"
       data-raised={raised}
       aria-label="Wallet"
       aria-expanded={open}
-      className={`${PROP} group/wallet z-1 h-[18em] w-[14.8em] [--bleed:1] [--tall:0.8] aria-expanded:[--tall:0.45] data-[raised=true]:z-900!`}
+      className={`${PROP} group/wallet z-1 h-[18em] w-[14.8em] cursor-pointer data-[raised=true]:z-900!`}
       onClick={toggle}
-      onPointerDown={(event) => {
-        press.current = { x: event.clientX, y: event.clientY }
-        travel.current = 0
-      }}
-      onPointerMove={move}
-      onPointerUp={release}
-      onPointerCancel={release}
     >
       {/* The half that stays. It shows a pixel past the fold, so no seam opens between it and the cover. */}
       <i
@@ -81,10 +57,10 @@ export function Wallet() {
         aria-hidden
         className={`${HALF} ${TURN} ${STANDS} ${OPEN_LIES} bottom-full h-[20em] origin-bottom scale-y-0 bg-top brightness-50 group-aria-expanded/wallet:scale-y-100 group-aria-expanded/wallet:brightness-100`}
       />
-      {/* The closed wallet, whose cover lifts toward the fold along its top edge. */}
+      {/* The closed wallet, whose cover lifts toward the fold along its top edge. Shut, the plate shows it. */}
       <i
         aria-hidden
-        className={`${RENDER} ${TURN} ${LIES} ${OPEN_STANDS} pointer-events-none absolute -inset-[1em] origin-[50%_1em] bg-[url(/objects/mat/wallet.avif)] group-aria-expanded/wallet:scale-y-0 group-aria-expanded/wallet:brightness-50`}
+        className={`${RENDER} ${TURN} ${LIES} ${OPEN_STANDS} pointer-events-none absolute -inset-[1em] origin-[50%_1em] bg-[url(/objects/mat/wallet.avif)] opacity-0 group-aria-expanded/wallet:scale-y-0 group-aria-expanded/wallet:brightness-50 group-data-[raised=true]/wallet:opacity-100`}
       />
       {/* Open, it can be pressed anywhere on the half that has swung up as well. */}
       <span className="absolute inset-x-0 bottom-full hidden h-[18em] group-aria-expanded/wallet:block" />
