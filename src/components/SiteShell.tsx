@@ -19,7 +19,8 @@ type Tone = {
   bleeds?: boolean
   /** The page is a mat that takes the whole strip, band and all, so its panel has no frame. The band shows only as its tab's paper. */
   fills?: boolean
-  /** The page is a ticket off a roll. Folded, its strip is only as wide as the roll, narrower than the others. */
+  /** The page is a ticket off a roll, lying on a panel that takes the whole strip, band and all. Folded, its strip
+   * is only as wide as the roll, narrower than the others. */
   roll?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
@@ -285,7 +286,7 @@ export function SiteShell({ children }: SiteShellProps) {
               transition={transition}
               style={stripStyle(pageTones[i], i + 1, stack - i)}
             >
-              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills ? 'panel-hangs' : ''}`}>
+              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${pageTones[i].hangs || pageTones[i].bleeds || pageTones[i].fills || pageTones[i].roll ? 'panel-hangs' : ''}`}>
                 {pageTones[i].hangs ? (
                   <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
                 ) : (
@@ -317,7 +318,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
                 )}
               </div>
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} />
             </motion.section>
           )
         })}
