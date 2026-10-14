@@ -5,6 +5,11 @@
 """Prints the signal (studio/signal/render.py) as the references are printed: a coarse four-colour halftone in
 loud colour, the dots a little ragged where the ink spread into the paper and the inks a hair out of register.
 
+First the Turkish Vans (studio/signal/cats.py) are pasted down the post, as the poster's eyes were pasted into its
+signal. The post is their floor: the picture is turned a quarter round for them, so their up is the strip's right and
+they walk, sit and sleep along the strip's length, each on the post's edge, some with a tail hung over it. Each is
+cut round with a dark line, as the eyed sunflower is, so the white cats hold their shape on the white paper.
+
     uv run studio/signal/print.py [--proof DIR]
 
 Each ink is screened at its own angle with a round dot that grows into a chequer at half tone and closes to white
@@ -43,6 +48,72 @@ def separate(rgb):
     return {"cyan": rest[..., 0], "magenta": rest[..., 1], "yellow": rest[..., 2], "black": k}
 
 
+# Down the post from the signal: each cat, how tall it stands off the post as a share of the picture's width, how
+# far down its cut-out its feet are (below that its tail hangs over the post), and whether it faces up the post.
+CATS = [
+    ("ledge", 0.5, 0.62, True),
+    ("walk", 0.5, 1.0, True),
+    ("sleep", 0.27, 0.86, False),
+    ("sit", 0.55, 0.98, True),
+    ("loaf", 0.36, 0.95, False),
+    ("back", 0.52, 0.6, True),
+    ("paw", 0.34, 0.7, False),
+    ("sniff", 0.32, 0.95, True),
+    ("momo", 0.55, 0.98, False),
+]
+GAP = 0.05  # between one cat and the next, as a share of the width
+KEYLINE = 3  # the line cut round each cat, in pixels
+
+
+def lay_cats(signal):
+    """Pastes the cats down the post of the signal, an RGBA image, and returns it."""
+    w = signal.width
+    alpha = np.asarray(signal.getchannel("A"), dtype=np.float32) / 255 > 0.5
+    across = alpha.sum(axis=1)
+    # The post is the run of rows below the head that are only as wide as it is.
+    head = int(np.argmax(across > 0.6 * w))
+    rows = np.nonzero((across > 0) & (across < 0.25 * w) & (np.arange(len(across)) > head))[0]
+    right = np.array([np.nonzero(alpha[y])[0].max() for y in rows])
+    slope, offset = np.polyfit(rows, right, 1)
+    edge = lambda y: offset + slope * y
+    lean = np.degrees(np.arctan(slope))
+    out = signal.copy()
+    y = rows[0] + 0.12 * w
+    for name, tall, ground, up in CATS:
+        cat = Image.open(os.path.join(HERE, "art", "cats", f"{name}-cut.png"))
+        scale = tall * w / (ground * cat.height)
+        cat = cat.resize((round(cat.width * scale), round(cat.height * scale)), Image.LANCZOS)
+        if up:
+            cat = cat.transpose(Image.FLIP_LEFT_RIGHT)
+        length = cat.width
+        # A quarter turn clockwise: the cat's up is the strip's right, its feet on a line down the strip.
+        feet = np.array([cat.height * (1 - ground), cat.width / 2])
+        cat = cat.rotate(-90, expand=True)
+        # Then tilted with the post, round its own middle.
+        middle = np.array(cat.size) / 2
+        cat = cat.rotate(-lean, expand=True, resample=Image.BICUBIC)
+        a = np.radians(-lean)
+        d = feet - middle
+        feet = np.array([np.cos(a) * d[0] + np.sin(a) * d[1], -np.sin(a) * d[0] + np.cos(a) * d[1]]) + np.array(cat.size) / 2
+        centre = y + length / 2
+        at = (round(edge(centre) - 0.035 * w - feet[0]), round(centre - feet[1]))
+        # The cut line, then the cat on it.
+        shape = np.asarray(cat.getchannel("A"), dtype=np.float32) / 255
+        line = ndimage.grey_dilation(shape, footprint=disc(KEYLINE))
+        keyline = Image.fromarray(np.dstack([np.full_like(line, 22), np.full_like(line, 22), np.full_like(line, 24), line * 255]).astype(np.uint8), "RGBA")
+        out.alpha_composite(keyline, dest=(max(at[0], 0), at[1]), source=(max(-at[0], 0), 0))
+        out.alpha_composite(cat, dest=(max(at[0], 0), at[1]), source=(max(-at[0], 0), 0))
+        y += length + GAP * w
+        if y > signal.height:
+            break
+    return out
+
+
+def disc(radius):
+    ys, xs = np.mgrid[-radius : radius + 1, -radius : radius + 1]
+    return xs * xs + ys * ys <= radius * radius
+
+
 def screen(cover, angle, offset, rng):
     h, w = cover.shape
     ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
@@ -65,7 +136,7 @@ def main():
     parser.add_argument("--proof")
     args = parser.parse_args()
 
-    image = np.asarray(Image.open(args.source).convert("RGBA"), dtype=np.float32) / 255
+    image = np.asarray(lay_cats(Image.open(args.source).convert("RGBA")), dtype=np.float32) / 255
     alpha = image[..., 3:]
     rgb = image[..., :3] * alpha + (1 - alpha)
     # A press gains contrast and pushes colour: the dark paint goes deep and the lamps stay bright.
