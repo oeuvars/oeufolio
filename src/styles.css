@@ -3,7 +3,6 @@
 @import '@fontsource-variable/jetbrains-mono/index.css';
 @import '@fontsource-variable/jost/index.css';
 @import '@fontsource-variable/geist-mono/index.css';
-@import '@fontsource/petit-formal-script/400.css';
 @import 'tailwindcss';
 
 /* On the mat, a tap on a phone still plays an object's hover. Mat holds data-lingering on an object the pointer
@@ -36,7 +35,6 @@
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-futura: 'Jost Variable', Futura, 'Century Gothic', sans-serif;
   --font-geist: 'Geist Mono Variable', ui-monospace, Menlo, monospace;
-  --font-script: 'Petit Formal Script', 'Snell Roundhand', cursive;
 
   --color-mat: #e8b73d;
   --ease-spring: cubic-bezier(0.2, 1.3, 0.3, 1);
