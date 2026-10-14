@@ -1,5 +1,4 @@
 import { StripHouse } from './StripHouse'
-import { StripMat } from './StripMat'
 import { StripTicket } from './ticket/StripTicket'
 
 type ArtProps = {
@@ -8,7 +7,8 @@ type ArtProps = {
   open: boolean
 }
 
-/** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. */
+/** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. The desk's
+ * strip shows the desk itself (SiteShell). */
 export function Art({ index, open }: ArtProps) {
   if (index === 1) {
     // The letter's own drawings, date and signature, down the edge of its sheet (studio/letter.py).
@@ -23,8 +23,6 @@ export function Art({ index, open }: ArtProps) {
   }
 
   if (index === 2) return <StripHouse open={open} />
-
-  if (index === 3) return <StripMat />
 
   return <StripTicket />
 }

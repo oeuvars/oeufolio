@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import { cn } from '../../lib/utils'
 import type { PlateId, PropId } from '../../types'
 import { PendantLamp } from './PendantLamp'
 import { Rulers } from './Rulers'
+import { lamp } from './lamp'
 import { BULB, PLATES } from './layout'
 import { atKolkataMinute, lightAt } from './sun'
 
@@ -45,14 +46,16 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * map of the lamp's light that the leather, its rules and its rulers are multiplied by.
  */
 export function Mat({ children, className }: MatProps) {
-  // The lamp is on when the page opens. It only shows once the sun is down.
-  const [lit, setLit] = useState(true)
+  // The lamp only shows once the sun is down.
+  const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
 
+  // The desk is laid and lit before it is first painted: the folded strip and the page swap copies of it
+  // mid-slide, and neither may show a bare mat.
   // The hour, and whether it is dark.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const frame = root.current
     if (!frame) return
     // ?minute=780 holds the mat at that minute of the Kolkata day, to look at it in another light.
@@ -68,7 +71,7 @@ export function Mat({ children, className }: MatProps) {
   }, [])
 
   // The plate fits the mat, and the objects' boxes follow it.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const frame = root.current
     const board = sheet.current
     if (!frame || !board) return
@@ -106,7 +109,7 @@ export function Mat({ children, className }: MatProps) {
 
   // The folder tab the page hangs from is cut from this leather (SiteShell's Tab), so it takes the same light:
   // the hour, the lamp, and the lamp's map laid where it lies over the mat.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const frame = root.current
     const board = sheet.current
     const tab = document.querySelector<HTMLElement>('[data-mat-light]')
@@ -220,7 +223,7 @@ export function Mat({ children, className }: MatProps) {
               fontSize: plate.lampSize * geometry.em,
             }}
           >
-            <PendantLamp lit={lit} onPull={() => setLit(!lit)} />
+            <PendantLamp lit={lit} onPull={lamp.pull} />
           </div>
         )}
       </div>

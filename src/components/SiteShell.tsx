@@ -7,6 +7,7 @@ import { profile } from '../content'
 import type { NavItem } from '../types'
 import { Art } from './Art'
 import { Badge } from './Badge'
+import { Desk } from './mat/Desk'
 import { useStackMetrics } from './useStackMetrics'
 
 type Tone = {
@@ -47,6 +48,8 @@ const tabHeights = [11, 10, 10, 10, 10, 11.5]
 const tabSpan = 4
 const tabMargin = 0.3
 
+// A page's frame: its margins and type.
+const PAGE = '@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]'
 const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 const instant = { duration: 0 } as const
 
@@ -221,7 +224,14 @@ export function SiteShell({ children }: SiteShellProps) {
   const folded = (i: number) => (pageTones[i].bleeds ? 1.5 * strip : pageTones[i].roll ? (mobile ? 0.7 * strip : contact) : strip)
   const shut = profile.nav.reduce((sum, _, i) => (i === index ? sum : sum + folded(i)), 0)
   const openWidth = metrics.width - fixed - shut + gaps * overlap
-  const panelWidth = openWidth - band
+  // How wide a strip is when its page is open, whichever page is open now.
+  const openWidthOf = (i: number) => (i === index ? openWidth : openWidth + folded(i) - folded(index))
+  // A page laid out as it is when open, at the width it is then.
+  const page = (i: number): CSSProperties => ({ width: openWidthOf(i) - band, minWidth: 0, paddingLeft: overlap + protrude + 16 })
+  // The desk lies under its strip and goes with the strip's tab: it is laid at the width it has open, its
+  // right edge kept to the strip's, so that the strip opening uncovers it from the left and folding covers
+  // it again, and nothing on it moves.
+  const underTab = (i: number): CSSProperties => ({ ...page(i), marginLeft: `calc(100% - ${openWidthOf(i)}px)` })
 
   const lefts: number[] = []
   let cursor = mobile ? 0 : spine - overlap
@@ -344,7 +354,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 )}
                 {pageTones[i].hangs ? (
                   <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
-                ) : (
+                ) : pageTones[i].fills ? null : (
                   <motion.div
                     aria-hidden
                     className="absolute inset-y-0"
@@ -358,10 +368,19 @@ export function SiteShell({ children }: SiteShellProps) {
                   </motion.div>
                 )}
 
-                {open ? (
+                {pageTones[i].fills ? (
+                  // The desk is always here, open or folded: folded, the strip shows the edge of it beside the
+                  // tab. It is never laid again, so whatever is on it stays as it was left.
+                  <div className={PAGE} style={underTab(i)} inert={!open} aria-hidden={!open || undefined}>
+                    <div className="grid flex-1 content-center py-[4vh]">
+                      {open && children}
+                      <Desk />
+                    </div>
+                  </div>
+                ) : open ? (
                   <motion.div
-                    className="@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]"
-                    style={{ width: panelWidth, minWidth: 0, paddingLeft: overlap + protrude + 16 }}
+                    className={PAGE}
+                    style={page(i)}
                     // A page that is a picture grows out of its strip's own picture, so it is there from the start.
                     initial={pageTones[i].bleeds ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -369,9 +388,8 @@ export function SiteShell({ children }: SiteShellProps) {
                   >
                     <div className="grid flex-1 content-center py-[4vh]">{children}</div>
                   </motion.div>
-                ) : (
-                  <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />
-                )}
+                ) : null}
+                {!open && <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
               <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} />
             </motion.section>
