@@ -2,22 +2,24 @@
 risograph printed in four spot inks, black, vermilion, teal and yellow, as the illustrated tickets the page follows
 are: each ink a stencil laid down on its own pass, translucent, so where two overlap they mix into a third colour,
 and never quite in register with the others. It has bites along both ends and a notch either side of the line it was
-meant to tear along. It has been carried: folded once along the tear line, its top corner dog-eared and put back,
-its edges a little scuffed. Then the same ticket with the conductor's punch through it, and a roll of the small
-tickets for the strip, and the strip of stamps that lies beside the ticket. Run from the repository root, after studio/ticket/ink.py and studio/ticket/plate.mjs:
+meant to tear along. The email address was typed on at the box office. It has been carried: folded once along the
+tear line, its top corner dog-eared and put back, its edges a little scuffed. Then the same ticket with the
+conductor's punch through it, and the strip of stamps that lies beside it. Run from the repository root, after
+studio/ticket/ink.py, hand.py, cats.py, typed.py, stamps.py and plate.mjs:
 
-    blender -b --factory-startup -P studio/ticket/ticket.py -- [ticket punched roll stamps ...] [--scale 0.5] [--samples 64] [--proofs DIR]
+    blender -b --factory-startup -P studio/ticket/ticket.py -- [ticket punched stamps ...] [--scale 0.5] [--samples 64] [--proofs DIR]
 
 Writes public/objects/ticket.avif, the ticket and the shadow it leaves; public/objects/ticket-punched.avif, the same
-with the conductor's punch through it, for the page to show in its place; and public/objects/ticket-roll.avif, the roll; and public/objects/ticket-stamps.avif, the stamps. Uses the
-copy stand from the oeusume studio, so it is lit as every other object on the site is. Set OEUSUME if that checkout
-is not in ~/Documents/oeusume.
+with the conductor's punch through it, for the page to show in its place; and public/objects/ticket-stamps.avif, the
+stamps. Uses the copy stand from the oeusume studio, so it is lit as every other object on the site is. Set OEUSUME
+if that checkout is not in ~/Documents/oeusume.
 
 Every measure is in the ticket's em, from src/components/ticket/ticket.json, which the page reads too. What is
 printed comes from the page's own type, captured by plate.mjs into studio/ticket/art as one plate per ink
 (plate-<ink>.png), so the words in the photograph sit under the page's live words; from hand.py's note in the
-reference's own handwriting (hand.png); from cats.py's cats, one for each link (cat-<name>.png); and from ink.py's
-plates of the picture (river-<ink>.png for the ticket, river-tower-<ink>.png for the strip's).
+reference's own handwriting (hand.png); from cats.py's cats, one for each link (cat-<name>.png); from typed.py's
+strikes of a typewriter (typed.png); and from ink.py's plates of the picture (river-<ink>.png for the ticket,
+river-tower-, river-boat- and river-span-<ink>.png for the stamps).
 """
 
 import argparse
@@ -45,6 +47,7 @@ PANEL = "#651415"  # the red leather the ticket lies on (leather.py), which ligh
 CARD = "#f6f5f0"  # bright white uncoated card
 # The four riso inks, in the order the press laid them down, and how far each pass landed off true, in em.
 INKS = (("yellow", "#ffd23f", (0.035, -0.02)), ("teal", "#0f8b8d", (-0.025, 0.03)), ("red", "#ff4a3d", (0.02, 0.025)), ("k", "#121212", (0.0, 0.0)))
+RIBBON = "#24201d"  # a typewriter ribbon's black
 GRIME = "#7a7770"
 ART = os.path.join(HERE, "art")
 OUT = os.path.join(ROOT, "public", "objects")
@@ -264,9 +267,24 @@ def build(sheet, name, warp):
     )
 
 
+def typed(sheet):
+    """The email address, typed on at the box office after the ticket was printed (typed.py's strikes). The ribbon
+    leaves a black that is not the press's: thinner, a little warm, with the weave of its cloth in it. Each slug hit
+    the card hard enough to press its letter into it. Returns where the ribbon inked."""
+    x, y, w, h = json.load(open(os.path.join(ART, "typed.json")))["box"]
+    struck = placed(sheet, pixels_of(os.path.join(ART, "typed.png"))[..., 0].astype(np.float64), x, y, w, h)
+    # A fresh ribbon, struck hard: the scan's ink, a little denser, as the specimen's paper took it lighter than card.
+    struck = np.clip(struck * 1.5, 0, 1)
+    sheet.ink(struck, RIBBON, 0.95)
+    sheet.press(blur(np.clip(struck * 3, 0, 1), 0.8 * sheet.ppe / 96), 0.004)
+    sheet.finish(struck, rough=0.85)
+    return struck
+
+
 def ticket(punched):
     sheet = card(W, H, 3)
     printed = riso(sheet, {name: plate(sheet, name, "river") for name, _, _ in INKS}, 5)
+    printed = np.maximum(printed, typed(sheet))
     if punched:
         px, py, pr = TICKET["punch"]
         sheet.punch(star(sheet, px, py, pr, pr * 0.45, turn=8))
@@ -275,28 +293,6 @@ def ticket(punched):
     sheet.soften(0.06, 0.02)
     build(sheet, "ticket", warp(drift(W, H, 0.1, 11)))
     return STAGE.shoot("ticket-punched" if punched else "ticket", (0, 0, W, H), bleed=BLEED, shadow=0.75, sharp=SHARP, exposure=EXPOSURE)
-
-
-def roll():
-    """The roll: the same ticket at a third of the size, again and again, each joined to the next where their
-    bites meet, so that the bites there are whole round holes. Its picture is its own: a look up the near tower."""
-    spec = TICKET["roll"]
-    s, count = spec["scale"], spec["count"]
-    w, h = W * s, H * s * count
-    sheet = card(w, h, 13)
-    plates = {}
-    for name, _, _ in INKS:
-        plates[name] = np.zeros(sheet.height.shape)
-        for i in range(count):
-            plates[name] = np.maximum(plates[name], plate(sheet, name, "river-tower", 0, i * H * s, s))
-    printed = riso(sheet, plates, 17, scale=s)
-    for i in range(count):
-        die(sheet, 0, i * H * s, s)
-    carried(sheet, printed, 23, scale=s, folded=False)
-    sheet.soften(0.03, 0.012)
-    build(sheet, "ticket-roll", drift(w, h, 0.1, 19))
-    shown = spec["shown"] * H * s
-    return STAGE.shoot("ticket-roll", (0, (h - shown) / 2, w, shown), bleed=0.5, shadow=0.75, sharp=1.0, exposure=EXPOSURE)
 
 
 def stamps():
@@ -339,7 +335,7 @@ def stamps():
     return STAGE.shoot("ticket-stamps", (0, 0, w, h), bleed=0.5, shadow=0.75, sharp=SHARP, exposure=EXPOSURE)
 
 
-SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "roll": roll, "stamps": stamps}
+SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "stamps": stamps}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("shots", nargs="*")

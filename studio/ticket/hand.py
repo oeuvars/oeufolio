@@ -10,7 +10,10 @@ studio/ticket/assets/hand.png is the handwritten note off the reference ticket t
 has it. No font is used: every letter here is one the reference's pen wrote, lifted from that photograph by its box
 and set down again, with the next copy of it each time it comes round so that no two neighbours are the same, on
 the baseline it sat on, with the spacing of the hand. A word is only ever spelt from letters the reference wrote,
-so the note is worded with those alone: there is no b, f, j, q or x, and no capital but I, C, O, N, Y and T.
+so the note is worded with those alone: there is no b, j, q or x, and no capital but I, C, O, N, Y and T, with two
+made of the hand's own strokes. Its r is a small capital R, so the capital R is that same r, written larger. It
+never wrote an f: the f is its l turned over, so the tick at the l's foot is the f's hook at its head, crossed by
+the bar off one of its t's.
 
 The photograph is small, so it is enlarged four times and its ink edge drawn again from the enlarged grey, as a
 marker leaves it. Writes studio/ticket/art/hand.png, white where the ink is, as wide as the note's box on the
@@ -30,7 +33,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 TICKET = json.load(open(os.path.join(ROOT, "src", "components", "ticket", "ticket.json")))
 UP = 4  # the photograph is enlarged this many times before the ink is read off it
 PX_PER_EM = 164  # the reference ticket is 615 photograph pixels across, which is 15 em
-TEXT = "Come say hello, any time. Or write a note, ask anything, tell me what the weather is like where you are."
+TEXT = "Come say hello, any time. Or write a note, ask anything, tell me an interesting travel story of yours where you met Rick sanchez."
 
 # The reference's four lines: the band each sits in and its baseline, in pixels of the enlarged photograph.
 LINES = ((60, 215, 165), (190, 335, 287), (318, 452, 410), (452, 565, 530))
@@ -59,12 +62,13 @@ GLYPHS = {
     "v": [(0, 260, 300), (2, 110, 150), (2, 1814, 1854), (3, 218, 259)],
     "w": [(1, 1189, 1252), (2, 1559, 1621)],
     "y": [(1, 913, 983)],
+    "z": [(1, 382, 437), (1, 446, 495)],
     ",": [(1, 632, 656), (1, 1801, 1826)],
     ".": [(0, 1638, 1654), (1, 994, 1009), (2, 1418, 1434), (3, 1719, 1734)],
 }
 GAP = 9  # between two letters of a word, in pixels of the enlarged photograph
 SPACE = 46  # between words
-LEADING = 122  # from one baseline to the next
+LEADING = 112  # from one baseline to the next
 # How deep a letter may reach below its line's band, for the tails of g, p and y.
 TAIL = {"g": 70, "p": 55, "y": 64, ",": 25}
 
@@ -106,6 +110,46 @@ def lift(page, letter, line, x0, x1):
     return glyph, base - (top + rows[0])
 
 
+def capital(glyph, rise, scale):
+    """A letter written larger, as the hand writes a capital of a letter whose small form is already a capital's."""
+    h, w = glyph.shape
+    big = np.asarray(Image.fromarray((glyph * 255).astype(np.uint8)).resize((round(w * scale), round(h * scale)), Image.Resampling.LANCZOS), dtype=np.float64) / 255
+    # The pen's line is as heavy as ever: the enlarged strokes are drawn back to its weight.
+    thin = ndimage.grey_erosion(big, size=(round(scale), round(scale)))
+    return thin, round(rise * scale)
+
+
+def bar_of(t):
+    """The rows of a t that are its bar: the widest run of ink across it, and the rows either side as wide."""
+    rows = (t > 0.3).sum(axis=1)
+    peak = int(np.argmax(rows))
+    band = np.where(rows > 0.6 * rows[peak])[0]
+    band = band[np.abs(band - peak) < 14]
+    return band[0], band[-1] + 1
+
+
+def eff(l, lrise, t, xheight):
+    """An f, from the hand's own strokes: its l turned over, so the tick at the l's foot is the hook at the f's head,
+    with the bar off one of its t's across it at the top of the small letters."""
+    stem = l[::-1]
+    b0, b1 = bar_of(t)
+    piece = t[b0:b1]
+    cols = np.where(piece.max(axis=0) > 0.2)[0]
+    piece = piece[:, cols[0] : cols[-1] + 1]
+    h, w = stem.shape
+    width = max(w, piece.shape[1]) + 4
+    out = np.zeros((h, width))
+    sx = (width - w) // 2
+    out[:, sx : sx + w] = stem
+    # The bar centred on the stem where it crosses the top of the small letters, its middle on that line.
+    y = lrise - xheight
+    middle = sx + int(np.average(np.arange(w), weights=(stem[y : y + 10] > 0.3).sum(axis=0) + 1e-6))
+    by = max(0, y - piece.shape[0] // 2)
+    bx = min(max(0, middle - piece.shape[1] // 2), width - piece.shape[1])
+    out[by : by + piece.shape[0], bx : bx + piece.shape[1]] = np.maximum(out[by : by + piece.shape[0], bx : bx + piece.shape[1]], piece)
+    return out, lrise
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--proof")
@@ -116,6 +160,10 @@ def main():
     page = ink(ndimage.gaussian_filter(grey, 1.2))
 
     glyphs = {letter: [lift(page, letter, *where) for where in places] for letter, places in GLYPHS.items()}
+    glyphs["R"] = [capital(glyph, rise, 1.45) for glyph, rise in glyphs["r"]]
+    xheight = int(np.median([rise for _, rise in glyphs["o"]]))
+    # The cleanest l's and t's: the others carry a touch of a neighbour.
+    glyphs["f"] = [eff(*glyphs["l"][k], glyphs["t"][j][0], xheight) for k, j in ((0, 2), (3, 6), (4, 5))]
     turn = {letter: 0 for letter in glyphs}
 
     # Set the words, then break them into lines as wide as the note's box.
@@ -139,7 +187,7 @@ def main():
         used += (SPACE if line[:-1] else 0) + w
     lines.append(line)
 
-    top = 150  # room above the first baseline for the tall letters
+    top = 118  # room above the first baseline for the tall letters
     height = round(top + LEADING * (len(lines) - 1) + 110)
     out = np.zeros((height, round(width)))
     rng = np.random.default_rng(4)

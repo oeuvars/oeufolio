@@ -1,6 +1,6 @@
 // Photographs the ticket's own typesetting from the running site, for studio/ticket/ticket.py to print on the
-// card: everything the contact page prints on the ticket but its picture, as one black-on-white plate per ink the
-// type is printed in (black, red, teal). ticket.py prints the picture from ink.py's plates into the same place.
+// card: everything the contact page prints on the ticket but its picture and what is typed on it (typed.py), as
+// one black-on-white plate per ink the type is printed in (black, red, teal). ticket.py prints the picture from ink.py's plates into the same place.
 //
 //   pnpm dev                                  (in another terminal)
 //   node studio/ticket/plate.mjs
@@ -43,6 +43,7 @@ await run(`(() => {
     [data-plate], [data-plate] * { visibility: visible !important; color: #fff !important; text-decoration: none !important; }
     [data-plate] svg, [data-plate] svg * { fill: currentColor !important; }
     [data-art] { visibility: hidden !important; }
+    [data-plate] [data-typed], [data-plate] [data-typed] * { visibility: hidden !important; }
   \`;
   document.head.append(style);
   const ink = document.createElement("style");

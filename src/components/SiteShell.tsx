@@ -85,6 +85,8 @@ type TabProps = {
   footless?: boolean
   /** The tab is cut from the page's own leather mat, not from paper. */
   leather?: boolean
+  /** The tab is cut from the surface the page lies on, this tile of it, not from paper. */
+  surface?: string
 }
 
 /**
@@ -117,7 +119,7 @@ function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, current, src, footless, leather }: TabProps) {
+function Tab({ label, shape, to, current, src, footless, leather, surface }: TabProps) {
   const { reach, path } = tabOutline(shape, footless)
   const hide = useId()
   const cut = useId()
@@ -146,7 +148,15 @@ function Tab({ label, shape, to, current, src, footless, leather }: TabProps) {
             </clipPath>
           </defs>
         )}
-        <path d={path} fill={leather ? `url(#${hide})` : undefined} />
+        {surface && !leather && (
+          <defs>
+            {/* The same tile, at the same size, as the panel the tab grows out of. */}
+            <pattern id={hide} patternUnits="userSpaceOnUse" width="256" height="256">
+              <image href={surface} width="256" height="256" />
+            </pattern>
+          </defs>
+        )}
+        <path d={path} fill={leather || surface ? `url(#${hide})` : undefined} />
       </svg>
       {leather && (
         // The leather is the mat's, so it is in the mat's light: the lamp's, the dusk's and the dark. The mat
@@ -391,7 +401,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 ) : null}
                 {!open && <Link to={item.to} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} surface={pageTones[i].surface} />
             </motion.section>
           )
         })}

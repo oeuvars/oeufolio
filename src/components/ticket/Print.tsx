@@ -13,6 +13,8 @@ type PrintProps = {
 
 const [W] = ticket.size
 const [AX, AY, AW, AH] = ticket.art
+// The typed address: where its first character starts, its baseline, and the typewriter's pitch.
+const [TX, TY, TP] = ticket.typed
 
 /** A field's name as these tickets print it: heavy capitals, spaced out, and a colon. */
 function Label({ children, className = '', style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
@@ -44,7 +46,7 @@ function Rule({ y }: { y: number }) {
  * in its own script with the year beside it, and the title again in Latin letters; a rule of dots where the
  * ticket is notched to tear; the fields, which are only the ways to reach me, each link a cat printed where its
  * username would be (studio/ticket/cats.py, only in the photograph: here each is a link over its cat), and the
- * email address on one line; a last rule; and a note written by
+ * email address, typed on afterwards on a typewriter; a last rule; and a note written by
  * hand (studio/ticket/hand.py, only in the photograph: here it is for screen readers). The same type is
  * the plate studio/ticket/ticket.py prints on the card, and, laid over the photograph of it and left clear, what a
  * visitor selects and follows, so the links are where their words are printed. The picture and the rules are only
@@ -94,17 +96,27 @@ export function Print({ onCopy, copied }: PrintProps) {
         )
       })}
 
-      <div className="absolute top-[22.5em] left-[0.85em] flex items-baseline gap-[0.5em]">
-        <Label>Email</Label>
-        <button type="button" onClick={onCopy} className={`font-['Domine'] text-[0.8em] leading-none font-bold ${value}`} aria-label={`Copy ${profile.email}`}>
-          {profile.email}
-        </button>
-        <span className="sr-only" aria-live="polite">
-          {copied ? 'Copied' : ''}
-        </span>
-      </div>
+      {/* The label sits on the typed line's baseline, in its own smaller em. */}
+      <Label className="absolute" style={{ left: `${0.85 / 0.6}em`, top: `${(TY - 0.47) / 0.6}em` }}>
+        Email
+      </Label>
+      {/* Typed on at the box office (studio/ticket/typed.py), so the photograph has it and the plate does not: here
+          it is a clear copy in a monospace at the typewriter's pitch, to select and to click. */}
+      <button
+        type="button"
+        data-typed
+        onClick={onCopy}
+        aria-label={`Copy ${profile.email}`}
+        className={`absolute font-['Red_Hat_Mono'] leading-none whitespace-nowrap ${value}`}
+        style={{ left: `${TX}em`, top: `${TY - 0.8 * (TP / 0.6)}em`, fontSize: `${TP / 0.6}em` }}
+      >
+        {profile.email}
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {copied ? 'Copied' : ''}
+      </span>
 
-      <p className="sr-only">Come say hello, any time. Or write a note, ask anything, tell me what the weather is like where you are.</p>
+      <p className="sr-only">Come say hello, any time. Or write a note, ask anything, tell me an interesting travel story of yours where you met Rick sanchez.</p>
 
       {ticket.rules.map((y) => (
         <Rule key={y} y={y} />
