@@ -1,7 +1,7 @@
 """A bunch of keys. A stitched leather key tag, racing green lapped over a tan tab, has the name blind
 stamped into the green, and the tab carries Lacoste's crocodile. A steel split ring leans through its brass
-eyelet and round the brass bar of a Ferrari key fob in its frame: a red lacquered body in dark gunmetal, with
-carbon fibre twill round it. The fob carries no maker's mark."""
+eyelet and round the brass bar of a Ferrari key fob in its frame: a domed red lacquered body in polished
+gunmetal, with carbon fibre twill round it. The fob carries no maker's mark."""
 
 import math
 import os
@@ -12,7 +12,7 @@ import numpy as np
 from mathutils import Matrix, Vector
 
 from paint import blur, box, cloud, cover, disc, linear, ramp, segment
-from solids import finish, lathe, principled, prism, rect, worn
+from solids import fillet, finish, lathe, principled, prism, rect, worn
 from stock import Sheet, fit, pixels_of
 
 W, H = 30.0, 9.625
@@ -35,17 +35,27 @@ THICK = 0.6
 RING, WIRE, LEAN = 1.9, 0.105, math.radians(35)
 LEVEL = math.radians(20)
 
-# The fob: a Ferrari key fob in its frame, as on the newer cars. A lacquered red body sits in a dark gunmetal
-# frame with a gap of carbon fibre twill round it, and a brass bar spans a notch in the top of the frame for
-# the ring. Measured off a photograph, in em, from the middle of the bar, the fob hanging along x.
+# The fob: a Ferrari key fob in its frame, as on the newer cars, measured off a photograph of one. A red body
+# in deep lacquer, flat on top with softly rounded edges, lies in a dark gunmetal frame with a thin polished lip
+# round its opening. Carbon fibre twill shows round the body in a U, narrow at the sides and wide below, and at
+# the top the opening closes in beside the body on two angled gussets. A brass bar runs between the frame's
+# posts for the ring. A shallow channel runs down into the body from its top, and another up from its foot,
+# where the black head of the emergency blade lies in it; below the body a small steel stud sits on the carbon.
+# All in em, from the middle of the bar, the fob hanging along x.
 FOB_TURN = 22.0
-FRAME = (-0.25, 7.15, 2.8)  # from, to, half its width
-WALL = 0.5
+FRAME = (-0.4, 7.15, 2.8)  # from, to, half its width
+WALL = 0.4
 FRAME_H = 1.0
-FRAME_R = 1.3
-BODY_GAP = 0.18
-BODY_TOP = 1.3
-BAR_R, BAR_HALF = 0.14, 1.4
+FRAME_R = 1.2
+OPENING_TOP = 0.3  # where the opening begins, under the bar
+GUSSET = (1.9, 2.5)  # where the gussets beside the body begin to open out, and where they meet the sides
+BODY = (0.62, 6.1, 1.82, 0.7)  # from, to, half its width, corner radius
+BODY_BASE, BODY_TOP, BODY_EDGE, BODY_CROWN = 0.3, 1.12, 0.55, 0.04
+CHANNELS = ((1.35, 0.33, 0.3), (1.75, 0.3, 0.42))  # top and foot: how far in, half the width, how deep
+BLADE = (1.45, 0.2)  # the blade's head: how far up the foot channel, half its width
+CARBON_H = 0.35
+BAR_R, BAR_HALF = 0.17, 1.4
+NOTCH = 1.26
 # The ring crosses the bar this high above the mat.
 RING_Z = 0.6
 
@@ -277,9 +287,9 @@ def carbon(stage, outline_box, r, z):
     """Carbon fibre twill, two by two, under a clear lacquer: tows a little over a millimetre wide, those
     running one way catching the light and those the other way dark, each rounded across its width."""
     x0, y0, x1, y1 = outline_box
-    sheet = Sheet(x1 - x0, y1 - y0, "#1d1d20", rough=0.35, density=4)
+    sheet = Sheet(x1 - x0, y1 - y0, "#1d1d20", rough=0.35, density=8)
     X, Y = sheet.X, sheet.Y
-    tow = 0.2
+    tow = 0.12
     i, j = np.floor(X / tow), np.floor(Y / tow)
     along = ((i + j) % 4) < 2
     sheet.paint(along.astype(float), "#2e2e33")
@@ -290,31 +300,119 @@ def carbon(stage, outline_box, r, z):
     return sheet.build(stage, "carbon", thickness=z, coat_rough=0.05, at=(x0, y0))
 
 
+def pillow(stage, name, x0, y0, x1, y1, r, material):
+    """A rounded slab with a domed top: rings of its outline drawn in step by step, each higher, rising on a
+    quarter round at the edge and crowning gently over the middle, closed underneath."""
+    # Close together over the curve of the edge, where the light changes fastest.
+    steps = [BODY_EDGE * (1 - math.cos(math.pi / 2 * i / 28)) for i in range(29)]
+    steps += [BODY_EDGE + (1.62 - BODY_EDGE) * i / 12 for i in range(1, 13)]
+    steps = [t for t in steps if t < (y1 - y0) / 2 - 0.05]
+    bm = bmesh.new()
+    rings = []
+    for t in steps:
+        u = min(t / BODY_EDGE, 1.0)
+        z = BODY_BASE + (BODY_TOP - BODY_BASE) * math.sqrt(1 - (1 - u) ** 2)
+        c = max(0.0, (t - BODY_EDGE) / (steps[-1] - BODY_EDGE))
+        z += BODY_CROWN * c * c * (3 - 2 * c)
+        # The corners stay round all the way up, so the dome has no ridges.
+        outline = rect(x0 + t, y0 + t, x1 - t, y1 - t, min(r - 0.98 * t * r / steps[-1], (y1 - y0) / 2 - t - 0.01), 16)
+        rings.append([bm.verts.new((x, -y, z)) for x, y in outline])
+    count = len(rings[0])
+    for a, b in zip(rings, rings[1:]):
+        for i in range(count):
+            j = (i + 1) % count
+            bm.faces.new((a[i], a[j], b[j], b[i]))
+    bm.faces.new(rings[-1])
+    bm.faces.new(list(reversed(rings[0])))
+    return finish(stage, name, bm, material)
+
+
+def opening(grow=0.0):
+    """The frame's opening, grown outward by grow: narrow at the top beside the body, opening out on the
+    gussets to the frame's sides, and round at the bottom."""
+    f0, f1, half = FRAME
+    ih = half - WALL + grow
+    beside = BODY[2] + 0.13 + grow
+    top, bottom = OPENING_TOP - grow, f1 - WALL + grow
+    g0, g1 = GUSSET
+    return fillet(
+        [
+            (top, -beside, 0.2),
+            (g0, -beside, 0.25),
+            (g1, -ih, 0.4),
+            (bottom, -ih, 0.9 + grow),
+            (bottom, ih, 0.9 + grow),
+            (g1, ih, 0.4),
+            (g0, beside, 0.25),
+            (top, beside, 0.2),
+        ],
+        8,
+    )
+
+
+def scoop(stage, name, centre, radii):
+    """An ellipsoid to cut a channel with: deepest in the middle, fading out along its length."""
+    shape = bmesh.new()
+    bmesh.ops.create_uvsphere(shape, u_segments=48, v_segments=24, radius=1.0)
+    bmesh.ops.scale(shape, vec=radii, verts=shape.verts)
+    bmesh.ops.translate(shape, vec=centre, verts=shape.verts)
+    return finish(stage, name, shape, None)
+
+
 def fob(stage, bar_at):
     """The fob, built about the middle of its bar and laid with the bar where the ring crosses it."""
     root = stage.add("fob", None)
-    lacquer = principled("fob", "#c8101a", rough=0.18, coat_weight=1.0, coat_roughness=0.03)
-    worn(lacquer, "Fingerprints009", 4, 0.05)
-    gunmetal = worn(principled("frame", (0.16, 0.16, 0.17), rough=0.24, metal=1.0), "Scratches003", 3, 0.12)
-    brass = worn(principled("bar", (0.86, 0.64, 0.3), rough=0.26, metal=1.0), "Scratches003", 3, 0.15)
+    lacquer = principled("fob", "#c20c15", rough=0.3, coat_weight=1.0, coat_roughness=0.02)
+    worn(lacquer, "Fingerprints009", 4, 0.04)
+    gunmetal = worn(principled("frame", (0.2, 0.2, 0.21), rough=0.2, metal=1.0), "Scratches003", 3, 0.1)
+    chrome = principled("lip", (0.9, 0.9, 0.92), rough=0.05, metal=1.0)
+    brass = worn(principled("bar", (0.86, 0.64, 0.3), rough=0.18, metal=1.0), "Scratches003", 3, 0.12)
+    steel = principled("stud", (0.82, 0.82, 0.84), rough=0.12, metal=1.0)
+    black = principled("blade", (0.015, 0.015, 0.017), rough=0.2, coat_weight=1.0, coat_roughness=0.05)
 
     f0, f1, half = FRAME
     outer = rect(f0, -half, f1, half, FRAME_R, 12)
-    inner = rect(f0 + WALL, -half + WALL, f1 - WALL, half - WALL, FRAME_R - WALL, 12)
-    notch = rect(f0 - 1, -BAR_HALF + 0.1, f0 + WALL + 0.05, BAR_HALF - 0.1)
-    frame = solid(stage, "frame", outer, 0.0, FRAME_H, gunmetal, cut=((inner, -1, 3), (notch, -1, 3)), bevel=0.12)
+    notch = rect(f0 - 1, -NOTCH, OPENING_TOP + 0.05, NOTCH)
+    frame = solid(stage, "frame", outer, 0.0, FRAME_H, gunmetal, cut=((opening(), -1, 3), (notch, 0.25, 3)), bevel=0.18)
+    # The polished lip round the opening, a hair proud of the frame.
+    lip = solid(stage, "lip", opening(0.07), 0.2, FRAME_H + 0.01, chrome, cut=((opening(), -1, 3), (notch, 0.25, 3)), bevel=0.03)
 
-    i0, i1, ih = f0 + WALL, f1 - WALL, half - WALL
-    bed = carbon(stage, (i0, -ih, i1, ih), FRAME_R - WALL, 0.45)
-    g = BODY_GAP
-    body = solid(stage, "body", rect(i0 + g, -ih + g, i1 - g, ih - g, FRAME_R - WALL - g, 12), 0.1, BODY_TOP, lacquer, bevel=0.42)
+    bottom = f1 - WALL
+    bed = carbon(stage, (OPENING_TOP - 0.2, -half + WALL - 0.1, bottom + 0.1, half - WALL + 0.1), 0.9, CARBON_H)
+
+    b0, b1, bh, br = BODY
+    body = pillow(stage, "body", b0, -bh, b1, bh, br, lacquer)
+    (top_in, top_w, top_d), (foot_in, foot_w, foot_d) = CHANNELS
+    cutters = [
+        scoop(stage, "top-cut", (b0, 0, BODY_TOP + 0.45 - top_d), (top_in, top_w, 0.45)),
+        scoop(stage, "foot-cut", (b1, 0, BODY_TOP + 0.45 - foot_d), (foot_in, foot_w, 0.45)),
+    ]
+    for i, cutter in enumerate(cutters):
+        carving = body.modifiers.new(f"channel-{i}", "BOOLEAN")
+        carving.operation = "DIFFERENCE"
+        carving.object = cutter
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    body.data = bpy.data.meshes.new_from_object(body.evaluated_get(depsgraph))
+    for modifier in list(body.modifiers):
+        body.modifiers.remove(modifier)
+    for cutter in cutters:
+        bpy.data.objects.remove(cutter)
+    body.data.polygons.foreach_set("use_smooth", [True] * len(body.data.polygons))
+    length, width = BLADE
+    blade = prism(stage, "blade", rect(b1 - length, -width, b1 + 0.05, width, width, 8), 0.3, BODY_TOP - foot_d + 0.22, black, bevel=0.07)
+
+    stud = bmesh.new()
+    bmesh.ops.create_uvsphere(stud, u_segments=32, v_segments=16, radius=1.0)
+    bmesh.ops.scale(stud, vec=(0.2, 0.14, 0.12), verts=stud.verts)
+    knob = finish(stage, "stud", stud, steel)
+    knob.location = ((b1 + bottom) / 2 + 0.05, 0, CARBON_H)
 
     rod = bmesh.new()
     bmesh.ops.create_cone(rod, cap_ends=True, segments=48, radius1=BAR_R, radius2=BAR_R, depth=2 * BAR_HALF)
     bmesh.ops.rotate(rod, verts=rod.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 2, 3, "X"))
     bar = finish(stage, "bar", rod, brass)
     bar.location = (0, 0, RING_Z)
-    for part in (frame, bed, body, bar):
+    for part in (frame, lip, bed, body, blade, knob, bar):
         part.parent = root
     lay(root, bar_at, FOB_TURN)
 
