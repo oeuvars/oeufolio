@@ -521,27 +521,23 @@ def relief(name, height, x0, y0, w, h, z0, material):
 
 
 def badge(name, mark, cx, cy, wide, z0):
-    """Blackstar's badge as it is fixed to the Debut's grille: the name in raised white letters on a
-    black plate cut close round them, the plate's edge following the letters' tops and feet, standing
-    proud of the cloth."""
+    """Blackstar's badge as it is fixed to the amplifier's grille: the name in raised white letters on a black
+    plate die-cut an even margin round them, standing proud of the cloth."""
     tall = wide * mark.shape[0] / mark.shape[1]
     pad = 0.07 * tall / 0.3
     w, h = wide + 2 * pad, tall + 2 * pad
     x0, y0 = cx - w / 2, cy - h / 2
     sheet = Sheet(w, h, "#0d0d0f", rough=0.22, density=5)
     letters, _ = placed(sheet, mark, pad, pad, w - pad, h - pad)
-    grown = blur(letters, 0.045 * sheet.ppe) > 0.04
-    # Down each column the plate runs from the highest point of the letters to the lowest, so it fills
-    # their counters and the gaps between them, and its edge rises and falls with them.
-    rows = np.arange(grown.shape[0])[:, None]
-    top = np.where(grown.any(axis=0), np.argmax(grown, axis=0), grown.shape[0])
-    foot = np.where(grown.any(axis=0), grown.shape[0] - 1 - np.argmax(grown[::-1], axis=0), -1)
-    plate = ((rows >= top) & (rows <= foot)).astype(np.float64)
-    plate = np.clip(blur(plate, 0.012 * sheet.ppe) * 1.6 - 0.3, 0, 1)
+    # The plate is cut round the letters a fixed margin out, as a badge is die-cut: an even black outline round the
+    # whole word, its counters and the gaps between letters filled, its edge crisp and square to the face.
+    grown = fill_holes(blur(letters, 0.03 * sheet.ppe) > 0.025)
+    plate = np.clip(blur(grown.astype(np.float64), 0.004 * sheet.ppe) * 1.6 - 0.3, 0, 1)
     face = np.clip(blur(letters, 0.004 * sheet.ppe), 0, 1)
     sheet.paint(face, "#efeeea")
     sheet.finish(face, rough=0.32, coat=0.25)
-    sheet.finish(plate * (1 - face), rough=0.2, coat=0.8)
+    # A satin black, so it reads as black under the open studio and does not mirror the room as a grey haze.
+    sheet.finish(plate * (1 - face), rough=0.38, coat=0.2)
     # Only the shading of the solid itself: the map below is the solid, not a bump laid on it.
     sheet.height[:] = 0.0
     finish = skin(sheet, f"{name}-badge", specular=0.5)
