@@ -67,30 +67,23 @@ export type PropId =
   | 'wallet'
   | 'pick-fin'
   | 'pick-wedge'
+  | 'catlamp'
 
 /** One rendered picture of the desk: wide for a mat in a window, tall for a phone. */
 export type PlateId = 'wide' | 'tall'
 
 /**
- * A plate as studio/desk/desk.py renders it, in em of the plate. size is its width and height, bleed how far
- * the lamp's light map runs past it on each side, lamp where the bulb hangs over it (x, y and its height) and
- * lampSize how large the lamp is drawn, in em of the plate to one of the lamp's. rim is the colour of the
- * lamp's light where its map ends. at is where each object lies on it: the middle of its box and its turn in
- * degrees, clockwise.
+ * A plate as studio/desk/desk.py renders it, in em of the plate. size is its width and height, and bleed how far
+ * the lamp's light map runs past it on each side. rim is the colour of the lamp's light where its map ends, and
+ * dark the room's light on the mat with the lamp off. at is where each object lies on it: the middle of its box
+ * and its turn in degrees, clockwise.
  */
 export type Plate = {
   size: [number, number]
   bleed: [number, number]
-  lamp: [number, number, number]
-  lampSize: number
   rim: string
+  dark: string
   at: Partial<Record<PropId, [number, number, number]>>
-}
-
-/** Sunlight over Kolkata at one moment. day and warmth run 0 to 1. */
-export type Light = {
-  day: number
-  warmth: number
 }
 
 export type Profile = {

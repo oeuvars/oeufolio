@@ -27,9 +27,9 @@ import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
-from objects import card, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
+from objects import card, catlamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
 from paint import blur  # noqa: E402
-from stage import BOX_ON_STAND, GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
+from stage import GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(HERE))
 SETS = os.path.join(HERE, "sets")
@@ -46,6 +46,7 @@ BUILDERS = {
     **pick.SHOTS,
     **proraso.SHOTS,
     **razor.SHOTS,
+    **catlamp.SHOTS,
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
@@ -62,6 +63,7 @@ PROPS = {
     "pick-wedge": {"box": (2.76, 3.125), "k": 1.6, "shots": {"pick-wedge": (0, 0, 0)}},
     "proraso": {"box": (25.5, 7.95), "shots": {"proraso": (0, 0, 0)}},
     "razor": {"box": (17.5, 7.3), "shots": {"razor": (0, 0, 0)}},
+    "catlamp": {"box": (27.0, 11.0), "shots": {"catlamp": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real.
@@ -70,14 +72,13 @@ STAND_INS = {"reel": ("reel",)}
 # The page shows an em of the plate at up to this many pixels.
 DENSITY = 32
 EXPOSURE = 0.1
-# The lamp's plate: how bright the bulb is, in watts, and how much of the room's light is left at night.
-BULB = 300000.0
-NIGHT_ROOM = 0.025
+# The room is lit dimly from elsewhere, by this much of the light the leather was photographed in, and each bulb
+# in the cat lamp's glass tip gives this many watts when it is on.
+ROOM = 0.08
+GLOW = 2500.0
+# A lens spreads a little of a light too bright for it round it: this share, over this many em.
+BLOOM = (0.05, 1.2)
 LAMP_EXPOSURE = 0.0
-# The window's share of the light on the mat by day, the rest being the room's. Its size and distance in em.
-KEY_SHARE = 0.6
-KEY_SIZE = 45.0
-KEY_DISTANCE = 160.0
 
 
 class Keeper(Stage):
@@ -252,35 +253,11 @@ class Desk:
         scene.render.border_min_x, scene.render.border_max_x = x0 / vw, (x0 + side) / vw
         scene.render.border_min_y, scene.render.border_max_y = 1 - (y0 + side) / vh, 1 - y0 / vh
 
-    def key(self, power):
-        """The window: a big soft disk up and to the top right of the desk, where the studio's octabox hangs.
-        It gives every object a shadow with a direction and an edge, and metal a highlight to hold."""
-        source = bpy.data.lights.new("key", "AREA")
-        source.shape = "DISK"
-        source.size = KEY_SIZE
-        source.energy = power
-        source.color = (0.99, 0.995, 1.0)
-        light = self.stage.add("key", source)
-        middle = Vector((self.w / 2, -self.h / 2, 0))
-        light.location = middle + BOX_ON_STAND * KEY_DISTANCE
-        light.rotation_euler = (-BOX_ON_STAND).to_track_quat("-Z", "Y").to_euler()
-        return light
-
-    def lamp(self, power):
-        """The pendant over the top right of the plate: a bare bulb in a deep shade, so it throws a pool of
-        light down onto the mat with a soft edge where the rim of the shade cuts it off."""
-        x, y, height = self.layout["lamp"]
-        source = bpy.data.lights.new("bulb", "SPOT")
-        source.energy = power
-        source.color = (1.0, 0.74, 0.46)
-        source.spot_size = math.radians(138)
-        source.spot_blend = 1.0
-        source.shadow_soft_size = 2.5
-        bulb = self.stage.add("bulb", source)
-        bulb.location = (x, -y, height)
-        # The shade hangs a little turned toward the middle of the desk.
-        bulb.rotation_euler = (math.radians(-6), math.radians(-8), 0)
-        return bulb
+    def glow(self, power):
+        """Switch the cat lamp: each bulb in its tip gives this many watts, or none."""
+        for obj in bpy.context.scene.objects:
+            if obj.get("bulb"):
+                obj.data.energy = power
 
 
 def middle_of(anchor, frame):
@@ -294,9 +271,14 @@ def show(objects, seen):
         obj.visible_camera = seen
 
 
-def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE):
-    """The pixels as an AVIF with straight alpha, the shadow on the mat under them, as Stage.develop does it."""
+def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE, bloom=None):
+    """The pixels as an AVIF with straight alpha, the shadow on the mat under them, as Stage.develop does it.
+    bloom is (share, sigma in pixels): the light over white spread round where it is, as a lens spreads it."""
     light = pixels[..., :3] * GAIN * 2.0**exposure
+    if bloom:
+        share, sigma = bloom
+        hot = np.maximum(light - 1.0, 0)
+        light = light + share * np.dstack([blur(hot[..., c], sigma) for c in range(3)]) + 0.25 * share * np.dstack([blur(hot[..., c], 4 * sigma) for c in range(3)])
     cover = pixels[..., 3]
     alpha = np.clip(np.maximum(cover, light.max(axis=-1)), 0, 1)
     colour = shoulder(light / np.maximum(alpha, 1e-6)[..., None])
@@ -337,7 +319,7 @@ def main():
     parser.add_argument("--scale", type=float, default=1.0)
     parser.add_argument("--samples", type=int, default=256)
     parser.add_argument("--proofs")
-    parser.add_argument("--passes", nargs="*", default=["day", "lamp"])
+    parser.add_argument("--passes", nargs="*", default=["off", "lamp"])
     parser.add_argument("--shot", help="photograph this one shot on a stand of its own, as a proof, and nothing else")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
 
@@ -417,22 +399,23 @@ def main():
         paint.default_value = mat_colour
         return grey
 
-    # The room is turned down and the window makes up the difference, so the mat is lit as brightly as the
-    # leather the page lays under the plate, which was shot in the room alone.
+    # The leather the page lays under the plate was photographed in the room at full strength: that is 1 on
+    # the maps of the light. The room the desk is in is lit dimly, and the lamp does the rest.
     daylight = white_mat()
-    room.default_value = 1 - KEY_SHARE
-    window = desk.key(1e5)
-    lit = white_mat()
-    window.data.energy = 1e5 * KEY_SHARE * daylight.mean() / max(lit.mean() - (1 - KEY_SHARE) * daylight.mean(), 1e-6)
-    print(f"KEY {window.data.energy:.0f}W")
+    room.default_value = ROOM
+    for obj, _ in desk.gear:
+        obj.hide_render = True
+    off = white_mat() / daylight
+    print("DARK #" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(np.where(off <= 0.0031308, off * 12.92, 1.055 * off ** (1 / 2.4) - 0.055), 0, 1)))
 
-    if "day" in args.passes:
-        # The objects, the mat unseen but lighting them from below and showing in them.
+    if "off" in args.passes:
+        # The lamp off: the objects in the dim room, the mat unseen but lighting them from below and showing in
+        # them.
         show(layered, False)
         pixels = stage._expose(raw)
         print(f"OBJECTS {time.time() - started:.0f}s")
 
-        # The mat alone, catching the shadows of everything over it under the same light.
+        # The mat alone, catching the shadows of everything over it in the same light.
         show(everything, False)
         for obj in desk.shadowless:
             obj.hide_render = True
@@ -451,14 +434,9 @@ def main():
         layers("", EXPOSURE)
 
     if "lamp" in args.passes:
-        # Night, the lamp on, the room all but dark and the studio's own lights off. The objects are
-        # rendered in its light as the day's are, and the mat as a map of the light alone, which the page
-        # multiplies its own leather, rules and rulers by: 1 is as bright as the mat is by day.
-        window.hide_render = True
-        for obj, _ in desk.gear:
-            obj.hide_render = True
-        room.default_value = NIGHT_ROOM
-        desk.lamp(BULB)
+        # The lamp on, in the same dim room. The objects are rendered in its light, and the mat as a map of the
+        # light alone, which the page multiplies its own leather, rules and rulers by.
+        desk.glow(GLOW)
         # The map: a white mat, with everything on it unseen but still in the way of the light.
         show(everything, False)
         floor.visible_camera = True
@@ -481,7 +459,7 @@ def main():
         show([obj for obj in everything if obj not in layered], True)
         desk.camera(0, 0, desk.w, desk.h, density)
         pixels = stage._expose(raw)
-        develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-lamp.avif"), args.proofs, f"{named}-lamp", LAMP_EXPOSURE)
+        develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-lamp.avif"), args.proofs, f"{named}-lamp", LAMP_EXPOSURE, (BLOOM[0], BLOOM[1] * density))
         print(f"LAMP {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
         layers("-lamp", LAMP_EXPOSURE)
 

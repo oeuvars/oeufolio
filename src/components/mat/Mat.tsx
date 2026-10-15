@@ -2,10 +2,9 @@ import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import { cn } from '../../lib/utils'
 import type { PlateId, PropId } from '../../types'
-import { PendantLamp } from './PendantLamp'
 import { Rulers } from './Rulers'
 import { lamp } from './lamp'
-import { BULB, PLATES } from './layout'
+import { PLATES } from './layout'
 
 type MatProps = {
   /** What on the mat the page needs to reach: links and the parts that move. Each marks its root with data-prop. */
@@ -25,8 +24,6 @@ type Geometry = {
 const WIDE_FROM = 420
 // An em of the plate is drawn at most this many pixels, where its render is still sharp.
 const LARGEST = 22
-// Layers of light over the mat, the plate and what is on it.
-const LIGHT = 'pointer-events-none absolute inset-0 z-940 transition-opacity duration-500'
 // The plates and the lamp's light lie over the rulers, which are printed on the mat under everything on it.
 const FADE = 'pointer-events-none absolute z-1 max-w-none transition-opacity duration-500'
 
@@ -40,9 +37,10 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * A cutting mat in teal leather, seen from overhead, with the things left on it as on a desk in use. All of
  * it is one photograph of one set, rendered in the studio under one light, so every object shades the others
  * and throws its own shadow. The page lays the plate over its own leather, as large as lets all of it show.
- * The room is dark. With the lamp in the corner on, the mat is lit by a second plate of the same set under the
- * lamp alone: the objects, and a map of the lamp's light that the leather, its rules and its rulers are
- * multiplied by. With it off, the desk is all but dark.
+ * The room is dimly lit, and on the desk stands a lamp, a porcelain cat whose glass tail tip glows. Each state of
+ * the lamp is its own plate of the same set: the objects in that light, and the light on the mat, which the
+ * leather, its rules and its rulers are multiplied by: a map of the lamp's light with it on, the room's even
+ * dimness with it off. Clicking the cat switches it.
  */
 export function Mat({ children, className }: MatProps) {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
@@ -106,6 +104,7 @@ export function Mat({ children, className }: MatProps) {
     }
     tab.style.setProperty('--lit', lit ? '1' : '0')
     tab.style.setProperty('--light-rim', plate.rim)
+    tab.style.setProperty('--light-dark', plate.dark)
     tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
     tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
     place()
@@ -118,7 +117,7 @@ export function Mat({ children, className }: MatProps) {
     return () => {
       moving.disconnect()
       window.removeEventListener('scroll', place, true)
-      for (const name of ['--lit', '--light-rim', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
+      for (const name of ['--lit', '--light-rim', '--light-dark', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
     }
   }, [geometry, lit])
 
@@ -152,7 +151,8 @@ export function Mat({ children, className }: MatProps) {
 
         {geometry && plate && (
           <>
-            {/* By day: the objects and the shadows they throw on the mat. */}
+            {/* The lamp off: the room's dim light on the mat, then the objects in it and the shadows they throw. */}
+            <div aria-hidden className={`${FADE} inset-0 opacity-[calc(1-var(--lamp))] mix-blend-multiply`} style={{ backgroundColor: plate.dark }} />
             <img
               src={`/objects/mat/desk-${geometry.id}.avif`}
               alt=""
@@ -183,21 +183,6 @@ export function Mat({ children, className }: MatProps) {
 
         {children}
 
-        {/* The dark of the room, with the lamp off. */}
-        <div aria-hidden className={`${LIGHT} bg-[rgb(10_14_24)] opacity-[calc((1-var(--lit))*0.82)] mix-blend-multiply`} />
-
-        {geometry && plate && (
-          <div
-            className="absolute z-945"
-            style={{
-              left: geometry.x + plate.lamp[0] * geometry.em - BULB.x * plate.lampSize * geometry.em,
-              top: geometry.y + plate.lamp[1] * geometry.em - BULB.y * plate.lampSize * geometry.em,
-              fontSize: plate.lampSize * geometry.em,
-            }}
-          >
-            <PendantLamp lit={lit} onPull={lamp.pull} />
-          </div>
-        )}
       </div>
     </div>
   )
