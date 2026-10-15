@@ -245,7 +245,8 @@ def warp(base):
 
     def z(x, y):
         fold = ((x - fx0) * (fy1 - fy0) - (y - fy0) * (fx1 - fx0)) / fl
-        ear = np.clip(-((x - ex0) * (ey1 - ey0) - (y - ey0) * (ex1 - ex0)) / el, 0, None)
+        # How far past the dog-ear's crease a point lies, toward the corner it folded; nothing on the ticket's side.
+        ear = np.clip(((x - ex0) * (ey1 - ey0) - (y - ey0) * (ex1 - ex0)) / el, 0, None)
         reach = 1.45  # em from the dog-ear's crease to its tip
         return base(x, y) + RIDGE * MM * np.exp(-((fold / 0.5) ** 2)) + EAR * MM * (ear / reach) ** 1.3
 

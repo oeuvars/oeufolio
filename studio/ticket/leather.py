@@ -43,10 +43,10 @@ PEBBLE = 0.13  # the mean distance between pebbles, in em: at the ticket's scale
 DEPTH = 0.028  # how far a pebble's crown stands above the crease, in em
 DYE = "#6a0203"  # the red on the crowns, as the dye reflects it: a deep crimson that reflects almost no green or blue
 POOLED = "#210001"  # the red the dye dries to in the creases
-# The square the page repeats is lit by the stand's room alone, a fifth of the light the contact scene puts on the
-# hide (scene.py: the room and the key lamp, four times as bright), so it is exposed that much more to match it.
+# The square the page repeats is lit by the stand's room alone; it is exposed to come out as the hide does in the
+# contact scene's photograph (scene.py), measured off the two.
 QUALITY = 86
-EXPOSURE = 0.32
+EXPOSURE = -1.28
 
 
 def smooth(lo, hi, x):
@@ -159,7 +159,8 @@ def leather(stage, proof=None):
     square meets itself on every side. The lens is left out: it leans the light across the frame, which would show
     as a step where two squares meet."""
     hide(stage, -TILE, -TILE, 3 * TILE, 3 * TILE, proof)
-    stage.shoot("leather", (0, 0, TILE, TILE), exposure=EXPOSURE, lens=False, sharp=2.0)
+    # The hide lies at the stand's mat's height, so the mat, which would shade it, is taken away.
+    stage.shoot("leather", (0, 0, TILE, TILE), exposure=EXPOSURE, lens=False, sharp=2.0, mat=False)
 
 
 def main():

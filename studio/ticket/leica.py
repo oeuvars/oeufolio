@@ -296,21 +296,16 @@ def faced(material, metal=None, rough=None, relief=0.012, image="leica-front.png
 
 
 def lens_glass():
-    """The front element. Glass is not lit as a surface is: what shows in it is what lies behind it, down in the lens,
-    the black of the barrel and the coloured reflections of the coated elements, which is what the photograph shows
-    there; so that is given out as it was photographed, and over it only the glass's own thin, sharp reflection of
-    the studio, curved with its surface."""
-    material = principled("lens-glass", (0, 0, 0), rough=0.03, specular_ior_level=0.05)
-    nodes, links = material.node_tree.nodes, material.node_tree.links
-    faced(material, relief=0.0)
-    shader = nodes["Principled BSDF"]
-    photo = next(n for n in nodes if n.type == "TEX_IMAGE")
-    shader.inputs["Base Color"].links and links.remove(shader.inputs["Base Color"].links[0])
-    shader.inputs["Base Color"].default_value = (0, 0, 0, 1)
-    # Given out at the strength that develops back to the photograph's own tones.
-    strength = 1 / (float(stage_module.GAIN.mean()) * 2.0**EXPOSURE)
-    links.new(photo.outputs["Color"], shader.inputs["Emission Color"])
-    shader.inputs["Emission Strength"].default_value = strength
+    """The front element as glass in this light, not as it was photographed in another room: clear, onto the dark of
+    the barrel and the faces of the elements behind it, and over that its own reflection of what is above the table,
+    the lamp, curved small by its surface and coloured by its anti-reflection coat."""
+    material = principled("lens-glass", (1.0, 1.0, 1.0), rough=0.0, specular_ior_level=0.5, transmission_weight=1.0)
+    shader = material.node_tree.nodes["Principled BSDF"]
+    shader.inputs["IOR"].default_value = 1.62
+    # A single layer of magnesium fluoride a quarter wave thick at 550 nm, as Leitz coated its lenses: it reflects least
+    # in the green and leaves a dim violet.
+    shader.inputs["Thin Film Thickness"].default_value = 100
+    shader.inputs["Thin Film IOR"].default_value = 1.38
     return material
 
 
@@ -350,6 +345,15 @@ def camera():
     disc("bezel", cx, cy, [(28.2, 17.4), (28.6, 17.4), (28.6, 21.4), (28.2, 21.4)], black, caps=False)
     disc("throat", cx, cy, [(28.6, 17.4), (26.0, 17.2), (24.0, 17.0)], black, caps=False)
     disc("element", cx, cy, [(24.0, 0), (24.0, 17.0), (25.0, 17.0), (26.6, 12.8), (27.6, 6.9), (27.95, 0)], lens_glass(), steps=128)
+    # Down the barrel behind it, the faces of the elements further in, each throwing back its own smaller image of the
+    # lamp in its own coat's colour, and the black of the barrel round them.
+    disc("barrel-inside", cx, cy, [(24.0, 17.0), (12.0, 13.0), (12.0, 0)], black, steps=96, caps=False)
+    for name, z, r, sag, coat in (("second", 21.0, 14.0, 1.6, 420), ("third", 17.5, 12.5, -1.2, 330), ("rear", 14.0, 11.5, 1.0, 190)):
+        face = principled(f"{name}-face", (0.0, 0.0, 0.0), rough=0.02, specular_ior_level=0.35)
+        face.node_tree.nodes["Principled BSDF"].inputs["Thin Film Thickness"].default_value = coat
+        face.node_tree.nodes["Principled BSDF"].inputs["Thin Film IOR"].default_value = 1.38
+        profile = [(z, 0.0)] + [(z + sag * (1 - (t / r) ** 2), t) for t in (r * 0.3, r * 0.55, r * 0.75, r * 0.9, r)]
+        disc(name, cx, cy, profile, face, steps=96, caps=False)
 
     # Along the top, seen from above in profile: the advance lever and the release, the speed dial, the shoe, the
     # rewind knob.
@@ -422,7 +426,9 @@ def softbox(holder):
     while stack:
         obj = stack.pop()
         stack.extend(obj.children)
-        if obj.type in ("MESH", "CURVE", "FONT"):
+        # The front element is left out: the softbox is a studio's, and in the scene the glass shows only what is over
+        # the table, the lamp.
+        if obj.type in ("MESH", "CURVE", "FONT") and obj.name != "element":
             parts.objects.link(obj)
     lens_at = bpy.data.objects["element"].matrix_world.translation
     cast = 1 / stage_module.GAIN
