@@ -37,10 +37,10 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * A cutting mat in teal leather, seen from overhead, with the things left on it as on a desk in use. All of
  * it is one photograph of one set, rendered in the studio under one light, so every object shades the others
  * and throws its own shadow. The page lays the plate over its own leather, as large as lets all of it show.
- * The room is dimly lit, and on the desk stands a lamp, a porcelain cat whose glass tail tip glows. Each state of
+ * The room is dimly lit, and on the desk stands a lamp, a porcelain cat holding an orange dome up on its tail. Each state of
  * the lamp is its own plate of the same set: the objects in that light, and the light on the mat, which the
  * leather, its rules and its rulers are multiplied by: a map of the lamp's light with it on, the room's even
- * dimness with it off. Clicking the cat switches it.
+ * dimness with it off. Clicking the lamp switches it.
  */
 export function Mat({ children, className }: MatProps) {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)

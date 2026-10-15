@@ -35,6 +35,8 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 SETS = os.path.join(HERE, "sets")
 OUT = os.path.join(ROOT, "public", "objects", "mat")
 LAYOUT = os.path.join(ROOT, "src", "components", "mat", "desk.json")
+# Where the lens shows each layer, against where its prop lies: written here, read by the page.
+LEAN = os.path.join(ROOT, "src", "components", "mat", "lean.json")
 BUILDERS = {
     **mat.SHOTS,
     **card.SHOTS,
@@ -63,7 +65,7 @@ PROPS = {
     "pick-wedge": {"box": (2.76, 3.125), "k": 1.6, "shots": {"pick-wedge": (0, 0, 0)}},
     "proraso": {"box": (25.5, 7.95), "shots": {"proraso": (0, 0, 0)}},
     "razor": {"box": (17.5, 7.3), "shots": {"razor": (0, 0, 0)}},
-    "catlamp": {"box": (27.0, 11.0), "shots": {"catlamp": (0, 0, 0)}},
+    "catlamp": {"box": (27.0, 10.0), "k": 0.7, "shots": {"catlamp": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real.
@@ -73,9 +75,9 @@ STAND_INS = {"reel": ("reel",)}
 DENSITY = 32
 EXPOSURE = 0.1
 # The room is lit dimly from elsewhere, by this much of the light the leather was photographed in, and each bulb
-# in the cat lamp's glass tip gives this many watts when it is on.
+# in the cat lamp's head gives this many watts when it is on.
 ROOM = 0.08
-GLOW = 2500.0
+GLOW = 15000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
 LAMP_EXPOSURE = 0.0
@@ -223,38 +225,60 @@ class Desk:
             obj.light_linking.blocker_collection = lit
 
     def camera(self, x0, y0, w, h, density):
-        """An overhead camera on the rectangle of the plate from (x0, y0), w by h em."""
+        """A camera held where someone at the desk holds a phone over it, at the plate's eye (x, y and height in
+        em, the near side of the desk being down the page), framing the rectangle of the mat from (x0, y0), w by
+        h em. Its back is kept level with the desk and the lens shifted onto the frame, as an architect's camera
+        is: the mat and everything flat on it are drawn true, and anything standing on it shows its side toward
+        the eye, the lamp its front."""
         scene = bpy.context.scene
         camera = scene.camera
         if camera is None:
             optics = bpy.data.cameras.new("overhead")
-            optics.type = "ORTHO"
-            optics.clip_end = 300
+            optics.type = "PERSP"
+            optics.sensor_fit = "AUTO"
+            optics.sensor_width = 36.0
+            optics.clip_end = 1000
             camera = scene.camera = self.stage.add("overhead", optics)
-        camera.data.ortho_scale = max(w, h)
-        camera.location = (x0 + w / 2, -(y0 + h / 2), 200)
+        ex, ey, height = self.layout["eye"]
+        side = max(w, h)
+        camera.data.lens = camera.data.sensor_width * height / side
+        camera.data.shift_x = (x0 + w / 2 - ex) / side
+        camera.data.shift_y = -(y0 + h / 2 - ey) / side
+        camera.location = (ex, -ey, height)
         scene.render.resolution_x = round(w * density)
         scene.render.resolution_y = round(h * density)
         scene.render.resolution_percentage = 100
         self.view = (x0, y0, w, h)
 
-    def crop(self, shot, prop):
-        """Render only the square round a shot's frame, wherever the camera is."""
+    def crop(self, shot, prop, parts):
+        """Render only the square round a shot's frame, as the lens sees it. The parts stand off the mat, so the
+        lens shows them a little out from where they lie and a little larger. Returns where they show, against
+        where they lie: the shift in em of the prop, turned and scaled as the prop is, and the scale."""
         scene = bpy.context.scene
         with open(os.path.join(SETS, f"{shot}.json")) as file:
             frame = json.load(file)["frame"]
         bpy.context.view_layer.update()
         middle = middle_of(bpy.data.objects[f"{prop}-{shot}"], frame)
-        side = max(frame[2:]) * PROPS[prop].get("k", 1.0)
+        k = PROPS[prop].get("k", 1.0)
+        heights = [(obj.matrix_world @ Vector(corner)).z for obj in parts for corner in obj.bound_box]
+        z = (min(heights) + max(heights)) / 2
+        eye = scene.camera.location
+        grow = eye.z / (eye.z - z)
+        seen = Vector((eye.x + (middle.x - eye.x) * grow, eye.y + (middle.y - eye.y) * grow, 0))
+        side = max(frame[2:]) * k * grow
         vx, vy, vw, vh = self.view
-        x0, y0 = middle.x - side / 2 - vx, -middle.y - side / 2 - vy
+        x0, y0 = seen.x - side / 2 - vx, -seen.y - side / 2 - vy
         scene.render.use_border = True
         scene.render.use_crop_to_border = True
         scene.render.border_min_x, scene.render.border_max_x = x0 / vw, (x0 + side) / vw
         scene.render.border_min_y, scene.render.border_max_y = 1 - (y0 + side) / vh, 1 - y0 / vh
+        dx, dy = seen.x - middle.x, -(seen.y - middle.y)
+        turn = math.radians(self.layout["at"][prop][2])
+        local = (dx * math.cos(turn) + dy * math.sin(turn), -dx * math.sin(turn) + dy * math.cos(turn))
+        return [round(local[0] / k, 4), round(local[1] / k, 4), round(grow, 4)]
 
     def glow(self, power):
-        """Switch the cat lamp: each bulb in its tip gives this many watts, or none."""
+        """Switch the cat lamp: each bulb in its head gives this many watts, or none."""
         for obj in bpy.context.scene.objects:
             if obj.get("bulb"):
                 obj.data.energy = power
@@ -271,9 +295,18 @@ def show(objects, seen):
         obj.visible_camera = seen
 
 
+def rolled(x, knee=0.72, brightest=6.0, soft=0.5):
+    """Highlights as a phone camera keeps them in a dim room with a lamp in it: linear up to the knee, then
+    compressed on a log scale, so that the lamp's glass, tens of times brighter than the desk it lights, still
+    shows its shape instead of burning out flat."""
+    over = np.maximum(x - knee, 0)
+    return np.where(x <= knee, x, knee + (1 - knee) * np.minimum(np.log1p(over / soft) / np.log1p(brightest / soft), 1))
+
+
 def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE, bloom=None):
     """The pixels as an AVIF with straight alpha, the shadow on the mat under them, as Stage.develop does it.
-    bloom is (share, sigma in pixels): the light over white spread round where it is, as a lens spreads it."""
+    bloom is (share, sigma in pixels): the light over white spread round where it is, as a lens spreads it.
+    With it, the highlights are rolled off as a camera exposing for a lit room does."""
     light = pixels[..., :3] * GAIN * 2.0**exposure
     if bloom:
         share, sigma = bloom
@@ -281,7 +314,7 @@ def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE, bloom=None):
         light = light + share * np.dstack([blur(hot[..., c], sigma) for c in range(3)]) + 0.25 * share * np.dstack([blur(hot[..., c], 4 * sigma) for c in range(3)])
     cover = pixels[..., 3]
     alpha = np.clip(np.maximum(cover, light.max(axis=-1)), 0, 1)
-    colour = shoulder(light / np.maximum(alpha, 1e-6)[..., None])
+    colour = (rolled if bloom else shoulder)(light / np.maximum(alpha, 1e-6)[..., None])
     under = np.clip(cast, 0, 1) * (1 - alpha)
     total = alpha + under
     colour = (colour * alpha[..., None] + SHADOW * under[..., None]) / np.maximum(total, 1e-6)[..., None]
@@ -363,19 +396,25 @@ def main():
     named = f"desk-{args.plate}"
 
     def layers(suffix, exposure):
-        """Each layer on its own, cropped square round its object, with everything else still there to light it."""
+        """Each layer on its own, cropped square round its object, with everything else still there to light it.
+        Where the lens shows each, against where its prop lies, goes to LEAN for the page."""
         show(everything, False)
+        leans = {}
         for shot, prop in LAYERS.items():
             parts = desk.parts.get(shot)
             if not parts:
                 continue
             show(parts, True)
-            desk.crop(shot, prop)
+            leans[shot] = desk.crop(shot, prop, parts)
             layer = stage._expose(raw)
             scene.render.use_border = False
             develop(layer, np.zeros(layer.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-{shot}{suffix}.avif"), args.proofs, f"{named}-{shot}{suffix}", exposure)
             show(parts, False)
             print(f"LAYER {shot}{suffix} {layer.shape[1]}x{layer.shape[0]}")
+        known = json.load(open(LEAN)) if os.path.exists(LEAN) else {}
+        known.setdefault(args.plate, {}).update(leans)
+        with open(LEAN, "w") as file:
+            file.write(json.dumps(known, indent=2) + "\n")
         show([obj for obj in everything if obj not in layered], True)
 
     room = scene.world.node_tree.nodes["Background"].inputs["Strength"]
@@ -444,7 +483,8 @@ def main():
         bx, by = desk.layout["bleed"]
         desk.camera(-bx, -by, desk.w + 2 * bx, desk.h + 2 * by, min(density, 8))
         light = stage._expose(raw, samples=max(64, args.samples // 2))[..., :3] / daylight
-        light = np.clip(light * 2.0**LAMP_EXPOSURE, 0, 1)
+        # Where the lamp lights the leather brighter than it was photographed, it eases into that, as film does.
+        light = shoulder(light * 2.0**LAMP_EXPOSURE)
         light = np.where(light <= 0.0031308, light * 12.92, 1.055 * light ** (1 / 2.4) - 0.055)
         light += (np.random.default_rng(1).random(light.shape, dtype=np.float32) - 0.5) / 255
         save(np.dstack((np.clip(light, 0, 1), np.ones(light.shape[:2]))).astype(np.float32), os.path.join(tempfile.gettempdir(), "desk-light.png"))

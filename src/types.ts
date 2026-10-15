@@ -75,7 +75,8 @@ export type PlateId = 'wide' | 'tall'
 /**
  * A plate as studio/desk/desk.py renders it, in em of the plate. size is its width and height, and bleed how far
  * the lamp's light map runs past it on each side. rim is the colour of the lamp's light where its map ends, and
- * dark the room's light on the mat with the lamp off. at is where each object lies on it: the middle of its box
+ * dark the room's light on the mat with the lamp off. eye is where the camera is held: x and y on the plate and its
+ * height. at is where each object lies on it: the middle of its box
  * and its turn in degrees, clockwise.
  */
 export type Plate = {
@@ -83,6 +84,7 @@ export type Plate = {
   bleed: [number, number]
   rim: string
   dark: string
+  eye: [number, number, number]
   at: Partial<Record<PropId, [number, number, number]>>
 }
 

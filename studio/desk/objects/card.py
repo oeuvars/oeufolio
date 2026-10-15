@@ -161,7 +161,8 @@ def sleeve(stage, top, seed):
     z += WAVE * cloud(X.shape, seed, falloff=3.2)
     rows, cols = X.shape
     verts = [(x, -y, h) for x, y, h in zip(X.ravel(), Y.ravel(), z.ravel())]
-    faces = [(r * cols + c, r * cols + c + 1, (r + 1) * cols + c + 1, (r + 1) * cols + c) for r in range(rows - 1) for c in range(cols - 1)]
+    # Wound so the faces look up, away from the card: the film's gloss is worked out from the side it faces.
+    faces = [((r + 1) * cols + c, (r + 1) * cols + c + 1, r * cols + c + 1, r * cols + c) for r in range(rows - 1) for c in range(cols - 1)]
     mesh = bpy.data.meshes.new("sleeve")
     mesh.from_pydata(verts, [], faces)
     u = (X.ravel() + BAND) / (W + 2 * BAND)

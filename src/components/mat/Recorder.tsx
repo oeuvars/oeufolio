@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 
 import type { Like } from '../../types'
 import { PROP, RENDER } from './classes'
+import lean from './lean.json'
 import { playTape } from './tape'
 import { useRevving } from './useRevving'
 
@@ -16,6 +17,10 @@ type RecorderProps = {
  * under the pointer. Pressing it plays a few bars off tape, and the reel turns for as long as they last,
  * then runs down.
  */
+// Where studio/desk/desk.py found the lens shows the hub, against where the recorder lies: a shift in em of the
+// recorder and a scale.
+const LEAN = { wide: lean.wide.reel, tall: lean.tall.reel }
+
 export function Recorder({ like }: RecorderProps) {
   const [playing, setPlaying] = useState(false)
   const pressedAt = useRef({ x: 0, y: 0 })
@@ -36,13 +41,25 @@ export function Recorder({ like }: RecorderProps) {
       onPointerDown={(event) => (pressedAt.current = { x: event.clientX, y: event.clientY })}
       onClick={play}
     >
+      {/* The hub stands off the mat, so the lens shows it a little out from where it lies and a little larger. */}
+      <span
+        aria-hidden
+        className="absolute top-[1.44em] left-[0.445em] aspect-square w-[10.88em] [--lean:var(--lean-wide)] group-data-[plate=tall]/mat:[--lean:var(--lean-tall)]"
+        style={
+          {
+            '--lean-wide': `translate(${LEAN.wide[0]}em, ${LEAN.wide[1]}em) scale(${LEAN.wide[2]})`,
+            '--lean-tall': `translate(${LEAN.tall[0]}em, ${LEAN.tall[1]}em) scale(${LEAN.tall[2]})`,
+            transform: 'var(--lean)',
+          } as React.CSSProperties
+        }
+      >
       <span
         ref={reel}
-        aria-hidden
-        className="absolute top-[1.44em] left-[0.445em] aspect-square w-[10.88em] animate-reel revving [--rate:0] group-data-[playing=true]/recorder:[--rate:3]"
+        className="absolute inset-0 animate-reel revving [--rate:0] group-data-[playing=true]/recorder:[--rate:3]"
       >
         <i className={`${RENDER} absolute inset-0 bg-[url(/objects/mat/desk-wide-reel.avif)] opacity-[calc(1-var(--lamp))] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel.avif)]`} />
         <i className={`${RENDER} absolute inset-0 bg-[url(/objects/mat/desk-wide-reel-lamp.avif)] opacity-[var(--lamp)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel-lamp.avif)]`} />
+      </span>
       </span>
       <h2 className="sr-only">
         {like.subject}: {like.title}
