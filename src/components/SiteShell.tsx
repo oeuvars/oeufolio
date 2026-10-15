@@ -29,6 +29,8 @@ type Tone = {
   /** What the panel is made of: a photographed square of it that repeats (studio/ticket/leather.py). It is not
    * paper, so the sheet's grain and creases are cut away over it. */
   surface?: string
+  /** The strip is a plain page, cut straight down its edge, not torn. */
+  cut?: boolean
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
   /** What the page is printed on, as a tile that repeats (studio/poster's poster-paper): the panel round the page
@@ -126,7 +128,7 @@ function torn(seed: number, calm: Array<[number, number]>, edge: Edge, outward =
 }
 
 /** How a strip's own edge was made. */
-const edgeOf = (tone: Tone): Edge => (tone.fills ? 'cut' : tone.roll ? 'worn' : 'torn')
+const edgeOf = (tone: Tone): Edge => (tone.fills || tone.cut ? 'cut' : tone.roll ? 'worn' : 'torn')
 
 /** The work strip's colours when its page is the poster: the poster's own dark, so nothing of the building's night is left. */
 const posterTone = { band: '#100e0c', panel: '#100e0c', paper: '/objects/poster-paper.avif' }
@@ -138,7 +140,7 @@ const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills ||
 
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
-  { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
+  { band: '#7a8597', bandInk: '#121820', panel: '#cfcecb', panelInk: '#24242a', cut: true, grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
