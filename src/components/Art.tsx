@@ -24,7 +24,7 @@ export function Art({ index, open, poster }: ArtProps) {
     )
   }
 
-  if (index === 2) return poster ? <StripPoster /> : <StripHouse open={open} />
+  if (index === 2) return poster ? <StripPoster open={open} /> : <StripHouse open={open} />
 
   return null
 }

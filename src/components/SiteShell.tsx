@@ -553,9 +553,14 @@ export function SiteShell({ children }: SiteShellProps) {
                     className="absolute inset-y-0"
                     // A picture runs on under the strip before it as far as that strip's tear can bite, and out to its
                     // panel's edge past its own tear's reach, as the open page does, so no tear uncovers bare panel.
-                    style={tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) } : { left: overlap, width: folded(i) - band - overlap }}
+                    // The poster hands over to its page and back in the same frame, the two lying on each other, and its
+                    // page hides and shows it (Poster, StripPoster), so it is always here, not faded.
+                    style={{
+                      ...(tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) } : { left: overlap, width: folded(i) - band - overlap }),
+                      ...(tones[i].bleeds && workPoster ? { opacity: 1 } : {}),
+                    }}
                     initial={false}
-                    animate={{ opacity: open ? 0 : 1 }}
+                    animate={tones[i].bleeds && workPoster ? undefined : { opacity: open ? 0 : 1 }}
                     // A picture page folds back into its strip's picture, which has to be there at once to take over.
                     transition={{ duration: tones[i].bleeds && !open ? 0 : 0.35 }}
                   >
