@@ -6,8 +6,8 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
-    prs       a Blackstar Debut's colours: its cream tolex, with four of the outline birds PRS inlays down
-              its fretboards let into it one under another, mother-of-pearl in rosewood, and a band of the
+    prs       a Blackstar Debut's tolex in the seafoam of a PRS Silver Sky, with four of the outline birds PRS
+              inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band of the
               amplifier's red grille cloth round it under Blackstar's badge
     apple     a Mac Studio's bead-blasted aluminium, with the six-colour apple let into it over the case's
               drilled grille
@@ -456,7 +456,7 @@ def prs(name, height):
             shell = cover * np.clip(colour[..., 0] * 1.6, 0, 1)
             birds.append((cover, shell, cover - shell))
             y += h + gap
-        # Tolex: a fine leather grain pressed into the cream, everywhere but what is let into it.
+        # Tolex: a fine leather grain pressed into the blue, everywhere but what is let into it.
         grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
         bare = 1 - np.clip(blur(np.max([cover for cover, _, _ in birds], axis=0), 2.0) * 3, 0, 1)
         sheet.height += 0.0045 * bare * grain
@@ -472,7 +472,8 @@ def prs(name, height):
         return amp(name, 6.1, 8.3, artwork("logos/blackstar"))
 
     # The birds' outlines are fine, so the sheet is drawn finer than the others.
-    return {"card": 1.2}, moulded(name, height, "#e6cdab", 0.4, 0.12, dress, density=7, subsurface=0.03)
+    # The tolex is the Silver Sky's seafoam, the blue of its satin body.
+    return {"card": 1.2}, moulded(name, height, SEAFOAM, 0.4, 0.12, dress, density=7, subsurface=0.03)
 
 
 def drill(case, centres, bore, sink, depth, material):
@@ -699,6 +700,9 @@ def tagheuer(name, height):
     return {"card": 0.5}, [strap, *steel]
 
 
+# A PRS Silver Sky's seafoam, as its satin body shows it in the light.
+SEAFOAM = "#70b9bd"
+
 # Each tab: the height in rem of the paper tab (SiteShell's tabHeights), that paper's colour (the band of
 # its strip), which lights the piece's edges from below, how the piece was set down (see stuck), and what
 # builds it.
@@ -706,7 +710,7 @@ TABS = {
     "lacoste": (10, "#e3d3c1", (0.9, 0.02, -0.03), lacoste),
     "proraso": (10, "#d9d4c2", (-0.7, -0.02, 0.02), proraso),
     "apple": (10, "#1e2740", (0.5, 0.03, 0.03), apple),
-    "prs": (10, "#7a8597", (-1.0, 0.0, -0.02), prs),
+    "prs": (10, "#ece8df", (-1.0, 0.0, -0.02), prs),
     "tagheuer": (11.5, "#8a8b78", (0.5, 0.0, 0.02), tagheuer),
 }
 

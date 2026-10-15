@@ -12,6 +12,12 @@ import { Desk } from './mat/Desk'
 import { Ticket } from './ticket/Ticket'
 import { useStackMetrics } from './useStackMetrics'
 
+/** A material as a tile that repeats without a seam, and how many CSS pixels square it is shown. */
+type Paper = {
+  src: string
+  size: number
+}
+
 type Tone = {
   band: string
   bandInk: string
@@ -31,11 +37,10 @@ type Tone = {
   surface?: string
   /** The strip is a plain page, cut straight down its edge, not torn. */
   cut?: boolean
-  /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
-  grain?: string
-  /** What the page is printed on, as a tile that repeats (studio/poster's poster-paper): the panel round the page
-   * and the tab are cut from it, so they are the page's own paper and not a flat colour. */
-  paper?: string
+  /** What the page is made of, as a tile that repeats, size CSS pixels square: the poster's wall (studio/poster) or
+   * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
+   * from it, so they are the page's own paper and not a flat colour. */
+  paper?: Paper
   /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
   tab: string
 }
@@ -131,16 +136,16 @@ function torn(seed: number, calm: Array<[number, number]>, edge: Edge, outward =
 const edgeOf = (tone: Tone): Edge => (tone.fills || tone.cut ? 'cut' : tone.roll ? 'worn' : 'torn')
 
 /** The work strip's colours when its page is the poster: the poster's own dark, so nothing of the building's night is left. */
-const posterTone = { band: '#100e0c', panel: '#100e0c', paper: '/objects/poster-paper.avif' }
-// The paper tile's size in CSS pixels: PAPER_SIZE in studio/poster/poster.py, written at twice this.
-const PAPER = 140
+// Its tile is PAPER_SIZE in studio/poster/poster.py, written at twice the size it is shown.
+const posterTone = { band: '#100e0c', panel: '#100e0c', paper: { src: '/objects/poster-paper.avif', size: 140 } }
 
 /** Whether a strip's page covers the whole strip, band and all. Only a page that sits framed on its band shows it. */
-const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll)
+const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll || tone.paper)
 
 const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
-  { band: '#70b9bd', bandInk: '#0e2426', panel: '#cfcecb', panelInk: '#24242a', cut: true, grain: '/photos/laid.avif', tab: '/objects/tab-prs.avif' },
+  // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
+  { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
@@ -167,7 +172,6 @@ function stripStyle(tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Rec
     '--panel-ink': tone.panelInk,
     '--paper': tone.panel,
     '--ink': tone.panelInk,
-    '--panel-grain': tone.grain ? `url(${tone.grain})` : 'none',
     '--tab-top': `${tabTops[slot]}rem`,
     zIndex: z,
     ...extra,
@@ -196,7 +200,7 @@ type TabProps = {
   /** The tab is cut from the surface the page lies on, this tile of it, not from paper. */
   surface?: string
   /** The tab is cut from the page's paper, this tile of it (Tone's paper). */
-  paper?: string
+  paper?: Paper
 }
 
 /**
@@ -262,8 +266,8 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
         {paper && (
           <defs>
             {/* The same tile, at the same size, as the panel round the page. */}
-            <pattern id={hide} patternUnits="userSpaceOnUse" width={PAPER} height={PAPER}>
-              <image href={paper} width={PAPER} height={PAPER} />
+            <pattern id={hide} patternUnits="userSpaceOnUse" width={paper.size} height={paper.size}>
+              <image href={paper.src} width={paper.size} height={paper.size} />
             </pattern>
           </defs>
         )}
@@ -516,7 +520,7 @@ export function SiteShell({ children }: SiteShellProps) {
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
-                style={tones[i].paper ? { backgroundImage: `url(${tones[i].paper})`, backgroundSize: `${PAPER}px ${PAPER}px`, backgroundBlendMode: 'normal' } : undefined}
+                style={tones[i].paper ? { backgroundImage: `url(${tones[i].paper.src})`, backgroundSize: `${tones[i].paper.size}px` } : undefined}
               >
                 {tones[i].surface && (
                   <div

@@ -287,9 +287,6 @@
     right: var(--band-w);
     overflow: hidden;
     background-color: var(--panel, var(--band));
-    background-image: var(--panel-grain, none);
-    background-size: 1064px auto;
-    background-blend-mode: multiply;
     color: var(--panel-ink, var(--band-ink));
   }
 
