@@ -151,10 +151,8 @@ const pageTones: Tone[] = [
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
-// The hide's tile: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are. It is
-// TILE (30) em of the ticket's spread across, and the spread is 90vh tall for its 29.85 em (ticket/Ticket.tsx), so the
-// hide's grain is the size it is beside the ticket.
-const HIDE = `calc(90vh * ${30 / 29.85})`
+// The hide's tile, in pixels: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are.
+const HIDE = '256px'
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
 // A tab's width on a wide screen and the room a render of its piece keeps round the tab, in rem: WIDTH
