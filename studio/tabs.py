@@ -7,7 +7,7 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               with Merkur's mark struck into its collar
     lacoste   a cut off a navy piqué polo, hemmed: the embroidered crocodile, and the collar's rib knit with ecru and
               gold tipping
-    prs       a Blackstar Debut's tolex in the seafoam of a PRS Silver Sky, with four of the outline birds PRS
+    prs       a Blackstar Debut's tolex in a PRS Silver Sky's Sandglow Yellow, with four of the outline birds PRS
               inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
               front of a Blackstar ID:Core in red round it: its black grille cloth between edges of its wine tolex,
               under Blackstar's badge
@@ -616,10 +616,10 @@ def prs(name, height):
         return amp(name, 6.1, 8.3, artwork("logos/blackstar"))
 
     # The birds' outlines are fine, so the sheet is drawn finer than the others.
-    # The tolex is the Silver Sky's seafoam, the blue of its satin body.
+    # The tolex is the Silver Sky's Sandglow Yellow, the colour of its satin body.
     # Tolex is an embossed vinyl, its pebbled grain the scan of a real pebbled hide (ambientCG Leather025), each
     # pebble a millimetre or two across: semi-matte, with a thin sheen on the tops of the pebbles.
-    return {"card": 1.2, "ceiling": False}, moulded(name, height, SEAFOAM, 0.5, 0.08, dress, density=7, scan=("Leather025", 6, 1.1, 0.35), relief=0.01, subsurface=0.03)
+    return {"card": 1.2, "ceiling": False}, moulded(name, height, SANDGLOW, 0.5, 0.08, dress, density=7, scan=("Leather025", 6, 1.1, 0.35), relief=0.01, subsurface=0.03)
 
 
 def drill(case, centres, bore, sink, depth, material):
@@ -851,8 +851,9 @@ def tagheuer(name, height):
     return {"card": 0.5}, [strap, *steel]
 
 
-# A PRS Silver Sky's seafoam, as its satin body shows it in the light.
-SEAFOAM = "#70b9bd"
+# A PRS Silver Sky in Sandglow Yellow, the warm, sandy vintage yellow of the John Mayer Defender, as its satin
+# body shows it in the light.
+SANDGLOW = "#dab65c"
 # Lacoste's navy, and the ecru and muted gold its collar is tipped in.
 NAVY = "#1d2a4a"
 ECRU = "#ece4d2"
