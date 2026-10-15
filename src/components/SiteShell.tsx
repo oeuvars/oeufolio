@@ -171,7 +171,7 @@ type TabProps = {
   label: string
   shape: TabShape
   to?: NavItem['to']
-  /** The version of the page to open, if not its first (the work page's poster). */
+  /** The version of the page to open, if not its current one (the work page's building). */
   search?: VersionSearch
   current?: boolean
   /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
@@ -310,13 +310,13 @@ type SiteShellProps = {
 
 export function SiteShell({ children }: SiteShellProps) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const poster = useRouterState({ select: (state) => state.location.pathname === '/work' && Number((state.location.search as { v?: unknown }).v) === 2 })
+  const poster = useRouterState({ select: (state) => state.location.pathname === '/work' && Number((state.location.search as { v?: unknown }).v) !== 1 })
   // The version of the work page last open: its strip shows that version folded, and opens to it again.
-  const [workPoster, setWorkPoster] = useState(false)
+  const [workPoster, setWorkPoster] = useState(true)
   useEffect(() => {
     if (pathname === '/work') setWorkPoster(poster)
   }, [pathname, poster])
-  const searchOf = (to: NavItem['to']): VersionSearch | undefined => (to === '/work' && workPoster ? { v: 2 } : undefined)
+  const searchOf = (to: NavItem['to']): VersionSearch | undefined => (to === '/work' && !workPoster ? { v: 1 } : undefined)
   const index = Math.max(
     0,
     profile.nav.findIndex((item) => item.to === pathname),

@@ -2,7 +2,7 @@ import { POSTER } from './house'
 import { Reveal } from './Reveal'
 
 /**
- * The second work page: a poster of lit windows in a block of flats at night (studio/poster), with "human
+ * The work page: a poster of lit windows in a block of flats at night (studio/poster), with "human
  * experience" glowing across them and passages set between them. Its type is in the picture, not over it. It
  * stands the panel's height, and the strip opens no wider than it (SiteShell), on the poster's own dark, its edges
  * fading into it.

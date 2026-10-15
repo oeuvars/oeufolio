@@ -7,16 +7,16 @@ import { Reveal } from '../components/Reveal'
 import { profile } from '../content'
 import type { VersionSearch } from '../types'
 
-/** Two versions of the page: the building (the default), and the poster at /work?v=2. */
+/** Two versions of the page: the poster (the default), and the building it replaced at /work?v=1. */
 export const Route = createFileRoute('/work')({
-  validateSearch: (search: Record<string, unknown>): VersionSearch => (Number(search.v) === 2 ? { v: 2 } : {}),
+  validateSearch: (search: Record<string, unknown>): VersionSearch => (Number(search.v) === 1 ? { v: 1 } : {}),
   component: Work,
 })
 
 function Work() {
   const { v } = Route.useSearch()
 
-  return v === 2 ? <Poster /> : <Building />
+  return v === 1 ? <Building /> : <Poster />
 }
 
 /**

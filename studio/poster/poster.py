@@ -2,7 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow>=11.3", "scipy"]
 # ///
-"""The second work page's poster: a copy of the reference poster (art/reference.jpg, 736 x 981), lit windows of a
+"""The work page's poster: a copy of the reference poster (art/reference.jpg, 736 x 981), lit windows of a
 block of flats at night with "human experience" glowing across them and four italic passages set between them,
 printed at three times its size.
 

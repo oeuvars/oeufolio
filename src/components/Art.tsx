@@ -6,7 +6,7 @@ type ArtProps = {
   index: number
   /** Whether the strip is unfolded, with its page over the art. */
   open: boolean
-  /** Whether the work page was last open as its poster, so its strip shows the poster folded. */
+  /** Whether the work page was last open as its poster, not its building, so its strip shows the poster folded. */
   poster?: boolean
 }
 
