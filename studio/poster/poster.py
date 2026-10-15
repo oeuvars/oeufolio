@@ -69,7 +69,7 @@ def box_mask(shape, boxes, feather):
 def lift_type(picture, mask):
     """The wall under the passages with their letters taken off: a grey opening wider than a stroke keeps what is
     broad (the window frames, the title's glow) and drops what is thin."""
-    size = 4 * SCALE + 1
+    size = 6 * SCALE + 1
     bare = np.stack([ndimage.grey_opening(picture[..., c], size=(size, size)) for c in range(3)], -1)
     bare = np.stack([ndimage.gaussian_filter(bare[..., c], SCALE) for c in range(3)], -1)
     return picture * (1 - mask[..., None]) + bare * mask[..., None]
