@@ -1,8 +1,8 @@
 {
   "human": { "left": 95, "baseline": 370, "vars": { "size": "82px", "track": "-0.045em" } },
   "experience": { "left": 242, "baseline": 613, "vars": { "size": "84px", "track": "-0.05em" } },
-  "parcel": { "left": 311, "width": 83, "baseline": 314.6, "vars": { "size": "9.4px", "lead": "10.2px" } },
+  "parcel": { "left": 311, "width": 83, "baseline": 314.6, "vars": { "size": "9.4px", "lead": "10.2px", "wrap": "34px" } },
   "ekarth": { "left": 518, "width": 120, "baseline": 383.5, "vars": { "size": "9.4px", "lead": "10.15px" } },
   "shift": { "left": 106, "width": 192, "baseline": 493.6, "vars": { "size": "9.4px", "lead": "10.17px" } },
-  "first": { "left": 305, "width": 220, "baseline": 632.7, "vars": { "size": "9.4px", "lead": "10.2px" } }
+  "first": { "left": 305, "width": 220, "baseline": 632.7, "vars": { "size": "9.4px", "lead": "10.2px", "wrap": "45px" } }
 }
