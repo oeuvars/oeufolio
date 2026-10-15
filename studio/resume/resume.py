@@ -57,8 +57,9 @@ ROOM = 0.4
 # The key lamp, lower and smaller than the ticket's, so the shadows are darker and their edges firmer.
 KEY_FROM = Vector((-0.8, 0.9, 1.15)).normalized()
 KEY_SIZE = 9.0
-# A window over the desk, seen only in reflections: its sheen lies on the lacquer from GLARE[0] to GLARE[1] em down from
-# the top of the link's box, at this share of the key lamp's brightness.
+# A window over the desk, seen only in reflections, and only in the roll's, the twine's and the tag's: it lies along the
+# roll from GLARE[0] to GLARE[1] em down from the top of the link's box, at this share of the key lamp's brightness.
+# On the desk its sheen would be a pale wash with nothing to show where it came from, so the desk is not lit by it.
 GLARE = (-3.0, 15.0)
 GLARE_SHARE = 0.16
 
@@ -88,6 +89,22 @@ CLIP = 0.36  # the cut corners
 HOLE, RING = 0.11, 0.3
 HOLE_DOWN = 0.62
 MANILA = "#d8bd86"
+
+# Cats off the signal post's photographs (studio/signal/art/cats, credited there), printed on photo paper and cut out
+# with scissors, lying down the desk below the tag, one half under the last folder: the cut-out's name, where its middle lies (em across the frame, em
+# down from the top of the link's box), how long it is along its picture's width, and how far it is turned clockwise.
+CATS_ART = os.path.join(ROOT, "studio", "signal", "art", "cats")
+CATS = (
+    ("doze", 2.15, 26.4, 2.5, 92.0),
+    ("nap", 1.3, 32.8, 4.4, -85.0),
+    ("walk", 2.15, 39.6, 2.2, 7.0),
+    ("ledge", 2.1, 46.8, 2.0, -5.0),
+)
+PHOTO = "#f6f5f1"  # the photo paper's white
+SNIP = 0.025  # the paper left round a cat by the scissors
+# The second key lamp, the same as the first, aimed this far down the link's box, so the desk is lit as far as the
+# cats lie.
+LOW_KEY = 40.0
 STAMP = "#d0232b"
 
 
@@ -408,6 +425,40 @@ def tag(stage):
     return obj
 
 
+def cat(stage, name, cx, cy, length, turn):
+    """A cat printed on photo paper and cut round with scissors: a hairline of the paper's white shows past its fur,
+    the print is a satin, and the cut-out has curled a little since."""
+    image = pixels_of(os.path.join(CATS_ART, f"{name}-cut.png")).astype(np.float64)
+    rows, cols = image.shape[:2]
+    w, h = length, length * rows / cols
+    sheet = Sheet(w, h, PHOTO, rough=0.32, density=3)
+    sheet.art(os.path.join(CATS_ART, f"{name}-cut.png"), 0, 0, w, h)
+    cover = fit(image[..., 3:], *sheet.height.shape)[..., 0]
+    soft = 0.03 * sheet.ppe
+    held = blur(cover, soft)
+    # Scissors follow the fur's outline, not every hair: the outline of the softened cover, let out by SNIP.
+    sheet.cut((0.45 - held) * 2.5 * soft / sheet.ppe - SNIP)
+    obj = sheet.build(
+        stage,
+        f"cat-{name}",
+        thickness=0.022,
+        step=0.08,
+        warp=lambda x, y: 0.03 * ((x - w / 2) / w) ** 2 + 0.01 * np.sin(1.7 * y / h + 0.4),
+        scan="Paper006",
+        scan_size=4,
+        scan_normal=0.15,
+        scan_rough=0.2,
+        coat_rough=0.2,
+        sheen=0.1,
+    )
+    # Turn it about its middle and lay it there.
+    a = math.radians(-turn)
+    off = (w / 2 * math.cos(a) + h / 2 * math.sin(a), w / 2 * math.sin(a) - h / 2 * math.cos(a))
+    obj.rotation_euler = (0, 0, a)
+    obj.location = (cx - off[0], -cy - off[1], 0)
+    return obj
+
+
 def desk(stage):
     """The desk under the whole frame: the walnut scan, its grain turned to run down the strip, under a coat of
     satin lacquer. Fingermarks and wear dull the coat unevenly, and fine scratches catch the light."""
@@ -472,9 +523,9 @@ def desk(stage):
     return stage.add("desk", mesh)
 
 
-def glare():
-    """The window over the desk that the lacquer reflects. For a mirror under a lens EYE over the frame's middle, a
-    point on the desk y em down the frame reflects a point at the same height EYE as far again past it."""
+def glare(receivers):
+    """The window over the desk that the roll reflects. For a mirror under a lens EYE over the frame's middle, a
+    point y em down the frame reflects a point at the same height EYE as far again past it. Only `receivers` see it."""
     middle = TALL / 2 - TOP
     near, far = (2 * y - middle for y in GLARE)
     width = 16.0
@@ -515,6 +566,10 @@ def glare():
     for flag in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission", "visible_volume_scatter"):
         setattr(pane, flag, False)
     bpy.context.scene.collection.objects.link(pane)
+    lit = bpy.data.collections.new("glare-receivers")
+    for obj in receivers:
+        lit.objects.link(obj)
+    pane.light_linking.receiver_collection = lit
     return pane
 
 
@@ -530,12 +585,12 @@ def main():
     stage = Stage(out, args.proofs, scale=args.scale, samples=args.samples)
     stage.clear()
     desk(stage)
-    roll(stage)
-    twine(stage)
-    tag(stage)
+    pieces = [roll(stage), *twine(stage), tag(stage)]
+    pieces += [cat(stage, *spec) for spec in CATS]
     key_light.FROM, key_light.SIZE = KEY_FROM, KEY_SIZE
     key_light.add((END / 2, -HEIGHT / 2))
-    glare()
+    key_light.add((END / 2, -LOW_KEY))
+    glare(pieces)
     # The desk is in the photograph, so the shadows and reflections are its own: no shadow pass and no stand mat.
     stage.shoot("resume", (0, -TOP, END, TALL), bleed=BLEED, mat=False, lens=False, eye=EYE, room=ROOM, exposure=0.05 - 2.5)
 
