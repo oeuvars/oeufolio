@@ -5,8 +5,8 @@ type LetterProps = {
 }
 
 /** The image's size in pixels. */
-const WIDTH = 1375
-const HEIGHT = 2222
+const WIDTH = 1394
+const HEIGHT = 2223
 
 /**
  * The letter (studio/letter.py), written straight onto its page. It is the ink of a photographed card and

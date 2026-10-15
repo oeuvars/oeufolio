@@ -128,9 +128,8 @@ WRITING = (
     ((160, 644, -0.004), 160, 1, "You give your heart to Arsenal, which is a stupid"),
     ((158, 683, -0.004), 158, 1, "thing to do with a heart."),
     ((160, 842, -0.004), 160, 1, "And the cats. You think you are not a"),
-    ((156, 881, -0.004), 156, 1, "cat person. Then one falls asleep next"),
-    ((158, 920, -0.004), 158, 1, "to you, belly up, trusting you"),
-    ((160, 959, -0.004), 160, 1, "completely, and that is that."),
+    ((156, 881, -0.004), 156, 1, "cat person. Then Dilly falls asleep on"),
+    ((158, 920, -0.004), 158, 1, "top of your keyboard and it's wraps."),
     ((160, 1003, -0.004), 160, 1, "It isn't impressive, any of it, and I wouldn't trade it."),
     ((158, 1042, -0.004), 158, 1, "Take your time getting here."),
     ((612, 1113, -0.01), 612, 1, "cheers,"),
@@ -147,11 +146,11 @@ STRIP = (
     (0.5, ((388, 506, 452, 593), (456, 506, 526, 593), (544, 496, 612, 593))),
     (0.5, ((280, 686, 480, 806),)),
     (0.9, ((550, 700, 640, 806),)),
-    (0.5, ((604, 820, 836, 960),)),
+    (0.5, ((598, 810, 840, 982),)),
     (0.4, ((144, 1048, 329, 1216),)),
     (0.9, ((604, 1088, 712, 1164),)),
 )
-STRIP_WIDTH, STRIP_GAP = 232, 58
+STRIP_WIDTH, STRIP_GAP = 244, 58
 STRIP_CLEARED = ((584, 360, 608, 396), (376, 586, 394, 600), (576, 586, 592, 600), (329, 1085, 540, 1216))  # ends of things cut through
 SPACE = 16.0  # bare card between two words, and how much it varies
 PAGE = (150, 58, 640, 104)  # bare card, to take paper grain from
@@ -779,43 +778,94 @@ def drawings(pen):
     pen.bubble(556, 626, 634, 658, (602, 663))
     pen.say(571, 648, 0, 1, "#golly!")
 
-    # A tabby asleep on its back on a cushion: belly up, front paws gone limp, one hind foot in the air, the
-    # other leg flung out, tail over the edge. Its head is tipped back, so its face is upside down.
-    pen.shift[:] = -6, 0
-    pen.grown = (1.1, np.array([722.0, 930.0]))
+    # Dilly asleep on the MacBook's keyboard, curled up with her tail over the front edge, having typed a line
+    # of k's. She is a long-haired van: white, a ginger cap parted by a white blaze, a ginger patch on her left
+    # lip, two ginger spots on the right of her back, and a solid ginger tail.
+    pen.shift[:] = 0, 0
+    fine = {"round_off": 0, "stray": 0.2, "width": PEN * 0.55}
 
-    def front(points, closed=False, **how):
-        """A part of the cat, in front of whatever was drawn before it."""
+    def front(points, closed=True, **how):
         pen.blank(points)
         pen.sketch([*points, points[0]] if closed else points, **{"stray": 0.3, "round_off": 1, **how})
 
-    fine = {"round_off": 0, "stray": 0.2, "width": PEN * 0.55}
-    pillow = [(626, 930), (631, 922), (648, 919), (720, 918), (792, 917), (808, 920), (813, 929), (808, 938), (792, 941), (720, 942), (648, 942), (631, 939)]
-    pen.sketch([*pillow, pillow[0]], stray=0.4)
-    pen.strokes([(626, 930), (619, 926)], [(626, 930), (618, 931)], [(626, 930), (620, 936)], [(813, 929), (819, 927)], [(634, 932), (700, 931), (760, 931)], [(642, 936), (652, 935)], [(700, 937), (716, 936)], stray=0.3, width=PEN * 0.55)
-    pen.hatch(640, 943, 800, 948, 16, 1.6)
-    pen.hatch(768, 932, 804, 940, 6)
-    front([(784, 888), (800, 881), (815, 882), (822, 888), (816, 894), (801, 895), (790, 900)])
-    pen.strokes([(815, 884), (816, 889)], [(819, 886), (819, 891)], [(798, 883), (799, 893)], [(805, 882), (806, 893)], **fine)
-    front([(672, 921), (680, 899), (685, 893), (688, 897), (692, 889), (696, 893), (701, 885), (714, 879), (730, 876), (746, 878), (760, 885), (770, 894), (778, 902), (790, 906), (792, 913), (786, 919), (774, 922)])
-    pen.stroke([(774, 922), (740, 923), (700, 923), (676, 922)], stray=0.3)
-    pen.strokes([(700, 921), (703, 912)], [(712, 922), (716, 912)], [(726, 922), (730, 913)], [(740, 922), (743, 913)], [(754, 921), (757, 913)], [(766, 920), (770, 912)], **fine)
-    pen.strokes([(712, 886), (710, 891), (714, 890)], [(726, 883), (724, 888), (728, 887)], [(740, 884), (739, 889), (743, 888)], [(752, 889), (751, 894), (755, 893)], [(720, 896), (718, 901), (722, 900)], [(736, 897), (735, 902), (739, 901)], [(750, 901), (749, 905), (753, 904)], **fine)
-    front([(760, 888), (763, 874), (771, 865), (781, 864), (784, 852), (791, 846), (798, 850), (797, 859), (790, 868), (789, 878), (784, 890)])
-    pen.strokes([(766, 878), (774, 871)], [(770, 884), (779, 877)], [(776, 888), (784, 881)], [(787, 850), (789, 854)], [(791, 848), (792, 852)], [(795, 850), (795, 854)], [(789, 858), (793, 860)], **fine)
-    front([(705, 884), (705, 868), (701, 867), (698, 862), (701, 857), (708, 855), (714, 859), (714, 868), (714, 881)])
-    pen.strokes([(703, 858), (704, 863)], [(708, 857), (708, 862)], [(706, 877), (713, 876)], [(706, 872), (713, 871)], **fine)
-    front([(689, 892), (688, 873), (683, 873), (679, 868), (682, 862), (690, 860), (697, 864), (698, 873), (698, 888)])
-    pen.strokes([(684, 863), (685, 868)], [(689, 862), (689, 867)], [(689, 885), (697, 884)], [(689, 879), (697, 878)], **fine)
-    front([(664, 890), (673, 892), (680, 898), (684, 904), (679, 907), (683, 912), (677, 916), (683, 929), (668, 920), (662, 920), (651, 931), (650, 917), (645, 912), (649, 908), (644, 903), (649, 896), (656, 891)], closed=True)
-    pen.strokes([(653, 909), (656.5, 906.5), (660, 909)], [(668, 909), (671.5, 906.5), (675, 909)], round_off=1, stray=0.15, width=PEN * 0.7)
-    pen.strokes([(662, 902), (666, 902), (664, 899.5), (662, 902)], [(664, 899.5), (664, 897.5)], [(664, 897.5), (661, 895.5), (658.5, 897.5)], [(664, 897.5), (667, 895.5), (669.5, 897.5)], [(663, 895.5), (664, 893), (665, 895.5)], **fine)
-    pen.strokes([(660, 913), (660, 917)], [(664, 913), (664, 918)], [(668, 913), (668, 917)], [(679, 921), (677, 918)], [(654, 924), (653, 919)], **fine)
-    pen.strokes([(657, 899), (643, 893)], [(657, 901), (641, 899)], [(657, 903), (643, 905)], [(671, 899), (686, 891)], [(671, 901), (689, 897)], [(671, 903), (688, 904)], round_off=0, stray=0.3, width=PEN * 0.45)
-    front([(790, 911), (805, 914), (817, 921), (823, 933), (822, 945), (815, 952), (808, 948), (811, 941), (815, 943), (817, 936), (813, 927), (803, 920), (788, 918)], round_off=2)
-    pen.strokes([(799, 913), (797, 919)], [(808, 916), (805, 922)], [(817, 924), (812, 927)], [(822, 934), (817, 935)], [(821, 944), (816, 942)], **fine)
-    pen.strokes([(650, 872), (657, 872), (650, 879), (657, 879)], [(658, 855), (668, 855), (658, 865), (668, 865)], [(670, 836), (683, 836), (670, 849), (683, 849)], round_off=0, stray=0.3)
-    pen.grown = (1.0, np.zeros(2))
+    def ginger(cx, cy, rx, ry, step=2.0, below=None, blaze=None):
+        """Ginger fur: short hatching filling an oval, down to `below`, clear of a blaze between two x's."""
+        x = cx - rx + step / 2
+        while x < cx + rx:
+            if not (blaze and blaze[0] < x < blaze[1]):
+                reach = ry * np.sqrt(max(1 - ((x - cx) / rx) ** 2, 0))
+                top, foot = cy - reach + 1.2, min(cy + reach - 1.2, below or 1e9)
+                if foot - top > 1.5:
+                    pen.stroke([(x + 0.25 * (foot - top) / 2, top), (x - 0.25 * (foot - top) / 2, foot)], round_off=0, stray=0.35, width=PEN * 0.5)
+            x += step
+
+    def fluff(cx, cy, rx, ry, n=40, tuft=1.6):
+        """An oval with a long coat's tufts round its edge."""
+        t = np.linspace(0, 2 * np.pi, n, endpoint=False) + pen.rng.uniform(0, 1)
+        r = 1 + np.where(np.arange(n) % 2, tuft / max(rx, ry), -0.2 * tuft / max(rx, ry))
+        return [(cx + rx * k * np.cos(a), cy + ry * k * np.sin(a)) for a, k in zip(t, r)]
+
+    # The lid, standing behind: bezel, notch, an editor's lines, and what she typed.
+    pen.sketch([(628, 818), (812, 814), (816, 908), (624, 911), (628, 818)], stray=0.35)
+    pen.stroke([(634, 823), (806, 820), (809, 903), (631, 906), (634, 823)], stray=0.3, width=PEN * 0.6)
+    pen.stroke([(713, 821), (714, 825), (728, 825), (729, 821)], round_off=0, stray=0.15, width=PEN * 0.6)
+    for y, x0, x1 in ((832, 642, 690), (838, 650, 718), (844, 650, 700), (850, 658, 742), (856, 650, 690), (862, 642, 664)):
+        pen.stroke([(x0, y), (x1, y - 0.3)], round_off=0, stray=0.25, width=PEN * 0.55)
+    pen.say(642, 875, -0.004, 0.55, "kkkkkkkkkkkkkkkkkkkkkkk")
+    pen.strokes([(784, 866), (784, 876)], stray=0.1, width=PEN * 0.6)
+    # The deck coming forward: the keyboard's well and its rows of keys, the trackpad, the front edge.
+    deck = [(624, 911), (816, 908), (836, 953), (604, 958)]
+    front(deck)
+    pen.strokes([(604, 958), (606, 963), (834, 958), (836, 953)], [(708, 958), (710, 961), (730, 961), (732, 957)], round_off=0, stray=0.25)
+
+    def across(y, u):
+        """A point of the deck, from its back edge (y = 0) to its front (y = 1), and left (u = 0) to right."""
+        left = np.array([624, 911]) + (np.array([604, 958]) - np.array([624, 911])) * y
+        right = np.array([816, 908]) + (np.array([836, 953]) - np.array([816, 908])) * y
+        return tuple(left + (right - left) * u)
+
+    rows = np.linspace(0.08, 0.52, 6)
+    pen.stroke([across(rows[0], 0.06), across(rows[0], 0.94), across(rows[-1], 0.94), across(rows[-1], 0.06), across(rows[0], 0.06)], round_off=0, stray=0.25, width=PEN * 0.6)
+    for a, b in zip(rows, rows[1:]):
+        pen.stroke([across(b, 0.06), across(b, 0.94)], round_off=0, stray=0.2, width=PEN * 0.45)
+        for k in range(1, 14):
+            u = 0.06 + 0.88 * k / 14 + (0.02 if a > 0.3 else 0)
+            pen.stroke([across(a + 0.01, u), across(b - 0.01, u)], round_off=0, stray=0.15, width=PEN * 0.45)
+    pen.stroke([across(0.6, 0.38), across(0.6, 0.62), across(0.9, 0.62), across(0.9, 0.38), across(0.6, 0.38)], round_off=0, stray=0.25, width=PEN * 0.6)
+    # Dilly: her body curled on the keys, her head down on her paws at the left.
+    front(fluff(732, 904, 50, 26))
+    ginger(724, 889, 13, 7, 1.3)
+    ginger(748, 889, 6.5, 4.5, 1.3)
+    pen.strokes([(700, 920), (712, 926)], [(742, 926), (756, 921)], [(760, 896), (768, 902)], **fine)
+    front(fluff(676, 928, 8, 4, 16, 0.8))
+    front(fluff(695, 929, 8, 4, 16, 0.8))
+    pen.strokes([(672, 929), (673, 931)], [(677, 929), (677, 931.5)], [(691, 930), (692, 932)], [(696, 930), (696, 932.5)], **fine)
+    front([(668, 897), (669, 881), (680, 891)], round_off=0)
+    front([(689, 890), (697, 880), (700, 896)], round_off=0)
+    pen.blank(fluff(684, 908, 18.5, 17, 30, 1.2))
+    head = fluff(684, 908, 18, 16.5, 30, 1.2)
+    pen.sketch([*head, head[0]], stray=0.3, round_off=1)
+    ginger(684, 908, 17, 15.5, 1.3, below=903, blaze=(681.8, 686.4))
+    pen.strokes([(669.5, 885), (670, 893)], [(671.5, 886), (673, 892)], [(674, 888), (677, 892)], [(696.5, 883), (695, 893)], [(698, 886), (697, 894)], [(694, 886), (692, 892)], **fine)
+    pen.strokes([(673, 906.5), (677, 909.5), (681, 906.5)], [(687, 906.5), (691, 909.5), (695, 906.5)], round_off=1, stray=0.12, width=PEN * 0.7)
+    pen.strokes([(682.4, 913), (685.6, 913), (684, 915.2), (682.4, 913)], [(684, 915.2), (684, 916.6)], [(684, 916.6), (681.5, 918.2)], [(684, 916.6), (686.5, 918.2)], **fine)
+    ginger(691, 916.5, 3.6, 2.4, 1.1)
+    pen.strokes([(679, 915), (664, 912)], [(679, 917), (663, 918)], [(689, 915), (705, 911)], [(689, 917), (706, 917)], round_off=0, stray=0.3, width=PEN * 0.45)
+    # Her tail, solid ginger and bushy, from the back of her over the front edge.
+    path = np.array([(776, 914), (790, 924), (800, 938), (805, 954), (803, 968), (796, 976)], dtype=np.float64)
+    normal = np.gradient(path, axis=0)[:, ::-1] * (1, -1)
+    normal /= np.linalg.norm(normal, axis=1)[:, None]
+    wide = np.array([6.5, 7, 7, 6.5, 6, 4.5])
+    tail = [tuple(p) for p in path + normal * wide[:, None]] + [tuple(p) for p in (path - normal * wide[:, None])[::-1]]
+    front(tail)
+    for side in np.linspace(-0.75, 0.75, 7):  # filled lengthwise, so it reads solid and not ringed
+        pen.stroke(path[:-1] + normal[:-1] * (wide[:-1, None] * side), round_off=2, stray=0.45, width=PEN * 0.5)
+    for k in np.linspace(0.3, len(path) - 1.3, 12):
+        i, f = int(k), k - int(k)
+        at, along = path[i] * (1 - f) + path[i + 1] * f, path[i + 1] - path[i]
+        out = normal[i] * wide[i] * (1 if k % 2 < 1 else -1)
+        pen.stroke([tuple(at + out * 0.6), tuple(at + out * 1.15 + along * 0.25)], round_off=0, stray=0.3, width=PEN * 0.5)
+    pen.strokes([(606, 878), (612, 878), (606, 884), (612, 884)], [(612, 862), (620, 862), (612, 870), (620, 870)], round_off=0, stray=0.25)
 
     # Me on the bench, seen from the side, pressing 225 lbs: the bar end-on with its two plates, and not trying.
     pen.shift[:] = 0, 209
