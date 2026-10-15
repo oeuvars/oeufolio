@@ -16,8 +16,6 @@ const SPREAD_W = BESIDE_W + FRAME_W
 // The photograph of the whole set and the one of the punched hole, each by the box it covers in the spread's em.
 const [OX, OY, OW, OH] = contact.open
 const [PX, PY, PW, PH] = contact.punch
-// The photograph's own edge fades into the hide the page lays round it, a few em in.
-const FADE = 5
 
 /** Lays an image over the box it was photographed for, in the spread's em. */
 const over = (x: number, y: number, w: number, h: number) => ({ left: `${x}em`, top: `${y}em`, width: `${w}em`, height: `${h}em` })
@@ -57,11 +55,7 @@ export function Ticket() {
           aria-hidden
           draggable={false}
           className="pointer-events-none absolute max-w-none"
-          style={{
-            ...over(OX, OY, OW, OH),
-            maskImage: `linear-gradient(to right, transparent, #000 ${FADE}em, #000 calc(100% - ${FADE}em), transparent), linear-gradient(transparent, #000 ${FADE}em, #000 calc(100% - ${FADE}em), transparent)`,
-            maskComposite: 'intersect',
-          }}
+          style={over(OX, OY, OW, OH)}
         />
         <img
           src="/objects/contact-punch.avif"

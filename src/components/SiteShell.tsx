@@ -475,9 +475,9 @@ export function SiteShell({ children }: SiteShellProps) {
                     aria-hidden
                     className="pointer-events-none absolute inset-0"
                     style={{
-                      // The hide falls off a little into shadow toward the edges of the light.
-                      backgroundImage: `radial-gradient(120% 85% at 50% 42%, transparent 50%, rgb(20 2 1 / 0.3)), url(${pageTones[i].surface})`,
-                      backgroundSize: '100% 100%, 256px 256px',
+                      // Under the photograph of the set, which covers it: only a window taller than the photograph shows it.
+                      backgroundImage: `url(${pageTones[i].surface})`,
+                      backgroundSize: '256px 256px',
                     }}
                   />
                 )}
@@ -522,7 +522,8 @@ export function SiteShell({ children }: SiteShellProps) {
                 ) : null}
                 {!open && <Link to={item.to} search={searchOf(item.to)} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
-              {edgeOf(pageTones[i]) === 'worn' && (
+              {/* The ticket's leather is a photograph that runs to the tear, its own cut edge and wear in it, so it has none laid over it. */}
+              {edgeOf(pageTones[i]) === 'worn' && !pageTones[i].surface && (
                 <>
                   <div aria-hidden className="torn-fray" />
                   <div aria-hidden className="torn torn-wear" />
