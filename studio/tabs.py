@@ -380,7 +380,7 @@ def rounded(edge, radius):
     return radius * (1 - np.sqrt(np.clip(1 - out * out, 0, 1)))
 
 
-def displaced(name, sheet, edge, top, material, step=2, at=(0.0, 0.0), base=0.0):
+def displaced(name, sheet, edge, top, material, step=2, at=(0.0, 0.0), base=0.0, plumb=False):
     """A solid whose top is the sheet's height map as real geometry, standing top rem high, cut to where edge is
     negative: its relief catches the light and throws its own small shadows, as a bump map laid on a flat face
     cannot. The sheet's height is spent on the geometry, so the surface that dresses it carries none of it again."""
@@ -409,6 +409,19 @@ def displaced(name, sheet, edge, top, material, step=2, at=(0.0, 0.0), base=0.0)
     mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
     mesh.materials.append(material)
     body = STAGE.add(name, mesh)
+    if plumb:
+        # Walls straight down from the outline to base, for a top that falls steeply at its edge, where walls grown
+        # along its normals would splay out sideways.
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        rim = [e for e in bm.edges if e.is_boundary]
+        grown = bmesh.ops.extrude_edge_only(bm, edges=rim)
+        for v in grown["geom"]:
+            if isinstance(v, bmesh.types.BMVert):
+                v.co.z = base
+        bm.to_mesh(mesh)
+        bm.free()
+        return clad(body, at[0], at[1], sheet.w, sheet.h)
     # Walls down to the page.
     walls = body.modifiers.new("walls", "SOLIDIFY")
     walls.thickness = float(top - base)
@@ -545,9 +558,9 @@ def badge(name, mark, cx, cy, wide, z0):
 
 
 def amp(name, y0, y1, mark):
-    """A band off the front of a Blackstar ID:Core in red clamped round the piece: its black grille cloth, from a
-    photograph of the amplifier's own (studio/assets/blackstar/grille-black), between two
-    edges of its wine tolex, with the maker's badge on it."""
+    """A band off the front of a Blackstar ID:Core in red wrapped round the piece: its black grille cloth, from a
+    photograph of the amplifier's own (studio/assets/blackstar/grille-black), between two edges of its wine tolex,
+    with the maker's badge on it. It is one piece, following the piece's face and coming down over its sides."""
     lap = 0.05
     x0, x1 = NEAR - lap, WIDTH - FAR + lap
     w, h = x1 - x0, y1 - y0
@@ -566,18 +579,29 @@ def amp(name, y0, y1, mark):
     weave = lum - blur(lum, 0.06 * sheet.ppe)
     sheet.height += 0.012 * np.clip(weave / max(weave.std(), 1e-6), -2.5, 2.5) / 2.5
     sheet.rough += 0.08 * np.clip(-weave / max(weave.std(), 1e-6), 0, 2)
-    # It is bent round the piece, so it falls away at each side.
-    sheet.height -= 0.08 * (1 - np.clip(np.minimum(X, w - X) / 0.5, 0, 1)) ** 2
+    Y = sheet.Y
+    # The cabinet's tolex, a fine-grained vinyl in the ID:Core's wine red, folded over the cloth's top and foot. It is
+    # a little thicker than the cloth and its folded lip is rounded, so it stands clean of the weave.
+    edging = 0.26
+    tolex = np.clip(ramp(edging + 0.004, edging - 0.004, Y) + ramp(h - edging - 0.004, h - edging + 0.004, Y), 0, 1)
+    from_fold = np.minimum(np.abs(Y - edging), np.abs(Y - (h - edging)))
+    sheet.rgb += tolex[..., None] * (linear(WINE) - sheet.rgb)
+    sheet.finish(tolex, rough=0.5, coat=0.15)
+    grain = 0.0015 * np.clip(scanned(sheet, "Leather025", 6, 1.0) / 0.05, -1, 1)
+    sheet.height += tolex * (0.014 + grain - rounded(-from_fold, 0.012) - sheet.height)
+    # It is wrapped round the piece: it follows the piece's face, crowned and rounded at its edges, a little thicker
+    # than the cloth, and runs a little past the piece's sides before it turns straight down them.
+    inside = np.clip(np.minimum(X, w - X) - lap, 0, None)
+    face = THICK - CROWN * (1 - np.clip(inside / SHOULDER, 0, 1)) ** 2 - rounded(-inside, EDGE)
+    sheet.height += face + 0.03
+    outline_ = within(X, Y, fillet([(0, 0, 0.03), (w, 0, 0.03), (w, h, 0.03), (0, h, 0.03)], steps=6))
+    heights = sheet.height.copy()
+    sheet.height[:] = 0.0
     fabric = skin(sheet, f"{name}-cloth", sheen=0.4, specular=0.3)
-    top = THICK + 0.05
-    band = clad(prism(STAGE, f"{name}-amp", rect(x0, y0, x1, y1, 0.06, 4), 0.0, top, fabric, bevel=0.045, segments=4), x0, y0, w, h)
-    # The cabinet's tolex, a fine-grained vinyl in the ID:Core's wine red, folded over the cloth's top and foot.
-    tolex = principled(f"{name}-tolex", WINE, rough=0.5, coat_weight=0.15, coat_roughness=0.35)
-    beads = [
-        prism(STAGE, f"{name}-tolex-{i}", rect(x0, y - 0.13, x1, y + 0.13, 0.04, 4), top - 0.04, top + 0.04, tolex, bevel=0.035, segments=6)
-        for i, y in enumerate((y0 + 0.13, y1 - 0.13))
-    ]
-    return [band, *beads, badge(name, mark, (x0 + x1) / 2, (y0 + y1) / 2, wide, top)]
+    sheet.height = heights
+    top = THICK + 0.03
+    band = displaced(f"{name}-amp", sheet, outline_, 0.0, fabric, step=steps(sheet), at=(x0, y0), plumb=True)
+    return [band, badge(name, mark, (x0 + x1) / 2, (y0 + y1) / 2, wide, top + 0.006)]
 
 
 def prs(name, height):
