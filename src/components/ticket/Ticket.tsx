@@ -1,4 +1,3 @@
-import { motion } from 'motion/react'
 import { useState } from 'react'
 
 import { profile } from '../../content'
@@ -25,7 +24,7 @@ const over = (x: number, y: number, w: number, h: number) => ({ left: `${x}em`, 
  * leather with a strip of Indian stamps beside it and a Leica lying on its back above them, all under one lamp. What
  * is printed on the ticket is laid over the photograph in the same type and left clear, so the words can be
  * selected and followed where they are printed. The spread is as tall as the page lets it be and never wider than
- * the page; the photograph runs on past it into the hide. Copying the email address has the conductor punch the
+ * the page. It is laid once and stays where it lies, the strip uncovering it as it opens (SiteShell). Copying the email address has the conductor punch the
  * ticket: a photograph of the same set with the hole through it, of the hole alone, is laid over the first.
  */
 export function Ticket() {
@@ -39,14 +38,11 @@ export function Ticket() {
     )
 
   return (
-    <motion.div
+    <div
       // The panel has no frame, so the spread takes the page's margins either side, all but a sliver: on the left the
       // room kept for the tab of the strip before, on the right the band, which this panel covers.
       className="@container -my-[4vh] w-full md:-mr-[calc(clamp(1rem,2.6vw,3rem)+var(--band-w)-12px)] md:-ml-[calc(var(--protrude)+6px)] md:w-auto"
       style={{ maxWidth: `calc(90vh * ${SPREAD_W / FRAME_H})` }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
     >
       <div className="relative select-none" style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em` }}>
         <img
@@ -73,6 +69,6 @@ export function Ticket() {
           <Print onCopy={copy} copied={copied} />
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

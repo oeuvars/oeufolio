@@ -9,6 +9,7 @@ import { Art } from './Art'
 import { Badge } from './Badge'
 import { POSTER } from './house'
 import { Desk } from './mat/Desk'
+import { Ticket } from './ticket/Ticket'
 import { useStackMetrics } from './useStackMetrics'
 
 type Tone = {
@@ -528,7 +529,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 )}
                 {tones[i].hangs ? (
                   <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
-                ) : tones[i].fills ? null : (
+                ) : tones[i].fills || tones[i].roll ? null : (
                   <motion.div
                     aria-hidden
                     className="absolute inset-y-0"
@@ -544,13 +545,14 @@ export function SiteShell({ children }: SiteShellProps) {
                   </motion.div>
                 )}
 
-                {tones[i].fills ? (
-                  // The desk is always here, open or folded: folded, the strip shows the edge of it beside the
-                  // tab. It is never laid again, so whatever is on it stays as it was left.
+                {tones[i].fills || tones[i].roll ? (
+                  // The desk and the ticket are always here, open or folded, laid at the page's open width and pinned
+                  // to the strip's edge: folded, the strip shows the edge of them beside the tab, and opening it only
+                  // uncovers the rest where it lies. Neither is laid again, so whatever is on it stays as it was left.
                   <div className={PAGE} style={underTab(i)} inert={!open} aria-hidden={!open || undefined}>
                     <div className="grid flex-1 content-center py-[4vh]">
                       {open && children}
-                      <Desk />
+                      {tones[i].fills ? <Desk /> : <Ticket />}
                     </div>
                   </div>
                 ) : open ? (

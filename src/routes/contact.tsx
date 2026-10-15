@@ -1,10 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Ticket } from '../components/ticket/Ticket'
-
 export const Route = createFileRoute('/contact')({ component: Contact })
 
-/** How to reach me, printed on a cinema ticket. */
+/** The page is the ticket, which lies in its strip whether the page is open or not (SiteShell, ticket/Ticket.tsx). */
 function Contact() {
-  return <Ticket />
+  return <h1 className="sr-only">Contact</h1>
 }

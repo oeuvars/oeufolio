@@ -10,8 +10,7 @@ Each stamp is an Indian one, as the stamp sheets in the reference's feed are eac
 the country in Devanagari and in English along its foot, in black, and its value in rupees beside them, in
 vermilion. The type is the page's own, from the font files the page loads: Martel for the Devanagari, the rupee
 sign and the figures, Domine for the Latin. Writes studio/ticket/art/stamps-k.png and stamps-red.png, white where the ink prints,
-the whole strip (ticket.json's "stamps") at PX_PER_EM, and coil-k.png and coil-red.png for the folded strip's long
-run of the same stamps (ticket.json's "coil"). ticket.py prints them.
+the whole strip (ticket.json's "stamps") at PX_PER_EM. ticket.py prints them.
 """
 
 import json
@@ -30,8 +29,7 @@ DOMINE = os.path.join(FONTS, "domine", "files", "domine-latin-700-normal.woff")
 
 
 def plates_for(key):
-    """The type for one run of stamps in ticket.json: "stamps", the strip beside the ticket, or "coil", the long run
-    down the folded strip. A run gives its own pictures and values and takes its stamps' size from "stamps"."""
+    """The type for the run of stamps in ticket.json under key."""
     spec = {**TICKET["stamps"], **TICKET[key]}
     sw, sh = spec["size"]
     ax, ay, aw, ah = spec["art"]
@@ -63,5 +61,4 @@ def plates_for(key):
     print("wrote", count, key, f"{size[0]} x {size[1]} px")
 
 
-for key in ("stamps", "coil"):
-    plates_for(key)
+plates_for("stamps")

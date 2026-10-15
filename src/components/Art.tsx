@@ -1,6 +1,5 @@
 import { StripHouse } from './StripHouse'
 import { StripPoster } from './StripPoster'
-import { StripTicket } from './ticket/StripTicket'
 
 type ArtProps = {
   index: number
@@ -11,7 +10,7 @@ type ArtProps = {
 }
 
 /** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. The desk's
- * strip shows the desk itself (SiteShell). */
+ * and the ticket's strips show the desk and the ticket themselves (SiteShell). */
 export function Art({ index, open, poster }: ArtProps) {
   if (index === 1) {
     // The letter's own drawings, date and signature, down the edge of its sheet (studio/letter.py).
@@ -27,5 +26,5 @@ export function Art({ index, open, poster }: ArtProps) {
 
   if (index === 2) return poster ? <StripPoster /> : <StripHouse open={open} />
 
-  return <StripTicket />
+  return null
 }

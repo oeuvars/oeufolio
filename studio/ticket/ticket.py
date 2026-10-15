@@ -318,12 +318,8 @@ def lay_stamps(key="stamps", at=(0.0, 0.0)):
     """The strip of stamps beside the ticket: three Indian stamps still joined, each its own picture of the same river,
     printed in the ticket's four inks, with the country and the value along the foot (stamps.py's plates). The
     perforations run between them, whole round holes, and round the strip's edge, where it was torn off the sheet,
-    as the teeth the holes leave. Mint and lying flat, but for the curl gummed paper takes.
-
-    key "coil" is the folded strip's: fourteen of the same stamps off a coil, as stamps for machines come, perforated only
-    between one stamp and the next, their long sides cut straight."""
+    as the teeth the holes leave. Mint and lying flat, but for the curl gummed paper takes."""
     spec = {**TICKET["stamps"], **TICKET[key]}
-    coil = key == "coil"
     sw, sh = spec["size"]
     ax, ay, aw, ah = spec["art"]
     radius, pitch = spec["perf"]
@@ -348,13 +344,13 @@ def lay_stamps(key="stamps", at=(0.0, 0.0)):
     for k in range(across + 1):
         for i in range(count + 1):
             sheet.punch(disc(sheet.X, sheet.Y, k * w / across, i * sh, radius))
-    for k in range(0 if coil else down * count + 1):
+    for k in range(down * count + 1):
         for x in (0, w):
             sheet.punch(disc(sheet.X, sheet.Y, x, k * sh / down, radius))
-    carried(sheet, printed, 41 if not coil else 47, scale=0.4, folded=False)
+    carried(sheet, printed, 41, scale=0.4, folded=False)
     sheet.soften(0.02, 0.008)
-    # Gummed paper curls a little across, toward its gum; a coil, wound, a little more, in waves along it.
-    wave = drift(w, h, (0.15 if not coil else 0.3) * MM, 43)
+    # Gummed paper curls a little across, toward its gum.
+    wave = drift(w, h, 0.15 * MM, 43)
     build(sheet, f"ticket-{key}", lambda x, y: wave(x, y) + 0.4 * MM * ((x - w / 2) / (w / 2)) ** 2, at)
     return w, h
 
@@ -362,10 +358,10 @@ def lay_stamps(key="stamps", at=(0.0, 0.0)):
 def stamps(key="stamps"):
     w, h = lay_stamps(key)
     key_light.add((w / 2, -h / 2))
-    return STAGE.shoot(f"ticket-{key}", (0, 0, w, h), bleed=1.6, shadow=0.85, sharp=SHARP if key != "coil" else 1.0, exposure=EXPOSURE + KEYED)
+    return STAGE.shoot(f"ticket-{key}", (0, 0, w, h), bleed=1.6, shadow=0.85, sharp=SHARP, exposure=EXPOSURE + KEYED)
 
 
-SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "stamps": stamps, "coil": lambda: stamps("coil")}
+SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "stamps": stamps}
 STAGE = None  # the stage the builders lay their sheets on: main's, or a scene's (scene.py)
 
 
