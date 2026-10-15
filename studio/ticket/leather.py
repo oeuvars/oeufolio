@@ -41,8 +41,8 @@ OUT = os.path.join(ROOT, "public", "objects")
 TILE = 8.0  # the square the page repeats, in em
 PEBBLE = 0.13  # the mean distance between pebbles, in em: at the ticket's scale, about two thirds of a millimetre
 DEPTH = 0.028  # how far a pebble's crown stands above the crease, in em
-DYE = "#6a0203"  # the red on the crowns, as the dye reflects it: a deep crimson that reflects almost no green or blue
-POOLED = "#210001"  # the red the dye dries to in the creases
+DYE = "#a60b0d"  # the red on the crowns, as the dye reflects it: a deep crimson that reflects almost no green or blue
+POOLED = "#380203"  # the red the dye dries to in the creases
 # The square the page repeats is lit by the stand's room alone; it is exposed to come out as the hide does in the
 # contact scene's photograph (scene.py), measured off the two.
 QUALITY = 86

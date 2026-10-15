@@ -108,6 +108,9 @@ def main():
     for plate in args.plates or ("open", "punch"):
         STAGE.clear()
         frame = set_down(plate)
+        # The open plate is large: rendered in tiles, so it fits the graphics card's memory beside whatever else is on it.
+        bpy.context.scene.cycles.use_auto_tile = True
+        bpy.context.scene.cycles.tile_size = 1024
         # The hide is in the photograph, so the stand's mat, which only reflections and shadows see, is taken away.
         STAGE.shoot(f"contact-{plate}", frame, exposure=EXPOSURE, lens=False, mat=False, sharp=1.5)
         places[plate] = [round(v, 4) for v in frame]

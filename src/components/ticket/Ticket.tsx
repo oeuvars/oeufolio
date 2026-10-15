@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { motion } from 'motion/react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 import { profile } from '../../content'
+import { slide } from '../house'
 import contact from './contact.json'
 import { Print } from './Print'
 import ticket from './ticket.json'
@@ -27,8 +29,39 @@ const over = (x: number, y: number, w: number, h: number) => ({ left: `${x}em`, 
  * the page. It is laid once and stays where it lies, the strip uncovering it as it opens (SiteShell). Copying the email address has the conductor punch the
  * ticket: a photograph of the same set with the hole through it, of the hole alone, is laid over the first.
  */
-export function Ticket() {
+type TicketProps = {
+  /** Whether the contact strip is open. Folded, the strip frames the ticket's picture, nearer. */
+  open: boolean
+  /** The folded strip's width, in pixels. */
+  folded: number
+}
+
+// How much nearer the folded strip sees the table than the open page does.
+const NEAR = 1.12
+
+export function Ticket({ open, folded }: TicketProps) {
   const [copied, setCopied] = useState(false)
+  const spread = useRef<HTMLDivElement>(null)
+  // Where the ticket's picture lies, from the strip's right edge, in pixels: the spread is pinned to that edge, so it
+  // is the same open or folded. Measured off the layout, without the move.
+  const [reach, setReach] = useState(0)
+
+  useLayoutEffect(() => {
+    // The frame round the spread does not move, so it gives the layout as laid.
+    const frame = spread.current?.parentElement
+    const strip = frame?.closest<HTMLElement>('.strip')
+    if (!frame || !strip) return
+    const measure = () => {
+      const f = frame.getBoundingClientRect()
+      const em = f.width / SPREAD_W
+      setReach(strip.getBoundingClientRect().right - (f.left + (BESIDE_W + B + W / 2) * em))
+    }
+    measure()
+    const watch = new ResizeObserver(measure)
+    watch.observe(frame)
+    watch.observe(strip)
+    return () => watch.disconnect()
+  }, [])
 
   // A browser that refuses the clipboard leaves the ticket as it is. The address can still be selected.
   const copy = () =>
@@ -44,7 +77,16 @@ export function Ticket() {
       className="@container -my-[4vh] w-full md:-mr-[calc(clamp(1rem,2.6vw,3rem)+var(--band-w)-12px)] md:-ml-[calc(var(--protrude)+6px)] md:w-auto"
       style={{ maxWidth: `calc(90vh * ${SPREAD_W / FRAME_H})` }}
     >
-      <div className="relative select-none" style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em` }}>
+      {/* The camera's move, on the strip's own spring, so the two keep step: folded, the ticket's picture in the
+          middle of the strip and a little nearer; open, the whole table where it lies. */}
+      <motion.div
+        ref={spread}
+        className="relative select-none"
+        style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em`, transformOrigin: `${((BESIDE_W + B + W / 2) / SPREAD_W) * 100}% 38%` }}
+        initial={false}
+        animate={open ? { x: 0, scale: 1 } : { x: Math.max(0, reach - folded / 2), scale: NEAR }}
+        transition={slide}
+      >
         <img
           src="/objects/contact-open.avif"
           alt=""
@@ -68,7 +110,7 @@ export function Ticket() {
         >
           <Print onCopy={copy} copied={copied} />
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
