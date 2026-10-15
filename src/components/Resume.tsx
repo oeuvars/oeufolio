@@ -41,8 +41,9 @@ function spread(room: number) {
  * The strip of desk to the right of the folders, photographed (studio/resume): walnut under a satin lacquer, from
  * the top of the window down, with the resume lying on it, printed, rolled up and tied to a stamped tag. The roll and
  * the tag open the PDF. The photograph runs a bleed past the strip on every side, out under the last folder, which
- * lies over the strip's first rem, and past the window's edge. Cats cut out of photographs lie about the desk, each
- * shot alone under the same lamp with its shadow, so they can be spread over whatever desk the window shows.
+ * lies over the strip's first rem, and past the window's edge. Turkish Vans cut out of photographs taken from above lie
+ * about the desk, each with the shadow the desk's lamp gives it (studio/resume/cats.py), so they can be spread over
+ * whatever desk the window shows.
  */
 export function Resume({ resume, room }: ResumeProps) {
   const [width, height] = frame.size

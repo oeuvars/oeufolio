@@ -32,7 +32,6 @@ import numpy as np  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 import key as key_light  # noqa: E402
-import minicat  # noqa: E402
 import stage as stage_module  # noqa: E402
 from paint import blur, box, cloud, disc, linear, ramp, segment  # noqa: E402
 from solids import principled  # noqa: E402
@@ -92,25 +91,6 @@ HOLE, RING = 0.11, 0.3
 HOLE_DOWN = 0.62
 MANILA = "#d8bd86"
 
-# Mini cats, Turkish Vans modelled and furred in Blender (minicat.py), each shot alone on the desk under the roll's lamp
-# and laid by the page: the first on the bit of desk above the last folder's tab, which every window shows, at ABOVE em
-# down the page; the rest spread down the desk under the tag, as many as the window has room for, in this order. Each:
-# a name, its pose, its coat, its irises, left and right, any patches, where its middle lies across the frame in em,
-# how far it is turned clockwise, and a seed for its coat. The first is the household's cat, in its own markings.
-CATS = (
-    ("home", "sit", "ginger", ("#c99a33", "#c99a33"), (((4.5, 3.5, 14.0), 2.2), ((6.0, 3.0, 10.5), 1.4)), True, 2.1, -80.0, 3),
-    ("cream", "curl", "cream", ("#c99a33", "#c99a33"), (), False, 2.1, 15.0, 5),
-    ("odd", "sphinx", "ginger", ("#7fb3d9", "#d1a12c"), (), False, 2.15, 90.0, 7),
-    ("black", "sit", "black", ("#9aa63a", "#9aa63a"), (), False, 2.1, -100.0, 9),
-    ("ginger", "curl", "ginger", ("#c99a33", "#c99a33"), (), False, 2.1, -160.0, 11),
-)
-CAT_SCALE = 0.07  # em to the centimetre: a cat about three em long, nose to tail
-ABOVE = 2.3
-CAT_BLEED = 0.45
-CAT_DESK = "#2a1d16"  # the walnut where the cats lie, which lights them from below
-# A cat shot alone has no window over it and the room turned further down, under a smaller lamp, so its fur keeps the
-# hard light and deep shade a coat has under one lamp. Its white is brought up to the paper's.
-CAT_KEY, CAT_ROOM, CAT_LIFT = 6.0, 0.3, 2.6
 STAMP = "#d0232b"
 
 
@@ -431,24 +411,6 @@ def tag(stage):
     return obj
 
 
-def mini(stage, name, pose, coat, irises, spots, lip, turn, seed):
-    """A mini cat, built and turned clockwise about its own origin, and the box it covers then, in em: x0, y0 down the
-    frame, width and height."""
-    cat = minicat.Cat(minicat.POSES[pose], coat=coat, eyes=irises, spots=spots, lip=lip, seed=seed)
-    holder = bpy.data.objects.new(f"{name}-holder", None)
-    bpy.context.scene.collection.objects.link(holder)
-    for obj in cat.build(stage, name, CAT_SCALE):
-        if obj.parent is None:
-            obj.parent = holder
-    holder.rotation_euler = (0, 0, math.radians(-turn))
-    (x0, y0, _), (x1, y1, _) = cat.pose["bounds"]
-    corners = np.array([(x, y) for x in (x0, x1) for y in (y0, y1)]) * CAT_SCALE
-    a = math.radians(-turn)
-    turned = corners @ np.array([[math.cos(a), math.sin(a)], [-math.sin(a), math.cos(a)]])
-    lo, hi = turned.min(0), turned.max(0)
-    return lo[0], -hi[1], hi[0] - lo[0], hi[1] - lo[1]
-
-
 def desk(stage):
     """The desk under the whole frame: the walnut scan, its grain turned to run down the strip, under a coat of
     satin lacquer. Fingermarks and wear dull the coat unevenly, and fine scratches catch the light."""
@@ -582,24 +544,6 @@ def main():
     glare(pieces)
     # The desk is in the photograph, so the shadows and reflections are its own: no shadow pass and no stand mat.
     stage.shoot("resume", (0, -TOP, END, TALL), bleed=BLEED, mat=False, lens=False, eye=EYE, room=ROOM, exposure=0.05 - 2.5)
-
-    # Each cat alone, on the stand's mat in the walnut's colour, which keeps only its shadow, under the same lamp.
-    stage_module.MAT = CAT_DESK
-    stage_module.SHADOW = linear("#120c09")
-    laid = []
-    for name, pose, coat, irises, spots, lip, across, turn, seed in CATS:
-        stage.clear()
-        bpy.context.scene.cycles_curves.shape = "THICK"
-        x0, y0, bw, bh = mini(stage, name, pose, coat, irises, spots, lip, turn, seed)
-        key_light.SIZE = CAT_KEY
-        key_light.add((x0 + bw / 2, -(y0 + bh / 2)))
-        stage.shoot(f"resume-cat-{name}", (x0, y0, bw, bh), bleed=CAT_BLEED, shadow=0.9, room=CAT_ROOM, sharp=1.5, exposure=CAT_LIFT + 0.05 - 2.5)
-        laid.append({"src": f"/objects/resume-cat-{name}.avif", "x": across, "size": [round(bw, 3), round(bh, 3)]})
-    if out == OUT:
-        FRAME["cats"] = {"above": ABOVE, "bleed": CAT_BLEED, "laid": laid}
-        with open(os.path.join(ROOT, "src", "components", "resume.json"), "w") as file:
-            json.dump(FRAME, file)
-            file.write("\n")
 
 
 main()
