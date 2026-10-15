@@ -43,8 +43,8 @@
         line-height: 0;
         white-space: nowrap;
       }
-      /* Each passage is set line for line as the reference sets it, every line pulled out to the measure,
-         the last one too. Its top is its first baseline. */
+      /* Each passage is set line for line, every line but the last pulled out to the measure, the breaks chosen so
+         each is nearly full before it is, so the spaces stay even. Its top is its first baseline. */
       .passage {
         position: absolute;
         font-family: "EB Garamond";
@@ -68,6 +68,9 @@
         text-align-last: justify;
         white-space: nowrap;
       }
+      .passage > div:last-child {
+        text-align-last: left;
+      }
     </style>
   </head>
   <body class="title">
@@ -77,48 +80,46 @@
     </div>
     <div class="body">
       <div class="passage" id="parcel">
-        <div>I have come to think</div>
-        <div class="wrap">that work is</div>
-        <div class="wrap">mostly the</div>
+        <div>I am happiest early,</div>
+        <div class="wrap">in the quiet</div>
         <div class="wrap">hour before</div>
-        <div class="wrap">anyone is</div>
-        <div class="wrap">awake, with</div>
+        <div class="wrap">dawn, with</div>
         <div class="wrap">a thing half</div>
-        <div>made on the desk, one</div>
-        <div>problem turned over</div>
-        <div>until it gives, and</div>
-        <div>that a life is days</div>
-        <div>like that, unseen,</div>
-        <div>and I would not trade</div>
-        <div>a single one.</div>
+        <div class="wrap">made on my</div>
+        <div class="wrap">desk, turning</div>
+        <div>it over and over until</div>
+        <div>it gives, and I think a</div>
+        <div>life is mostly days like</div>
+        <div>that, slow ones, and</div>
+        <div>I would not trade a</div>
+        <div>single one of them.</div>
       </div>
       <div class="passage" id="ekarth">
-        <div>at <b>Ekarth</b> i built a lending</div>
-        <div>platform and learned to pitch.</div>
-        <div>and i think now the work is</div>
-        <div>never only the code, it is the</div>
-        <div>people in the room, and whether</div>
-        <div>they walk out believing you a</div>
-        <div>little more than they did.</div>
+        <div>at <b>Ekarth</b> i learned to speak for</div>
+        <div>what i had made, and ever since</div>
+        <div>i have wanted to make only the</div>
+        <div>kind of thing i would be glad</div>
+        <div>to stand beside, things that will</div>
+        <div>hold long after i have stopped</div>
+        <div>holding them.</div>
       </div>
       <div class="passage" id="shift">
-        <div>at <b>Cybership</b> a parcel is weighed, a label prints,</div>
-        <div>a truck backs into the dock, a packer waits on a</div>
-        <div>box, an order leaves for a town i will never see,</div>
-        <div>a warehouse goes quiet at midnight and my phone</div>
-        <div>lights up, a fix goes out before the night shift</div>
-        <div>sweeps the floor, the first truck is loaded in the</div>
-        <div>dark. work passes like this.</div>
+        <div>at <b>Cybership</b> my days are parcels and printers and</div>
+        <div>the long quiet of warehouses at night, and when one</div>
+        <div>of them stops i go to it, whatever the hour, and stay</div>
+        <div>until it moves again, and then i sit a while in the</div>
+        <div>dark with the screen still lit and listen to it breathe,</div>
+        <div>and by morning the trucks are out as if nothing</div>
+        <div>happened at all. work passes like this.</div>
       </div>
       <div class="passage" id="first">
-        <div class="wrap">first came <b>ProperSKU</b> and websites for</div>
-        <div>clients, the whole stack learned by doing it, and</div>
-        <div>i still learn that way, by breaking things and</div>
-        <div>sitting with them, and somewhere along the way the</div>
-        <div>work stopped being a job and became the way i look</div>
-        <div>at everything, at a door, a chair, a song, and some</div>
-        <div>nights it all comes at once, and i feel, it is</div>
-        <div>enough! it is enough!</div>
+        <div class="wrap"><b>ProperSKU</b> was where it began, my first work,</div>
+        <div>learning the whole of it by hand, and i still learn that</div>
+        <div>way, slowly, by breaking things and sitting with them, and</div>
+        <div>somewhere along the way the work stopped being a job and</div>
+        <div>became the way i look at everything, a door, a chair, a song</div>
+        <div>on the way home, and some nights it all comes at once and i</div>
+        <div>feel, it is enough! it is enough!</div>
       </div>
     </div>
     <script>
