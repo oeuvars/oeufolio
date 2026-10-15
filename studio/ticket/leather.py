@@ -20,6 +20,7 @@ OEUSUME if that checkout is not in ~/Documents/oeusume.
 """
 
 import argparse
+import math
 import os
 import subprocess
 import sys
@@ -28,10 +29,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
 sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 
+import key  # noqa: E402
 import stage as stage_module  # noqa: E402
 from paint import blur, cloud, linear  # noqa: E402
 from stage import Stage  # noqa: E402
@@ -41,12 +44,13 @@ OUT = os.path.join(ROOT, "public", "objects")
 TILE = 8.0  # the square the page repeats, in em
 PEBBLE = 0.13  # the mean distance between pebbles, in em: at the ticket's scale, about two thirds of a millimetre
 DEPTH = 0.028  # how far a pebble's crown stands above the crease, in em
-DYE = "#a60b0d"  # the red on the crowns, as the dye reflects it: a deep crimson that reflects almost no green or blue
-POOLED = "#380203"  # the red the dye dries to in the creases
-# The square the page repeats is lit by the stand's room alone; it is exposed to come out as the hide does in the
-# contact scene's photograph (scene.py), measured off the two.
+DYE = "#6a0203"  # the red on the crowns, as the dye reflects it: a deep crimson that reflects almost no green or blue
+POOLED = "#210001"  # the red the dye dries to in the creases
 QUALITY = 86
-EXPOSURE = -1.28
+EXPOSURE = -1.85  # the contact scene's (scene.py), lifted so the hide is 5% lighter on the screen
+# How much of the key lamp's light the hide got in the contact scene's photograph of 12:40 (a805773), where the page
+# shows it: the lamp was aimed at the middle of the set, and the hide round the ticket lay away from it.
+SHARE = 0.35
 
 
 def smooth(lo, hi, x):
@@ -158,9 +162,21 @@ def leather(stage, proof=None):
     """The square the page repeats under the contact strip: three squares across, the frame the middle one, so the
     square meets itself on every side. The lens is left out: it leans the light across the frame, which would show
     as a step where two squares meet."""
-    hide(stage, -TILE, -TILE, 3 * TILE, 3 * TILE, proof)
+    # The same stretch of hide the contact scene laid under the ticket (scene.py: some 64 em across), so its relief reads
+    # as it did there; the frame is one square of it, on the square's own edges, so it meets itself on every side.
+    hide(stage, -3 * TILE, -3 * TILE, 8 * TILE, 8 * TILE, proof)
+    # Lit as the contact scene lit the hide in its photograph: the stand's room, and the key lamp up to the left
+    # (key.py), which rakes across the pebbles. Here the lamp is a sun from the same direction, as wide as the lamp
+    # looks from the table and as bright on it, so it lights every point of the square alike and the square still
+    # meets itself on every side.
+    sun = bpy.data.lights.new("key", "SUN")
+    sun.angle = 2 * math.atan(key.SIZE / 2 / key.DISTANCE)
+    sun.energy = SHARE * key.POWER / (math.pi * key.DISTANCE**2)
+    lamp = bpy.data.objects.new("key", sun)
+    lamp.rotation_euler = (-key.FROM).to_track_quat("-Z", "Y").to_euler()
+    bpy.context.scene.collection.objects.link(lamp)
     # The hide lies at the stand's mat's height, so the mat, which would shade it, is taken away.
-    stage.shoot("leather", (0, 0, TILE, TILE), exposure=EXPOSURE, lens=False, sharp=2.0, mat=False)
+    stage.shoot("leather", (0, 0, TILE, TILE), exposure=EXPOSURE, lens=False, sharp=1.5, mat=False)
 
 
 def main():
