@@ -361,10 +361,10 @@ def fill_holes(solid):
         outside = grown
 
 
-def scanned(sheet, asset, size, depth):
+def scanned(sheet, asset, size, depth, kind="Displacement"):
     """A scanned material's own relief (its displacement map), repeating every size rem over the sheet, depth rem from
     its lowest to its highest, about zero."""
-    disp = pixels_of(os.path.join(stage_module.ASSETS, asset, f"{asset}_1K-JPG_Displacement.jpg"))[..., 0].astype(np.float64)
+    disp = pixels_of(os.path.join(stage_module.ASSETS, asset, f"{asset}_1K-JPG_{kind}.jpg"))[..., :3].mean(axis=-1).astype(np.float64)
     rows, cols = disp.shape
     fy, fx = (sheet.Y / size * rows) % rows, (sheet.X / size * cols) % cols
     r0, c0 = np.floor(fy).astype(int), np.floor(fx).astype(int)
@@ -424,6 +424,8 @@ def steps(sheet):
 
 
 KNIT = 22.0  # rem to one tile of the knit's scan
+# The rib's knit scan: rem to its tile, and the stitch columns and rows in a tile (measured from its relief).
+RIB_KNIT, RIB_WALES, RIB_COURSES = 8.3, 139, 153
 
 
 def lacoste(name, height):
@@ -445,29 +447,28 @@ def lacoste(name, height):
     sheet.press(blur(stitches.astype(float), 1.2), 0.006)
     sheet.paint(blur(stitches.astype(float), 0.8) * 0.5, "#141d36")
 
-    # The collar's rib at the foot, knit stitch by stitch: columns of V-shaped stitches, each leg a strand of yarn,
-    # the columns standing proud of the grooves between them. Its tipping is knit in, not printed on: whole rows of
-    # stitches in ecru, and one row in a muted gold, so each stripe is made of the same Vs as the rib, its edges
-    # running along the rows of stitches, and the navy shows a little between the legs.
+    # The collar's rib at the foot. Its stitches are a photograph's, a real knit's (Poly Haven's Knitted Fleece, CC0):
+    # its relief and the light and dark of its yarn, at a fine gauge, a stitch column about six tenths of a millimetre
+    # across, with every other column standing a little proud, as a 1x1 rib's do. The tipping is the same stitches in
+    # other yarn: its rows run along the knit, so where a stripe starts and stops the Vs of the two yarns interlock.
     rib0, rib1 = height - 2.4, height - 0.62
     rib = sheet.mask(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2)
-    wale, course = 0.11, 0.07
-    u = (X % wale) / wale - 0.5
-    v = ((Y - rib0) % course) / course
-    row = np.floor((Y - rib0) / course)
-    # The two legs of each V: apart at the top of the stitch, meeting at its foot.
-    leg = np.exp(-(((np.abs(u) - (0.4 - 0.32 * v)) / 0.13) ** 2))
-    groove = np.exp(-((np.abs(u) - 0.5) / 0.07) ** 2)
-    sheet.height += rib * (0.009 * leg - 0.012 * groove - 0.006)
-    sheet.rough += rib * 0.05 * leg
+    stitch = scanned(sheet, "KnittedFleece", RIB_KNIT, 1.0)
+    stitch /= max(stitch.std(), 1e-6)
+    yarn = np.clip(1 + 0.22 * scanned(sheet, "KnittedFleece", RIB_KNIT, 1.0, kind="Color") / 0.12, 0.55, 1.4)
+    ribbing = np.cos(np.pi * X / (RIB_KNIT / RIB_WALES))
+    sheet.height += rib * (0.007 * np.clip(stitch, -2.5, 2.5) + 0.006 * ribbing - 0.008)
+    sheet.rough += rib * 0.04 * np.clip(stitch, -1, 1)
     seam = np.clip(1 - np.abs(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2) / 0.03, 0, 1)
     sheet.press(blur(seam, 1.0), 0.012)
-    fuzz = np.clip(cloud(sheet.height.shape, 47, falloff=0.6), -2, 2)
-    for rows, colour in (((6, 7, 8), ECRU), ((11,), GOLD)):
-        tipped = rib * np.isin(row, rows) * np.clip(0.35 + 0.75 * leg + 0.05 * fuzz, 0, 1)
-        sheet.paint(blur(tipped, 0.6), colour)
-    # The yarn is darker where it bends down into the grooves, whatever its colour.
-    sheet.rgb *= (1 - rib * 0.35 * groove)[..., None]
+    course = RIB_KNIT / RIB_COURSES
+    wobble = 0.35 * course * np.clip(stitch, -2, 2)
+    for top, rows, colour in ((6, 3, ECRU), (11, 1, GOLD)):
+        y0, y1 = rib0 + top * course, rib0 + (top + rows) * course
+        tipped = rib * ramp(y0 - 0.15 * course, y0 + 0.15 * course, Y + wobble) * ramp(-y1 - 0.15 * course, -y1 + 0.15 * course, -(Y - wobble))
+        sheet.paint(tipped, colour)
+    # Every yarn is lit and shaded by its own stitches.
+    sheet.rgb *= (1 + rib * (yarn - 1))[..., None]
 
     # The crocodile, embroidered on a badge of the same knit: raised thread, the satin stitch's lines running
     # across it at a slant, sheened where the thread catches the light.
