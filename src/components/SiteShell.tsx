@@ -124,7 +124,10 @@ function torn(seed: number, calm: Array<[number, number]>, edge: Edge, outward =
 /** How a strip's own edge was made. */
 const edgeOf = (tone: Tone): Edge => (tone.fills ? 'cut' : tone.roll ? 'worn' : 'torn')
 
-/** Whether a strip's page covers the whole strip, band and all. */
+/** The work strip's colours when its page is the poster: the poster's own dark, so nothing of the building's night is left. */
+const posterTone = { band: '#100e0c', panel: '#100e0c' }
+
+/** Whether a strip's page covers the whole strip, band and all. Only a page that sits framed on its band shows it. */
 const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll)
 
 const pageTones: Tone[] = [
@@ -173,11 +176,11 @@ type TabProps = {
   to?: NavItem['to']
   /** The version of the page to open, if not its current one (the work page's building). */
   search?: VersionSearch
+  /** The strip's page lies over its band, so the tab has no foot on the band: only what stands out of the strip is paper. */
+  footless?: boolean
   current?: boolean
   /** A render of what is stuck on the tab. The tab carries no words, so the label is only what a link to it is called. */
   src: string
-  /** The strip's page lies over its band, so the tab has no foot on the band: only what stands out of the strip is paper. */
-  footless?: boolean
   /** The tab is cut from the page's own leather mat, not from paper. */
   leather?: boolean
   /** The tab is cut from the surface the page lies on, this tile of it, not from paper. */
@@ -186,8 +189,8 @@ type TabProps = {
 
 /**
  * The outline of a folder tab, as the reference cuts it: it leaves the strip's edge on a slant, runs
- * straight down and slants back in, with every corner eased. Its foot is the length of band it grows out of.
- * Returns the path and how far its joins reach.
+ * straight down and slants back in, with every corner eased. Its foot is the length of band it grows out of, when
+ * the band shows. Returns the path and how far its joins reach.
  */
 function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   const rise = protrude * 0.33
@@ -317,6 +320,8 @@ export function SiteShell({ children }: SiteShellProps) {
     if (pathname === '/work') setWorkPoster(poster)
   }, [pathname, poster])
   const searchOf = (to: NavItem['to']): VersionSearch | undefined => (to === '/work' && !workPoster ? { v: 1 } : undefined)
+  // Each strip is the colour of the page it holds, so the work strip takes the poster's when the poster is its page.
+  const tones = pageTones.map((tone) => (tone.bleeds && workPoster ? { ...tone, ...posterTone } : tone))
   const index = Math.max(
     0,
     profile.nav.findIndex((item) => item.to === pathname),
@@ -332,34 +337,41 @@ export function SiteShell({ children }: SiteShellProps) {
   // Each page's edge is torn its own way, and runs straight where its tab grows out of it, so the tab's
   // eased joins meet a straight edge. Open, the mat is laid from the edge of the strip before it, and it cannot
   // be laid any wider without moving everything on it, so that strip's tear reaches out over the mat instead.
-  const reachesOver = (i: number) => Boolean(pageTones[i + 1]?.fills)
-  const tears = pageTones.map((_, i) => {
+  const reachesOver = (i: number) => Boolean(tones[i + 1]?.fills)
+  const tears = tones.map((_, i) => {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
-    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(pageTones[i]), reachesOver(i))
+    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(tones[i]), reachesOver(i))
   })
   const fixed = mobile ? 0 : spine + end
   const gaps = mobile ? count - 1 : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
   // strip shows only its roll, so it folds narrower than the rest.
-  const folds = (i: number) => (pageTones[i].bleeds ? 1.5 * strip : pageTones[i].roll ? (mobile ? 0.7 * strip : contact) : strip)
+  const folds = (i: number) => (tones[i].bleeds ? 1.5 * strip : tones[i].roll ? (mobile ? 0.7 * strip : contact) : strip)
   // How wide a strip is open: the room the others leave it, folded.
   const roomFor = (i: number) => metrics.width - fixed - profile.nav.reduce((sum, _, j) => (j === i ? sum : sum + folds(j)), 0) + gaps * overlap
-  // The work page's poster stands the window's height, and its strip opens only as wide as the poster: the room
-  // left over is shared among the folded strips.
+  // The work page's poster runs the window's height and out to the strip's torn edge, so its strip opens only as wide
+  // as the poster is at that height, past the part under the strip before it. The room left over is shared among the
+  // folded strips.
   const room = roomFor(index)
-  const openWidth = poster && !mobile ? Math.min(room, (metrics.height * POSTER.width) / POSTER.height + overlap + band) : room
+  const openWidth = poster && !mobile ? Math.min(room, (metrics.height * POSTER.width) / POSTER.height + overlap) : room
   const spare = (room - openWidth) / (count - 1)
   const folded = (i: number) => folds(i) + spare
   // How wide a strip is when its page is open, whichever page is open now.
   const openWidthOf = (i: number) => (i === index ? openWidth : roomFor(i))
-  // A page laid out as it is when open, at the width it is then.
-  const page = (i: number): CSSProperties => ({ width: openWidthOf(i) - band, minWidth: 0, paddingLeft: overlap + protrude + 16 })
+  // A page laid out as it is when open, at the width it is then, and as wide as its panel: the whole strip when the
+  // page covers it, out to the torn edge and over the tear's reach past it, so what the page lays out to its edges
+  // is what the tear cuts; and short of the band when the page sits framed on it.
+  const page = (i: number): CSSProperties => ({
+    width: hangs(tones[i]) ? openWidthOf(i) + (reachesOver(i) ? TEAR_WIDTH : 0) : openWidthOf(i) - band,
+    minWidth: 0,
+    paddingLeft: overlap + protrude + 16,
+  })
   // The desk lies under its strip and goes with the strip's tab: it is laid at the width it has open, its
   // right edge kept to the strip's, so that the strip opening uncovers it from the left and folding covers
   // it again, and nothing on it moves.
-  const underTab = (i: number): CSSProperties => ({ ...page(i), marginLeft: `calc(100% - ${openWidthOf(i)}px)` })
+  const underTab = (i: number): CSSProperties => ({ ...page(i), width: openWidthOf(i) - band, marginLeft: `calc(100% - ${openWidthOf(i)}px)` })
 
   const lefts: number[] = []
   let cursor = mobile ? 0 : spine - overlap
@@ -371,18 +383,18 @@ export function SiteShell({ children }: SiteShellProps) {
   // The mat's strip is leather, not paper, so the sheet's grain and creases are cut away over it (styles.css):
   // a column from where the strip before it ends to its own edge. They are put back in the shape of the paper
   // that lies on the mat there: the tab of the strip before it with its piece, and the piece on the mat's own tab.
-  const mat = pageTones.findIndex((tone) => tone.fills)
+  const mat = tones.findIndex((tone) => tone.fills)
   const matFrom = lefts[mat] + overlap
   const matTo = lefts[mat] + (mat === index ? openWidth : folded(mat))
   const tabWidth = band + protrude
   const pieceMargin = (tabMargin * tabWidth) / tabSpan
-  const tabBefore = { shape: tabShape(mat), top: tabTops[mat] * metrics.rem, src: pageTones[mat - 1].tab }
-  const tabOwn = { shape: tabShape(mat + 1), top: tabTops[mat + 1] * metrics.rem, src: pageTones[mat].tab }
+  const tabBefore = { shape: tabShape(mat), top: tabTops[mat] * metrics.rem, src: tones[mat - 1].tab }
+  const tabOwn = { shape: tabShape(mat + 1), top: tabTops[mat + 1] * metrics.rem, src: tones[mat].tab }
   const paper = tabOutline(tabBefore.shape)
   const paperHeight = tabBefore.shape.height + 2 * paper.reach
   const paperMask = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-paper.reach} ${tabWidth} ${paperHeight}" preserveAspectRatio="none"><path d="${paper.path}"/></svg>`
   // The same goes for a strip whose panel is a surface of its own, the ticket's leather: a second column, cut the same way.
-  const skin = pageTones.findIndex((tone) => tone.surface)
+  const skin = tones.findIndex((tone) => tone.surface)
   const skinFrom = lefts[skin] + overlap
   // Its tab is cut from the same leather and stands out past the strip's edge. It is the last strip, so the cut runs on
   // to the window's edge: over the tab, and over the dark beyond it, so no line is left in the dark where it ends.
@@ -465,41 +477,41 @@ export function SiteShell({ children }: SiteShellProps) {
               initial={false}
               animate={{ left: lefts[i], width: open ? openWidth : folded(i) }}
               transition={transition}
-              style={{ ...stripStyle(pageTones[i], i + 1, stack - i), ...tears[i] }}
+              style={{ ...stripStyle(tones[i], i + 1, stack - i), ...tears[i] }}
             >
               {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
-              {!hangs(pageTones[i]) && <div aria-hidden className="torn" />}
-              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(pageTones[i]) ? 'panel-hangs' : ''}`}>
-                {pageTones[i].surface && (
+              {!hangs(tones[i]) && <div aria-hidden className="torn" />}
+              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}>
+                {tones[i].surface && (
                   <div
                     aria-hidden
                     className="pointer-events-none absolute inset-0"
                     style={{
                       // Under the photograph of the set, which covers it: only a window taller than the photograph shows it.
-                      backgroundImage: `url(${pageTones[i].surface})`,
+                      backgroundImage: `url(${tones[i].surface})`,
                       backgroundSize: '256px 256px',
                     }}
                   />
                 )}
-                {pageTones[i].hangs ? (
+                {tones[i].hangs ? (
                   <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
-                ) : pageTones[i].fills ? null : (
+                ) : tones[i].fills ? null : (
                   <motion.div
                     aria-hidden
                     className="absolute inset-y-0"
                     // A picture runs on under the strip before it as far as that strip's tear can bite, so the tear
                     // never uncovers bare panel.
-                    style={pageTones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - band - overlap + TEAR_WIDTH } : { left: overlap, width: folded(i) - band - overlap }}
+                    style={tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - band - overlap + TEAR_WIDTH } : { left: overlap, width: folded(i) - band - overlap }}
                     initial={false}
                     animate={{ opacity: open ? 0 : 1 }}
                     // A picture page folds back into its strip's picture, which has to be there at once to take over.
-                    transition={{ duration: pageTones[i].bleeds && !open ? 0 : 0.35 }}
+                    transition={{ duration: tones[i].bleeds && !open ? 0 : 0.35 }}
                   >
                     <Art index={i} open={open} poster={workPoster} />
                   </motion.div>
                 )}
 
-                {pageTones[i].fills ? (
+                {tones[i].fills ? (
                   // The desk is always here, open or folded: folded, the strip shows the edge of it beside the
                   // tab. It is never laid again, so whatever is on it stays as it was left.
                   <div className={PAGE} style={underTab(i)} inert={!open} aria-hidden={!open || undefined}>
@@ -513,7 +525,7 @@ export function SiteShell({ children }: SiteShellProps) {
                     className={PAGE}
                     style={page(i)}
                     // A page that is a picture grows out of its strip's own picture, so it is there from the start.
-                    initial={pageTones[i].bleeds ? false : { opacity: 0, y: 10 }}
+                    initial={tones[i].bleeds ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
                   >
@@ -523,13 +535,13 @@ export function SiteShell({ children }: SiteShellProps) {
                 {!open && <Link to={item.to} search={searchOf(item.to)} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
               </div>
               {/* The ticket's leather is a photograph that runs to the tear, its own cut edge and wear in it, so it has none laid over it. */}
-              {edgeOf(pageTones[i]) === 'worn' && !pageTones[i].surface && (
+              {edgeOf(tones[i]) === 'worn' && !tones[i].surface && (
                 <>
                   <div aria-hidden className="torn-fray" />
                   <div aria-hidden className="torn torn-wear" />
                 </>
               )}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={pageTones[i].tab} footless={pageTones[i].fills || pageTones[i].roll} leather={pageTones[i].fills} surface={pageTones[i].surface} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} />
             </motion.section>
           )
         })}
