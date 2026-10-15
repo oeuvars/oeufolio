@@ -24,6 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "studio", "desk"))
 sys.path.insert(0, os.path.join(ROOT, "studio", "ticket"))
+sys.path.insert(0, HERE)
 
 import bmesh  # noqa: E402
 import bpy  # noqa: E402
@@ -31,6 +32,7 @@ import numpy as np  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 import key as key_light  # noqa: E402
+import minicat  # noqa: E402
 import stage as stage_module  # noqa: E402
 from paint import blur, box, cloud, disc, linear, ramp, segment  # noqa: E402
 from solids import principled  # noqa: E402
@@ -90,26 +92,25 @@ HOLE, RING = 0.11, 0.3
 HOLE_DOWN = 0.62
 MANILA = "#d8bd86"
 
-# Cats off the signal post's photographs (studio/signal/art/cats, credited there), printed on photo paper and cut out
-# with scissors. Each is shot alone on the desk, lit as the roll is, and the page lays them: the first on the bit of
-# desk above the last folder's tab, which every window shows, at ABOVE em down the page; the rest spread down the desk
-# under the tag, as many as the window has room for, in this order. The cut-out's name, where its middle lies across
-# the frame in em, how long it is along its picture's width, and how far it is turned clockwise.
-CATS_ART = os.path.join(ROOT, "studio", "signal", "art", "cats")
+# Mini cats, Turkish Vans modelled and furred in Blender (minicat.py), each shot alone on the desk under the roll's lamp
+# and laid by the page: the first on the bit of desk above the last folder's tab, which every window shows, at ABOVE em
+# down the page; the rest spread down the desk under the tag, as many as the window has room for, in this order. Each:
+# a name, its pose, its coat, its irises, left and right, any patches, where its middle lies across the frame in em,
+# how far it is turned clockwise, and a seed for its coat. The first is the household's cat, in its own markings.
 CATS = (
-    ("ledge", 2.15, 1.6, -5.0),
-    ("walk", 2.1, 1.9, 7.0),
-    ("doze", 2.15, 1.9, 92.0),
-    ("nap", 1.3, 3.6, -85.0),
-    ("bw-stroll", 2.15, 1.9, -4.0),
-    ("roof", 2.1, 1.5, 6.0),
+    ("home", "sit", "ginger", ("#c99a33", "#c99a33"), (((4.5, 3.5, 14.0), 2.2), ((6.0, 3.0, 10.5), 1.4)), True, 2.1, -80.0, 3),
+    ("cream", "curl", "cream", ("#c99a33", "#c99a33"), (), False, 2.1, 15.0, 5),
+    ("odd", "sphinx", "ginger", ("#7fb3d9", "#d1a12c"), (), False, 2.15, 90.0, 7),
+    ("black", "sit", "black", ("#9aa63a", "#9aa63a"), (), False, 2.1, -100.0, 9),
+    ("ginger", "curl", "ginger", ("#c99a33", "#c99a33"), (), False, 2.1, -160.0, 11),
 )
+CAT_SCALE = 0.07  # em to the centimetre: a cat about three em long, nose to tail
 ABOVE = 2.3
 CAT_BLEED = 0.45
 CAT_DESK = "#2a1d16"  # the walnut where the cats lie, which lights them from below
-CAT_LIFT = 0.35  # stops: on the desk the roll's window lights them as well, which a cat shot alone has not got
-PHOTO = "#f6f5f1"  # the photo paper's white
-SNIP = 0.025  # the paper left round a cat by the scissors
+# A cat shot alone has no window over it and the room turned further down, under a smaller lamp, so its fur keeps the
+# hard light and deep shade a coat has under one lamp. Its white is brought up to the paper's.
+CAT_KEY, CAT_ROOM, CAT_LIFT = 6.0, 0.3, 2.6
 STAMP = "#d0232b"
 
 
@@ -430,45 +431,22 @@ def tag(stage):
     return obj
 
 
-def cat_size(name, length, turn):
-    """The cut-out's width and height, and the width and height of the box it covers turned."""
-    rows, cols = pixels_of(os.path.join(CATS_ART, f"{name}-cut.png")).shape[:2]
-    w, h = length, length * rows / cols
-    a = math.radians(turn)
-    return w, h, abs(w * math.cos(a)) + abs(h * math.sin(a)), abs(w * math.sin(a)) + abs(h * math.cos(a))
-
-
-def cat(stage, name, cx, cy, length, turn):
-    """A cat printed on photo paper and cut round with scissors: a hairline of the paper's white shows past its fur,
-    the print is a satin, and the cut-out has curled a little since."""
-    image = pixels_of(os.path.join(CATS_ART, f"{name}-cut.png")).astype(np.float64)
-    w, h, _, _ = cat_size(name, length, turn)
-    sheet = Sheet(w, h, PHOTO, rough=0.32, density=3)
-    sheet.art(os.path.join(CATS_ART, f"{name}-cut.png"), 0, 0, w, h)
-    cover = fit(image[..., 3:], *sheet.height.shape)[..., 0]
-    soft = 0.03 * sheet.ppe
-    held = blur(cover, soft)
-    # Scissors follow the fur's outline, not every hair: the outline of the softened cover, let out by SNIP.
-    sheet.cut((0.45 - held) * 2.5 * soft / sheet.ppe - SNIP)
-    obj = sheet.build(
-        stage,
-        f"cat-{name}",
-        thickness=0.022,
-        step=0.08,
-        warp=lambda x, y: 0.03 * ((x - w / 2) / w) ** 2 + 0.01 * np.sin(1.7 * y / h + 0.4),
-        scan="Paper006",
-        scan_size=4,
-        scan_normal=0.15,
-        scan_rough=0.2,
-        coat_rough=0.2,
-        sheen=0.1,
-    )
-    # Turn it about its middle and lay it there.
+def mini(stage, name, pose, coat, irises, spots, lip, turn, seed):
+    """A mini cat, built and turned clockwise about its own origin, and the box it covers then, in em: x0, y0 down the
+    frame, width and height."""
+    cat = minicat.Cat(minicat.POSES[pose], coat=coat, eyes=irises, spots=spots, lip=lip, seed=seed)
+    holder = bpy.data.objects.new(f"{name}-holder", None)
+    bpy.context.scene.collection.objects.link(holder)
+    for obj in cat.build(stage, name, CAT_SCALE):
+        if obj.parent is None:
+            obj.parent = holder
+    holder.rotation_euler = (0, 0, math.radians(-turn))
+    (x0, y0, _), (x1, y1, _) = cat.pose["bounds"]
+    corners = np.array([(x, y) for x in (x0, x1) for y in (y0, y1)]) * CAT_SCALE
     a = math.radians(-turn)
-    off = (w / 2 * math.cos(a) + h / 2 * math.sin(a), w / 2 * math.sin(a) - h / 2 * math.cos(a))
-    obj.rotation_euler = (0, 0, a)
-    obj.location = (cx - off[0], -cy - off[1], 0)
-    return obj
+    turned = corners @ np.array([[math.cos(a), math.sin(a)], [-math.sin(a), math.cos(a)]])
+    lo, hi = turned.min(0), turned.max(0)
+    return lo[0], -hi[1], hi[0] - lo[0], hi[1] - lo[1]
 
 
 def desk(stage):
@@ -609,12 +587,13 @@ def main():
     stage_module.MAT = CAT_DESK
     stage_module.SHADOW = linear("#120c09")
     laid = []
-    for name, across, length, turn in CATS:
-        _, _, bw, bh = cat_size(name, length, turn)
+    for name, pose, coat, irises, spots, lip, across, turn, seed in CATS:
         stage.clear()
-        cat(stage, name, bw / 2, bh / 2, length, turn)
-        key_light.add((bw / 2, -bh / 2))
-        stage.shoot(f"resume-cat-{name}", (0, 0, bw, bh), bleed=CAT_BLEED, shadow=0.9, room=ROOM, exposure=CAT_LIFT + 0.05 - 2.5)
+        bpy.context.scene.cycles_curves.shape = "THICK"
+        x0, y0, bw, bh = mini(stage, name, pose, coat, irises, spots, lip, turn, seed)
+        key_light.SIZE = CAT_KEY
+        key_light.add((x0 + bw / 2, -(y0 + bh / 2)))
+        stage.shoot(f"resume-cat-{name}", (x0, y0, bw, bh), bleed=CAT_BLEED, shadow=0.9, room=CAT_ROOM, sharp=1.5, exposure=CAT_LIFT + 0.05 - 2.5)
         laid.append({"src": f"/objects/resume-cat-{name}.avif", "x": across, "size": [round(bw, 3), round(bh, 3)]})
     if out == OUT:
         FRAME["cats"] = {"above": ABOVE, "bleed": CAT_BLEED, "laid": laid}
