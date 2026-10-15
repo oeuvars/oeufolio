@@ -11,7 +11,7 @@ import sys
 
 from PIL import Image
 
-QUALITY = 95
+QUALITY = 98
 
 source, target = sys.argv[1:3]
 Image.open(source).convert("RGBA").save(target, quality=QUALITY, subsampling="4:4:4", speed=2)

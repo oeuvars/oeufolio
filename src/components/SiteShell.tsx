@@ -311,7 +311,10 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
             className="absolute inset-0 bg-no-repeat opacity-[var(--lit,0)] mix-blend-multiply"
             style={{ backgroundColor: 'var(--light-rim)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
           />
-          <div className="absolute inset-0 bg-(--light-dark) opacity-[calc(1-var(--lit,0))] mix-blend-multiply" />
+          <div
+            className="absolute inset-0 bg-no-repeat opacity-[calc(1-var(--lit,0))] mix-blend-multiply"
+            style={{ backgroundColor: 'var(--light-dark)', backgroundImage: 'var(--dark-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
+          />
         </div>
       )}
       {/* The cut itself, rendered: the light its edge catches and turns from, and the shadow it leaves on the page

@@ -190,7 +190,7 @@ def painted(verts, normals):
     # together just behind the shoulders; a larger pair behind it splays outward like wings, each spot narrowing
     # toward the spine and the head. Long fur feathers their edges.
     top = soft(normals[:, 2] - 0.15, 0, 0.3)
-    for (cx, cy, rx, ry, lean), seed in (((8.5, 0.95, 0.95, 0.8, 0.3), 4), ((11.2, 1.85, 1.6, 1.3, 0.55), 5)):
+    for (cx, cy, rx, ry, lean), seed in (((8.6, 0.6, 0.5, 0.45, 0.25), 4), ((10.5, 1.05, 1.0, 0.72, 0.45), 5)):
         for side in (1, -1):
             dx, dy = x - cx, y - side * cy
             c, s_ = np.cos(side * lean), np.sin(side * lean)

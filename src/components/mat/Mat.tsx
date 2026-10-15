@@ -105,6 +105,7 @@ export function Mat({ children, className }: MatProps) {
     tab.style.setProperty('--lit', lit ? '1' : '0')
     tab.style.setProperty('--light-rim', plate.rim)
     tab.style.setProperty('--light-dark', plate.dark)
+    tab.style.setProperty('--dark-image', `url(/objects/mat/desk-${geometry.id}-dark.avif)`)
     tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
     tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
     place()
@@ -117,7 +118,7 @@ export function Mat({ children, className }: MatProps) {
     return () => {
       moving.disconnect()
       window.removeEventListener('scroll', place, true)
-      for (const name of ['--lit', '--light-rim', '--light-dark', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
+      for (const name of ['--lit', '--light-rim', '--light-dark', '--dark-image', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
     }
   }, [geometry, lit])
 
@@ -151,8 +152,17 @@ export function Mat({ children, className }: MatProps) {
 
         {geometry && plate && (
           <>
-            {/* The lamp off: the room's dim light on the mat, then the objects in it and the shadows they throw. */}
-            <div aria-hidden className={`${FADE} inset-0 opacity-[calc(1-var(--lamp))] mix-blend-multiply`} style={{ backgroundColor: plate.dark }} />
+            {/* The lamp off: the window's dim light on the mat, shadows and all, then the objects in it. */}
+            <div
+              aria-hidden
+              className={`${FADE} inset-0 bg-no-repeat opacity-[calc(1-var(--lamp))] mix-blend-multiply`}
+              style={{
+                backgroundColor: plate.dark,
+                backgroundImage: `url(/objects/mat/desk-${geometry.id}-dark.avif)`,
+                backgroundSize: `${(plate.size[0] + 2 * plate.bleed[0]) * geometry.em}px ${(plate.size[1] + 2 * plate.bleed[1]) * geometry.em}px`,
+                backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
+              }}
+            />
             <img
               src={`/objects/mat/desk-${geometry.id}.avif`}
               alt=""

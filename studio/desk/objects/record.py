@@ -55,21 +55,20 @@ HAND = {
 
 
 def sleeve(stage):
-    sheet = Sheet(S, S, TINT, rough=0.16)
+    # Printed card with a satin varnish: it takes the light softly, without a mirror's highlight.
+    sheet = Sheet(S, S, TINT, rough=0.5)
     X, Y = sheet.X, sheet.Y
     # The sleeve is printed with the cover of his playlist, edge to edge. The file holds sRGB values.
     art = fit(pixels_of(COVER)[..., :3].astype(np.float64), *sheet.height.shape)
     sheet.rgb = np.where(art <= 0.04045, art / 12.92, ((art + 0.055) / 1.055) ** 2.4)
     sheet.punch(disc(X, Y, S + 0.3, S / 2, 1.05))
-    # The record inside presses its rim through the card.
-    reach = np.hypot(X - S / 2, Y - S / 2)
-    sheet.height += 0.007 * np.exp(-(((reach - DISC / 2) / 0.1) ** 2))
     sheet.soften(0.07, 0.02)
     wave = drift(S, S, 0.03, 71)
 
     def bulge(x, y):
         r = np.hypot(x - S / 2, y - S / 2) / (S / 2)
-        return 0.22 * np.clip(1 - r * r, 0, None) + wave(x, y)
+        # The record is half out, so the sleeve lies nearly flat, only a little open at the mouth.
+        return 0.06 * np.clip(1 - r * r, 0, None) + wave(x, y)
 
     sheet.build(
         stage,
@@ -79,8 +78,8 @@ def sleeve(stage):
         scan="Paper006",
         scan_size=12,
         scan_normal=0.12,
-        scan_rough=0.15,
-        wear=(("Scratches003", 10, 0.3, 0.001), ("SurfaceImperfections003", 14, 0.18, 0), ("Fingerprints009", 9, 0.12, 0)),
+        scan_rough=0.3,
+        wear=(("SurfaceImperfections003", 14, 0.06, 0),),
         mottle=0.02,
     )
     stage.shoot("sleeve", (0, 0, S, S), bleed=0.8, shadow=0.7, sharp=SHARP)
@@ -264,15 +263,8 @@ def vinyl(stage):
         area = sheet.window(x - abs(dx) - 0.03, y - abs(dy) - 0.03, x + abs(dx) + 0.03, y + abs(dy) + 0.03)
         along = segment(X[area], Y[area], x - dx, y - dy, x + dx, y + dy, 0.0015)
         scuff[area] = np.maximum(scuff[area], rng.uniform(0.15, 0.5) * sheet.mask(along))
-    # Where fingers took hold of it. Each is one print of the scan: its place on the disc, its place in the scan.
-    prints = pixels_of(os.path.join(ASSETS, "Fingerprints009", "Fingerprints009_1K-JPG_Opacity.jpg"))[..., 0]
-    grease = np.zeros((rows, cols))
-    for x, y, u, v in ((12.5, 10.3, 0.142, 0.098), (11.2, 3.5, 0.376, 0.625), (3.4, 5.2, 0.49, 0.43)):
-        tile = prints[(((Y - y) / 9 + v) % 1 * prints.shape[0]).astype(int), (((X - x) / 9 + u) % 1 * prints.shape[1]).astype(int)]
-        grease += tile * np.exp(-(((X - x) ** 2 + (Y - y) ** 2) / 0.8) ** 2)
-    sheet.rgb += dust[..., None] * (0.45 - sheet.rgb) + scuff[..., None] * 0.03 + grease[..., None] * 0.04
-    sheet.rough += dust * 0.8 + scuff * 0.3 + grease * 0.3
-    cut[..., 1] *= 1 - 0.6 * np.clip(grease * 1.3, 0, 1)
+    sheet.rgb += dust[..., None] * (0.45 - sheet.rgb) + scuff[..., None] * 0.03
+    sheet.rough += dust * 0.8 + scuff * 0.3
     cut[..., 1:3] *= ((1 - dust) * (1 - 0.5 * scuff))[..., None]
 
     record = sheet.build(

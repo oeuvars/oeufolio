@@ -74,20 +74,26 @@ LAYERS = {"reel": "recorder"}
 # and only what turns is in the layer. A spinning hub's shading does not turn with it.
 STILL = {"reel": ("hub",)}
 STAND_INS = {"reel": ("reel",)}
-# The page shows an em of the plate at up to this many pixels.
-DENSITY = 32
+# The page shows an em of the plate at up to 22 pixels, 44 on a screen of two pixels to the point; this many leaves
+# room to zoom in before the render runs out.
+DENSITY = 64
 EXPOSURE = 0.1
 # The room is lit dimly from elsewhere, by this much of the light the leather was photographed in, and each bulb
 # in the cat lamp's head gives this many watts when it is on.
 ROOM = 0.012
-# A window across the room, dusk outside: a big soft cool light low over the top left of the desk. It adds this
-# much of the leather's light to the mat, so in the dark every object still throws a soft shadow.
+# Moonlight through the window: the moon is a small, far source, half a degree across, so it throws hard, dark
+# shadows that only soften a little away from where an object touches the mat. It comes in over the top left of
+# the desk, and adds this much of the leather's light to the mat; the night sky and the dark room add a little.
 WINDOW = 0.16
-WINDOW_FROM = (-0.5, 0.55, 0.67)
+WINDOW_FROM = (-0.55, 0.6, 0.58)
+MOON = 0.55
 GLOW = 28000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
 LAMP_EXPOSURE = 0.0
+# The maps of the light on the mat are drawn this many pixels to the em, enough for a shadow's sharp edge where an
+# object touches the mat.
+MAP_DENSITY = 32
 
 
 class Keeper(Stage):
@@ -288,16 +294,14 @@ class Desk:
         return [round(local[0] / k, 4), round(local[1] / k, 4), round(grow, 4)]
 
     def window(self, power):
-        """The window: a big soft disk far off over the top left of the desk, its light a little cool."""
-        source = bpy.data.lights.new("window", "AREA")
-        source.shape = "DISK"
-        source.size = 24.0
+        """The moon, through the window over the top left of the desk: parallel light from a disk MOON degrees
+        across, its colour the cool of moonlight. power is in watts to the square metre, as Blender's sun is."""
+        source = bpy.data.lights.new("moon", "SUN")
+        source.angle = math.radians(MOON)
         source.energy = power
-        source.color = (0.82, 0.88, 1.0)
-        light = self.stage.add("window", source)
-        middle = Vector((self.w / 2, -self.h / 2, 0))
+        source.color = (0.8, 0.87, 1.0)
+        light = self.stage.add("moon", source)
         towards = Vector(WINDOW_FROM).normalized()
-        light.location = middle + towards * 160.0
         light.rotation_euler = (-towards).to_track_quat("-Z", "Y").to_euler()
         return light
 
@@ -387,6 +391,13 @@ def main():
     parser.add_argument("--passes", nargs="*", default=["off", "lamp"])
     parser.add_argument("--shot", help="photograph this one shot on a stand of its own, as a proof, and nothing else")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
+    if args.scale != 1:
+        # A proof at another scale never takes the place of the page's plates, or the page would show a plate of
+        # one render with a layer of another.
+        global OUT, LEAN
+        OUT = args.proofs or tempfile.mkdtemp(prefix="desk-")
+        LEAN = os.path.join(OUT, "lean.json")
+        os.makedirs(OUT, exist_ok=True)
 
     if args.shot:
         proofs = args.proofs or tempfile.gettempdir()
@@ -479,65 +490,55 @@ def main():
     for obj, _ in desk.gear:
         obj.hide_render = True
     dim = white_mat()
-    window = desk.window(1e5)
+    window = desk.window(1.0)
     lit = white_mat()
-    window.data.energy = 1e5 * WINDOW * daylight.mean() / max(lit.mean() - dim.mean(), 1e-6)
-    print(f"WINDOW {window.data.energy:.0f}W")
+    window.data.energy = WINDOW * daylight.mean() / max(lit.mean() - dim.mean(), 1e-6)
+    print(f"MOON {window.data.energy:.3f}W/m2")
     off = white_mat() / daylight
     print("DARK #" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(np.where(off <= 0.0031308, off * 12.92, 1.055 * off ** (1 / 2.4) - 0.055), 0, 1)))
 
-    if "off" in args.passes:
-        # The lamp off: the objects in the dim room, the mat unseen but lighting them from below and showing in
-        # them.
-        show(layered, False)
-        cast(layered, False)
-        pixels = stage._expose(raw)
-        print(f"OBJECTS {time.time() - started:.0f}s")
-
-        # The mat alone, catching the shadows of everything over it in the same light.
-        show(everything, False)
-        for obj in desk.shadowless:
-            obj.hide_render = True
-        floor.visible_camera = True
-        floor.is_shadow_catcher = True
-        rows, cols = pixels.shape[:2]
-        soft = stage._expose(raw, 50, samples=max(32, args.samples // 2))[..., 3]
-        soft = np.repeat(np.repeat(soft, 2, axis=0), 2, axis=1)
-        soft = np.pad(soft, ((0, max(0, rows - soft.shape[0])), (0, max(0, cols - soft.shape[1]))), mode="edge")[:rows, :cols]
-        develop(pixels, blur(soft, 1.0), os.path.join(OUT, f"{named}.avif"), args.proofs, named)
-        print(f"PLATE {cols}x{rows} {time.time() - started:.0f}s")
-        floor.visible_camera = False
-        floor.is_shadow_catcher = False
-        for obj in desk.shadowless:
-            obj.hide_render = False
-        layers("", EXPOSURE)
-
-    if "lamp" in args.passes:
-        # The lamp on, in the same dim room. The objects are rendered in its light, and the mat as a map of the
-        # light alone, which the page multiplies its own leather, rules and rulers by.
-        desk.glow(GLOW)
-        # The map: a white mat, with everything on it unseen but still in the way of the light.
+    def light_map(suffix):
+        """The light on the mat as a map, which the page multiplies its own leather, rules and rulers by: a white
+        mat rendered with everything on it unseen but still in the way of the light, so their shadows, soft and
+        hard, and the dark where they touch it, are the light's own. 1 is the light the leather was photographed
+        in. Returns the colour round its edge, which the page carries on past it."""
         show(everything, False)
         floor.visible_camera = True
         paint.default_value = (0.8, 0.8, 0.8, 1)
         bx, by = desk.layout["bleed"]
-        desk.camera(-bx, -by, desk.w + 2 * bx, desk.h + 2 * by, min(density, 8))
-        light = stage._expose(raw, samples=max(64, args.samples // 2))[..., :3] / daylight
-        # Where the lamp lights the leather brighter than it was photographed, it eases into that, as film does.
+        desk.camera(-bx, -by, desk.w + 2 * bx, desk.h + 2 * by, min(density, MAP_DENSITY))
+        light = stage._expose(raw, samples=max(128, args.samples // 2))[..., :3] / daylight
+        # Where the light is brighter on the leather than it was photographed, it eases into that, as film does.
         light = shoulder(light * 2.0**LAMP_EXPOSURE)
         light = np.where(light <= 0.0031308, light * 12.92, 1.055 * light ** (1 / 2.4) - 0.055)
         light += (np.random.default_rng(1).random(light.shape, dtype=np.float32) - 0.5) / 255
-        save(np.dstack((np.clip(light, 0, 1), np.ones(light.shape[:2]))).astype(np.float32), os.path.join(tempfile.gettempdir(), "desk-light.png"))
-        subprocess.run(["uv", "run", "--quiet", os.path.join(HERE, "encode.py"), os.path.join(tempfile.gettempdir(), "desk-light.png"), os.path.join(OUT, f"{named}-light.avif")], check=True)
-        rim = np.concatenate((light[0], light[-1], light[:, 0], light[:, -1])).mean(axis=0)
-        print("LIGHT RIM #" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(rim, 0, 1)))
+        mapped = np.dstack((np.clip(light, 0, 1), np.ones(light.shape[:2]))).astype(np.float32)
+        save(mapped, os.path.join(tempfile.gettempdir(), "desk-light.png"))
+        subprocess.run(["uv", "run", "--quiet", os.path.join(HERE, "encode.py"), os.path.join(tempfile.gettempdir(), "desk-light.png"), os.path.join(OUT, f"{named}-{suffix}.avif")], check=True)
         if args.proofs:
-            save(np.dstack((np.clip(light, 0, 1), np.ones(light.shape[:2]))).astype(np.float32), os.path.join(args.proofs, f"{named}-light.png"))
-
+            save(mapped, os.path.join(args.proofs, f"{named}-{suffix}.png"))
         floor.visible_camera = False
         paint.default_value = mat_colour
         show([obj for obj in everything if obj not in layered], True)
         desk.camera(0, 0, desk.w, desk.h, density)
+        rim = np.concatenate((light[0], light[-1], light[:, 0], light[:, -1])).mean(axis=0)
+        return "#" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(rim, 0, 1))
+
+    if "off" in args.passes:
+        # The lamp off: the dim room, lit mostly by the window. The objects in that light, the mat unseen but
+        # lighting them from below and showing in them, and the light on the mat as a map.
+        show(layered, False)
+        cast(layered, False)
+        pixels = stage._expose(raw)
+        develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}.avif"), args.proofs, named)
+        print(f"PLATE {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
+        print("DARK RIM " + light_map("dark"))
+        layers("", EXPOSURE)
+
+    if "lamp" in args.passes:
+        # The lamp on, in the same dim room. The objects are rendered in its light, and the mat as a map of it.
+        desk.glow(GLOW)
+        print("LIGHT RIM " + light_map("light"))
         pixels = stage._expose(raw)
         develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-lamp.avif"), args.proofs, f"{named}-lamp", LAMP_EXPOSURE, (BLOOM[0], BLOOM[1] * density))
         print(f"LAMP {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
