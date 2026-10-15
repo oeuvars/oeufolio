@@ -24,7 +24,7 @@ export type Letter = {
   alt: string
 }
 
-/** The resume as a PDF, and the render of it rolled up that links to it. */
+/** The resume as a PDF, the photograph of the desk with it rolled up on it, and the name of the link to it. */
 export type Resume = {
   href: string
   src: string

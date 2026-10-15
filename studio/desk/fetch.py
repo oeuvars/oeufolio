@@ -27,6 +27,7 @@ MATERIALS = (
     "Fingerprints009",
     "Rubber004",
     "Clay003",
+    "Wood067",
 )
 # Poly Haven HDRI: a small studio with softboxes.
 HDRI = "studio_small_08"
