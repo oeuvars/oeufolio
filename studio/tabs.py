@@ -7,8 +7,9 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               with Merkur's mark struck into its collar
     lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
     prs       a Blackstar Debut's tolex in the seafoam of a PRS Silver Sky, with four of the outline birds PRS
-              inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band of the
-              amplifier's red grille cloth round it under Blackstar's badge
+              inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
+              front of a Blackstar ID:Core in red round it: its black grille cloth between edges of its wine tolex,
+              under Blackstar's badge
     apple     a Mac Studio's bead-blasted aluminium, with the six-colour apple let into it over the case's
               drilled grille
 
@@ -403,18 +404,18 @@ def badge(name, mark, cx, cy, wide, z0):
 
 
 def amp(name, y0, y1, mark):
-    """A band off the front of a Blackstar Debut clamped round the piece: its oxblood grille cloth, from a
-    photograph of the amplifier's own (studio/assets/blackstar/grille), between two beads of cream piping,
-    with the maker's badge on it."""
+    """A band off the front of a Blackstar ID:Core in red clamped round the piece: its black grille cloth, from a
+    photograph of the amplifier's own (studio/assets/blackstar/grille-black), between two
+    edges of its wine tolex, with the maker's badge on it."""
     lap = 0.05
     x0, x1 = NEAR - lap, WIDTH - FAR + lap
     w, h = x1 - x0, y1 - y0
-    sheet = Sheet(w, h, "#7a2c24", rough=0.85, density=6)
+    sheet = Sheet(w, h, "#2c2a29", rough=0.85, density=6)
     X = sheet.X
-    # The photograph at the amplifier's own scale, where its badge is as wide as the one here.
+    # The photograph at the amplifier's own scale, where its badge (305 pixels across there) is as wide as the one here.
     wide = 2.3
-    per_rem = 415 / wide
-    cloth = artwork("blackstar/grille")[..., :3]
+    per_rem = 305 / wide
+    cloth = artwork("blackstar/grille-black")[..., :3]
     rows, cols = round(h * per_rem), round(w * per_rem)
     r0, c0 = (cloth.shape[0] - rows) // 2, (cloth.shape[1] - cols) // 2
     tone = np.clip(fit(cloth[r0 : r0 + rows, c0 : c0 + cols], *sheet.height.shape), 0, 1)
@@ -429,10 +430,11 @@ def amp(name, y0, y1, mark):
     fabric = skin(sheet, f"{name}-cloth", sheen=0.4, specular=0.3)
     top = THICK + 0.05
     band = clad(prism(STAGE, f"{name}-amp", rect(x0, y0, x1, y1, 0.06, 4), 0.0, top, fabric, bevel=0.045, segments=4), x0, y0, w, h)
-    tolex = principled(f"{name}-piping", "#efe0c6", rough=0.36, coat_weight=0.3, coat_roughness=0.2)
+    # The cabinet's tolex, a fine-grained vinyl in the ID:Core's wine red, folded over the cloth's top and foot.
+    tolex = principled(f"{name}-tolex", WINE, rough=0.5, coat_weight=0.15, coat_roughness=0.35)
     beads = [
-        prism(STAGE, f"{name}-piping-{i}", rect(x0, y - 0.05, x1, y + 0.05, 0.04, 4), top - 0.04, top + 0.05, tolex, bevel=0.049, segments=8)
-        for i, y in enumerate((y0 + 0.16, y1 - 0.16))
+        prism(STAGE, f"{name}-tolex-{i}", rect(x0, y - 0.13, x1, y + 0.13, 0.04, 4), top - 0.04, top + 0.04, tolex, bevel=0.035, segments=6)
+        for i, y in enumerate((y0 + 0.13, y1 - 0.13))
     ]
     return [band, *beads, badge(name, mark, (x0 + x1) / 2, (y0 + y1) / 2, wide, top)]
 
@@ -702,6 +704,8 @@ def tagheuer(name, height):
 
 # A PRS Silver Sky's seafoam, as its satin body shows it in the light.
 SEAFOAM = "#70b9bd"
+# A Blackstar ID:Core in red: its tolex, a dusky wine.
+WINE = "#6e3438"
 
 # Each tab: the height in rem of the paper tab (SiteShell's tabHeights), that paper's colour (the band of
 # its strip), which lights the piece's edges from below, how the piece was set down (see stuck), and what

@@ -199,8 +199,8 @@ type TabProps = {
   leather?: boolean
   /** The tab is cut from the surface the page lies on, this tile of it, not from paper. */
   surface?: string
-  /** The tab is cut from the page's paper, this tile of it (Tone's paper). */
-  paper?: Paper
+  /** The tab is cut from the page's paper, which the panel draws under it (SiteShell's sheet), so it is clear here. */
+  paper?: boolean
 }
 
 /**
@@ -263,15 +263,7 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
           </defs>
         )}
         {/* A tab cut from the page's own hide has the strip's hide laid under it (SiteShell's hideOver), so it is clear here. */}
-        {paper && (
-          <defs>
-            {/* The same tile, at the same size, as the panel round the page. */}
-            <pattern id={hide} patternUnits="userSpaceOnUse" width={paper.size} height={paper.size}>
-              <image href={paper.src} width={paper.size} height={paper.size} />
-            </pattern>
-          </defs>
-        )}
-        <path d={path} fill={paper ? `url(#${hide})` : leather ? `url(#${hide})` : surface ? 'none' : undefined} />
+        <path d={path} fill={leather ? `url(#${hide})` : surface || paper ? 'none' : undefined} />
       </svg>
       {leather && (
         // The leather is the mat's, so it is in the mat's light: the lamp's, or the dark. The mat
@@ -369,6 +361,29 @@ export function SiteShell({ children }: SiteShellProps) {
       maskSize: `${w}px ${h}px`,
       maskPosition: `right 0 top ${tabTops[i + 1] * metrics.rem - reach}px`,
       maskRepeat: 'no-repeat',
+    }
+  }
+  // A page made of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
+  // is cut to the strip, its edge torn or cut as the strip's is, and to the tab's outline, so the tab is the same
+  // piece of paper as the page, its tile running on unbroken, with no join between them.
+  const sheet = (i: number, paper: Paper): CSSProperties => {
+    const shape = tabShape(i + 1)
+    // The outline with its foot, so the tab and the page overlap over the band and no hairline opens between them.
+    const { reach, path } = tabOutline(shape)
+    const w = shape.band + shape.protrude
+    const h = shape.height + 2 * reach
+    const outline = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-reach} ${w} ${h}" preserveAspectRatio="none"><path d="${path}"/></svg>`
+    // How far past the strip's edge its tear reaches, over the strip after it.
+    const out = reachesOver(i) ? TEAR_WIDTH : 0
+    return {
+      right: -shape.protrude,
+      backgroundImage: `url(${paper.src})`,
+      backgroundSize: `${paper.size}px`,
+      maskImage: `linear-gradient(#000, #000), var(--torn-core, linear-gradient(#000, #000)), url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
+      // The page runs a pixel into its edge's strip, so no hairline opens where they meet.
+      maskSize: `calc(100% - ${shape.protrude - out + TEAR_WIDTH - 1}px) 100%, ${TEAR_WIDTH}px ${TEAR_LENGTH}px, ${w}px ${h}px`,
+      maskPosition: `left 0 top 0, right ${shape.protrude - out}px top 0, right 0 top ${tabTops[i + 1] * metrics.rem - reach}px`,
+      maskRepeat: 'no-repeat, repeat-y, no-repeat',
     }
   }
   // Each page's edge is torn its own way, and runs straight where its tab grows out of it, so the tab's
@@ -520,7 +535,7 @@ export function SiteShell({ children }: SiteShellProps) {
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
-                style={tones[i].paper ? { backgroundImage: `url(${tones[i].paper.src})`, backgroundSize: `${tones[i].paper.size}px` } : undefined}
+                style={tones[i].paper ? sheet(i, tones[i].paper) : undefined}
               >
                 {tones[i].surface && (
                   <div
@@ -583,7 +598,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 </>
               )}
               {pageTones[i].surface && <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-2" style={hideOver(i)} />}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={tones[i].paper} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={Boolean(tones[i].paper)} />
             </motion.section>
           )
         })}
