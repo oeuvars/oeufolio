@@ -561,8 +561,8 @@ def amp(name, y0, y1, mark):
     """A band off the front of a Blackstar ID:Core in red wrapped round the piece: its black grille cloth, from a
     photograph of the amplifier's own (studio/assets/blackstar/grille-black), between two edges of its wine tolex,
     with the maker's badge on it. It is one piece, following the piece's face and coming down over its sides."""
-    lap = 0.05
-    x0, x1 = NEAR - lap, WIDTH - FAR + lap
+    # Exactly as wide as the piece, so it ends where the piece's rounded edge does and turns down its side unseen.
+    x0, x1 = NEAR, WIDTH - FAR
     w, h = x1 - x0, y1 - y0
     sheet = Sheet(w, h, "#2c2a29", rough=0.85, density=6)
     X = sheet.X
@@ -590,8 +590,8 @@ def amp(name, y0, y1, mark):
     grain = 0.0015 * np.clip(scanned(sheet, "Leather025", 6, 1.0) / 0.05, -1, 1)
     sheet.height += tolex * (0.014 + grain - rounded(-from_fold, 0.012) - sheet.height)
     # It is wrapped round the piece: it follows the piece's face, crowned and rounded at its edges, a little thicker
-    # than the cloth, and runs a little past the piece's sides before it turns straight down them.
-    inside = np.clip(np.minimum(X, w - X) - lap, 0, None)
+    # than the cloth, and turns straight down the piece's sides where they do.
+    inside = np.minimum(X, w - X)
     face = THICK - CROWN * (1 - np.clip(inside / SHOULDER, 0, 1)) ** 2 - rounded(-inside, EDGE)
     sheet.height += face + 0.03
     outline_ = within(X, Y, fillet([(0, 0, 0.03), (w, 0, 0.03), (w, h, 0.03), (0, h, 0.03)], steps=6))
