@@ -48,7 +48,6 @@
   /* The mat's rulers and its light at dusk. These read variables that the mat sets on itself, so they are written into each rule that uses them. */
   --background-image-ticks-x: linear-gradient(90deg, color-mix(in srgb, var(--ink) 45%, transparent) 1px, transparent 1px);
   --background-image-ticks-y: linear-gradient(color-mix(in srgb, var(--ink) 45%, transparent) 1px, transparent 1px);
-  --background-image-golden: linear-gradient(90deg, rgb(255 150 60), rgb(255 196 120));
 }
 
 @supports (transition-timing-function: linear(0, 1)) {

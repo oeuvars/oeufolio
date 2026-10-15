@@ -254,8 +254,8 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
         <path d={path} fill={leather || surface ? `url(#${hide})` : undefined} />
       </svg>
       {leather && (
-        // The leather is the mat's, so it is in the mat's light: the lamp's, the dusk's and the dark. The mat
-        // lends this its hour, its lamp and where its map of the lamp's light lies (mat/Mat.tsx). The clip
+        // The leather is the mat's, so it is in the mat's light: the lamp's, or the dark. The mat
+        // lends this its lamp and where its map of the lamp's light lies (mat/Mat.tsx). The clip
         // isolates what is in it, so the layers multiply on white and the whole multiplies the leather.
         <div
           aria-hidden
@@ -264,11 +264,10 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
           style={{ top: -reach, width, height: shape.height + 2 * reach, clipPath: `url(#${cut})` }}
         >
           <div
-            className="absolute inset-0 bg-no-repeat opacity-[calc(var(--lit,0)*(1-var(--day,1)))] mix-blend-multiply"
+            className="absolute inset-0 bg-no-repeat opacity-[var(--lit,0)] mix-blend-multiply"
             style={{ backgroundColor: 'var(--light-rim)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
           />
-          <div className="absolute inset-0 bg-golden opacity-[calc(var(--warmth,0)*0.5)] mix-blend-multiply" />
-          <div className="absolute inset-0 bg-[rgb(10_14_24)] opacity-[calc((1-var(--day,1))*(1-var(--lit,0))*0.82)] mix-blend-multiply" />
+          <div className="absolute inset-0 bg-[rgb(10_14_24)] opacity-[calc((1-var(--lit,0))*0.82)] mix-blend-multiply" />
         </div>
       )}
       <img

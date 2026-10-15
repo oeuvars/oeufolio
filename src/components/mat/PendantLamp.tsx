@@ -10,8 +10,8 @@ type PendantLampProps = {
 // Every render overhangs the lamp's box by this many em, which lets the flex run off the top of the frame.
 const BLEED = 0.5
 const LAYER = `${RENDER} absolute inset-0`
-// The base renders, dimmed as the day goes and lifted a little by the lamp's own light.
-const DIMMED = 'brightness-[calc(0.3+0.7*var(--day)+0.25*var(--lit)*(1-var(--day)))]'
+// The base renders, dim in the dark room and lifted a little by the lamp's own light.
+const DIMMED = 'brightness-[calc(0.3+0.25*var(--lit))]'
 const GLOW = 'opacity-0 mix-blend-screen transition-opacity duration-300 data-[lit=true]:opacity-100'
 
 // The lamp's set, in em from the top left of the lamp's box.

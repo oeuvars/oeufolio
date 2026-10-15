@@ -6,7 +6,6 @@ import { PendantLamp } from './PendantLamp'
 import { Rulers } from './Rulers'
 import { lamp } from './lamp'
 import { BULB, PLATES } from './layout'
-import { atKolkataMinute, lightAt } from './sun'
 
 type MatProps = {
   /** What on the mat the page needs to reach: links and the parts that move. Each marks its root with data-prop. */
@@ -41,36 +40,18 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * A cutting mat in teal leather, seen from overhead, with the things left on it as on a desk in use. All of
  * it is one photograph of one set, rendered in the studio under one light, so every object shades the others
  * and throws its own shadow. The page lays the plate over its own leather, as large as lets all of it show.
- * The light is the sun over Kolkata at the current minute. After dark the mat goes dark unless the lamp in the
- * corner is on, and then it is lit by a second plate of the same set under the lamp alone: the objects, and a
- * map of the lamp's light that the leather, its rules and its rulers are multiplied by.
+ * The room is dark. With the lamp in the corner on, the mat is lit by a second plate of the same set under the
+ * lamp alone: the objects, and a map of the lamp's light that the leather, its rules and its rulers are
+ * multiplied by. With it off, the desk is all but dark.
  */
 export function Mat({ children, className }: MatProps) {
-  // The lamp only shows once the sun is down.
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
 
-  // The desk is laid and lit before it is first painted: the folded strip and the page swap copies of it
-  // mid-slide, and neither may show a bare mat.
-  // The hour, and whether it is dark.
-  useLayoutEffect(() => {
-    const frame = root.current
-    if (!frame) return
-    // ?minute=780 holds the mat at that minute of the Kolkata day, to look at it in another light.
-    const pinned = new URLSearchParams(window.location.search).get('minute')
-    const shade = () => {
-      const light = lightAt(pinned === null ? new Date() : atKolkataMinute(new Date(), Number(pinned)))
-      frame.style.setProperty('--day', light.day.toFixed(3))
-      frame.style.setProperty('--warmth', light.warmth.toFixed(3))
-    }
-    shade()
-    const ticking = window.setInterval(shade, 30_000)
-    return () => window.clearInterval(ticking)
-  }, [])
-
-  // The plate fits the mat, and the objects' boxes follow it.
+  // The plate fits the mat, and the objects' boxes follow it. It is laid before it is first painted, so the
+  // strip never uncovers a bare mat.
   useLayoutEffect(() => {
     const frame = root.current
     const board = sheet.current
@@ -108,7 +89,7 @@ export function Mat({ children, className }: MatProps) {
   }, [])
 
   // The folder tab the page hangs from is cut from this leather (SiteShell's Tab), so it takes the same light:
-  // the hour, the lamp, and the lamp's map laid where it lies over the mat.
+  // the lamp, and the lamp's map laid where it lies over the mat.
   useLayoutEffect(() => {
     const frame = root.current
     const board = sheet.current
@@ -118,10 +99,6 @@ export function Mat({ children, className }: MatProps) {
     const [w, h] = plate.size
     const [bx, by] = plate.bleed
     const { em } = geometry
-    const hour = () => {
-      tab.style.setProperty('--day', frame.style.getPropertyValue('--day'))
-      tab.style.setProperty('--warmth', frame.style.getPropertyValue('--warmth'))
-    }
     const place = () => {
       const mat = board.getBoundingClientRect()
       const at = tab.getBoundingClientRect()
@@ -131,10 +108,7 @@ export function Mat({ children, className }: MatProps) {
     tab.style.setProperty('--light-rim', plate.rim)
     tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
     tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
-    hour()
     place()
-    const ticking = new MutationObserver(hour)
-    ticking.observe(frame, { attributes: true, attributeFilter: ['style'] })
     // The strip slides open after the mat is laid, and the page scrolls under the tab.
     const moving = new ResizeObserver(place)
     moving.observe(board)
@@ -142,10 +116,9 @@ export function Mat({ children, className }: MatProps) {
     if (strip) moving.observe(strip)
     window.addEventListener('scroll', place, true)
     return () => {
-      ticking.disconnect()
       moving.disconnect()
       window.removeEventListener('scroll', place, true)
-      for (const name of ['--day', '--warmth', '--lit', '--light-rim', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
+      for (const name of ['--lit', '--light-rim', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
     }
   }, [geometry, lit])
 
@@ -157,7 +130,7 @@ export function Mat({ children, className }: MatProps) {
       data-lit={lit}
       data-plate={geometry?.id}
       className={cn(
-        'group/mat mat @container relative isolate flex flex-col [--day:1] [--lamp:calc(var(--lit)*(1-var(--day)))] [--lit:0] [--s:1] [--warmth:0] data-[lit=true]:[--lit:1]',
+        'group/mat mat @container relative isolate flex flex-col [--lamp:var(--lit)] [--lit:0] [--s:1] data-[lit=true]:[--lit:1]',
         className,
       )}
     >
@@ -210,9 +183,8 @@ export function Mat({ children, className }: MatProps) {
 
         {children}
 
-        {/* The hour: gold near dusk, and dark at night with the lamp off. */}
-        <div aria-hidden className={`${LIGHT} bg-golden opacity-[calc(var(--warmth)*0.5)] mix-blend-multiply`} />
-        <div aria-hidden className={`${LIGHT} bg-[rgb(10_14_24)] opacity-[calc((1-var(--day))*(1-var(--lit))*0.82)] mix-blend-multiply`} />
+        {/* The dark of the room, with the lamp off. */}
+        <div aria-hidden className={`${LIGHT} bg-[rgb(10_14_24)] opacity-[calc((1-var(--lit))*0.82)] mix-blend-multiply`} />
 
         {geometry && plate && (
           <div
