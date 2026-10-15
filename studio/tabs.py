@@ -5,7 +5,7 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               through its steel folding clasp with the shield engraved in the cover
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
-    lacoste   the white piqué polo: the crocodile, the name, and tipping in its green and red
+    lacoste   the white piqué polo: the crocodile, the name, and tipping in navy and seafoam
     prs       a Blackstar Debut's tolex in the seafoam of a PRS Silver Sky, with four of the outline birds PRS
               inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
               front of a Blackstar ID:Core in red round it: its black grille cloth between edges of its wine tolex,
@@ -350,8 +350,9 @@ def lacoste(name, height):
         # The crocodile is sewn on as a patch, so it stands off the knit.
         printed(sheet, croc, colour, rough=0.3, coat=0.3, proud=0.014)
         printed(sheet, wordmark, INK, rough=0.3, coat=0.2)
-        inlay(sheet, stripe(sheet, 7.5, 8.12), "#004f2b", rough=0.1)
-        inlay(sheet, stripe(sheet, 8.34, 8.64), "#cf2027")
+        # Tipping as on a navy-tipped polo, its thin stripe the seafoam of the PRS tab beside it.
+        inlay(sheet, stripe(sheet, 7.5, 8.12), NAVY, rough=0.1)
+        inlay(sheet, stripe(sheet, 8.34, 8.64), SEAFOAM)
 
     return {}, moulded(name, height, "#f1eee6", 0.3, 0.25, dress, subsurface=0.08)
 
@@ -704,6 +705,8 @@ def tagheuer(name, height):
 
 # A PRS Silver Sky's seafoam, as its satin body shows it in the light.
 SEAFOAM = "#70b9bd"
+# Lacoste's navy, for the polo's tipping.
+NAVY = "#1d2a4a"
 # A Blackstar ID:Core in red: its tolex, a dusky wine.
 WINE = "#6e3438"
 

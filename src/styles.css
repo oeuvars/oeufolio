@@ -218,8 +218,9 @@
   .torn,
   .panel-hangs {
     mask-image: linear-gradient(#000, #000), var(--torn-core);
+    /* The body runs a pixel into the tear's tile, so no hairline opens where they meet. */
     mask-size:
-      calc(100% - 16px) 100%,
+      calc(100% - 15px) 100%,
       16px 1600px;
     mask-position:
       left top,
@@ -269,7 +270,7 @@
     mask-image: var(--torn-calm), linear-gradient(#000, #000), var(--torn-surface);
     mask-size:
       100% 100%,
-      calc(100% - 16px) 100%,
+      calc(100% - 15px) 100%,
       16px 1600px;
     mask-position:
       left top,
@@ -310,6 +311,14 @@
     overflow: visible;
     fill: var(--band);
     pointer-events: none;
+  }
+
+  /* The tab's cut, rendered (studio/tabcut): only light and shadow, laid over the strip's own surface. */
+  .tab-cut {
+    position: absolute;
+    max-width: none;
+    pointer-events: none;
+    user-select: none;
   }
 
   /* What is stuck on the tab. The render brings the shadow it sits in. This is the one the lamp throws. */

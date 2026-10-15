@@ -9,6 +9,7 @@ import { Art } from './Art'
 import { Badge } from './Badge'
 import { POSTER } from './house'
 import { Desk } from './mat/Desk'
+import tabcut from './tabcut.json'
 import { Ticket } from './ticket/Ticket'
 import { useStackMetrics } from './useStackMetrics'
 
@@ -150,8 +151,10 @@ const pageTones: Tone[] = [
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
-// The hide's tile, in pixels: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are.
-const HIDE = 256
+// The hide's tile: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are. It is
+// TILE (30) em of the ticket's spread across, and the spread is 90vh tall for its 29.85 em (ticket/Ticket.tsx), so the
+// hide's grain is the size it is beside the ticket.
+const HIDE = `calc(90vh * ${30 / 29.85})`
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
 // A tab's width on a wide screen and the room a render of its piece keeps round the tab, in rem: WIDTH
@@ -201,6 +204,17 @@ type TabProps = {
   surface?: string
   /** The tab is cut from the page's paper, which the panel draws under it (SiteShell's sheet), so it is clear here. */
   paper?: boolean
+  /** The tab's cut, rendered (studio/tabcut): where its render lies, in pixels from the tab's top left. */
+  cut: TabCut
+}
+
+/** A rendered cut over a tab: the light and shadow of its edge, and where that lies from the tab's top left. */
+type TabCut = {
+  src: string
+  left: number
+  top: number
+  width: number
+  height: number
 }
 
 /**
@@ -233,7 +247,7 @@ function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, search, current, src, footless, leather, surface, paper }: TabProps) {
+function Tab({ label, shape, to, search, current, src, footless, leather, surface, paper, cut: edge }: TabProps) {
   const { reach, path } = tabOutline(shape, footless)
   const hide = useId()
   const cut = useId()
@@ -282,6 +296,9 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
           <div className="absolute inset-0 bg-(--light-dark) opacity-[calc(1-var(--lit,0))] mix-blend-multiply" />
         </div>
       )}
+      {/* The cut itself, rendered: the light its edge catches and turns from, and the shadow it leaves on the page
+          below as the tab lifts off the folder. It is only light, so it lies over whatever the strip is made of. */}
+      <img aria-hidden alt="" src={edge.src} draggable={false} className="tab-cut" style={{ left: edge.left, top: edge.top, width: edge.width, height: edge.height }} />
       <img
         aria-hidden
         alt=""
@@ -343,6 +360,12 @@ export function SiteShell({ children }: SiteShellProps) {
 
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
+  // The render of a tab's cut for this layout and the tab's height, in pixels.
+  const tabCut = (slot: number): TabCut => {
+    const { src, x, y, width, height } = tabcut[`${mobile ? 'phone' : 'wide'}-${tabHeights[slot]}` as keyof typeof tabcut]
+    const rem = metrics.rem
+    return { src, left: x * rem, top: y * rem, width: width * rem, height: height * rem }
+  }
   // The tab of a strip whose page is a hide is cut from that hide: the same tile, anchored at the strip's top left as
   // the panel's is, laid over the strip and out past its edge and masked to the tab, so the hide runs on unbroken. The
   // mask is pinned to the layer's right edge, which is the tab's, however wide the strip is as it opens and folds.
@@ -355,7 +378,7 @@ export function SiteShell({ children }: SiteShellProps) {
     return {
       width: `calc(100% + ${shape.protrude}px)`,
       backgroundImage: `url(${pageTones[i].surface})`,
-      backgroundSize: `${HIDE}px ${HIDE}px`,
+      backgroundSize: `${HIDE} ${HIDE}`,
       backgroundPosition: '0 0',
       maskImage: `url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       maskSize: `${w}px ${h}px`,
@@ -544,7 +567,7 @@ export function SiteShell({ children }: SiteShellProps) {
                     style={{
                       // Under the photograph of the set, which covers it: only a window taller than the photograph shows it.
                       backgroundImage: `url(${tones[i].surface})`,
-                      backgroundSize: '256px 256px',
+                      backgroundSize: `${HIDE} ${HIDE}`,
                     }}
                   />
                 )}
@@ -598,7 +621,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 </>
               )}
               {pageTones[i].surface && <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-2" style={hideOver(i)} />}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={Boolean(tones[i].paper)} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={Boolean(tones[i].paper)} cut={tabCut(i + 1)} />
             </motion.section>
           )
         })}

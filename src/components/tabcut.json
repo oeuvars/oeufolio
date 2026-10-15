@@ -1,0 +1,30 @@
+{
+  "wide-10": {
+    "src": "/objects/tabcut-wide-10.avif",
+    "x": 1.2999999999999998,
+    "y": -1.84,
+    "width": 3.6,
+    "height": 13.68
+  },
+  "wide-11.5": {
+    "src": "/objects/tabcut-wide-11_5.avif",
+    "x": 1.2999999999999998,
+    "y": -1.84,
+    "width": 3.6,
+    "height": 15.18
+  },
+  "phone-10": {
+    "src": "/objects/tabcut-phone-10.avif",
+    "x": 0.7999999999999999,
+    "y": -1.6,
+    "width": 3.0,
+    "height": 10.45
+  },
+  "phone-11.5": {
+    "src": "/objects/tabcut-phone-11_5.avif",
+    "x": 0.7999999999999999,
+    "y": -1.6,
+    "width": 3.0,
+    "height": 11.537500000000001
+  }
+}
