@@ -30,6 +30,9 @@ type Tone = {
   surface?: string
   /** A paper's grain for the panel, as a tile that darkens its colour (studio/letter.py). */
   grain?: string
+  /** What the page is printed on, as a tile that repeats (studio/poster's poster-paper): the panel round the page
+   * and the tab are cut from it, so they are the page's own paper and not a flat colour. */
+  paper?: string
   /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
   tab: string
 }
@@ -125,7 +128,9 @@ function torn(seed: number, calm: Array<[number, number]>, edge: Edge, outward =
 const edgeOf = (tone: Tone): Edge => (tone.fills ? 'cut' : tone.roll ? 'worn' : 'torn')
 
 /** The work strip's colours when its page is the poster: the poster's own dark, so nothing of the building's night is left. */
-const posterTone = { band: '#100e0c', panel: '#100e0c' }
+const posterTone = { band: '#100e0c', panel: '#100e0c', paper: '/objects/poster-paper.avif' }
+// The paper tile's size in CSS pixels: PAPER_SIZE in studio/poster/poster.py, written at twice this.
+const PAPER = 140
 
 /** Whether a strip's page covers the whole strip, band and all. Only a page that sits framed on its band shows it. */
 const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll)
@@ -185,6 +190,8 @@ type TabProps = {
   leather?: boolean
   /** The tab is cut from the surface the page lies on, this tile of it, not from paper. */
   surface?: string
+  /** The tab is cut from the page's paper, this tile of it (Tone's paper). */
+  paper?: string
 }
 
 /**
@@ -217,7 +224,7 @@ function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, search, current, src, footless, leather, surface }: TabProps) {
+function Tab({ label, shape, to, search, current, src, footless, leather, surface, paper }: TabProps) {
   const { reach, path } = tabOutline(shape, footless)
   const hide = useId()
   const cut = useId()
@@ -254,7 +261,15 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
             </pattern>
           </defs>
         )}
-        <path d={path} fill={leather || surface ? `url(#${hide})` : undefined} />
+        {paper && (
+          <defs>
+            {/* The same tile, at the same size, as the panel round the page. */}
+            <pattern id={hide} patternUnits="userSpaceOnUse" width={PAPER} height={PAPER}>
+              <image href={paper} width={PAPER} height={PAPER} />
+            </pattern>
+          </defs>
+        )}
+        <path d={path} fill={paper ? `url(#${hide})` : leather || surface ? `url(#${hide})` : undefined} />
       </svg>
       {leather && (
         // The leather is the mat's, so it is in the mat's light: the lamp's, or the dark. The mat
@@ -481,7 +496,10 @@ export function SiteShell({ children }: SiteShellProps) {
             >
               {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
-              <div className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}>
+              <div
+                className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
+                style={tones[i].paper ? { backgroundImage: `url(${tones[i].paper})`, backgroundSize: `${PAPER}px ${PAPER}px` } : undefined}
+              >
                 {tones[i].surface && (
                   <div
                     aria-hidden
@@ -499,9 +517,9 @@ export function SiteShell({ children }: SiteShellProps) {
                   <motion.div
                     aria-hidden
                     className="absolute inset-y-0"
-                    // A picture runs on under the strip before it as far as that strip's tear can bite, so the tear
-                    // never uncovers bare panel.
-                    style={tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - band - overlap + TEAR_WIDTH } : { left: overlap, width: folded(i) - band - overlap }}
+                    // A picture runs on under the strip before it as far as that strip's tear can bite, and out to its
+                    // panel's edge past its own tear's reach, as the open page does, so no tear uncovers bare panel.
+                    style={tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) } : { left: overlap, width: folded(i) - band - overlap }}
                     initial={false}
                     animate={{ opacity: open ? 0 : 1 }}
                     // A picture page folds back into its strip's picture, which has to be there at once to take over.
@@ -541,7 +559,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <div aria-hidden className="torn torn-wear" />
                 </>
               )}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={tones[i].paper} />
             </motion.section>
           )
         })}

@@ -17,7 +17,9 @@ the whole, at the new size, so the scaled-up picture reads as film again.
 
 Writes public/objects/poster.avif, and public/objects/poster-strip.avif for the work strip folded: the poster's
 middle column of windows, the full height of it, with the sign's light across it but none of the passages, which
-come with the page when the strip opens.
+come with the page when the strip opens; and public/objects/poster-paper.avif, a tile of the poster's bare wall
+that repeats without a seam, at the size the poster is shown, for what of the strip the poster does not cover: its
+tab, and the panel round the poster where the strip is narrower than it.
 """
 
 import argparse
@@ -34,6 +36,10 @@ SCALE = 3
 PASSAGES = [(305, 302, 398, 450), (512, 374, 642, 448), (100, 484, 302, 558), (300, 622, 530, 706)]
 # The folded strip's column, in the reference's pixels: the windows stacked down its middle.
 STRIP = (300, 594)
+# The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
+# is shown at, src/components/SiteShell.tsx PAPER, the poster being shown about a third of its size).
+PAPER_TAKES = 420
+PAPER_SIZE = 280
 # The type's colour: the passages are printed a warm white, the sign is a cold one.
 INK = np.array([0.93, 0.91, 0.87])
 SIGN = np.array([0.90, 0.91, 0.92])
@@ -78,6 +84,32 @@ def lift_sign(picture, title):
 
     fill = np.stack([spread(picture[..., c] * keep) for c in range(3)], -1) / (spread(keep) + 1e-6)[..., None]
     return picture * keep[..., None] + fill * under[..., None]
+
+
+def paper(image):
+    """The flattest square of bare wall in the poster, made to repeat without a seam: the square and the same square
+    turned half over in both directions, mixed so each edge is the middle of the other, and its slow light taken out."""
+    luma = ndimage.gaussian_filter(image @ np.array([0.2126, 0.7152, 0.0722], np.float32), 12)
+    best = None
+    for top in range(0, image.shape[0] - PAPER_TAKES, 40):
+        for left in range(0, image.shape[1] - PAPER_TAKES, 40):
+            patch = luma[top : top + PAPER_TAKES, left : left + PAPER_TAKES]
+            score = patch.std() + abs(patch.mean() - 0.05)
+            if best is None or score < best[0]:
+                best = (score, top, left)
+    _, top, left = best
+    square = image[top : top + PAPER_TAKES, left : left + PAPER_TAKES]
+    half = PAPER_TAKES // 2
+    rolled = np.roll(square, (half, half), (0, 1))
+    ramp = 1 - np.abs(np.linspace(-1, 1, PAPER_TAKES, dtype=np.float32))
+    weight = np.minimum.outer(ramp, ramp)[..., None]
+    rolled_weight = np.roll(weight, (half, half), (0, 1))
+    tile = (square * weight + rolled * rolled_weight) / (weight + rolled_weight + 1e-6)
+    tile = np.asarray(Image.fromarray((np.clip(tile, 0, 1) * 255 + 0.5).astype(np.uint8)).resize((PAPER_SIZE, PAPER_SIZE), Image.LANCZOS))
+    tile = tile.astype(np.float32) / 255
+    # Only the grain is kept: the wall's slow light would show as a pattern where the tile repeats.
+    slow = np.stack([ndimage.gaussian_filter(tile[..., c], PAPER_SIZE / 16, mode="wrap") for c in range(3)], -1)
+    return tile - slow + tile.mean((0, 1))
 
 
 def screen_dots(shape, pitch):
@@ -128,6 +160,12 @@ def main():
         image = image + (0.035 + 0.05 * luma * (1 - luma))[..., None] * grain[..., None]
         if name == "poster-strip":
             image = image[:, left:right]
+        if name == "poster":
+            sheet = Image.fromarray((paper(np.clip(image, 0, 1)) * 255 + 0.5).astype(np.uint8))
+            sheet.save(os.path.join(ROOT, "public", "objects", "poster-paper.avif"), quality=82, subsampling="4:4:4", speed=2)
+            if args.proof:
+                os.makedirs(args.proof, exist_ok=True)
+                sheet.save(os.path.join(args.proof, "poster-paper.png"))
         out = Image.fromarray((np.clip(image, 0, 1) * 255 + 0.5).astype(np.uint8))
         out.save(os.path.join(ROOT, "public", "objects", f"{name}.avif"), quality=82, subsampling="4:4:4", speed=2)
         if args.proof:

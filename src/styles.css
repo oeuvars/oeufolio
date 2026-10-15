@@ -286,7 +286,6 @@
     left: 0;
     right: var(--band-w);
     overflow: hidden;
-    border-radius: 0.6rem;
     background-color: var(--panel, var(--band));
     background-image: var(--panel-grain, none);
     background-size: 1064px auto;
@@ -297,7 +296,6 @@
   /* The badge's page has no frame: its panel is the whole strip, with the tabs lying over it. */
   .panel-hangs {
     inset: 0;
-    border-radius: 0;
   }
 
   /* A folder tab standing out of the strip's band. Its outline is drawn in SiteShell. */

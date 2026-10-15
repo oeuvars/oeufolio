@@ -9,7 +9,7 @@ export function StripPoster() {
       aria-hidden
       src="/objects/poster-strip.avif"
       alt=""
-      className="absolute inset-y-0 left-0 h-full w-[calc(100%+var(--band-w))] max-w-none bg-[#100e0c] object-cover object-center"
+      className="absolute inset-y-0 left-0 h-full w-full max-w-none object-cover object-center"
     />
   )
 }

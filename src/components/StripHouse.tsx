@@ -42,7 +42,7 @@ export function StripHouse({ open }: StripHouseProps) {
       aria-hidden
       src="/objects/dollhouse-strip.webp"
       alt=""
-      className="absolute inset-y-0 left-0 h-full w-[calc(100%+var(--band-w))] max-w-none origin-bottom object-cover object-bottom"
+      className="absolute inset-y-0 left-0 h-full w-full max-w-none origin-bottom object-cover object-bottom"
     />
   )
 }
