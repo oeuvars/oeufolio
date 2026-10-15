@@ -34,7 +34,8 @@ WHITE = "#f7ecdc"
 GINGER = "#e8994a"
 DEEP = "#c06a26"
 PINK = "#e8a7a0"
-LINE = "#5a3b2c"
+LINE = "#2a1d16"
+AMBER = "#c98a2a"
 # The clear glaze where it pools in hollows, with the faint green of glaze run thick.
 POOL = "#dfe5dc"
 # The lamp: the same warm bulb as the pendant it replaces.
@@ -48,7 +49,7 @@ SHADE_T = 0.1
 
 # The tail rises from the rump and arches forward over the back, its tip over the cat's shoulders.
 TAIL = ((19.0, 0.0, 7.4), (23.6, 0.0, 13.6), (20.6, 0.0, 21.6), (14.5, 0.0, 20.0))
-TAIL_R = (1.2, 0.9)
+TAIL_R = (1.55, 1.05)
 HEAD = (14.5, 0.0, 20.0)
 
 
@@ -79,17 +80,48 @@ def mirrored(p, part):
     return np.minimum(part(p), part(flipped))
 
 
+def fur(p, amount, size, seed):
+    """Long hair, as the figurine sculpts it: soft clumps raised over the surface."""
+    rng = np.random.default_rng(seed)
+    out = np.zeros(p.shape[:-1])
+    for _ in range(7):
+        k = rng.normal(size=3) / size
+        out += np.sin(p @ k + rng.uniform(0, 6.3))
+    return amount * out / 7
+
+
 def body(p):
-    """The porcelain: everything but the glass. The cat bows, as the figurine does: a big round head low over
-    its outstretched forepaws, a short plump body, its haunches high."""
-    head = ellipsoid(p, (4.2, 0, 3.7), (3.0, 3.4, 2.8))
-    head = smin(head, mirrored(p, lambda q: ellipsoid(q, (3.6, 1.8, 2.9), (2.1, 1.9, 1.6))), 0.6)
-    head = smin(head, ellipsoid(p, (1.5, 0, 2.8), (0.9, 1.3, 0.8)), 0.45)
-    ears = mirrored(p, lambda q: cone(q, (4.9, 2.0, 5.6), (5.4, 2.9, 7.9), 1.3, 0.15))
-    head = smin(head, ears, 0.4)
-    trunk = cone(p, (6.8, 0, 3.0), (10.0, 0, 4.0), 3.0, 3.3)
-    trunk = smin(trunk, cone(p, (10.0, 0, 4.0), (13.0, 0, 5.4), 3.3, 3.2), 1.0)
-    trunk = smin(trunk, ellipsoid(p, (16.0, 0, 6.0), (3.6, 3.6, 3.4)), 1.4)
+    """The ceramic: the cat, without the lamp's head. It bows, as the figurine does: a big round head low over
+    its outstretched forepaws, a plump body, its haunches high. It is the household's cat, long haired: a full
+    ruff round its cheeks and neck, big upright ears, and a big plume of a tail."""
+    x = p[..., 0]
+    head = ellipsoid(p, (4.2, 0, 3.7), (2.9, 3.2, 2.7))
+    head = smin(head, mirrored(p, lambda q: ellipsoid(q, (3.6, 1.7, 2.9), (2.0, 1.8, 1.55))), 0.6)
+    head = smin(head, ellipsoid(p, (1.5, 0, 2.8), (0.9, 1.25, 0.8)), 0.45)
+
+    def ear(q):
+        # A cup: a cone with its front hollowed, big and upright, set at the back corners of the crown.
+        outer = cone(q, (4.6, 1.75, 5.1), (5.2, 2.75, 8.7), 1.6, 0.1)
+        inner = cone(q, (4.05, 1.75, 5.3), (4.75, 2.7, 8.5), 1.25, 0.04)
+        return np.maximum(outer, -inner)
+
+    head = smin(head, mirrored(p, ear), 0.35)
+    # The ruff: clumps of long hair round the cheeks, under the chin and down the chest.
+    ruff = mirrored(
+        p,
+        lambda q: np.minimum.reduce(
+            [
+                ellipsoid(q, (4.7, 3.2, 3.1), (1.4, 1.2, 1.7)),
+                ellipsoid(q, (5.5, 3.0, 2.0), (1.4, 1.3, 1.4)),
+                ellipsoid(q, (3.8, 2.8, 1.6), (1.3, 1.2, 1.1)),
+                ellipsoid(q, (4.5, 1.3, 1.0), (1.5, 1.4, 1.1)),
+            ]
+        ),
+    )
+    head = smin(head, ruff, 0.7)
+    trunk = cone(p, (6.8, 0, 3.0), (10.0, 0, 4.0), 3.1, 3.4)
+    trunk = smin(trunk, cone(p, (10.0, 0, 4.0), (13.0, 0, 5.4), 3.4, 3.3), 1.0)
+    trunk = smin(trunk, ellipsoid(p, (16.0, 0, 6.0), (3.7, 3.7, 3.5)), 1.4)
     fore = mirrored(
         p,
         lambda q: smin(cone(q, (7.5, 2.1, 2.3), (0.4, 2.7, 0.75), 1.45, 1.15), ellipsoid(q, (-0.5, 2.8, 0.7), (1.55, 1.3, 0.7)), 0.6),
@@ -97,8 +129,8 @@ def body(p):
     hind = mirrored(
         p,
         lambda q: smin(
-            smin(ellipsoid(q, (16.4, 2.5, 4.5), (2.6, 1.6, 2.8)), cone(q, (17.3, 2.6, 3.0), (16.8, 2.7, 0.9), 1.2, 1.0), 0.7),
-            ellipsoid(q, (16.4, 2.7, 0.65), (1.55, 1.1, 0.65)),
+            smin(ellipsoid(q, (16.4, 2.6, 4.5), (2.7, 1.7, 2.9)), cone(q, (17.3, 2.7, 3.0), (16.8, 2.8, 0.9), 1.3, 1.05), 0.7),
+            ellipsoid(q, (16.4, 2.8, 0.65), (1.55, 1.1, 0.65)),
             0.5,
         ),
     )
@@ -107,6 +139,10 @@ def body(p):
     d = smin(trunk, head, 1.3)
     d = smin(d, fore, 0.9)
     d = smin(d, hind, 1.0)
+    # Long hair everywhere but the face and the paws, deepest on the tail.
+    hairy = soft(x - 3.4, 0, 1.0) * soft(p[..., 2] - 1.2, 0, 0.8)
+    d = d - fur(p, 0.2, 1.1, 11) * hairy - 0.08 * hairy
+    tail = tail - fur(p, 0.15, 1.2, 12) - 0.25
     d = smin(d, tail, 0.7)
     # It stands on a flat foot.
     return np.maximum(d, -p[..., 2])
@@ -127,44 +163,53 @@ def wobble(p, seed, scale=0.6, size=1.8):
 
 
 def painted(verts, normals):
-    """Where each underglaze goes, as the household's cat is marked: how much ginger, pink and line, and whether
-    it is on the tail, for the brushwork. The colours themselves are laid in the shader."""
+    """Where each colour goes, as the household's cat is marked, from its photographs: how much ginger, pink, dark
+    and amber. The colours themselves are laid in the shader."""
     p = verts
     x, y, z = p[:, 0], p[:, 1], p[:, 2]
-    ginger = np.zeros(len(p))
-    # The cap: the crown, the back of the head and the ears, down to about the eyes at the sides, and lower
-    # toward the back of the head.
-    near_head = soft(-np.linalg.norm((p - (4.2, 0, 4.2)) / (3.9, 4.0, 4.6), axis=1) + wobble(p, 7, 0.12), -1.0, 0.18)
-    cap = near_head * soft(z - (3.5 + 0.42 * (4.8 - x)) + wobble(p, 1, 0.3), 0, 0.35)
-    # The blaze: white up the middle of the face from the nose, narrowing to a point on the crown.
-    blaze_half = np.clip(0.95 - 0.27 * (x - 1.2), 0.0, 1.0)
-    blaze = soft(blaze_half - np.abs(y + 0.25 * wobble(p, 2, 1.0)), 0, 0.3) * soft(5.6 - x, 0, 0.6)
-    ginger = np.maximum(ginger, cap * (1 - blaze))
-    # The ginger at the cat's left upper lip.
-    ginger = np.maximum(ginger, soft(0.75 - np.linalg.norm((p - (0.75, -0.85, 2.55)) / (0.8, 1.0, 0.7), axis=1) + wobble(p, 3, 0.2), 0, 0.3))
-    # On the back, as seen from above: a large patch on the left side behind the shoulders, a smaller one beside
-    # it, and ginger on the rump round the root of the tail.
-    for centre, radii, seed in (((10.6, 1.9, 6.6), (2.3, 1.7, 1.6), 4), ((13.6, 1.1, 7.6), (1.5, 1.1, 1.2), 5)):
-        ginger = np.maximum(ginger, soft(1 - np.linalg.norm((p - centre) / radii, axis=1) + wobble(p, seed, 0.35), 0, 0.7))
-    ginger = np.maximum(ginger, soft(1 - np.linalg.norm((p - (18.6, 0, 8.0)) / (2.0, 1.8, 1.6), axis=1) + wobble(p, 6, 0.3), 0, 0.35))
-    # The tail, all of it.
+    front = soft(-normals[:, 0] - 0.2, 0, 0.3)
+    # The cap: ginger over the crown, the backs and bases of the ears and the back of the head, coming down at
+    # the temples to about the eyes.
+    near_head = soft(-np.linalg.norm((p - (4.4, 0, 4.4)) / (3.6, 3.9, 5.2), axis=1) + wobble(p, 7, 0.1), -1.0, 0.2)
+    cap = near_head * soft(z - (4.15 + 0.1 * np.abs(y)) + 0.35 * soft(x - 3.3, 0, 1.0) + wobble(p, 1, 0.2), 0, 0.3)
+    # The blaze: white up the face from the nose, as wide as between the eyes at the eyes, narrowing to a point
+    # a little off the middle at the top of the forehead.
+    up = np.clip((z - 3.6) / 2.2, 0, 1)
+    blaze_half = 0.75 * (1 - up) ** 1.3
+    blaze = soft(blaze_half - np.abs(y - 0.12 * up), 0, 0.22) * soft(3.6 - x + 0.6 * (1 - up), 0, 0.5)
+    ginger = cap * (1 - blaze)
+    # The moustache: ginger on the cat's left upper lip, a smaller fleck on its right.
+    ginger = np.maximum(ginger, front * soft(0.62 - np.linalg.norm((p - (0.85, -0.7, 2.55)) / (0.9, 1.0, 0.75), axis=1) + wobble(p, 3, 0.12), 0, 0.2))
+    ginger = np.maximum(ginger, front * soft(0.3 - np.linalg.norm((p - (0.85, 0.55, 2.65)) / (0.9, 1.0, 0.8), axis=1), 0, 0.15))
+    # The back: two spots on the right side behind the shoulders, a bigger and a smaller.
+    for centre, radii, seed in (((10.2, 1.7, 7.0), (1.5, 1.15, 1.1), 4), ((8.5, 2.5, 6.0), (0.95, 0.85, 0.85), 5)):
+        ginger = np.maximum(ginger, soft(1 - np.linalg.norm((p - centre) / radii, axis=1) + wobble(p, seed, 0.25), 0, 0.45))
+    # The tail, all of it, from its root.
     points, along = tail_curve(200)
     nearest = np.concatenate([np.argmin(((chunk[:, None, :] - points[None]) ** 2).sum(-1), axis=1) for chunk in np.array_split(p, max(1, len(p) // 20000))])
-    tail = (np.linalg.norm(p - points[nearest], axis=1) < 1.6) * soft(along[nearest] - 0.4, 0, 0.8)
+    tail = (np.linalg.norm(p - points[nearest], axis=1) < 2.2) * soft(along[nearest] - 0.2, 0, 0.9)
     ginger = np.maximum(ginger, tail)
-    # Pink: the nose, and the insides of the ears.
-    pink = soft(0.36 - np.linalg.norm((p - (0.6, 0, 3.25)) / (1, 1.3, 0.8), axis=1), 0, 0.1)
-    ear = soft(z - 5.8, 0, 0.3) * soft(np.abs(y) - 1.2, 0, 0.3) * soft(7.0 - x, 0, 0.3)
-    inside = ear * soft(-normals[:, 0] - 0.3, 0, 0.3) * soft(0.6 - np.abs(np.abs(y) - (2.0 + 0.39 * (z - 5.6))), 0, 0.3)
-    pink = np.maximum(pink, inside)
-    ginger *= 1 - inside
-    # The eyes, shut in a smile, and the line of the mouth.
-    line = np.zeros(len(p))
+    # The ears: white round their edges and pale pink in the cup.
+    ear = soft(z - 5.4, 0, 0.3) * soft(np.abs(y) - 1.0, 0, 0.3) * soft(6.6 - x, 0, 0.3)
+    cup = ear * soft(-normals[:, 0] - 0.15, 0, 0.3)
+    ginger *= 1 - cup
+    pink = 0.7 * cup * soft(0.55 - np.abs(np.abs(y) - (1.85 + 0.3 * (z - 5.2))), 0, 0.3)
+    # The nose.
+    pink = np.maximum(pink, front * soft(0.34 - np.linalg.norm((p - (0.6, 0, 3.2)) / (1, 1.25, 0.75), axis=1), 0, 0.08))
+    # The eyes, open: amber, a dark pupil and a dark rim.
+    amber = np.zeros(len(p))
+    dark = np.zeros(len(p))
     for side in (1, -1):
-        centre = np.array([1.75, side * 1.3, 4.05])
-        r = np.linalg.norm((p - centre)[:, 1:], axis=1)
-        line = np.maximum(line, soft(0.07 - np.abs(r - 0.5), 0, 0.05) * (p[:, 2] < centre[2]) * (x < 2.8))
-    return np.column_stack((np.clip(ginger, 0, 1), np.clip(pink, 0, 1), np.clip(line, 0, 1), tail))
+        c = np.array([0.0, side * 1.35, 3.95])
+        q = (p - c)[:, 1:] / np.array([0.62, 0.47])
+        r = np.linalg.norm(q, axis=1)
+        eye = front * (x > 0.6) * (x < 2.4) * (np.abs(y) < 2.3)
+        amber = np.maximum(amber, eye * soft(1.0 - r, 0, 0.12))
+        dark = np.maximum(dark, eye * soft(0.14 - np.abs(r - 1.0), 0, 0.1))
+        pupil = np.linalg.norm((p - c)[:, 1:] / np.array([0.17, 0.36]), axis=1)
+        dark = np.maximum(dark, eye * soft(1.0 - pupil, 0, 0.2))
+    ginger *= 1 - amber
+    return np.column_stack((np.clip(ginger, 0, 1), np.clip(pink, 0, 1), np.clip(dark, 0, 1), np.clip(amber, 0, 1)))
 
 
 def rgb(nodes, hex_):
@@ -211,8 +256,23 @@ def porcelain():
     paint = mix(nodes, links, depth, rgb(nodes, GINGER), rgb(nodes, DEEP))
     colour = mix(nodes, links, math_node(nodes, links, "POWER", ginger, value=0.7), rgb(nodes, WHITE), paint)
     colour = mix(nodes, links, split.outputs["Green"], colour, rgb(nodes, PINK))
+    colour = mix(nodes, links, marks.outputs["Alpha"], colour, rgb(nodes, AMBER))
     colour = mix(nodes, links, split.outputs["Blue"], colour, rgb(nodes, LINE))
     links.new(colour, shader.inputs["Base Color"])
+    # The hair is drawn into the clay in fine strokes under the glaze: they shade the colour, not the glaze.
+    coord = nodes.new("ShaderNodeTexCoord")
+    along = nodes.new("ShaderNodeMapping")
+    along.inputs["Scale"].default_value = (1.2, 14.0, 6.0)
+    links.new(coord.outputs["Object"], along.inputs["Vector"])
+    strands = nodes.new("ShaderNodeTexNoise")
+    strands.inputs["Scale"].default_value = 1.0
+    strands.inputs["Detail"].default_value = 6.0
+    links.new(along.outputs["Vector"], strands.inputs["Vector"])
+    combed = nodes.new("ShaderNodeBump")
+    combed.inputs["Strength"].default_value = 0.45
+    combed.inputs["Distance"].default_value = 0.05
+    links.new(strands.outputs["Fac"], combed.inputs["Height"])
+    links.new(combed.outputs["Normal"], shader.inputs["Normal"])
     shader.inputs["Roughness"].default_value = 0.4
     shader.inputs["Subsurface Weight"].default_value = 0.25
     shader.inputs["Subsurface Radius"].default_value = (1.0, 0.7, 0.45)
