@@ -52,12 +52,12 @@ BUILDERS = {
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
-# A shot's own top left lies at (x, y) in the box, lifted z em off the mat. The record's sleeve lies over the
-# disc it holds, and the label on the disc.
+# A shot's own top left lies at (x, y) in the box, lifted z em off the mat. The record's sleeve lies on the mat
+# and drapes over the disc it holds (record.DISC_AT), and the label lies on the disc.
 PROPS = {
     "name": {"box": (30.0, 9.625), "shots": {"name": (0, 0, 0)}},
     "card": {"box": (14.8, 8.46), "k": 1.3, "shots": {"card": (0, 0, 0)}},
-    "record": {"box": (20.0, 15.625), "k": 1.5, "shots": {"disc": (5.5, 0.5625, 0), "label": (10.0, 5.0625, 0.1), "sleeve": (0, 0, 0.1)}},
+    "record": {"box": (20.0, 15.625), "k": 1.5, "shots": {"disc": (5.5, 0.5625, 0), "label": (10.0, 5.0625, 0.1), "sleeve": (0, 0, 0)}},
     "recorder": {"box": (11.875, 17.0), "shots": {"recorder": (0, 0, 0), "reel": (0, 0, 0)}},
     "ticket": {"box": (20.625, 9.375), "shots": {"ticket-stub": (0, 0, 0), "ticket-main": (3.4, 0, 0)}},
     "wallet": {"box": (14.8, 18.0), "shots": {"wallet": (0, 0, 0)}},
@@ -80,13 +80,15 @@ DENSITY = 64
 EXPOSURE = 0.1
 # The room is lit dimly from elsewhere, by this much of the light the leather was photographed in, and each bulb
 # in the cat lamp's head gives this many watts when it is on.
-ROOM = 0.012
+ROOM = 0.04
 # Moonlight through the window: the moon is a small, far source, half a degree across, so it throws hard, dark
 # shadows that only soften a little away from where an object touches the mat. It comes in over the top left of
 # the desk, and adds this much of the leather's light to the mat; the night sky and the dark room add a little.
 WINDOW = 0.16
 WINDOW_FROM = (-0.55, 0.6, 0.58)
 MOON = 0.55
+# How much of the moon's light is left beside the lamp's, as the camera exposes for the lamp.
+LAMP_MOON = 0.25
 GLOW = 28000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
@@ -537,7 +539,10 @@ def main():
 
     if "lamp" in args.passes:
         # The lamp on, in the same dim room. The objects are rendered in its light, and the mat as a map of it.
+        # The lamp, a few hand-widths from everything on the desk, outshines the moon there many times over:
+        # the camera exposes for the lamp, and the moonlight is left a faint cool fill.
         desk.glow(GLOW)
+        window.data.energy *= LAMP_MOON
         print("LIGHT RIM " + light_map("light"))
         pixels = stage._expose(raw)
         develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-lamp.avif"), args.proofs, f"{named}-lamp", LAMP_EXPOSURE, (BLOOM[0], BLOOM[1] * density))

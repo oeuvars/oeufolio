@@ -27,8 +27,11 @@ TURN = -3.0
 HOLE = 0.56
 INSET = 0.44
 PITCH = 0.37
-# The tag is propped a little off the mat, because the ring runs underneath its end.
-THICK = 0.6
+# Fine leather goods are thin: one layer of leather, skived toward the edge, sanded round, then edge painted in
+# coats and burnished to a satin gloss. The tag is that thick, and its edge turns over this far in from the outline.
+THICK = 0.3
+EDGE = 0.12
+EDGE_PAINT = "#231812"
 
 # A split ring: two turns of wire. It cannot lie flat and still go through a hole in something thick,
 # so it leans, resting on the mat at its lowest point. Its level diameter runs down to the right.
@@ -195,9 +198,9 @@ def tag(stage):
     sheet.finish(lines, rough=0.7)
     sheet.press(lines, 0.004)
 
-    # Edges are burnished and painted dark. The stitch line is creased in before the thread goes through.
-    sheet.ink(ramp(-0.1, -0.02, sheet.sdf), "#1d1916", 0.55)
-    sheet.soften(0.18, 0.07)
+    # The edge paint creeps a hair onto the face where the edge turns over. The stitch line is creased in
+    # before the thread goes through.
+    sheet.ink(ramp(-EDGE - 0.07, -EDGE + 0.01, sheet.sdf), EDGE_PAINT, 0.85)
     around = np.abs(sheet.sdf + INSET)
     lapped = np.maximum(np.abs(X - SEAM + INSET), np.abs(Y - TAG_H / 2) - (TAG_H / 2 - INSET))
     crease = np.minimum(around, lapped)
@@ -225,6 +228,8 @@ def tag(stage):
         specular=0.5,
         subsurface=0.03,
         at=(-EYE[0], -EYE[1]),
+        step=0.06,
+        edge={"round": EDGE, "square": 1.5, "skive": (0.4, 0.05), "paint": (EDGE_PAINT, 0.3, 0.5)},
     )
     lay(leather, EYE_AT, TURN)
 

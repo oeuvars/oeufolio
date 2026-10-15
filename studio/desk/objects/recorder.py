@@ -170,7 +170,7 @@ def body(stage):
     legend.paint(np.maximum(readout, letter), "#ffffff")
     legend.opacity = np.clip(name + readout + letter, 0, 1)
     legend.glow = readout * 1.5
-    legend.build(stage, "legend", thickness=TOP + 0.056).visible_shadow = False
+    legend.build(stage, "legend", thickness=TOP + 0.056, solid=False).visible_shadow = False
     stage.shoot("recorder", (0, 0, W, H), bleed=3.0, shadow=0.85)
 
 

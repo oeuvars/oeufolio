@@ -16,7 +16,7 @@ DYES = {"leather": "#006b55", "leather-yellow": "#f2b21c"}
 def leather(shot):
     def shoot(stage):
         sheet = Sheet(TILE * 3, TILE * 3, DYES[shot], rough=0.5, density=1)
-        sheet.build(stage, "mat", thickness=0.1, scan="Leather037", scan_size=TILE, scan_normal=2.1, scan_rough=1.0, scan_colour=0.3, sheen=0.08, specular=0.25, at=(-TILE, -TILE))
+        sheet.build(stage, "mat", thickness=0.1, scan="Leather037", scan_size=TILE, scan_normal=2.1, scan_rough=1.0, scan_colour=0.3, sheen=0.08, specular=0.25, at=(-TILE, -TILE), solid=False)
         stage.shoot(shot, (0, 0, TILE, TILE), exposure=0.4, lens=False, sharp=1.5)
 
     return shoot

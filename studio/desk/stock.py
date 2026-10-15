@@ -174,11 +174,23 @@ class Sheet:
         brushed=0.0,
         at=(0.0, 0.0),
         step=0.25,
+        solid=True,
+        edge=None,
     ):
         """Lay the sheet on the stage, its top left corner at `at`.
         scan names an ambientCG material; one tile of it covers scan_size em.
         wear is a list of (imperfection map, tile size in em, roughness added, depth of the mark).
-        step is the pitch of the mesh in em. A sheet whose warp is a moulded shape wants it fine."""
+        step is the pitch of the mesh in em. A sheet whose warp is a moulded shape wants it fine.
+        solid gives the sheet its body: the mesh is cut to the sheet's outline, and walls and an underside take it
+        down to the surface it lies on, so it rests on it and throws its shadow from where it touches.
+        edge shapes those walls, as a dict:
+          round: how far in from the outline the top and the underside turn over, in em. The wall bulges out
+            to the outline halfway down, as a sanded and burnished leather edge does, or card folded over.
+          square: above 1 the round flattens towards a wall with rounded corners.
+          skive: (width, drop): the top thins down to the edge over the last width em, as leather skived for
+            an edge does.
+          paint: the colour of the edge, its roughness and its gloss coat, as (colour, rough, coat). Without it
+            the edge carries the print, as a fold does."""
         rows, cols = self.height.shape
         alpha = cover(self.sdf, self.aa) * self.opacity
 
@@ -198,21 +210,69 @@ class Sheet:
         gx, gy = np.meshgrid(np.linspace(0, self.w, nx), np.linspace(0, self.h, ny))
         gz = warp(gx, gy) if warp else np.zeros_like(gx)
         base = thickness - gz.min()
-        gz = gz + base
         # Height of the sheet at a point, for anything that has to sit on it.
         self.z = lambda x, y: float(warp(np.float64(x), np.float64(y)) + base) if warp else thickness
-        verts = np.column_stack((gx.ravel() + at[0], -(gy.ravel() + at[1]), gz.ravel()))
         index = np.arange(nx * ny).reshape(ny, nx)
         faces = np.column_stack(
             (index[1:, :-1].ravel(), index[1:, 1:].ravel(), index[:-1, 1:].ravel(), index[:-1, :-1].ravel())
         )
+        px, py = gx.ravel().copy(), gy.ravel().copy()
+        walls = np.zeros((0, 4), dtype=np.int64)
+        edge = edge or {}
+        inset = edge.get("round", 0.0)
+        if solid and thickness > 0.005:
+            px, py, faces, walls = self._outline(px, py, faces, step, inset)
+        pz = (warp(px, py) if warp else np.zeros_like(px)) + base
+        width, drop = edge.get("skive", (0.0, 0.0))
+        if drop:
+            pz -= drop * (1 - np.clip((-self._sdf_at(px, py) - inset) / width, 0, 1)) ** 2
+        verts = np.column_stack((px + at[0], -(py + at[1]), pz))
+        top = len(faces)
+        # Where each vertex reads the sheet's maps.
+        ux, uy = px, py
+        if len(walls):
+            # The underside lies on the surface, and the walls join it to the top along the outline.
+            count = len(verts)
+            verts = np.vstack((verts, np.column_stack((verts[:, :2], np.full(count, 0.002)))))
+            ux, uy = np.concatenate((px, px)), np.concatenate((py, py))
+            rings = [np.arange(count), np.arange(count) + count]
+            if inset:
+                # Rings of the wall between them, each a step further round the edge's profile.
+                rim = np.unique(walls)
+                e = 0.01
+                nx_ = self._sdf_at(px[rim] + e, py[rim]) - self._sdf_at(px[rim] - e, py[rim])
+                ny_ = self._sdf_at(px[rim], py[rim] + e) - self._sdf_at(px[rim], py[rim] - e)
+                length = np.maximum(np.hypot(nx_, ny_), 1e-9)
+                nx_, ny_ = nx_ / length, ny_ / length
+                power = 2 / edge.get("square", 1.0)
+                high, low = pz[rim], 0.002
+                middle = []
+                steps = 12
+                for k in range(1, steps):
+                    turn = np.pi * k / steps
+                    out = inset * np.sin(turn) ** power
+                    rise = np.sign(np.cos(turn)) * np.abs(np.cos(turn)) ** power
+                    ring = np.full(count, -1)
+                    ring[rim] = len(verts) + np.arange(len(rim))
+                    x, y = px[rim] + out * nx_, py[rim] + out * ny_
+                    z = low + (high - low) * (1 + rise) / 2
+                    verts = np.vstack((verts, np.column_stack((x + at[0], -(y + at[1]), z))))
+                    # The edge reads the maps just inside the outline, where the print is whole.
+                    ux, uy = np.concatenate((ux, px[rim])), np.concatenate((uy, py[rim]))
+                    middle.append(ring)
+                rings = [rings[0], *middle, rings[1]]
+            sides = [np.column_stack((a[walls[:, 1]], a[walls[:, 0]], b[walls[:, 0]], b[walls[:, 1]])) for a, b in zip(rings, rings[1:])]
+            faces = np.vstack((faces, faces[:, ::-1] + count, *sides))
         mesh = bpy.data.meshes.new(name)
         mesh.from_pydata(verts.tolist(), [], faces.tolist())
-        uv = np.column_stack((gx.ravel() / self.w, 1 - gy.ravel() / self.h))
+        uv = np.column_stack((np.clip(ux, 0, self.w) / self.w, 1 - np.clip(uy, 0, self.h) / self.h))
         loops = np.empty(len(mesh.loops), dtype=np.int32)
         mesh.loops.foreach_get("vertex_index", loops)
         mesh.uv_layers.new().data.foreach_set("uv", uv[loops].ravel())
-        mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
+        # The top is smooth. A square wall meets it and the underside at a sharp edge; a rounded one is smooth.
+        under = top if len(walls) else 0
+        smooth = [True] * top + [False] * under + [bool(inset)] * (len(faces) - top - under)
+        mesh.polygons.foreach_set("use_smooth", smooth)
 
         material = bpy.data.materials.new(name)
         material.use_nodes = True
@@ -339,4 +399,74 @@ class Sheet:
             links.new(along.outputs[0], shader.inputs["Tangent"])
             shader.inputs["Anisotropic"].default_value = brushed
         mesh.materials.append(material)
+        if len(faces) > top and not (inset and "paint" not in edge):
+            # The walls and underside are the stock's cut edge: unless painted, its colour just inside the outline.
+            if "paint" in edge:
+                tint, finish, gloss = edge["paint"]
+                tone = linear(tint)
+            else:
+                near = (self.sdf > -0.15) & (self.sdf < -0.03)
+                tone = 0.8 * (np.median(self.rgb[near], axis=0) if near.any() else self.rgb.reshape(-1, 3).mean(axis=0))
+                finish, gloss = 0.7, 0.0
+            cut = bpy.data.materials.new(f"{name}-edge")
+            cut.use_nodes = True
+            tree = cut.node_tree
+            body = tree.nodes["Principled BSDF"]
+            body.inputs["Base Color"].default_value = (*tone, 1)
+            body.inputs["Roughness"].default_value = finish
+            body.inputs["Coat Weight"].default_value = gloss
+            body.inputs["Coat Roughness"].default_value = 0.2
+            if "paint" in edge:
+                # Edge paint goes on in coats, each sanded back: it lies a little uneven along the edge.
+                ripple = tree.nodes.new("ShaderNodeTexNoise")
+                ripple.inputs["Scale"].default_value = 9.0
+                ripple.inputs["Detail"].default_value = 6.0
+                lumps = tree.nodes.new("ShaderNodeBump")
+                lumps.inputs["Strength"].default_value = 0.25
+                lumps.inputs["Distance"].default_value = 0.01
+                tree.links.new(ripple.outputs[0], lumps.inputs["Height"])
+                tree.links.new(lumps.outputs["Normal"], body.inputs["Normal"])
+                tree.links.new(lumps.outputs["Normal"], body.inputs["Coat Normal"])
+            mesh.materials.append(cut)
+            mesh.polygons.foreach_set("material_index", [0] * top + [1] * (len(faces) - top))
         return stage.add(name, mesh)
+
+    def _sdf_at(self, x, y):
+        """The outline's distance field at points of the sheet, read between its pixels."""
+        rows, cols = self.sdf.shape
+        fx = np.clip(x * self.ppe - 0.5, 0, cols - 1.001)
+        fy = np.clip(y * self.ppe - 0.5, 0, rows - 1.001)
+        x0, y0 = fx.astype(int), fy.astype(int)
+        tx, ty = fx - x0, fy - y0
+        f = self.sdf
+        return (f[y0, x0] * (1 - tx) + f[y0, x0 + 1] * tx) * (1 - ty) + (f[y0 + 1, x0] * (1 - tx) + f[y0 + 1, x0 + 1] * tx) * ty
+
+    def _outline(self, px, py, faces, step, inset=0.0):
+        """Cut the mesh to the outline, or to a line inset inside it: drop the faces wholly outside it and draw the
+        vertices round its edge onto it. Returns the points, the faces kept, and the outline as edges, each wound
+        with the sheet on its left."""
+        d = self._sdf_at(px, py) + inset
+        keep = (d[faces] < 0).any(axis=1)
+        faces = faces[keep]
+        edges = np.concatenate([faces[:, [i, (i + 1) % 4]] for i in range(4)])
+        key = np.sort(edges, axis=1)
+        _, first, counts = np.unique(key, axis=0, return_index=True, return_counts=True)
+        walls = edges[first[counts == 1]]
+        rim = np.unique(walls)
+        x, y = px[rim].copy(), py[rim].copy()
+        e = 0.01
+        for _ in range(6):
+            f = self._sdf_at(x, y) + inset
+            gxd = (self._sdf_at(x + e, y) - self._sdf_at(x - e, y)) / (2 * e)
+            gyd = (self._sdf_at(x, y + e) - self._sdf_at(x, y - e)) / (2 * e)
+            g2 = np.maximum(gxd * gxd + gyd * gyd, 1e-6)
+            mx, my = -f * gxd / g2, -f * gyd / g2
+            reach = np.hypot(mx, my)
+            scale = np.minimum(1.0, 0.75 * step / np.maximum(reach, 1e-9))
+            x, y = x + mx * scale, y + my * scale
+        px, py = px.copy(), py.copy()
+        px[rim], py[rim] = np.clip(x, 0, self.w), np.clip(y, 0, self.h)
+        used = np.unique(faces)
+        remap = np.full(len(px), -1)
+        remap[used] = np.arange(len(used))
+        return px[used], py[used], remap[faces], remap[walls]

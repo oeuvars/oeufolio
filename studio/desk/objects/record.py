@@ -26,6 +26,8 @@ SHARP = 1.5
 # the last and the first turn of music, the foot of the bead and the rim.
 HOLE, LOCK, LAST, FIRST, BEAD, EDGE = 0.3, 3.3, 3.72, 6.96, 7.1, DISC / 2 - 0.012
 GAP = 0.085
+# The middle of the disc in the sleeve's own frame: desk.py lays the disc 5.5 em right of the sleeve, 0.5625 down.
+DISC_AT = (5.5 + DISC / 2, 0.5625 + DISC / 2)
 # The groove's walls as a mirror: how far they throw light across the groove, how little along it, how much.
 SPREAD, NARROW, SHINE = 0.31, 0.78, 0.1
 # Side one is the first three songs of the playlist: title, artist, seconds.
@@ -62,19 +64,22 @@ def sleeve(stage):
     art = fit(pixels_of(COVER)[..., :3].astype(np.float64), *sheet.height.shape)
     sheet.rgb = np.where(art <= 0.04045, art / 12.92, ((art + 0.055) / 1.055) ** 2.4)
     sheet.punch(disc(X, Y, S + 0.3, S / 2, 1.05))
-    sheet.soften(0.07, 0.02)
     wave = drift(S, S, 0.03, 71)
 
     def bulge(x, y):
+        # The sleeve lies on the mat, two plies of card, and drapes over the part of the record still inside it.
+        # The record is half out, so over it the sleeve is nearly flat, only a little open at the mouth.
+        inside = 1 - ramp(-0.4, 1.4, np.hypot(x - DISC_AT[0], y - DISC_AT[1]) - DISC / 2)
         r = np.hypot(x - S / 2, y - S / 2) / (S / 2)
-        # The record is half out, so the sleeve lies nearly flat, only a little open at the mouth.
-        return 0.06 * np.clip(1 - r * r, 0, None) + wave(x, y)
+        return inside * (0.16 + 0.06 * np.clip(1 - r * r, 0, None)) + wave(x, y)
 
     sheet.build(
         stage,
         "sleeve",
-        thickness=0.14,
+        thickness=0.05,
         warp=bulge,
+        # The spine is the card folded over, so the print runs round it.
+        edge={"round": 0.025},
         scan="Paper006",
         scan_size=12,
         scan_normal=0.12,
