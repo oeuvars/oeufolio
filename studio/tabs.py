@@ -259,13 +259,14 @@ def moulded(name, height, colour, rough, coat, dress, density=3, scan=("Plastic0
     # Moulded plastic is never one even shine: it flows a little as it cools, and it has been handled.
     sheet.rough += 0.025 * np.clip(cloud(sheet.height.shape, 5, falloff=2.0), -2, 2)
     sheet.height += 0.0012 * np.clip(cloud(sheet.height.shape, 6, falloff=2.4), -2, 2)
+    # The piece's relief is its own geometry: the crowned face, what is printed and let in, the scan's grain where it
+    # has one worth seeing, and the top edge rounded as the moulding is. The surface over it carries none of it again.
     if relief:
-        # The scan's relief as real geometry, rounded at the top edge as the moulding is, under the surface.
         sheet.height += scanned(sheet, scan[0], scan[1], relief)
-        sheet.height -= rounded(edge, EDGE)
-        heights = sheet.height.copy()
-        sheet.height[:] = 0.0
         scan = (scan[0], scan[1], scan[2] * 0.3, scan[3])
+    sheet.height -= rounded(edge, EDGE)
+    heights = sheet.height.copy()
+    sheet.height[:] = 0.0
     plastic = skin(
         sheet,
         f"{name}-skin",
@@ -278,11 +279,8 @@ def moulded(name, height, colour, rough, coat, dress, density=3, scan=("Plastic0
         coat_rough=0.06,
         **surface,
     )
-    if relief:
-        sheet.height = heights
-        return [displaced(name, sheet, edge, THICK, plastic, step=4), *fitted]
-    body = prism(STAGE, name, shape, 0.0, THICK, plastic, bevel=EDGE, segments=7)
-    return [clad(body, 0, 0, WIDTH, height), *fitted]
+    sheet.height = heights
+    return [displaced(name, sheet, edge, THICK, plastic, step=steps(sheet)), *fitted]
 
 
 def knurl(X, Y, pitch):
@@ -300,9 +298,10 @@ def grip(name, y0, y1, mark):
     x0, x1 = NEAR - lap, WIDTH - FAR + lap
     w, h = x1 - x0, y1 - y0
     lip, band = 0.28, 1.18
-    sheet = Sheet(w, h, "#d6d6da", rough=0.03, density=3)
+    sheet = Sheet(w, h, "#d6d6da", rough=0.03, density=4)
     X, Y = sheet.X, sheet.Y
     sheet.metal[:] = 1.0
+    collar_edge = within(X, Y, fillet([(0, 0, 0.05), (w, 0, 0.05), (w, h, 0.05), (0, h, 0.05)], steps=6))
     # It is bent round the piece: it bows a little across, and falls away at each side.
     sheet.height -= 0.05 * ((X - w / 2) / (w / 2)) ** 2
     sheet.height -= 0.09 * (1 - np.clip(np.minimum(X, w - X) / 0.5, 0, 1)) ** 2
@@ -320,14 +319,18 @@ def grip(name, y0, y1, mark):
     sheet.rgb *= (1 - 0.55 * die)[..., None]
     # Plating is never flawless, and a razor is handled every morning.
     sheet.rough += 0.012 * np.clip(cloud(sheet.height.shape, 9, falloff=1.8), -2, 2)
+    # The knurl's pyramids, the grooves and the struck mark are the collar's own geometry, and its edges are rounded.
+    sheet.height -= rounded(collar_edge, 0.045)
+    heights = sheet.height.copy()
+    sheet.height[:] = 0.0
     chrome = skin(
         sheet,
         f"{name}-chrome",
         wear=(("Scratches003", 3, 0.05, 0.0004), ("SurfaceImperfections003", 5, 0.05, 0)),
         specular=0.5,
     )
-    collar = prism(STAGE, f"{name}-grip", rect(x0, y0, x1, y1, 0.05, 4), 0.0, THICK + 0.05, chrome, bevel=0.045, segments=4)
-    return clad(collar, x0, y0, w, h)
+    sheet.height = heights
+    return displaced(f"{name}-grip", sheet, collar_edge, THICK + 0.05, chrome, step=1, at=(x0, y0))
 
 
 def proraso(name, height):
@@ -376,13 +379,13 @@ def rounded(edge, radius):
     return radius * (1 - np.sqrt(np.clip(1 - out * out, 0, 1)))
 
 
-def displaced(name, sheet, edge, top, material, step=2):
+def displaced(name, sheet, edge, top, material, step=2, at=(0.0, 0.0), base=0.0):
     """A solid whose top is the sheet's height map as real geometry, standing top rem high, cut to where edge is
     negative: its relief catches the light and throws its own small shadows, as a bump map laid on a flat face
     cannot. The sheet's height is spent on the geometry, so the surface that dresses it carries none of it again."""
     h = (top + sheet.height)[::step, ::step]
     inside = (edge < 0)[::step, ::step]
-    X, Y = sheet.X[::step, ::step], sheet.Y[::step, ::step]
+    X, Y = sheet.X[::step, ::step] + at[0], sheet.Y[::step, ::step] + at[1]
     rows, cols = h.shape
     index = np.arange(rows * cols).reshape(rows, cols)
     corners = (index[1:, :-1], index[1:, 1:], index[:-1, 1:], index[:-1, :-1])
@@ -397,10 +400,16 @@ def displaced(name, sheet, edge, top, material, step=2):
     body = STAGE.add(name, mesh)
     # Walls down to the page.
     walls = body.modifiers.new("walls", "SOLIDIFY")
-    walls.thickness = float(top)
+    walls.thickness = float(top - base)
     walls.offset = -1
     walls.use_even_offset = False
-    return clad(body, 0, 0, sheet.w, sheet.h)
+    return clad(body, at[0], at[1], sheet.w, sheet.h)
+
+
+def steps(sheet):
+    """How many of the sheet's pixels to a vertex, for a mesh of about a hundred vertices to the rem: fine enough for
+    any relief here, light enough to render beside the other studio jobs on one card."""
+    return max(1, round(sheet.ppe / 96))
 
 
 KNIT = 22.0  # rem to one tile of the knit's scan
@@ -802,8 +811,13 @@ def tagheuer(name, height):
     sheet.height -= 0.1 * (1 - np.clip(-edge / 0.6, 0, 1)) ** 2
     sheet.rough[:] = 0.42
     sheet.coat[:] = 0.06
+    # The padding and the scales are the strap's own geometry, its edge rounded over as the leather is folded.
+    sheet.height -= rounded(edge, 0.1)
+    heights = sheet.height.copy()
+    sheet.height[:] = 0.0
     leather = skin(sheet, f"{name}-alligator", specular=0.15, coat_rough=0.2)
-    strap = clad(prism(STAGE, name, shape, 0.0, THICK - 0.02, leather, bevel=0.1, segments=6), 0, 0, WIDTH, height)
+    sheet.height = heights
+    strap = displaced(name, sheet, edge, THICK - 0.02, leather, step=steps(sheet))
     # The clasp closes over the first join in the hide. Its cover stands out past the strap's sides as
     # far as it does in the photograph.
     lock = top + 282 * stretch / per_em - 0.75
@@ -832,6 +846,22 @@ TABS = {
 }
 
 
+def lit_by_the_room(stage):
+    """The stage takes its contact shadow under an even white sky, so it lies all round a piece. Here it is taken
+    under the room's own light, the octabox up at the top left among the rest, so it falls away from the light as the
+    rendered cut of the paper's does (studio/tabcut)."""
+    build_room = stage._room
+
+    def room(*args, **kwargs):
+        floor = build_room(*args, **kwargs)
+        nodes, links = bpy.context.scene.world.node_tree.nodes, bpy.context.scene.world.node_tree.links
+        studio = next(node for node in nodes if node.type == "TEX_ENVIRONMENT")
+        links.new(studio.outputs["Color"], nodes["even"].inputs[7])
+        return floor
+
+    stage._room = room
+
+
 def tab(name):
     height, paper, askew, build = TABS[name]
     stage_module.MAT = paper
@@ -858,6 +888,7 @@ os.makedirs(out_dir, exist_ok=True)
 if args.proofs:
     os.makedirs(args.proofs, exist_ok=True)
 STAGE = Stage(out_dir, args.proofs, scale=args.scale, samples=args.samples)
+lit_by_the_room(STAGE)
 for name in args.tabs or TABS:
     STAGE.clear()
     tab(name)
