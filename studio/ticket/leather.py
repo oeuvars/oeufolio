@@ -47,7 +47,7 @@ DEPTH = 0.028  # how far a pebble's crown stands above the crease, in em
 DYE = "#6a0203"  # the red on the crowns, as the dye reflects it: a deep crimson that reflects almost no green or blue
 POOLED = "#210001"  # the red the dye dries to in the creases
 QUALITY = 86
-EXPOSURE = -1.85  # the contact scene's (scene.py), lifted so the hide is 5% lighter on the screen
+EXPOSURE = -1.72  # the contact scene's (scene.py), lifted so the hide is 10% lighter on the screen
 # How much of the key lamp's light the hide got in the contact scene's photograph of 12:40 (a805773), where the page
 # shows it: the lamp was aimed at the middle of the set, and the hide round the ticket lay away from it.
 SHARE = 0.35
