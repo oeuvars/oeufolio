@@ -4,14 +4,15 @@ import { Reveal } from './Reveal'
 /**
  * The work page: a poster of lit windows in a block of flats at night (studio/poster), with "human
  * experience" glowing across them and passages set between them. Its type is in the picture, not over it. It
- * covers the whole strip out to its torn edge, so the tear cuts the poster itself, as it cuts every page; the strip
- * opens only as wide as the poster is at the window's height (SiteShell), so almost none of it is cropped. On a phone
- * the strip is far narrower than the poster, so it runs the strip's width instead, its top and foot fading into the
- * strip, which is the poster's own dark.
+ * is printed on the page's own paper: the strip, its tab and the wall round the windows are all one material, the
+ * poster's bare wall as a tile (SiteShell), and the picture is only the light on it, laid over the paper as a screen,
+ * so where it is dark the paper shows. It covers the strip out to its torn edge; the strip opens only as wide as the
+ * poster is at the window's height (SiteShell), so almost none of it is cropped. On a phone the strip is far narrower
+ * than the poster, so it runs the strip's width instead, with the paper above and below it.
  */
 export function Poster() {
   return (
-    <div className="absolute inset-0 flex items-center overflow-hidden">
+    <div className="absolute inset-0 flex items-center overflow-hidden mix-blend-screen">
       <h2 className="sr-only">Experience</h2>
       <Reveal delay={0.3} className="w-full md:size-full">
         <img

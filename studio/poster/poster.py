@@ -15,11 +15,11 @@ passages are lifted off the wall first, and the title is laid over the old one a
 of a lit sign, its letters soft, glowing, and broken into the dots of the screen it was shown on. New grain goes over
 the whole, at the new size, so the scaled-up picture reads as film again.
 
-Writes public/objects/poster.avif, and public/objects/poster-strip.avif for the work strip folded: the poster's
-middle column of windows, the full height of it, with the sign's light across it but none of the passages, which
-come with the page when the strip opens; and public/objects/poster-paper.avif, a tile of the poster's bare wall
-that repeats without a seam, at the size the poster is shown, for what of the strip the poster does not cover: its
-tab, and the panel round the poster where the strip is narrower than it.
+The page is one material: the poster's bare wall, as a tile of paper. Writes public/objects/poster-paper.avif, that
+tile; public/objects/poster.avif, the light printed on it (the windows, the sign and the passages, black where the
+wall was), which the page screens over the paper; and public/objects/poster-strip.avif, the same for the work strip
+folded: the poster's middle column of windows, the full height of it, with the sign's light across it but none of
+the passages, which come with the page when the strip opens.
 """
 
 import argparse
@@ -40,6 +40,8 @@ STRIP = (300, 594)
 # is shown at, src/components/SiteShell.tsx PAPER, the poster being shown about a third of its size).
 PAPER_TAKES = 420
 PAPER_SIZE = 280
+# How far over the paper's own dark the wall's light has to be to count as light printed on it.
+FLOOR = 0.012
 # The type's colour: the passages are printed a warm white, the sign is a cold one.
 INK = np.array([0.93, 0.91, 0.87])
 SIGN = np.array([0.90, 0.91, 0.92])
@@ -151,27 +153,37 @@ def main():
     ink = ndimage.gaussian_filter(plate("body.png", size), 0.45 * SCALE) * (1 - np.clip(1.4 * letters, 0, 1))
     picture = picture * (1 - ink[..., None]) + np.abs(picture - INK) * ink[..., None]
 
-    # Grain at the new size, a little stronger in the middle tones, as film's is. Both pictures take the same grain.
+    # Grain at the new size, a little stronger in the middle tones, as film's is.
     rng = np.random.default_rng(7)
     grain = ndimage.gaussian_filter(rng.standard_normal(shape).astype(np.float32), 0.7)
+
+    def grained(image):
+        luma = image @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+        return image + (0.035 + 0.05 * luma * (1 - luma))[..., None] * grain[..., None]
+
+    # The paper: the poster's bare wall, grain and all, as a tile. The page is made of it, round the poster and under it.
+    sheet = paper(np.clip(grained(picture), 0, 1))
+    write(Image.fromarray((sheet * 255 + 0.5).astype(np.uint8)), "poster-paper", args.proof)
+
+    # The poster itself is only the light printed on that paper: the windows, the sign and its glow, the passages. The
+    # wall is the paper's own dark, so what is no brighter than it comes off, and the page lays the rest over the paper
+    # as light (a screen), so the wall it shows is the paper.
+    floor = sheet.reshape(-1, 3).mean(0) + FLOOR
     left, right = (x * SCALE for x in STRIP)
     for name, image in (("poster", picture), ("poster-strip", strip)):
-        luma = image @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-        image = image + (0.035 + 0.05 * luma * (1 - luma))[..., None] * grain[..., None]
+        light = np.clip(image - floor, 0, None)
+        lit = np.clip(light.max(-1) / 0.06, 0, 1)[..., None]
+        light = grained(light) * lit + light * (1 - lit)
         if name == "poster-strip":
-            image = image[:, left:right]
-        if name == "poster":
-            sheet = Image.fromarray((paper(np.clip(image, 0, 1)) * 255 + 0.5).astype(np.uint8))
-            sheet.save(os.path.join(ROOT, "public", "objects", "poster-paper.avif"), quality=82, subsampling="4:4:4", speed=2)
-            if args.proof:
-                os.makedirs(args.proof, exist_ok=True)
-                sheet.save(os.path.join(args.proof, "poster-paper.png"))
-        out = Image.fromarray((np.clip(image, 0, 1) * 255 + 0.5).astype(np.uint8))
-        out.save(os.path.join(ROOT, "public", "objects", f"{name}.avif"), quality=82, subsampling="4:4:4", speed=2)
-        if args.proof:
-            os.makedirs(args.proof, exist_ok=True)
-            out.save(os.path.join(args.proof, f"{name}.png"))
+            light = light[:, left:right]
+        write(Image.fromarray((np.clip(light, 0, 1) * 255 + 0.5).astype(np.uint8)), name, args.proof)
 
+
+def write(image, name, proof):
+    image.save(os.path.join(ROOT, "public", "objects", f"{name}.avif"), quality=82, subsampling="4:4:4", speed=2)
+    if proof:
+        os.makedirs(proof, exist_ok=True)
+        image.save(os.path.join(proof, f"{name}.png"))
 
 if __name__ == "__main__":
     main()

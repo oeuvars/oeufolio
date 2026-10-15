@@ -513,7 +513,7 @@ export function SiteShell({ children }: SiteShellProps) {
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
-                style={tones[i].paper ? { backgroundImage: `url(${tones[i].paper})`, backgroundSize: `${PAPER}px ${PAPER}px` } : undefined}
+                style={tones[i].paper ? { backgroundImage: `url(${tones[i].paper})`, backgroundSize: `${PAPER}px ${PAPER}px`, backgroundBlendMode: 'normal' } : undefined}
               >
                 {tones[i].surface && (
                   <div
