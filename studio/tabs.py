@@ -5,7 +5,8 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               through its steel folding clasp with the shield engraved in the cover
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
-    lacoste   a cut off a navy piqué polo, hemmed: the embroidered crocodile, and the collar's rib tipped in seafoam
+    lacoste   a cut off a navy piqué polo, hemmed: the embroidered crocodile, and the collar's rib knit with ecru and
+              gold tipping
     prs       a Blackstar Debut's tolex in the seafoam of a PRS Silver Sky, with four of the outline birds PRS
               inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
               front of a Blackstar ID:Core in red round it: its black grille cloth between edges of its wine tolex,
@@ -341,7 +342,7 @@ def proraso(name, height):
         inlay(sheet, stripe(sheet, 5.5, 5.59), "#c5222b")
         return [grip(name, 5.9, 8.56, artwork("logos/merkur"))]
 
-    return {"card": 2.2}, moulded(name, height, "#0a7440", 0.1, 0.7, dress, subsurface=0.04)
+    return {"card": 2.2}, moulded(name, height, "#0a7440", 0.1, 0.7, dress, density=5, subsurface=0.04)
 
 
 def fill_holes(solid):
@@ -417,9 +418,9 @@ def displaced(name, sheet, edge, top, material, step=2, at=(0.0, 0.0), base=0.0)
 
 
 def steps(sheet):
-    """How many of the sheet's pixels to a vertex, for a mesh of about a hundred vertices to the rem: fine enough for
+    """How many of the sheet's pixels to a vertex, for a mesh of about a hundred and sixty vertices to the rem: fine enough for
     any relief here, light enough to render beside the other studio jobs on one card."""
-    return max(1, round(sheet.ppe / 96))
+    return max(1, round(sheet.ppe / 160))
 
 
 KNIT = 22.0  # rem to one tile of the knit's scan
@@ -429,7 +430,7 @@ def lacoste(name, height):
     """A cut off a navy Lacoste polo, hemmed and stitched to the tab: the knit is petit piqué, the scan of a real
     knit (ambientCG Fabric036) at its own scale, its little cells half a millimetre across; the crocodile is the
     embroidered badge sewn on at the chest, its thread raised and running across the body in satin stitch; and at
-    its foot is the collar's rib, knit in vertical ribs, tipped in seafoam."""
+    its foot is the collar's rib, knit stitch by stitch, tipped in ecru and gold."""
     sheet = Sheet(WIDTH, height, NAVY, rough=0.92, density=6)
     sheet.coat[:] = 0.0
     shape = outline(height)
@@ -444,17 +445,29 @@ def lacoste(name, height):
     sheet.press(blur(stitches.astype(float), 1.2), 0.006)
     sheet.paint(blur(stitches.astype(float), 0.8) * 0.5, "#141d36")
 
-    # The collar's rib at the foot: a band of ribs running down the piece, two seafoam tipping stripes across it.
+    # The collar's rib at the foot, knit stitch by stitch: columns of V-shaped stitches, each leg a strand of yarn,
+    # the columns standing proud of the grooves between them. Its tipping is knit in, not printed on: whole rows of
+    # stitches in ecru, and one row in a muted gold, so each stripe is made of the same Vs as the rib, its edges
+    # running along the rows of stitches, and the navy shows a little between the legs.
     rib0, rib1 = height - 2.4, height - 0.62
     rib = sheet.mask(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2)
-    ribs = 0.5 + 0.5 * np.cos(2 * np.pi * X / 0.11)
-    sheet.height += rib * (0.012 * ribs - 0.01)
-    sheet.rough += rib * 0.03 * ribs
+    wale, course = 0.11, 0.07
+    u = (X % wale) / wale - 0.5
+    v = ((Y - rib0) % course) / course
+    row = np.floor((Y - rib0) / course)
+    # The two legs of each V: apart at the top of the stitch, meeting at its foot.
+    leg = np.exp(-(((np.abs(u) - (0.4 - 0.32 * v)) / 0.13) ** 2))
+    groove = np.exp(-((np.abs(u) - 0.5) / 0.07) ** 2)
+    sheet.height += rib * (0.009 * leg - 0.012 * groove - 0.006)
+    sheet.rough += rib * 0.05 * leg
     seam = np.clip(1 - np.abs(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2) / 0.03, 0, 1)
     sheet.press(blur(seam, 1.0), 0.012)
-    for y0, y1 in ((rib0 + 0.42, rib0 + 0.62), (rib0 + 0.78, rib0 + 0.86)):
-        tipped = stripe(sheet, y0, y1) * rib
-        sheet.paint(tipped, SEAFOAM)
+    fuzz = np.clip(cloud(sheet.height.shape, 47, falloff=0.6), -2, 2)
+    for rows, colour in (((6, 7, 8), ECRU), ((11,), GOLD)):
+        tipped = rib * np.isin(row, rows) * np.clip(0.35 + 0.75 * leg + 0.05 * fuzz, 0, 1)
+        sheet.paint(blur(tipped, 0.6), colour)
+    # The yarn is darker where it bends down into the grooves, whatever its colour.
+    sheet.rgb *= (1 - rib * 0.35 * groove)[..., None]
 
     # The crocodile, embroidered on a badge of the same knit: raised thread, the satin stitch's lines running
     # across it at a slant, sheened where the thread catches the light.
@@ -484,7 +497,7 @@ def lacoste(name, height):
     sheet.height[:] = 0.0
     cloth = skin(sheet, f"{name}-knit", scan="Fabric036", scan_size=KNIT, scan_normal=0.35, scan_rough=0.3, sheen=0.7, specular=0.3)
     sheet.height = relief
-    return {"ceiling": False}, [displaced(name, sheet, edge, 0.1, cloth, step=3)]
+    return {"ceiling": False}, [displaced(name, sheet, edge, 0.1, cloth, step=steps(sheet))]
 
 
 def relief(name, height, x0, y0, w, h, z0, material):
@@ -839,8 +852,10 @@ def tagheuer(name, height):
 
 # A PRS Silver Sky's seafoam, as its satin body shows it in the light.
 SEAFOAM = "#70b9bd"
-# Lacoste's navy, for the polo's tipping.
+# Lacoste's navy, and the ecru and muted gold its collar is tipped in.
 NAVY = "#1d2a4a"
+ECRU = "#ece4d2"
+GOLD = "#c49a4a"
 # A Blackstar ID:Core in red: its tolex, a dusky wine.
 WINE = "#6e3438"
 
@@ -881,7 +896,7 @@ def tab(name):
     # A matte piece has no flat shine to keep from the room, so it is lit by the whole studio.
     if shot.pop("ceiling", True):
         ceiling(height)
-    STAGE.shoot(f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=3.0, **shot)
+    STAGE.shoot(f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=4.0, **shot)
 
 
 parser = argparse.ArgumentParser()
