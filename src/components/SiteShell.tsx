@@ -142,6 +142,8 @@ const pageTones: Tone[] = [
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
+// The hide's tile, in pixels: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are.
+const HIDE = 256
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
 // A tab's width on a wide screen and the room a render of its piece keeps round the tab, in rem: WIDTH
@@ -253,14 +255,7 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
             </clipPath>
           </defs>
         )}
-        {surface && !leather && (
-          <defs>
-            {/* The same tile, at the same size, as the panel the tab grows out of. */}
-            <pattern id={hide} patternUnits="userSpaceOnUse" width="256" height="256">
-              <image href={surface} width="256" height="256" />
-            </pattern>
-          </defs>
-        )}
+        {/* A tab cut from the page's own hide has the strip's hide laid under it (SiteShell's hideOver), so it is clear here. */}
         {paper && (
           <defs>
             {/* The same tile, at the same size, as the panel round the page. */}
@@ -269,7 +264,7 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
             </pattern>
           </defs>
         )}
-        <path d={path} fill={paper ? `url(#${hide})` : leather || surface ? `url(#${hide})` : undefined} />
+        <path d={path} fill={paper ? `url(#${hide})` : leather ? `url(#${hide})` : surface ? 'none' : undefined} />
       </svg>
       {leather && (
         // The leather is the mat's, so it is in the mat's light: the lamp's, or the dark. The mat
@@ -285,7 +280,7 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
             className="absolute inset-0 bg-no-repeat opacity-[var(--lit,0)] mix-blend-multiply"
             style={{ backgroundColor: 'var(--light-rim)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
           />
-          <div className="absolute inset-0 bg-[rgb(10_14_24)] opacity-[calc((1-var(--lit,0))*0.82)] mix-blend-multiply" />
+          <div className="absolute inset-0 bg-(--light-dark) opacity-[calc(1-var(--lit,0))] mix-blend-multiply" />
         </div>
       )}
       <img
@@ -349,6 +344,26 @@ export function SiteShell({ children }: SiteShellProps) {
 
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
+  // The tab of a strip whose page is a hide is cut from that hide: the same tile, anchored at the strip's top left as
+  // the panel's is, laid over the strip and out past its edge and masked to the tab, so the hide runs on unbroken. The
+  // mask is pinned to the layer's right edge, which is the tab's, however wide the strip is as it opens and folds.
+  const hideOver = (i: number): CSSProperties => {
+    const shape = tabShape(i + 1)
+    const { reach, path } = tabOutline(shape)
+    const w = shape.band + shape.protrude
+    const h = shape.height + 2 * reach
+    const outline = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-reach} ${w} ${h}" preserveAspectRatio="none"><path d="${path}"/></svg>`
+    return {
+      width: `calc(100% + ${shape.protrude}px)`,
+      backgroundImage: `url(${pageTones[i].surface})`,
+      backgroundSize: `${HIDE}px ${HIDE}px`,
+      backgroundPosition: '0 0',
+      maskImage: `url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
+      maskSize: `${w}px ${h}px`,
+      maskPosition: `right 0 top ${tabTops[i + 1] * metrics.rem - reach}px`,
+      maskRepeat: 'no-repeat',
+    }
+  }
   // Each page's edge is torn its own way, and runs straight where its tab grows out of it, so the tab's
   // eased joins meet a straight edge. Open, the mat is laid from the edge of the strip before it, and it cannot
   // be laid any wider without moving everything on it, so that strip's tear reaches out over the mat instead.
@@ -559,6 +574,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <div aria-hidden className="torn torn-wear" />
                 </>
               )}
+              {pageTones[i].surface && <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-2" style={hideOver(i)} />}
               <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={tones[i].paper} />
             </motion.section>
           )

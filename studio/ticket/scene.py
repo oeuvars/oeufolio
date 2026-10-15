@@ -4,7 +4,11 @@ repository root, after the art the pieces print (see ticket.py):
 
     blender -b --factory-startup -P studio/ticket/scene.py -- [open | punch | strip] [--scale 0.5] [--samples 64] [--proofs DIR]
 
-open is the open page: a stretch of the red hide, the ticket on it, the strip of stamps beside it and the Leica lying
+The hide is in the set, so it lights what lies on it and catches the shadows, but it is not in the photograph: the
+page lays the hide itself, one texture across the strip and its tab (leather.py's square), and the photograph over it
+holds only the pieces and their shadows.
+
+open is the open page: the ticket on the hide, the strip of stamps beside it and the Leica lying
 on its back at the top, over the ticket's corner. punch is the same set with the conductor's punch through the
 ticket, photographed only round the hole, for the page to lay over open once the address is copied. strip is the
 folded strip: a coil of the stamps running its length and the Leica lying across it.
@@ -67,15 +71,20 @@ def set_down(plate):
     """Everything for the plate on the stage. Returns the frame to photograph, in the plate's em."""
     if plate == "strip":
         x0, y0, w, h = STRIP
-        leather.hide(STAGE, x0 - 6, y0 - 6, w + 12, h + 12)
+        floor = leather.hide(STAGE, x0 - 6, y0 - 6, w + 12, h + 12)
         ticket.lay_stamps("coil", COIL_AT)
         leica.AT = STRIP_CAMERA_AT
     else:
         x0, y0, w, h = OPEN
-        leather.hide(STAGE, x0 - 6, y0 - 6, w + 12, h + 12)
+        floor = leather.hide(STAGE, x0 - 6, y0 - 6, w + 12, h + 12)
         ticket.lay_ticket(plate == "punch", TICKET_AT)
         ticket.lay_stamps("stamps", STAMPS_AT)
         leica.AT = CAMERA_AT
+    # The hide is the page's own, one texture across the strip and its tab: the photograph keeps only what lies on it and
+    # what that does to it, the shadows, which the hide catches. It still lights what is on it, red, from below. Through
+    # the punch's hole, too small to show where its grain falls, the hide is photographed.
+    if plate != "punch":
+        floor.is_shadow_catcher = True
     holder = leica.camera()
     leica.softbox(holder)
     key.add((x0 + w / 2, -(y0 + h / 2)))
