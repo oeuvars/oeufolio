@@ -18,7 +18,7 @@ export function CatLamp() {
       aria-label="Lamp"
       aria-pressed={lit}
       // The lamp stands up off the desk, so the camera shows its head beyond its feet: the box reaches up to it.
-      className={`${PROP} z-2 [--k:0.7] -mt-[8em] h-[26em] w-[27em] cursor-pointer touch-manipulation rounded-[5em]`}
+      className={`${PROP} z-2 [--k:0.7] -mt-[4em] h-[22em] w-[27em] cursor-pointer touch-manipulation rounded-[5em]`}
       onClick={lamp.pull}
     />
   )

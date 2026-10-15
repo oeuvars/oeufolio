@@ -70,14 +70,21 @@ PROPS = {
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real.
 LAYERS = {"reel": "recorder"}
+# Parts of a layer's shot that are round and stay put while the rest turns: they stay in the plate, shadow and all,
+# and only what turns is in the layer. A spinning hub's shading does not turn with it.
+STILL = {"reel": ("hub",)}
 STAND_INS = {"reel": ("reel",)}
 # The page shows an em of the plate at up to this many pixels.
 DENSITY = 32
 EXPOSURE = 0.1
 # The room is lit dimly from elsewhere, by this much of the light the leather was photographed in, and each bulb
 # in the cat lamp's head gives this many watts when it is on.
-ROOM = 0.08
-GLOW = 15000.0
+ROOM = 0.012
+# A window across the room, dusk outside: a big soft cool light low over the top left of the desk. It adds this
+# much of the leather's light to the mat, so in the dark every object still throws a soft shadow.
+WINDOW = 0.16
+WINDOW_FROM = (-0.5, 0.55, 0.67)
+GLOW = 28000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
 LAMP_EXPOSURE = 0.0
@@ -196,6 +203,8 @@ class Desk:
                     obj.parent = anchor
                 if was in kept["shadowless"]:
                     self.shadowless.append(obj)
+                if was in STILL.get(shot, ()):
+                    obj["still"] = True
                 if obj.type == "MESH" and not obj.visible_camera:
                     # A shot's own lights shine on its object alone. Its flags and cards, which only
                     # reflections see, would show in everything else on the desk, and the room is light enough.
@@ -261,7 +270,8 @@ class Desk:
         middle = middle_of(bpy.data.objects[f"{prop}-{shot}"], frame)
         k = PROPS[prop].get("k", 1.0)
         heights = [(obj.matrix_world @ Vector(corner)).z for obj in parts for corner in obj.bound_box]
-        z = (min(heights) + max(heights)) / 2
+        # What shows of a layer is its top; that height is where the lens sees it.
+        z = max(heights)
         eye = scene.camera.location
         grow = eye.z / (eye.z - z)
         seen = Vector((eye.x + (middle.x - eye.x) * grow, eye.y + (middle.y - eye.y) * grow, 0))
@@ -277,6 +287,20 @@ class Desk:
         local = (dx * math.cos(turn) + dy * math.sin(turn), -dx * math.sin(turn) + dy * math.cos(turn))
         return [round(local[0] / k, 4), round(local[1] / k, 4), round(grow, 4)]
 
+    def window(self, power):
+        """The window: a big soft disk far off over the top left of the desk, its light a little cool."""
+        source = bpy.data.lights.new("window", "AREA")
+        source.shape = "DISK"
+        source.size = 24.0
+        source.energy = power
+        source.color = (0.82, 0.88, 1.0)
+        light = self.stage.add("window", source)
+        middle = Vector((self.w / 2, -self.h / 2, 0))
+        towards = Vector(WINDOW_FROM).normalized()
+        light.location = middle + towards * 160.0
+        light.rotation_euler = (-towards).to_track_quat("-Z", "Y").to_euler()
+        return light
+
     def glow(self, power):
         """Switch the cat lamp: each bulb in its head gives this many watts, or none."""
         for obj in bpy.context.scene.objects:
@@ -288,6 +312,14 @@ def middle_of(anchor, frame):
     """Where the middle of a shot's frame is on the plate."""
     fx, fy, fw, fh = frame
     return anchor.matrix_world @ Vector((fx + fw / 2, -(fy + fh / 2), 0))
+
+
+def cast(objects, there):
+    """Whether objects are in the render at all. A layer the page turns is left out of the plate entirely: not
+    only unseen, but throwing no shadow and showing in no reflection, or the plate would keep a ghost of it that
+    stayed put while the layer turned over it. The layer brings its own shadow and reflections."""
+    for obj in objects:
+        obj.hide_render = not there
 
 
 def show(objects, seen):
@@ -388,7 +420,7 @@ def main():
     desk.camera(0, 0, desk.w, desk.h, density)
     scene = bpy.context.scene
     floor = next(obj for obj in scene.objects if obj.get("stand") == "mat")
-    layered = [obj for shot in LAYERS for obj in desk.parts.get(shot, [])]
+    layered = [obj for shot in LAYERS for obj in desk.parts.get(shot, []) if not obj.get("still")]
     everything = [obj for _, _, objects in desk.props.values() for obj in objects]
     raw = os.path.join(tempfile.gettempdir(), "desk.exr")
     if args.proofs:
@@ -401,15 +433,17 @@ def main():
         show(everything, False)
         leans = {}
         for shot, prop in LAYERS.items():
-            parts = desk.parts.get(shot)
+            parts = [obj for obj in desk.parts.get(shot, []) if not obj.get("still")]
             if not parts:
                 continue
             show(parts, True)
+            cast(parts, True)
             leans[shot] = desk.crop(shot, prop, parts)
             layer = stage._expose(raw)
             scene.render.use_border = False
             develop(layer, np.zeros(layer.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-{shot}{suffix}.avif"), args.proofs, f"{named}-{shot}{suffix}", exposure)
             show(parts, False)
+            cast(parts, False)
             print(f"LAYER {shot}{suffix} {layer.shape[1]}x{layer.shape[0]}")
         known = json.load(open(LEAN)) if os.path.exists(LEAN) else {}
         known.setdefault(args.plate, {}).update(leans)
@@ -444,6 +478,11 @@ def main():
     room.default_value = ROOM
     for obj, _ in desk.gear:
         obj.hide_render = True
+    dim = white_mat()
+    window = desk.window(1e5)
+    lit = white_mat()
+    window.data.energy = 1e5 * WINDOW * daylight.mean() / max(lit.mean() - dim.mean(), 1e-6)
+    print(f"WINDOW {window.data.energy:.0f}W")
     off = white_mat() / daylight
     print("DARK #" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(np.where(off <= 0.0031308, off * 12.92, 1.055 * off ** (1 / 2.4) - 0.055), 0, 1)))
 
@@ -451,6 +490,7 @@ def main():
         # The lamp off: the objects in the dim room, the mat unseen but lighting them from below and showing in
         # them.
         show(layered, False)
+        cast(layered, False)
         pixels = stage._expose(raw)
         print(f"OBJECTS {time.time() - started:.0f}s")
 

@@ -49,7 +49,8 @@ export function Recorder({ like }: RecorderProps) {
           {
             '--lean-wide': `translate(${LEAN.wide[0]}em, ${LEAN.wide[1]}em) scale(${LEAN.wide[2]})`,
             '--lean-tall': `translate(${LEAN.tall[0]}em, ${LEAN.tall[1]}em) scale(${LEAN.tall[2]})`,
-            transform: 'var(--lean)',
+            // The render is already turned as the recorder lies, so it is turned back by as much as the recorder is.
+            transform: 'var(--lean) rotate(calc(var(--r, 0) * -1deg))',
           } as React.CSSProperties
         }
       >

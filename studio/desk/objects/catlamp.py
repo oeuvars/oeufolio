@@ -24,15 +24,15 @@ from sdf import cone, ellipsoid, mesh, smin
 from solids import lathe
 
 # The box the cat stands in, in em, and where the cat's own origin lies in it.
-W, H = 27.0, 10.0
-ORIGIN = (2.6, 5.0)
+W, H = 27.0, 16.5
+ORIGIN = (2.6, 5.5)
 STEP = 0.09
 
 # The porcelain, and the underglaze colours: the cat's ginger, light and deep, the pink of its nose and the
 # insides of its ears, and the brown of the lines of its eyes and mouth.
 WHITE = "#f7ecdc"
-GINGER = "#e8994a"
-DEEP = "#c06a26"
+GINGER = "#d9823a"
+DEEP = "#a8521f"
 PINK = "#e8a7a0"
 LINE = "#2a1d16"
 AMBER = "#c98a2a"
@@ -47,10 +47,11 @@ NECK = 0.9
 SHADE_R = 3.0
 SHADE_T = 0.1
 
-# The tail rises from the rump and arches forward over the back, its tip over the cat's shoulders.
-TAIL = ((19.0, 0.0, 7.4), (23.6, 0.0, 13.6), (20.6, 0.0, 21.6), (14.5, 0.0, 20.0))
+# The tail rises from the rump and arches up and out over the cat's left side, so the lamp hangs beside it and lights
+# its flank and the desk, and the markings on its back are left in sight.
+TAIL = ((19.0, 0.0, 7.4), (23.0, -0.8, 13.6), (21.0, -6.0, 19.6), (15.5, -7.6, 17.6))
 TAIL_R = (1.55, 1.05)
-HEAD = (14.5, 0.0, 20.0)
+HEAD = (15.5, -7.6, 17.6)
 
 
 def tail_curve(samples=60):
@@ -102,7 +103,7 @@ def body(p):
     def ear(q):
         # A cup: a cone with its front hollowed, big and upright, set at the back corners of the crown.
         outer = cone(q, (4.6, 1.75, 5.1), (5.2, 2.75, 8.7), 1.6, 0.1)
-        inner = cone(q, (4.05, 1.75, 5.3), (4.75, 2.7, 8.5), 1.25, 0.04)
+        inner = cone(q, (4.3, 1.75, 5.5), (4.95, 2.72, 8.5), 1.15, 0.04)
         return np.maximum(outer, -inner)
 
     head = smin(head, mirrored(p, ear), 0.35)
@@ -170,8 +171,12 @@ def painted(verts, normals):
     front = soft(-normals[:, 0] - 0.2, 0, 0.3)
     # The cap: ginger over the crown, the backs and bases of the ears and the back of the head, coming down at
     # the temples to about the eyes.
-    near_head = soft(-np.linalg.norm((p - (4.4, 0, 4.4)) / (3.6, 3.9, 5.2), axis=1) + wobble(p, 7, 0.1), -1.0, 0.2)
-    cap = near_head * soft(z - (4.15 + 0.1 * np.abs(y)) + 0.35 * soft(x - 3.3, 0, 1.0) + wobble(p, 1, 0.2), 0, 0.3)
+    # The cap: the whole top and back of the head and the ears, ginger down to a line across the nape; in front it
+    # comes down to just above the eyes, and the cheeks, muzzle, chin and ruff are white.
+    nape = soft(6.7 - x + wobble(p, 7, 0.15), 0, 0.4)
+    brow = soft(z - (4.2 + 0.08 * np.abs(y)) + wobble(p, 1, 0.12), 0, 0.3)
+    crown = soft(x - 4.3, 0, 0.9) * soft(z - 2.9 + wobble(p, 8, 0.15), 0, 0.5)
+    cap = nape * np.maximum(brow, crown) * soft(np.abs(y) - 0.0 + 3.6, 0, 0.1) * soft(3.4 - np.abs(y), 0, 0.4)
     # The blaze: white up the face from the nose, as wide as between the eyes at the eyes, narrowing to a point
     # a little off the middle at the top of the forehead.
     up = np.clip((z - 3.6) / 2.2, 0, 1)
@@ -181,9 +186,19 @@ def painted(verts, normals):
     # The moustache: ginger on the cat's left upper lip, a smaller fleck on its right.
     ginger = np.maximum(ginger, front * soft(0.62 - np.linalg.norm((p - (0.85, -0.7, 2.55)) / (0.9, 1.0, 0.75), axis=1) + wobble(p, 3, 0.12), 0, 0.2))
     ginger = np.maximum(ginger, front * soft(0.3 - np.linalg.norm((p - (0.85, 0.55, 2.65)) / (0.9, 1.0, 0.8), axis=1), 0, 0.15))
-    # The back: two spots on the right side behind the shoulders, a bigger and a smaller.
-    for centre, radii, seed in (((10.2, 1.7, 7.0), (1.5, 1.15, 1.1), 4), ((8.5, 2.5, 6.0), (0.95, 0.85, 0.85), 5)):
-        ginger = np.maximum(ginger, soft(1 - np.linalg.norm((p - centre) / radii, axis=1) + wobble(p, seed, 0.25), 0, 0.45))
+    # The back, seen from above: four spots in two mirrored pairs either side of the spine. A small pair sits close
+    # together just behind the shoulders; a larger pair behind it splays outward like wings, each spot narrowing
+    # toward the spine and the head. Long fur feathers their edges.
+    top = soft(normals[:, 2] - 0.15, 0, 0.3)
+    for (cx, cy, rx, ry, lean), seed in (((8.5, 0.95, 0.95, 0.8, 0.3), 4), ((11.2, 1.85, 1.6, 1.3, 0.55), 5)):
+        for side in (1, -1):
+            dx, dy = x - cx, y - side * cy
+            c, s_ = np.cos(side * lean), np.sin(side * lean)
+            u, v = (c * dx + s_ * dy) / rx, (-s_ * dx + c * dy) / ry
+            # Narrower at the front and toward the spine: a teardrop.
+            u = u * (1 + 0.25 * np.clip(-u, 0, 1))
+            spot = soft(1 - np.hypot(u, v) + wobble(p, seed + (side > 0), 0.15, 0.7), 0.1, 0.2)
+            ginger = np.maximum(ginger, top * spot)
     # The tail, all of it, from its root.
     points, along = tail_curve(200)
     nearest = np.concatenate([np.argmin(((chunk[:, None, :] - points[None]) ** 2).sum(-1), axis=1) for chunk in np.array_split(p, max(1, len(p) // 20000))])
@@ -193,7 +208,7 @@ def painted(verts, normals):
     ear = soft(z - 5.4, 0, 0.3) * soft(np.abs(y) - 1.0, 0, 0.3) * soft(6.6 - x, 0, 0.3)
     cup = ear * soft(-normals[:, 0] - 0.15, 0, 0.3)
     ginger *= 1 - cup
-    pink = 0.7 * cup * soft(0.55 - np.abs(np.abs(y) - (1.85 + 0.3 * (z - 5.2))), 0, 0.3)
+    pink = 0.85 * cup * soft(0.7 - np.abs(np.abs(y) - (1.85 + 0.3 * (z - 5.2))), 0, 0.3)
     # The nose.
     pink = np.maximum(pink, front * soft(0.34 - np.linalg.norm((p - (0.6, 0, 3.2)) / (1, 1.25, 0.75), axis=1), 0, 0.08))
     # The eyes, open: amber, a dark pupil and a dark rim.
@@ -205,7 +220,7 @@ def painted(verts, normals):
         r = np.linalg.norm(q, axis=1)
         eye = front * (x > 0.6) * (x < 2.4) * (np.abs(y) < 2.3)
         amber = np.maximum(amber, eye * soft(1.0 - r, 0, 0.12))
-        dark = np.maximum(dark, eye * soft(0.14 - np.abs(r - 1.0), 0, 0.1))
+        dark = np.maximum(dark, 0.45 * eye * soft(0.05 - np.abs(r - 1.0), 0, 0.08))
         pupil = np.linalg.norm((p - c)[:, 1:] / np.array([0.17, 0.36]), axis=1)
         dark = np.maximum(dark, eye * soft(1.0 - pupil, 0, 0.2))
     ginger *= 1 - amber
@@ -360,7 +375,7 @@ def shade(stage):
 
 def build(stage):
     ox, oy = ORIGIN
-    lo, hi = (-2.4, -4.8, -0.2), (25.5, 4.8, 22.6)
+    lo, hi = (-2.4, -10.0, -0.2), (25.5, 4.8, 22.6)
     cat, verts = mesh(stage, "cat", body, lo, hi, STEP, porcelain())
     normals = np.zeros_like(verts)
     for e, column in zip(np.eye(3) * 0.01, range(3)):
