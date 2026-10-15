@@ -607,7 +607,7 @@ export function SiteShell({ children }: SiteShellProps) {
         })}
 
         {!mobile && <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />}
-        {!mobile && <Resume resume={profile.resume} />}
+        {!mobile && <Resume resume={profile.resume} room={metrics.height / metrics.rem} />}
       </motion.main>
     </MotionConfig>
   )

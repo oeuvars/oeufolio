@@ -91,20 +91,25 @@ HOLE_DOWN = 0.62
 MANILA = "#d8bd86"
 
 # Cats off the signal post's photographs (studio/signal/art/cats, credited there), printed on photo paper and cut out
-# with scissors, lying down the desk below the tag, one half under the last folder: the cut-out's name, where its middle lies (em across the frame, em
-# down from the top of the link's box), how long it is along its picture's width, and how far it is turned clockwise.
+# with scissors. Each is shot alone on the desk, lit as the roll is, and the page lays them: the first on the bit of
+# desk above the last folder's tab, which every window shows, at ABOVE em down the page; the rest spread down the desk
+# under the tag, as many as the window has room for, in this order. The cut-out's name, where its middle lies across
+# the frame in em, how long it is along its picture's width, and how far it is turned clockwise.
 CATS_ART = os.path.join(ROOT, "studio", "signal", "art", "cats")
 CATS = (
-    ("doze", 2.15, 26.4, 2.5, 92.0),
-    ("nap", 1.3, 32.8, 4.4, -85.0),
-    ("walk", 2.15, 39.6, 2.2, 7.0),
-    ("ledge", 2.1, 46.8, 2.0, -5.0),
+    ("ledge", 2.15, 1.6, -5.0),
+    ("walk", 2.1, 1.9, 7.0),
+    ("doze", 2.15, 1.9, 92.0),
+    ("nap", 1.3, 3.6, -85.0),
+    ("bw-stroll", 2.15, 1.9, -4.0),
+    ("roof", 2.1, 1.5, 6.0),
 )
+ABOVE = 2.3
+CAT_BLEED = 0.45
+CAT_DESK = "#2a1d16"  # the walnut where the cats lie, which lights them from below
+CAT_LIFT = 0.35  # stops: on the desk the roll's window lights them as well, which a cat shot alone has not got
 PHOTO = "#f6f5f1"  # the photo paper's white
 SNIP = 0.025  # the paper left round a cat by the scissors
-# The second key lamp, the same as the first, aimed this far down the link's box, so the desk is lit as far as the
-# cats lie.
-LOW_KEY = 40.0
 STAMP = "#d0232b"
 
 
@@ -425,12 +430,19 @@ def tag(stage):
     return obj
 
 
+def cat_size(name, length, turn):
+    """The cut-out's width and height, and the width and height of the box it covers turned."""
+    rows, cols = pixels_of(os.path.join(CATS_ART, f"{name}-cut.png")).shape[:2]
+    w, h = length, length * rows / cols
+    a = math.radians(turn)
+    return w, h, abs(w * math.cos(a)) + abs(h * math.sin(a)), abs(w * math.sin(a)) + abs(h * math.cos(a))
+
+
 def cat(stage, name, cx, cy, length, turn):
     """A cat printed on photo paper and cut round with scissors: a hairline of the paper's white shows past its fur,
     the print is a satin, and the cut-out has curled a little since."""
     image = pixels_of(os.path.join(CATS_ART, f"{name}-cut.png")).astype(np.float64)
-    rows, cols = image.shape[:2]
-    w, h = length, length * rows / cols
+    w, h, _, _ = cat_size(name, length, turn)
     sheet = Sheet(w, h, PHOTO, rough=0.32, density=3)
     sheet.art(os.path.join(CATS_ART, f"{name}-cut.png"), 0, 0, w, h)
     cover = fit(image[..., 3:], *sheet.height.shape)[..., 0]
@@ -580,19 +592,35 @@ def main():
     parser.add_argument("--proofs")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
 
-    stage_module.MAT = DESK
     out = OUT if args.scale == 1 and not args.proofs else (args.proofs or "/tmp")
     stage = Stage(out, args.proofs, scale=args.scale, samples=args.samples)
+    key_light.FROM, key_light.SIZE = KEY_FROM, KEY_SIZE
+
+    stage_module.MAT = DESK
     stage.clear()
     desk(stage)
     pieces = [roll(stage), *twine(stage), tag(stage)]
-    pieces += [cat(stage, *spec) for spec in CATS]
-    key_light.FROM, key_light.SIZE = KEY_FROM, KEY_SIZE
     key_light.add((END / 2, -HEIGHT / 2))
-    key_light.add((END / 2, -LOW_KEY))
     glare(pieces)
     # The desk is in the photograph, so the shadows and reflections are its own: no shadow pass and no stand mat.
     stage.shoot("resume", (0, -TOP, END, TALL), bleed=BLEED, mat=False, lens=False, eye=EYE, room=ROOM, exposure=0.05 - 2.5)
+
+    # Each cat alone, on the stand's mat in the walnut's colour, which keeps only its shadow, under the same lamp.
+    stage_module.MAT = CAT_DESK
+    stage_module.SHADOW = linear("#120c09")
+    laid = []
+    for name, across, length, turn in CATS:
+        _, _, bw, bh = cat_size(name, length, turn)
+        stage.clear()
+        cat(stage, name, bw / 2, bh / 2, length, turn)
+        key_light.add((bw / 2, -bh / 2))
+        stage.shoot(f"resume-cat-{name}", (0, 0, bw, bh), bleed=CAT_BLEED, shadow=0.9, room=ROOM, exposure=CAT_LIFT + 0.05 - 2.5)
+        laid.append({"src": f"/objects/resume-cat-{name}.avif", "x": across, "size": [round(bw, 3), round(bh, 3)]})
+    if out == OUT:
+        FRAME["cats"] = {"above": ABOVE, "bleed": CAT_BLEED, "laid": laid}
+        with open(os.path.join(ROOT, "src", "components", "resume.json"), "w") as file:
+            json.dump(FRAME, file)
+            file.write("\n")
 
 
 main()
