@@ -49,6 +49,9 @@ PANEL = "#651415"  # the red leather the ticket lies on (leather.py), which ligh
 CARD = "#f6f5f0"  # bright white uncoated card
 # The four riso inks, in the order the press laid them down, and how far each pass landed off true, in em.
 INKS = (("yellow", "#ffd23f", (0.035, -0.02)), ("teal", "#0f8b8d", (-0.025, 0.03)), ("red", "#ff4a3d", (0.02, 0.025)), ("k", "#121212", (0.0, 0.0)))
+MM = 15 / 60  # em to the millimetre: the ticket is about 60 mm across its 15 em
+RIDGE = 0.3  # mm the fold stands up, pressed out again
+EAR = 1.5  # mm the dog-ear's tip stands off the table
 RIBBON = "#24201d"  # a typewriter ribbon's black
 GRIME = "#7a7770"
 ART = os.path.join(HERE, "art")
@@ -229,8 +232,12 @@ def carried(sheet, printed, seed, scale=1.0, folded=True):
 
 
 def warp(base):
-    """How the old ticket lies: never flat, its two halves rising a little either side of the fold, and the
-    dog-eared corner standing up off the page."""
+    """How the carried ticket lies, as photographs of carried tickets lying on a table show it: flat. Card folded and
+    pressed out again keeps a low ridge along the fold, and a dog-ear, put back, stands its tip up off the table; the
+    rest lies down. Photographed tickets show no more lift than a millimetre or two, at a corner or along a curled
+    edge (the Surya Cinema ticket, North Lakhimpur, on Wikimedia Commons, lifts about that much along its left edge,
+    by the narrow shadow it throws on the ruled paper under it). The ticket is about 60 mm across its 15 em, so a
+    millimetre is MM em."""
     (fx0, fy0), (fx1, fy1) = TICKET["fold"]
     fl = math.hypot(fx1 - fx0, fy1 - fy0)
     (ex0, ey0), (ex1, ey1) = TICKET["ear"]
@@ -238,8 +245,9 @@ def warp(base):
 
     def z(x, y):
         fold = ((x - fx0) * (fy1 - fy0) - (y - fy0) * (fx1 - fx0)) / fl
-        ear = ((x - ex0) * (ey1 - ey0) - (y - ey0) * (ex1 - ex0)) / el
-        return base(x, y) + 0.03 * np.sqrt(fold * fold + 0.1) + 0.28 * np.clip(-ear, 0, None) ** 1.3
+        ear = np.clip(-((x - ex0) * (ey1 - ey0) - (y - ey0) * (ex1 - ex0)) / el, 0, None)
+        reach = 1.45  # em from the dog-ear's crease to its tip
+        return base(x, y) + RIDGE * MM * np.exp(-((fold / 0.5) ** 2)) + EAR * MM * (ear / reach) ** 1.3
 
     return z
 
@@ -251,10 +259,11 @@ def card(w, h, seed):
     return sheet
 
 
-def build(sheet, name, warp):
+def build(sheet, name, warp, at=(0.0, 0.0)):
     return sheet.build(
         STAGE,
         name,
+        at=at,
         thickness=0.05,
         warp=warp,
         scan="Paper001",
@@ -284,7 +293,8 @@ def typed(sheet):
     return struck
 
 
-def ticket(punched):
+def lay_ticket(punched, at=(0.0, 0.0)):
+    """The ticket, built and laid on the stage with its top left at at, in page em."""
     sheet = card(W, H, 3)
     printed = riso(sheet, {name: plate(sheet, name, "river") for name, _, _ in INKS}, 5)
     printed = np.maximum(printed, typed(sheet))
@@ -294,12 +304,16 @@ def ticket(punched):
     die(sheet, 0, 0, 1)
     carried(sheet, printed, 21)
     sheet.soften(0.06, 0.02)
-    build(sheet, "ticket", warp(drift(W, H, 0.1, 11)))
+    build(sheet, "ticket", warp(drift(W, H, 0.3 * MM, 11)), at)
+
+
+def ticket(punched):
+    lay_ticket(punched)
     key_light.add((W / 2, -H / 2))
     return STAGE.shoot("ticket-punched" if punched else "ticket", (0, 0, W, H), bleed=BLEED, shadow=0.85, sharp=SHARP, exposure=EXPOSURE + KEYED)
 
 
-def stamps(key="stamps"):
+def lay_stamps(key="stamps", at=(0.0, 0.0)):
     """The strip of stamps beside the ticket: three Indian stamps still joined, each its own picture of the same river,
     printed in the ticket's four inks, with the country and the value along the foot (stamps.py's plates). The
     perforations run between them, whole round holes, and round the strip's edge, where it was torn off the sheet,
@@ -338,29 +352,42 @@ def stamps(key="stamps"):
             sheet.punch(disc(sheet.X, sheet.Y, x, k * sh / down, radius))
     carried(sheet, printed, 41 if not coil else 47, scale=0.4, folded=False)
     sheet.soften(0.02, 0.008)
-    wave = drift(w, h, 0.1 if not coil else 0.25, 43)
-    name = f"ticket-{key}"
-    build(sheet, name, lambda x, y: wave(x, y) + 0.04 * ((x - w / 2) / w) ** 2)
+    # Gummed paper curls a little across, toward its gum; a coil, wound, a little more, in waves along it.
+    wave = drift(w, h, (0.15 if not coil else 0.3) * MM, 43)
+    build(sheet, f"ticket-{key}", lambda x, y: wave(x, y) + 0.4 * MM * ((x - w / 2) / (w / 2)) ** 2, at)
+    return w, h
+
+
+def stamps(key="stamps"):
+    w, h = lay_stamps(key)
     key_light.add((w / 2, -h / 2))
-    return STAGE.shoot(name, (0, 0, w, h), bleed=1.6, shadow=0.85, sharp=SHARP if not coil else 1.0, exposure=EXPOSURE + KEYED)
+    return STAGE.shoot(f"ticket-{key}", (0, 0, w, h), bleed=1.6, shadow=0.85, sharp=SHARP if key != "coil" else 1.0, exposure=EXPOSURE + KEYED)
 
 
 SHOTS = {"ticket": lambda: ticket(False), "punched": lambda: ticket(True), "stamps": stamps, "coil": lambda: stamps("coil")}
+STAGE = None  # the stage the builders lay their sheets on: main's, or a scene's (scene.py)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("shots", nargs="*")
-parser.add_argument("--scale", type=float, default=1.0)
-parser.add_argument("--samples", type=int, default=160)
-parser.add_argument("--proofs")
-args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
-unknown = [name for name in args.shots if name not in SHOTS]
-if unknown:
-    sys.exit(f"Unknown shots: {', '.join(unknown)}. Known: {', '.join(SHOTS)}")
-os.makedirs(OUT, exist_ok=True)
-if args.proofs:
-    os.makedirs(args.proofs, exist_ok=True)
-stage_module.MAT = PANEL
-STAGE = Stage(OUT, args.proofs, scale=args.scale, samples=args.samples)
-for name in args.shots or SHOTS:
-    STAGE.clear()
-    SHOTS[name]()
+
+def main():
+    global STAGE
+    parser = argparse.ArgumentParser()
+    parser.add_argument("shots", nargs="*")
+    parser.add_argument("--scale", type=float, default=1.0)
+    parser.add_argument("--samples", type=int, default=160)
+    parser.add_argument("--proofs")
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
+    unknown = [name for name in args.shots if name not in SHOTS]
+    if unknown:
+        sys.exit(f"Unknown shots: {', '.join(unknown)}. Known: {', '.join(SHOTS)}")
+    os.makedirs(OUT, exist_ok=True)
+    if args.proofs:
+        os.makedirs(args.proofs, exist_ok=True)
+    stage_module.MAT = PANEL
+    STAGE = Stage(OUT, args.proofs, scale=args.scale, samples=args.samples)
+    for name in args.shots or SHOTS:
+        STAGE.clear()
+        SHOTS[name]()
+
+
+if __name__ == "__main__":
+    main()

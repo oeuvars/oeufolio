@@ -15,19 +15,16 @@ the focusing ring knurled, the black front ring engraved and filled white, and i
 coated, so it throws back the studio in violet and amber. A leather strap is on the lug at the far end, with its
 keeper, and runs off the leather.
 
-The model is scaled to the props' scale (PROP, em to the millimetre, the stamps' scale too), turned and laid where
-the page wants it in the spread's em, and the box the photograph covers is written to src/components/ticket/
-camera.json for the page to place it by. Writes public/objects/ticket-camera.avif. Set OEUSUME if that checkout is
+The model is scaled to the props' scale (PROP, em to the millimetre), turned and laid at AT, in the em of the scene
+it is put down in (scene.py, which photographs it with everything else on the leather). Run on its own, it writes
+public/objects/ticket-camera.avif, the camera alone on the stand, for a look at it. Set OEUSUME if that checkout is
 not in ~/Documents/oeusume.
 """
 
 import argparse
-import json
 import math
 import os
-import subprocess
 import sys
-import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -46,7 +43,6 @@ from solids import finish, lathe, principled, prism, rect, spun, torus, worn  # 
 from stage import Stage  # noqa: E402
 
 OUT = os.path.join(ROOT, "public", "objects")
-PLACE = os.path.join(ROOT, "src", "components", "ticket", "camera.json")
 PANEL = "#651415"
 PROP = 0.068  # em to the millimetre: the props' scale
 AT = (3.7, 1.7)  # where the middle of the body lies, in the spread's em
@@ -416,93 +412,75 @@ def bounds():
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def shadow_photograph():
-    """The camera's shadow as the light really leaves it: the stand's mat, its leather red, photographed with the camera
-    on it, the camera itself kept out of the picture but still standing in the light and throwing it back, and again
-    with the camera taken away. One over the other, pixel by pixel, is how much of the light the camera takes from each
-    point of the leather, and what it puts back: dark and crisp where the body meets it, the penumbra spreading as the
-    lamp is wide, the room's light filling it in from the other side, and the chrome's reflected light, all as
-    rendered. Written as public/objects/ticket-camera-shadow.avif over the same frame as the camera, for the page to
-    multiply into the leather under it."""
-    scene = bpy.context.scene
-    meshes = [obj for obj in scene.objects if obj.type in ("MESH", "CURVE", "FONT") and not obj.get("stand")]
-    for obj in scene.objects:
-        if obj.get("stand") == "mat":
-            obj.visible_camera = True
-    for obj in meshes:
-        obj.visible_camera = False
-    raw = os.path.join(tempfile.gettempdir(), "studio-camera-shadow.exr")
-    samples = max(256, STAGE.samples)
-    with_camera = STAGE._expose(raw, round(100 * STAGE.scale), samples=samples)[..., :3]
-    for obj in meshes:
-        obj.hide_render = True
-    without = STAGE._expose(raw, round(100 * STAGE.scale), samples=samples)[..., :3]
-    ratio = np.clip(with_camera / np.maximum(without, 1e-6), 0, 1)
-    # The page multiplies in its own colour space, not in light: this is the ratio of the light as the screen encodes it.
-    ratio = ratio ** (1 / 2.2)
-    rows, cols = ratio.shape[:2]
-    encoded = np.dstack((ratio, np.ones((rows, cols)))).astype(np.float32)
-    lossless = os.path.join(tempfile.gettempdir(), "studio-ticket-camera-shadow.png")
-    STAGE._save("ticket-camera-shadow", encoded, lossless, "PNG")
-    encoder = os.path.join(OEUSUME, "studio", "encode.py")
-    subprocess.run(["uv", "run", "--quiet", encoder, lossless, os.path.join(OUT, "ticket-camera-shadow.avif")], check=True)
-    os.remove(lossless)
-    print("SHADOW", cols, "x", rows, "darkest", float(ratio.min()))
+def softbox(holder):
+    """Over the camera hangs a ring softbox round the stand's lens, as a camera is lit for its photograph: chrome and
+    glass show only what is round them, and here that is one broad even light all round, with the dark of the stand's
+    lens in its middle, right over the lens below, so the lens looks back at it as a dark eye ringed with light. Only
+    the camera sees it, and only in what it reflects: it lights nothing else, and casts nothing."""
+    parts = bpy.data.collections.new("leica-parts")
+    stack = [holder]
+    while stack:
+        obj = stack.pop()
+        stack.extend(obj.children)
+        if obj.type in ("MESH", "CURVE", "FONT"):
+            parts.objects.link(obj)
+    lens_at = bpy.data.objects["element"].matrix_world.translation
+    cast = 1 / stage_module.GAIN
+    for name, inner, outer, z, glow in (("softbox", 9.0, 34.0, 40.0, 0.45), ("stand-lens", 0.0, 9.0, 40.05, 0.0)):
+        panel_mesh = bpy.data.meshes.new(name)
+        bm = bmesh.new()
+        angles = np.linspace(0, 2 * math.pi, 96, endpoint=False)
+        if inner > 0:
+            near = [bm.verts.new((lens_at.x + inner * math.cos(t), lens_at.y + inner * math.sin(t), z)) for t in angles]
+            far = [bm.verts.new((lens_at.x + outer * math.cos(t), lens_at.y + outer * math.sin(t), z)) for t in angles]
+            for i in range(96):
+                j = (i + 1) % 96
+                bm.faces.new((near[i], far[i], far[j], near[j]))
+        else:
+            bm.faces.new([bm.verts.new((lens_at.x + outer * math.cos(t), lens_at.y + outer * math.sin(t), z)) for t in angles])
+        bm.to_mesh(panel_mesh)
+        bm.free()
+        light = bpy.data.materials.new(name)
+        light.use_nodes = True
+        nodes = light.node_tree.nodes
+        nodes.clear()
+        emit = nodes.new("ShaderNodeEmission")
+        emit.inputs["Color"].default_value = (*(cast / cast.max()), 1.0)
+        emit.inputs["Strength"].default_value = glow
+        out = nodes.new("ShaderNodeOutputMaterial")
+        light.node_tree.links.new(emit.outputs[0], out.inputs["Surface"])
+        panel_mesh.materials.append(light)
+        panel = STAGE.add(name, panel_mesh)
+        panel["stand"] = "shadowless"
+        panel.visible_camera = False
+        panel.visible_shadow = False
+        panel.visible_diffuse = False
+        panel.visible_volume_scatter = False
+        panel.light_linking.receiver_collection = parts
+        panel.light_linking.blocker_collection = parts
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--scale", type=float, default=1.0)
-parser.add_argument("--samples", type=int, default=160)
-parser.add_argument("--proofs")
-args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
-if args.proofs:
-    os.makedirs(args.proofs, exist_ok=True)
-stage_module.MAT = PANEL
-STAGE = Stage(OUT, args.proofs, scale=args.scale, samples=args.samples)
-STAGE.clear()
-camera()
-x0, y0, x1, y1 = bounds()
-BLEED = 4.0  # room for the key light's shadow to fade out entirely before the frame's edge
-# The box the photograph covers, and where the middle of the body lies, both in the spread's em.
-json.dump({"box": [round(v, 4) for v in (x0 - BLEED, y0 - BLEED, x1 - x0 + 2 * BLEED, y1 - y0 + 2 * BLEED)], "at": list(AT)}, open(PLACE, "w"))
-# Over it hangs a ring softbox round the stand's lens, as a camera is lit for its photograph: chrome and glass show
-# only what is round them, and here that is one broad even light all round, with the dark of the stand's lens in
-# its middle, right over the lens below, so the lens looks back at it as a dark eye ringed with light. Only what
-# reflects or refracts sees it: it lights nothing and casts nothing.
-lens_at = bpy.data.objects["element"].matrix_world.translation
-cast = 1 / stage_module.GAIN
-for name, inner, outer, z, glow in (("softbox", 9.0, 34.0, 40.0, 0.45), ("stand-lens", 0.0, 9.0, 40.05, 0.0)):
-    panel_mesh = bpy.data.meshes.new(name)
-    bm = bmesh.new()
-    angles = np.linspace(0, 2 * math.pi, 96, endpoint=False)
-    if inner > 0:
-        near = [bm.verts.new((lens_at.x + inner * math.cos(t), lens_at.y + inner * math.sin(t), z)) for t in angles]
-        far = [bm.verts.new((lens_at.x + outer * math.cos(t), lens_at.y + outer * math.sin(t), z)) for t in angles]
-        for i in range(96):
-            j = (i + 1) % 96
-            bm.faces.new((near[i], far[i], far[j], near[j]))
-    else:
-        bm.faces.new([bm.verts.new((lens_at.x + outer * math.cos(t), lens_at.y + outer * math.sin(t), z)) for t in angles])
-    bm.to_mesh(panel_mesh)
-    bm.free()
-    light = bpy.data.materials.new(name)
-    light.use_nodes = True
-    nodes = light.node_tree.nodes
-    nodes.clear()
-    emit = nodes.new("ShaderNodeEmission")
-    emit.inputs["Color"].default_value = (*(cast / cast.max()), 1.0)
-    emit.inputs["Strength"].default_value = glow
-    out = nodes.new("ShaderNodeOutputMaterial")
-    light.node_tree.links.new(emit.outputs[0], out.inputs["Surface"])
-    panel_mesh.materials.append(light)
-    panel = STAGE.add(name, panel_mesh)
-    panel["stand"] = "shadowless"
-    panel.visible_camera = False
-    panel.visible_shadow = False
-    panel.visible_diffuse = False
-    panel.visible_volume_scatter = False
-key.add(((x0 + x1) / 2, -(y0 + y1) / 2))
-# The camera on its own, without the stand's shadow pass: that pass keeps only how dark the shadow is, blurred, and the
-# page would paint it in one flat colour. The shadow is photographed properly below.
-STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=BLEED, shadow=0, exposure=EXPOSURE, lens=False, sharp=2.0)
-shadow_photograph()
+def main():
+    """The camera on its own, on the stand, for a look at it."""
+    global STAGE
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scale", type=float, default=1.0)
+    parser.add_argument("--samples", type=int, default=160)
+    parser.add_argument("--proofs")
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
+    if args.proofs:
+        os.makedirs(args.proofs, exist_ok=True)
+    stage_module.MAT = PANEL
+    STAGE = Stage(OUT, args.proofs, scale=args.scale, samples=args.samples)
+    STAGE.clear()
+    holder = camera()
+    x0, y0, x1, y1 = bounds()
+    softbox(holder)
+    key.add(((x0 + x1) / 2, -(y0 + y1) / 2))
+    STAGE.shoot("ticket-camera", (x0, y0, x1 - x0, y1 - y0), bleed=4.0, shadow=0.9, exposure=EXPOSURE, lens=False, sharp=2.0)
+
+
+STAGE = None  # the stage the camera is built on: main's, or a scene's (scene.py)
+
+if __name__ == "__main__":
+    main()

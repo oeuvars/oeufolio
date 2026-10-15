@@ -29,6 +29,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
 sys.path.insert(0, os.path.join(OEUSUME, "studio"))
 
+import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 
 import stage as stage_module  # noqa: E402
@@ -40,12 +41,12 @@ OUT = os.path.join(ROOT, "public", "objects")
 TILE = 8.0  # the square the page repeats, in em
 PEBBLE = 0.13  # the mean distance between pebbles, in em: at the ticket's scale, about two thirds of a millimetre
 DEPTH = 0.028  # how far a pebble's crown stands above the crease, in em
-DYE = "#e0080f"  # the red on the crowns, as the dye reflects it: a strong red that reflects almost no green or blue
-POOLED = "#500006"  # the red the dye dries to in the creases
-# The hide is lit dimly, as a dark red is: under the stand's usual light the white the finish reflects would grey the
-# red. Two stops down, the photograph comes out the deep crimson of the colour reference, about #651415.
+DYE = "#6a0203"  # the red on the crowns, as the dye reflects it: a deep crimson that reflects almost no green or blue
+POOLED = "#210001"  # the red the dye dries to in the creases
+# The square the page repeats is lit by the stand's room alone, a fifth of the light the contact scene puts on the
+# hide (scene.py: the room and the key lamp, four times as bright), so it is exposed that much more to match it.
 QUALITY = 86
-EXPOSURE = -2.05
+EXPOSURE = 0.32
 
 
 def smooth(lo, hi, x):
@@ -108,46 +109,77 @@ def grain(n):
     return height, crease, pits, long
 
 
-def leather(stage, proof=None):
+def skin(stage, name, proof=None):
+    """One square of the hide, TILE across, laid on the stage with its top left at the origin, its texture made to
+    repeat: the square meets itself on every side, so a stretch of the hide is this square scaled up, its texture
+    repeated across it. Returns the object."""
     sheet = Sheet(TILE * 3, TILE * 3, DYE, rough=0.5, density=2)
     rows, cols = sheet.height.shape
     n = rows // 3
     height, crease, pits, long = grain(n)
-    tile = lambda a: np.tile(a, (3, 3))[:rows, :cols]  # noqa: E731
-    height, crease, pits, long = tile(height), tile(crease), tile(pits), tile(long)
     # Colour: the dye on the crowns, darker where it pooled, and a faint unevenness, as no hide takes dye evenly.
-    mottle = tile(cloud((n, n), 21, falloff=1.2))
+    mottle = cloud((n, n), 21, falloff=1.2)
     top = linear(DYE) * (1 + 0.05 * mottle)[..., None]
     pool = linear(POOLED)
     dark = np.clip(0.85 * blur(crease, 0.6) + 0.3 * long + 0.4 * pits, 0, 1)[..., None]
-    sheet.rgb = top * (1 - dark) + pool * dark
-    sheet.height = height
+    sheet = Sheet(TILE, TILE, DYE, rough=0.5, density=2)
+    sheet.rgb = (top * (1 - dark) + pool * dark)[: sheet.height.shape[0], : sheet.height.shape[1]]
+    sheet.height = height[: sheet.height.shape[0], : sheet.height.shape[1]]
     # The finish: a satin wax, worn a little smoother on the crowns, matte in the creases and pores. No sheen: that is
     # the fuzz of velvet, and it greys the red.
-    sheet.rough = 0.5 + 0.3 * np.clip(crease + long + pits, 0, 1)
-    sheet.coat = 0.0 * crease
+    sheet.rough = (0.5 + 0.3 * np.clip(crease + long + pits, 0, 1))[: sheet.height.shape[0], : sheet.height.shape[1]]
+    sheet.coat = 0.0 * sheet.rough
     if proof:
-        np.save(os.path.join(proof, "leather-albedo.npy"), sheet.rgb[:n, :n].astype(np.float32))
-    # The sheet is three squares across and the frame the middle one, so the square meets itself on every side. The
-    # lens is left out: it leans the light across the frame, which would show as a step where two squares meet.
+        np.save(os.path.join(proof, "leather-albedo.npy"), sheet.rgb.astype(np.float32))
     # The scan of real hide only varies the shine: its relief is a coarser grain than this one, and would show through.
-    sheet.build(stage, "leather", thickness=0.1, scan="Leather037", scan_size=TILE / 4, scan_normal=0.0, scan_rough=0.2, specular=0.5, at=(-TILE, -TILE))
+    sheet.build(stage, name, thickness=0.0, scan="Leather037", scan_size=TILE / 4, scan_normal=0.0, scan_rough=0.2, specular=0.5)
+    obj = bpy.data.objects[name]
+    for node in obj.data.materials[0].node_tree.nodes:
+        if node.type == "TEX_IMAGE" and node.image and node.image.packed_file:
+            node.extension = "REPEAT"
+    return obj
+
+
+def hide(stage, x0, y0, w, h, proof=None):
+    """A stretch of the hide w by h em with its top left at (x0, y0) on the page, lying at the height of the mat,
+    for something to lie on: the square, scaled up, its texture repeating a square at a time."""
+    obj = skin(stage, "hide", proof)
+    across, down = w / TILE, h / TILE
+    mesh = obj.data
+    uv = mesh.uv_layers.active.data
+    for loop in uv:
+        loop.uv = (loop.uv[0] * across, 1 - (1 - loop.uv[1]) * down)
+    obj.scale = (across, down, 1)
+    obj.location = (x0, -y0, 0)
+    return obj
+
+
+def leather(stage, proof=None):
+    """The square the page repeats under the contact strip: three squares across, the frame the middle one, so the
+    square meets itself on every side. The lens is left out: it leans the light across the frame, which would show
+    as a step where two squares meet."""
+    hide(stage, -TILE, -TILE, 3 * TILE, 3 * TILE, proof)
     stage.shoot("leather", (0, 0, TILE, TILE), exposure=EXPOSURE, lens=False, sharp=2.0)
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--scale", type=float, default=1.0)
-parser.add_argument("--samples", type=int, default=96)
-parser.add_argument("--proof")
-args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
-stage_module.MAT = DYE
-STAGE = Stage(OUT, None, scale=args.scale, samples=args.samples)
-STAGE.clear()
-leather(STAGE, args.proof)
-# Again, smaller: the stage encodes every shot as it does the objects, near lossless.
-script = f"""
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scale", type=float, default=1.0)
+    parser.add_argument("--samples", type=int, default=96)
+    parser.add_argument("--proof")
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
+    stage_module.MAT = DYE
+    stage = Stage(OUT, None, scale=args.scale, samples=args.samples)
+    stage.clear()
+    leather(stage, args.proof)
+    # Again, smaller: the stage encodes every shot as it does the objects, near lossless.
+    script = f"""
 from PIL import Image
 path = {os.path.join(OUT, "leather.avif")!r}
 Image.open(path).convert("RGB").save(path, quality={QUALITY}, subsampling="4:2:0", speed=2)
 """
-subprocess.run(["uv", "run", "--quiet", "--with", "pillow>=11.3", "python", "-I", "-c", script], check=True)
+    subprocess.run(["uv", "run", "--quiet", "--with", "pillow>=11.3", "python", "-I", "-c", script], check=True)
+
+
+if __name__ == "__main__":
+    main()
