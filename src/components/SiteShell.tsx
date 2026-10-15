@@ -558,7 +558,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   <div className={PAGE} style={underTab(i)} inert={!open} aria-hidden={!open || undefined}>
                     <div className="grid flex-1 content-center py-[4vh]">
                       {open && children}
-                      {tones[i].fills ? <Desk /> : <Ticket open={open} folded={folded(i)} />}
+                      {tones[i].fills ? <Desk /> : <Ticket open={open} />}
                     </div>
                   </div>
                 ) : open ? (

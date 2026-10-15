@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
 import { profile } from '../../content'
 import { slide } from '../house'
@@ -26,43 +26,19 @@ const over = (x: number, y: number, w: number, h: number) => ({ left: `${x}em`, 
  * leather with a strip of Indian stamps beside it and a Leica lying on its back above them, all under one lamp. What
  * is printed on the ticket is laid over the photograph in the same type and left clear, so the words can be
  * selected and followed where they are printed. The spread is as tall as the page lets it be and never wider than
- * the page. It is laid once and stays where it lies, the strip uncovering it as it opens (SiteShell). Copying the email address has the conductor punch the
- * ticket: a photograph of the same set with the hole through it, of the hole alone, is laid over the first.
+ * the page. It is laid once and stays where it lies, the strip uncovering it as it opens (SiteShell). Copying the
+ * email address has the conductor punch the ticket: a photograph of the same set with the hole through it, of the hole alone, is laid over the first.
  */
 type TicketProps = {
-  /** Whether the contact strip is open. Folded, the strip frames the ticket's picture, nearer. */
+  /** Whether the contact strip is open. Folded, the strip sees the ticket's edge a little nearer. */
   open: boolean
-  /** The folded strip's width, in pixels. */
-  folded: number
 }
 
 // How much nearer the folded strip sees the table than the open page does.
-const NEAR = 1.12
+const NEAR = 1.08
 
-export function Ticket({ open, folded }: TicketProps) {
+export function Ticket({ open }: TicketProps) {
   const [copied, setCopied] = useState(false)
-  const spread = useRef<HTMLDivElement>(null)
-  // Where the ticket's picture lies, from the strip's right edge, in pixels: the spread is pinned to that edge, so it
-  // is the same open or folded. Measured off the layout, without the move.
-  const [reach, setReach] = useState(0)
-
-  useLayoutEffect(() => {
-    // The frame round the spread does not move, so it gives the layout as laid.
-    const frame = spread.current?.parentElement
-    const strip = frame?.closest<HTMLElement>('.strip')
-    if (!frame || !strip) return
-    const measure = () => {
-      const f = frame.getBoundingClientRect()
-      const em = f.width / SPREAD_W
-      setReach(strip.getBoundingClientRect().right - (f.left + (BESIDE_W + B + W / 2) * em))
-    }
-    measure()
-    const watch = new ResizeObserver(measure)
-    watch.observe(frame)
-    watch.observe(strip)
-    return () => watch.disconnect()
-  }, [])
-
   // A browser that refuses the clipboard leaves the ticket as it is. The address can still be selected.
   const copy = () =>
     navigator.clipboard.writeText(profile.email).then(
@@ -77,14 +53,15 @@ export function Ticket({ open, folded }: TicketProps) {
       className="@container -my-[4vh] w-full md:-mr-[calc(clamp(1rem,2.6vw,3rem)+var(--band-w)-12px)] md:-ml-[calc(var(--protrude)+6px)] md:w-auto"
       style={{ maxWidth: `calc(90vh * ${SPREAD_W / FRAME_H})` }}
     >
-      {/* The camera's move, on the strip's own spring, so the two keep step: folded, the ticket's picture in the
-          middle of the strip and a little nearer; open, the whole table where it lies. */}
+      {/* The view's move, on the strip's own spring, so the two keep step: folded, the ticket's edge a little nearer;
+          as the strip opens, the view pulls back to the whole table where it lies. */}
       <motion.div
-        ref={spread}
         className="relative select-none"
-        style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em`, transformOrigin: `${((BESIDE_W + B + W / 2) / SPREAD_W) * 100}% 38%` }}
+        // Scaled about the ticket's right edge, which the folded strip shows beside its tab: that edge stays where it
+        // is, with the hide between it and the tab, and only the rest grows and shrinks.
+        style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em`, transformOrigin: `${((BESIDE_W + B + W) / SPREAD_W) * 100}% 40%` }}
         initial={false}
-        animate={open ? { x: 0, scale: 1 } : { x: Math.max(0, reach - folded / 2), scale: NEAR }}
+        animate={{ scale: open ? 1 : NEAR }}
         transition={slide}
       >
         <img
