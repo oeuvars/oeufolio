@@ -392,7 +392,17 @@ def displaced(name, sheet, edge, top, material, step=2, at=(0.0, 0.0), base=0.0)
     live = inside[1:, :-1] & inside[1:, 1:] & inside[:-1, 1:] & inside[:-1, :-1]
     faces = np.column_stack([corner[live] for corner in corners])
     used, faces = np.unique(faces, return_inverse=True)
-    verts = np.column_stack((X.ravel(), -Y.ravel(), h.ravel()))[used]
+    # The grid's own outline steps from square to square. The vertices along it are moved out onto the true outline,
+    # down the slope of the distance to it, so the piece's edge runs smooth and not in stairs.
+    gy, gx = np.gradient(edge, 1 / sheet.ppe)
+    gx, gy = gx[::step, ::step].ravel(), gy[::step, ::step].ravel()
+    d = edge[::step, ::step].ravel()
+    near = d > -1.5 * step / sheet.ppe
+    slope = np.maximum(gx * gx + gy * gy, 1e-9)
+    xs, ys = X.ravel().copy(), Y.ravel().copy()
+    xs[near] -= (d * gx / slope)[near]
+    ys[near] -= (d * gy / slope)[near]
+    verts = np.column_stack((xs, -ys, h.ravel()))[used]
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(verts.tolist(), [], faces.reshape(-1, 4).tolist())
     mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
@@ -871,7 +881,7 @@ def tab(name):
     # A matte piece has no flat shine to keep from the room, so it is lit by the whole studio.
     if shot.pop("ceiling", True):
         ceiling(height)
-    STAGE.shoot(f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=2.0, **shot)
+    STAGE.shoot(f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=3.0, **shot)
 
 
 parser = argparse.ArgumentParser()
