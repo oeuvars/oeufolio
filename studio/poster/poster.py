@@ -33,7 +33,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 SCALE = 3
 # The passages' boxes in the reference's pixels (left, top, right, bottom), a little past their ink.
-PASSAGES = [(305, 302, 398, 450), (512, 374, 642, 448), (100, 484, 302, 558), (300, 622, 530, 706)]
+PASSAGES = [(305, 302, 398, 453), (512, 374, 642, 451), (100, 484, 302, 561), (300, 622, 530, 709)]
 # The folded strip's column, in the reference's pixels: the windows stacked down its middle.
 STRIP = (300, 594)
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it

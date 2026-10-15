@@ -3,17 +3,14 @@
 //
 //   node studio/poster/type.mjs
 //
-// Writes studio/poster/art/title.png and studio/poster/art/body.png. Uses the headless Chromium helper from the
-// oeusume studio; set OEUSUME if that checkout is not in ~/Documents/oeusume.
+// Writes studio/poster/art/title.png and studio/poster/art/body.png, with the headless Chromium in studio/browser.mjs.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OEUSUME = process.env.OEUSUME ?? join(homedir(), "Documents", "oeusume");
-const { open } = await import(join(OEUSUME, "studio", "browser.mjs"));
+const { open } = await import(join(HERE, "..", "browser.mjs"));
 const SCALE = 3;
 const WIDTH = 736;
 const HEIGHT = 981;
