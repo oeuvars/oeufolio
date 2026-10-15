@@ -24,6 +24,13 @@ export type Letter = {
   alt: string
 }
 
+/** The resume as a PDF, and the render of it rolled up that links to it. */
+export type Resume = {
+  href: string
+  src: string
+  alt: string
+}
+
 export type Role = {
   period: string
   org: string
@@ -93,6 +100,7 @@ export type Profile = {
   nav: NavItem[]
   badge: Badge
   letter: Letter
+  resume: Resume
   experience: Role[]
   extras: Extras
   socials: Social[]

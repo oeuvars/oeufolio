@@ -18,6 +18,11 @@ export const profile: Profile = {
     src: '/objects/letter.avif',
     alt: "A handwritten letter, dated Oct 2026, too late. Hello younger me, I know what you're like, so I know you'll call all of this stupid. I'm telling you anyway. You pick up an electric guitar and you don't put it down. You learn to shave slowly, the old way, and it ends up being the part of the morning that is yours. You give your heart to Arsenal, which is a stupid thing to do with a heart. And the cats. You think you are not a cat person. Then Dilly falls asleep on top of your keyboard and it's wraps. It isn't impressive, any of it, and I wouldn't trade it. Take your time getting here. Cheers, Anurag. Drawn between the lines: an amplifier and a PRS Silver Sky, noted loud, preferably. A lathered face in a mirror saying stretch and go with the grain, beside a shelf holding a Merkur razor, a tub of Proraso and a bottle of Clubman, while a younger onlooker says how relaxing! Someone holding a scarf up at a football match on television, shouting Özil, and the onlooker saying golly! Dilly, white with a ginger cap and tail, asleep on a MacBook's keyboard after typing a line of k's. And me on a bench, pressing 225 lbs: damn, light work.",
   },
+  resume: {
+    href: '/resume.pdf',
+    src: '/objects/resume.avif',
+    alt: 'Résumé (PDF)',
+  },
   experience: [
     { period: 'Mar 2025 to now', org: 'Cybership' },
     { period: 'Jul 2024 to Mar 2025', org: 'Ekarth Ventures' },

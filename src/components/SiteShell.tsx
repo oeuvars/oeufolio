@@ -9,6 +9,7 @@ import { Art } from './Art'
 import { Badge } from './Badge'
 import { POSTER } from './house'
 import { Desk } from './mat/Desk'
+import { Resume } from './Resume'
 import tabcut from './tabcut.json'
 import { Ticket } from './ticket/Ticket'
 import { useStackMetrics } from './useStackMetrics'
@@ -606,6 +607,7 @@ export function SiteShell({ children }: SiteShellProps) {
         })}
 
         {!mobile && <div aria-hidden className="absolute inset-y-0 right-0 z-0 bg-[#1f1e1b]" style={{ width: end }} />}
+        {!mobile && <Resume resume={profile.resume} />}
       </motion.main>
     </MotionConfig>
   )
