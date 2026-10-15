@@ -5,7 +5,7 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               through its steel folding clasp with the shield engraved in the cover
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
-    lacoste   the white piqué polo: the crocodile, the name, and tipping in navy and seafoam
+    lacoste   a cut off a navy piqué polo, hemmed: the embroidered crocodile, and the collar's rib tipped in seafoam
     prs       a Blackstar Debut's tolex in the seafoam of a PRS Silver Sky, with four of the outline birds PRS
               inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
               front of a Blackstar ID:Core in red round it: its black grille cloth between edges of its wine tolex,
@@ -247,7 +247,7 @@ def nacre(sheet, mask):
     sheet.rgb *= (1 - 0.25 * blur(seam, 0.7))[..., None]
 
 
-def moulded(name, height, colour, rough, coat, dress, density=3, **surface):
+def moulded(name, height, colour, rough, coat, dress, density=3, scan=("Plastic010", 7, 0.25, 0.15), **surface):
     """A piece of plastic cut to the paper tab. dress paints what it carries on its sheet, given the
     sheet and the distance in from the plastic's edge, and returns whatever else is fixed to it."""
     sheet = Sheet(WIDTH, height, colour, rough=rough, density=density)
@@ -262,10 +262,10 @@ def moulded(name, height, colour, rough, coat, dress, density=3, **surface):
     plastic = skin(
         sheet,
         f"{name}-skin",
-        scan="Plastic010",
-        scan_size=7,
-        scan_normal=0.25,
-        scan_rough=0.15,
+        scan=scan[0],
+        scan_size=scan[1],
+        scan_normal=scan[2],
+        scan_rough=scan[3],
         wear=(("Scratches003", 5, 0.05, 0.0005), ("SurfaceImperfections003", 8, 0.03, 0)),
         specular=0.5,
         coat_rough=0.06,
@@ -331,30 +331,73 @@ def proraso(name, height):
     return {"card": 2.2}, moulded(name, height, "#0a7440", 0.1, 0.7, dress, subsurface=0.04)
 
 
-def lacoste(name, height):
-    def dress(sheet, edge):
-        X, Y = sheet.X, sheet.Y
-        word, crocodile = parted(artwork("logos/lacoste"))
-        tipped = stripe(sheet, 7.42, 8.72)
-        croc, colour = placed(sheet, crocodile, MIDDLE - 1.16, 1.0, MIDDLE + 1.16, 2.62)
-        wordmark, _ = placed(sheet, word, MIDDLE - 0.5, 3.0, MIDDLE + 0.5, 7.05, turn=1)
-        # Petit piqué: the knit's small raised cells, moulded into the face inside a plain border.
-        pitch = 0.18
-        row = np.floor(Y / (pitch * 0.866))
-        u = (X / pitch + 0.5 * (row % 2)) % 1 - 0.5
-        v = (Y / (pitch * 0.866)) % 1 - 0.5
-        cell = np.clip(1 - (u * u + v * v) / 0.2, 0, 1)
-        field = ramp(0.2, 0.3, -edge) * (1 - tipped) * (1 - np.clip(blur(croc, 4.0) * 3, 0, 1))
-        sheet.height += 0.016 * field * cell
-        sheet.rough += 0.14 * field
-        # The crocodile is sewn on as a patch, so it stands off the knit.
-        printed(sheet, croc, colour, rough=0.3, coat=0.3, proud=0.014)
-        printed(sheet, wordmark, INK, rough=0.3, coat=0.2)
-        # Tipping as on a navy-tipped polo, its thin stripe the seafoam of the PRS tab beside it.
-        inlay(sheet, stripe(sheet, 7.5, 8.12), NAVY, rough=0.1)
-        inlay(sheet, stripe(sheet, 8.34, 8.64), SEAFOAM)
+def fill_holes(solid):
+    """A mask with its holes filled: whatever of the clear part cannot be reached from the border is filled."""
+    outside = np.zeros_like(solid)
+    outside[0, :], outside[-1, :], outside[:, 0], outside[:, -1] = ~solid[0, :], ~solid[-1, :], ~solid[:, 0], ~solid[:, -1]
+    while True:
+        grown = outside.copy()
+        grown[1:] |= outside[:-1]
+        grown[:-1] |= outside[1:]
+        grown[:, 1:] |= outside[:, :-1]
+        grown[:, :-1] |= outside[:, 1:]
+        grown &= ~solid
+        if (grown == outside).all():
+            return ~outside
+        outside = grown
 
-    return {}, moulded(name, height, "#f1eee6", 0.3, 0.25, dress, subsurface=0.08)
+
+def lacoste(name, height):
+    """A cut off a navy Lacoste polo, hemmed and stitched to the tab: the knit is petit piqué, the scan of a real
+    knit (ambientCG Fabric036) at its own scale, its little cells half a millimetre across; the crocodile is the
+    embroidered badge sewn on at the chest, its thread raised and running across the body in satin stitch; and at
+    its foot is the collar's rib, knit in vertical ribs, tipped in seafoam."""
+    sheet = Sheet(WIDTH, height, NAVY, rough=0.92, density=6)
+    sheet.coat[:] = 0.0
+    shape = outline(height)
+    edge = within(sheet.X, sheet.Y, shape)
+    X, Y = sheet.X, sheet.Y
+    # The hem: the cloth turned under all round, so its edge is a soft roll, and a row of stitches holds it in.
+    roll = 0.16
+    sheet.height -= 0.05 * (1 - np.clip(-edge / roll, 0, 1)) ** 2
+    stitch_line = np.abs(edge + 0.2) < 0.012
+    along = np.arctan2(Y - height / 2, X - MIDDLE) * 40
+    stitches = stitch_line & (np.sin(along) > -0.2)
+    sheet.press(blur(stitches.astype(float), 1.2), 0.006)
+    sheet.paint(blur(stitches.astype(float), 0.8) * 0.5, "#141d36")
+
+    # The collar's rib at the foot: a band of ribs running down the piece, two seafoam tipping stripes across it.
+    rib0, rib1 = height - 2.4, height - 0.62
+    rib = sheet.mask(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2)
+    ribs = 0.5 + 0.5 * np.cos(2 * np.pi * X / 0.11)
+    sheet.height += rib * (0.012 * ribs - 0.01)
+    sheet.rough += rib * 0.03 * ribs
+    seam = np.clip(1 - np.abs(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2) / 0.03, 0, 1)
+    sheet.press(blur(seam, 1.0), 0.012)
+    for y0, y1 in ((rib0 + 0.42, rib0 + 0.62), (rib0 + 0.78, rib0 + 0.86)):
+        tipped = stripe(sheet, y0, y1) * rib
+        sheet.paint(tipped, SEAFOAM)
+
+    # The crocodile, embroidered on a badge of the same knit: raised thread, the satin stitch's lines running
+    # across it at a slant, sheened where the thread catches the light.
+    _, crocodile = parted(artwork("logos/lacoste"))
+    croc, colour = placed(sheet, crocodile, MIDDLE - 1.0, 1.05, MIDDLE + 1.0, 2.55)
+    # The mark's scales and teeth are see-through in the artwork; on the badge they are white thread.
+    whole = blur(fill_holes(croc > 0.5).astype(float), 0.8)
+    white = np.clip(whole - croc, 0, 1)
+    satin = 0.5 + 0.5 * np.sin(2 * np.pi * (X * 0.5 + Y) / 0.035)
+    thread = np.clip(blur(whole, 1.2) * 1.4, 0, 1)
+    sheet.rgb += croc[..., None] * (colour - sheet.rgb)
+    sheet.paint(white, "#f2efe6")
+    sheet.rgb *= (1 - 0.12 * thread * (1 - satin))[..., None]
+    sheet.height += 0.05 * thread + 0.006 * thread * satin
+    sheet.finish(whole, rough=0.42)
+    # Cloth never lies quite flat: it rises and sinks a little where it was pressed down by hand.
+    sheet.height += 0.02 * np.clip(cloud(sheet.height.shape, 41, falloff=2.2), -2, 2)
+
+    cloth = skin(sheet, f"{name}-knit", scan="Fabric036", scan_size=1.6, scan_normal=1.4, scan_rough=0.3, sheen=0.7, specular=0.3)
+    body = prism(STAGE, name, shape, 0.0, 0.1, cloth, bevel=0.08, segments=8)
+    return {}, [clad(body, 0, 0, WIDTH, height)]
 
 
 def relief(name, height, x0, y0, w, h, z0, material):
@@ -459,12 +502,9 @@ def prs(name, height):
             shell = cover * np.clip(colour[..., 0] * 1.6, 0, 1)
             birds.append((cover, shell, cover - shell))
             y += h + gap
-        # Tolex: a fine leather grain pressed into the blue, everywhere but what is let into it.
-        grain = np.clip(blur(cloud(shape, 31, falloff=0.9), 1.6), -2, 2) + 0.5 * np.clip(cloud(shape, 32, falloff=1.5), -2, 2)
-        bare = 1 - np.clip(blur(np.max([cover for cover, _, _ in birds], axis=0), 2.0) * 3, 0, 1)
-        sheet.height += 0.0045 * bare * grain
-        sheet.rough += 0.05 * bare * np.clip(grain, -1, 1)
-        sheet.rgb *= (1 - 0.03 * bare * np.clip(grain, -1, 1))[..., None]
+        # The tolex's grain is the scan's (moulded's scan): only the inlays are smooth.
+        inlaid = np.clip(blur(np.max([cover for cover, _, _ in birds], axis=0), 2.0) * 3, 0, 1)
+        sheet.finish(inlaid, rough=0.3)
         figure = np.clip(streaks(shape, 71, 40, 2), -2, 2) / 2
         for cover, shell, wood in birds:
             # The rosewood, dark and oiled, its grain running down the neck.
@@ -476,7 +516,9 @@ def prs(name, height):
 
     # The birds' outlines are fine, so the sheet is drawn finer than the others.
     # The tolex is the Silver Sky's seafoam, the blue of its satin body.
-    return {"card": 1.2}, moulded(name, height, SEAFOAM, 0.4, 0.12, dress, density=7, subsurface=0.03)
+    # Tolex is an embossed vinyl, its pebbled grain the scan of a real pebbled hide (ambientCG Leather025), each
+    # pebble a millimetre or two across: semi-matte, with a thin sheen on the tops of the pebbles.
+    return {"card": 1.2}, moulded(name, height, SEAFOAM, 0.5, 0.08, dress, density=7, scan=("Leather025", 6, 1.1, 0.35), subsurface=0.03)
 
 
 def drill(case, centres, bore, sink, depth, material):

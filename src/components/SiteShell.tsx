@@ -141,6 +141,9 @@ const edgeOf = (tone: Tone): Edge => (tone.fills || tone.cut ? 'cut' : tone.roll
 const posterTone = { band: '#100e0c', panel: '#100e0c', paper: { src: '/objects/poster-paper.avif', size: 140 } }
 
 /** Whether a strip's page covers the whole strip, band and all. Only a page that sits framed on its band shows it. */
+/** Whether a strip's page is paper, one sheet with its tab: all but the mat and the ticket's leather. */
+const sheets = (tone: Tone) => !tone.fills && !tone.roll
+
 const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll || tone.paper)
 
 const pageTones: Tone[] = [
@@ -151,14 +154,31 @@ const pageTones: Tone[] = [
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
-// The hide's tile, in pixels: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are.
-const HIDE = '256px'
+// The hide's tile: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are. It is
+// TILE (8) em of the ticket's spread across, and the spread is 90vh tall for its 29.85 em (ticket/Ticket.tsx), so the
+// hide's grain is the size it was beside the ticket in the scene's photograph.
+const HIDE = `calc(90vh * ${8 / 29.85})`
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
 // A tab's width on a wide screen and the room a render of its piece keeps round the tab, in rem: WIDTH
 // and MARGIN in studio/tabs.py. The heights above are for a tab of this width.
 const tabSpan = 4
 const tabMargin = 0.3
+
+// The grain of a sheet of paper and the creases it was crumpled into, as background layers to lay over the paper's
+// colour and under whatever lies on it, so the objects on a page are clean of it. The crease photograph is laid at
+// a size of its own, so each strip is its own crumpled sheet and it moves with the strip.
+const GRAIN = {
+  image: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), url('/photos/crumple-soft.jpg')`,
+  size: '320px 320px, 1800px auto',
+  blend: 'multiply, soft-light',
+}
+/** A paper surface: the grain over an optional tile of the paper itself, all over the element's own colour. */
+const grained = (paper?: Paper): CSSProperties => ({
+  backgroundImage: paper ? `${GRAIN.image}, url(${paper.src})` : GRAIN.image,
+  backgroundSize: paper ? `${GRAIN.size}, ${paper.size}px` : GRAIN.size,
+  backgroundBlendMode: paper ? `${GRAIN.blend}, normal` : GRAIN.blend,
+})
 
 // A page's frame: its margins and type.
 const PAGE = '@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]'
@@ -384,10 +404,10 @@ export function SiteShell({ children }: SiteShellProps) {
       maskRepeat: 'no-repeat',
     }
   }
-  // A page made of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
+  // A page of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
   // is cut to the strip, its edge torn or cut as the strip's is, and to the tab's outline, so the tab is the same
-  // piece of paper as the page, its tile running on unbroken, with no join between them.
-  const sheet = (i: number, paper: Paper): CSSProperties => {
+  // piece of paper as the page, its tile and grain running on unbroken, with no join between them.
+  const sheet = (i: number, paper?: Paper): CSSProperties => {
     const shape = tabShape(i + 1)
     // The outline with its foot, so the tab and the page overlap over the band and no hairline opens between them.
     const { reach, path } = tabOutline(shape)
@@ -398,8 +418,7 @@ export function SiteShell({ children }: SiteShellProps) {
     const out = reachesOver(i) ? TEAR_WIDTH : 0
     return {
       right: -shape.protrude,
-      backgroundImage: `url(${paper.src})`,
-      backgroundSize: `${paper.size}px`,
+      ...grained(paper),
       maskImage: `linear-gradient(#000, #000), var(--torn-core, linear-gradient(#000, #000)), url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       // The page runs a pixel into its edge's strip, so no hairline opens where they meet.
       maskSize: `calc(100% - ${shape.protrude - out + TEAR_WIDTH - 1}px) 100%, ${TEAR_WIDTH}px ${TEAR_LENGTH}px, ${w}px ${h}px`,
@@ -453,48 +472,6 @@ export function SiteShell({ children }: SiteShellProps) {
     cursor += (i === index ? openWidth : folded(i)) - overlap
   }
 
-  // The mat's strip is leather, not paper, so the sheet's grain and creases are cut away over it (styles.css):
-  // a column from where the strip before it ends to its own edge. They are put back in the shape of the paper
-  // that lies on the mat there: the tab of the strip before it with its piece, and the piece on the mat's own tab.
-  const mat = tones.findIndex((tone) => tone.fills)
-  const matFrom = lefts[mat] + overlap
-  const matTo = lefts[mat] + (mat === index ? openWidth : folded(mat))
-  const tabWidth = band + protrude
-  const pieceMargin = (tabMargin * tabWidth) / tabSpan
-  const tabBefore = { shape: tabShape(mat), top: tabTops[mat] * metrics.rem, src: tones[mat - 1].tab }
-  const tabOwn = { shape: tabShape(mat + 1), top: tabTops[mat + 1] * metrics.rem, src: tones[mat].tab }
-  const paper = tabOutline(tabBefore.shape)
-  const paperHeight = tabBefore.shape.height + 2 * paper.reach
-  const paperMask = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-paper.reach} ${tabWidth} ${paperHeight}" preserveAspectRatio="none"><path d="${paper.path}"/></svg>`
-  // The same goes for a strip whose panel is a surface of its own, the ticket's leather: a second column, cut the same way.
-  const skin = tones.findIndex((tone) => tone.surface)
-  const skinFrom = lefts[skin] + overlap
-  // Its tab is cut from the same leather and stands out past the strip's edge. It is the last strip, so the cut runs on
-  // to the window's edge: over the tab, and over the dark beyond it, so no line is left in the dark where it ends.
-  const skinTo = lefts[skin] + (skin === index ? openWidth : folded(skin)) + 4000
-  // The strip before the mat tears out over it: the paper on the mat past that strip's edge, its frayed core
-  // with it, is put back by the tear's own mask.
-  const column =
-    `linear-gradient(to right, #000 calc(var(--mat-from) * 1px), transparent 0, transparent calc(var(--mat-to) * 1px), #000 0, #000 calc(var(--skin-from) * 1px), transparent 0, transparent calc(var(--skin-to) * 1px), #000 0)`
-  const grainCut = {
-    '--grain-cut': `${column}, ${(tears[mat - 1] as Record<string, string>)['--torn-core']}, url("data:image/svg+xml,${encodeURIComponent(paperMask)}"), url(${tabBefore.src}), url(${tabOwn.src})`,
-    '--grain-cut-size': [
-      '100% 100%',
-      `${TEAR_WIDTH}px ${TEAR_LENGTH}px`,
-      `${tabWidth}px ${paperHeight}px`,
-      `${tabWidth + 2 * pieceMargin}px ${tabBefore.shape.height + 2 * pieceMargin}px`,
-      `${tabWidth + 2 * pieceMargin}px ${tabOwn.shape.height + 2 * pieceMargin}px`,
-    ].join(', '),
-    '--grain-cut-position': [
-      '0 0',
-      'calc(var(--mat-from) * 1px) 0',
-      `calc(var(--mat-from) * 1px - ${band}px) ${tabBefore.top - paper.reach}px`,
-      `calc(var(--mat-from) * 1px - ${band + pieceMargin}px) ${tabBefore.top - pieceMargin}px`,
-      `calc(var(--mat-to) * 1px - ${band + pieceMargin}px) ${tabOwn.top - pieceMargin}px`,
-    ].join(', '),
-    '--grain-cut-repeat': 'no-repeat, repeat-y, no-repeat, no-repeat, no-repeat',
-  }
-
   return (
     <MotionConfig reducedMotion="user">
       <svg aria-hidden width="0" height="0" className="absolute">
@@ -518,19 +495,15 @@ export function SiteShell({ children }: SiteShellProps) {
         </defs>
       </svg>
       <motion.main
-        className="grain fixed inset-0 overflow-hidden bg-[#1f1e1b]"
-        style={{ '--band-w': `${band}px`, '--protrude': `${protrude}px`, ...grainCut } as CSSProperties}
-        initial={false}
-        // The cut follows the mat's strip as it slides: both are on the same spring.
-        animate={{ '--mat-from': matFrom, '--mat-to': matTo, '--skin-from': skinFrom, '--skin-to': skinTo }}
-        transition={transition}
+        className="fixed inset-0 overflow-hidden bg-[#1f1e1b]"
+        style={{ '--band-w': `${band}px`, '--protrude': `${protrude}px` } as CSSProperties}
       >
         {!mobile && (
           <aside
             className="strip"
             style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7, [], 'torn') }}
           >
-            <div aria-hidden className="torn" />
+            <div aria-hidden className="torn" style={grained()} />
             {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
                 lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down
                 past the foot of the strip, so a short window cuts it there. */}
@@ -556,7 +529,7 @@ export function SiteShell({ children }: SiteShellProps) {
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
-                style={tones[i].paper ? sheet(i, tones[i].paper) : undefined}
+                style={sheets(tones[i]) ? sheet(i, tones[i].paper) : undefined}
               >
                 {tones[i].surface && (
                   <div
@@ -619,7 +592,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 </>
               )}
               {pageTones[i].surface && <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-2" style={hideOver(i)} />}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={Boolean(tones[i].paper)} cut={tabCut(i + 1)} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tabCut(i + 1)} />
             </motion.section>
           )
         })}

@@ -27,11 +27,8 @@ export function Badge({ badge, page, margin, open }: BadgeProps) {
   return (
     <div
       className="absolute inset-y-0 right-0 flex justify-center bg-cover bg-center"
-      style={{
-        width: page,
-        backgroundColor: badge.backdrop.color,
-        backgroundImage: badge.backdrop.image && `url(${badge.backdrop.image})`,
-      }}
+      // The page's own paper, grain and all, is the panel under it (SiteShell), so the sheet lays nothing of its own.
+      style={{ width: page, backgroundImage: badge.backdrop.image && `url(${badge.backdrop.image})` }}
     >
       <motion.img
         src={badge.src}

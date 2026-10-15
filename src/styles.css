@@ -109,43 +109,6 @@
 }
 
 @layer utilities {
-  .grain::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-    mix-blend-mode: multiply;
-    opacity: 0.3;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
-  .grain::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 101;
-    pointer-events: none;
-    mix-blend-mode: soft-light;
-    opacity: 0.4;
-    filter: grayscale(1) contrast(1.1);
-    background-image: url('/photos/crumple.jpg');
-    background-size: cover;
-    background-position: center;
-  }
-
-  /*
-   * The extras strip's mat is leather, not paper, so the sheet's grain and creases are cut away over it and
-   * left on the paper that lies on it. SiteShell works out the cut.
-   */
-  .grain::before,
-  .grain::after {
-    mask-image: var(--grain-cut);
-    mask-size: var(--grain-cut-size);
-    mask-position: var(--grain-cut-position);
-    mask-repeat: var(--grain-cut-repeat, no-repeat);
-  }
-
   .display {
     font-family: var(--font-display);
     font-stretch: 125%;
