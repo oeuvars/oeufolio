@@ -247,7 +247,7 @@ def nacre(sheet, mask):
     sheet.rgb *= (1 - 0.25 * blur(seam, 0.7))[..., None]
 
 
-def moulded(name, height, colour, rough, coat, dress, density=3, scan=("Plastic010", 7, 0.25, 0.15), **surface):
+def moulded(name, height, colour, rough, coat, dress, density=3, scan=("Plastic010", 7, 0.25, 0.15), relief=0.0, **surface):
     """A piece of plastic cut to the paper tab. dress paints what it carries on its sheet, given the
     sheet and the distance in from the plastic's edge, and returns whatever else is fixed to it."""
     sheet = Sheet(WIDTH, height, colour, rough=rough, density=density)
@@ -259,6 +259,13 @@ def moulded(name, height, colour, rough, coat, dress, density=3, scan=("Plastic0
     # Moulded plastic is never one even shine: it flows a little as it cools, and it has been handled.
     sheet.rough += 0.025 * np.clip(cloud(sheet.height.shape, 5, falloff=2.0), -2, 2)
     sheet.height += 0.0012 * np.clip(cloud(sheet.height.shape, 6, falloff=2.4), -2, 2)
+    if relief:
+        # The scan's relief as real geometry, rounded at the top edge as the moulding is, under the surface.
+        sheet.height += scanned(sheet, scan[0], scan[1], relief)
+        sheet.height -= rounded(edge, EDGE)
+        heights = sheet.height.copy()
+        sheet.height[:] = 0.0
+        scan = (scan[0], scan[1], scan[2] * 0.3, scan[3])
     plastic = skin(
         sheet,
         f"{name}-skin",
@@ -271,6 +278,9 @@ def moulded(name, height, colour, rough, coat, dress, density=3, scan=("Plastic0
         coat_rough=0.06,
         **surface,
     )
+    if relief:
+        sheet.height = heights
+        return [displaced(name, sheet, edge, THICK, plastic, step=4), *fitted]
     body = prism(STAGE, name, shape, 0.0, THICK, plastic, bevel=EDGE, segments=7)
     return [clad(body, 0, 0, WIDTH, height), *fitted]
 
@@ -347,6 +357,55 @@ def fill_holes(solid):
         outside = grown
 
 
+def scanned(sheet, asset, size, depth):
+    """A scanned material's own relief (its displacement map), repeating every size rem over the sheet, depth rem from
+    its lowest to its highest, about zero."""
+    disp = pixels_of(os.path.join(stage_module.ASSETS, asset, f"{asset}_1K-JPG_Displacement.jpg"))[..., 0].astype(np.float64)
+    rows, cols = disp.shape
+    fy, fx = (sheet.Y / size * rows) % rows, (sheet.X / size * cols) % cols
+    r0, c0 = np.floor(fy).astype(int), np.floor(fx).astype(int)
+    r1, c1 = (r0 + 1) % rows, (c0 + 1) % cols
+    ty, tx = fy - r0, fx - c0
+    d = (disp[r0, c0] * (1 - tx) + disp[r0, c1] * tx) * (1 - ty) + (disp[r1, c0] * (1 - tx) + disp[r1, c1] * tx) * ty
+    return depth * (d - d.mean())
+
+
+def rounded(edge, radius):
+    """How far a top edge rounded to radius falls, at each distance in from it: a quarter circle."""
+    out = np.clip(1 - np.clip(-edge, 0, None) / radius, 0, 1)
+    return radius * (1 - np.sqrt(np.clip(1 - out * out, 0, 1)))
+
+
+def displaced(name, sheet, edge, top, material, step=2):
+    """A solid whose top is the sheet's height map as real geometry, standing top rem high, cut to where edge is
+    negative: its relief catches the light and throws its own small shadows, as a bump map laid on a flat face
+    cannot. The sheet's height is spent on the geometry, so the surface that dresses it carries none of it again."""
+    h = (top + sheet.height)[::step, ::step]
+    inside = (edge < 0)[::step, ::step]
+    X, Y = sheet.X[::step, ::step], sheet.Y[::step, ::step]
+    rows, cols = h.shape
+    index = np.arange(rows * cols).reshape(rows, cols)
+    corners = (index[1:, :-1], index[1:, 1:], index[:-1, 1:], index[:-1, :-1])
+    live = inside[1:, :-1] & inside[1:, 1:] & inside[:-1, 1:] & inside[:-1, :-1]
+    faces = np.column_stack([corner[live] for corner in corners])
+    used, faces = np.unique(faces, return_inverse=True)
+    verts = np.column_stack((X.ravel(), -Y.ravel(), h.ravel()))[used]
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts.tolist(), [], faces.reshape(-1, 4).tolist())
+    mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
+    mesh.materials.append(material)
+    body = STAGE.add(name, mesh)
+    # Walls down to the page.
+    walls = body.modifiers.new("walls", "SOLIDIFY")
+    walls.thickness = float(top)
+    walls.offset = -1
+    walls.use_even_offset = False
+    return clad(body, 0, 0, sheet.w, sheet.h)
+
+
+KNIT = 22.0  # rem to one tile of the knit's scan
+
+
 def lacoste(name, height):
     """A cut off a navy Lacoste polo, hemmed and stitched to the tab: the knit is petit piqué, the scan of a real
     knit (ambientCG Fabric036) at its own scale, its little cells half a millimetre across; the crocodile is the
@@ -392,12 +451,21 @@ def lacoste(name, height):
     sheet.rgb *= (1 - 0.12 * thread * (1 - satin))[..., None]
     sheet.height += 0.05 * thread + 0.006 * thread * satin
     sheet.finish(whole, rough=0.42)
-    # Cloth never lies quite flat: it rises and sinks a little where it was pressed down by hand.
-    sheet.height += 0.02 * np.clip(cloud(sheet.height.shape, 41, falloff=2.2), -2, 2)
+    # Cloth never lies quite flat: it rises and sinks where it was pressed down by hand, and keeps a soft crease
+    # across it where it was folded.
+    sheet.height += 0.03 * np.clip(blur(cloud(sheet.height.shape, 41, falloff=2.6), 12.0), -2, 2)
+    crease = np.exp(-(((Y - 0.42 * X - 4.6) / 0.35) ** 2))
+    sheet.height += 0.06 * crease - 0.025 * np.exp(-(((Y - 0.42 * X - 4.25) / 0.2) ** 2))
 
-    cloth = skin(sheet, f"{name}-knit", scan="Fabric036", scan_size=1.6, scan_normal=1.4, scan_rough=0.3, sheen=0.7, specular=0.3)
-    body = prism(STAGE, name, shape, 0.0, 0.1, cloth, bevel=0.08, segments=8)
-    return {}, [clad(body, 0, 0, WIDTH, height)]
+    # The knit itself, from the scan's relief at its own scale: the scan's tile holds about 240 cells across, and
+    # a piqué cell is about a millimetre, a tenth of a rem here. They stand a fifth of a millimetre proud.
+    sheet.height += scanned(sheet, "Fabric036", KNIT, 0.022) * (1 - 0.7 * thread)
+    sheet.height -= rounded(edge, 0.05)
+    relief = sheet.height.copy()
+    sheet.height[:] = 0.0
+    cloth = skin(sheet, f"{name}-knit", scan="Fabric036", scan_size=KNIT, scan_normal=0.35, scan_rough=0.3, sheen=0.7, specular=0.3)
+    sheet.height = relief
+    return {"ceiling": False}, [displaced(name, sheet, edge, 0.1, cloth, step=3)]
 
 
 def relief(name, height, x0, y0, w, h, z0, material):
@@ -518,7 +586,7 @@ def prs(name, height):
     # The tolex is the Silver Sky's seafoam, the blue of its satin body.
     # Tolex is an embossed vinyl, its pebbled grain the scan of a real pebbled hide (ambientCG Leather025), each
     # pebble a millimetre or two across: semi-matte, with a thin sheen on the tops of the pebbles.
-    return {"card": 1.2}, moulded(name, height, SEAFOAM, 0.5, 0.08, dress, density=7, scan=("Leather025", 6, 1.1, 0.35), subsurface=0.03)
+    return {"card": 1.2, "ceiling": False}, moulded(name, height, SEAFOAM, 0.5, 0.08, dress, density=7, scan=("Leather025", 6, 1.1, 0.35), relief=0.01, subsurface=0.03)
 
 
 def drill(case, centres, bore, sink, depth, material):
@@ -770,7 +838,9 @@ def tab(name):
     shot, pieces = build(f"tab-{name}", height)
     for piece in pieces:
         stuck(piece, height, askew)
-    ceiling(height)
+    # A matte piece has no flat shine to keep from the room, so it is lit by the whole studio.
+    if shot.pop("ceiling", True):
+        ceiling(height)
     STAGE.shoot(f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=2.0, **shot)
 
 
