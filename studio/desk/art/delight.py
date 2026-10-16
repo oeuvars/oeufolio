@@ -27,8 +27,14 @@ cord[30:110, 480:590] = True
 cord &= rgb.max(-1) < 0.3
 cord = ndimage.binary_dilation(cord, iterations=2) & (np.indices(m.shape)[1] < 590)
 m = np.where(cord, 0.0, m)
+# Between her far foreleg and her near paw the table shows only as a hairline of shadow: the two touch there.
+crease = np.zeros_like(m, dtype=bool)
+crease[880:1010, 0:300] = True
+photographed = m > 0.5
+m = np.where(crease & ndimage.binary_closing(photographed, structure=np.ones((3, 3)), iterations=4), np.maximum(m, 1.0), m)
 Image.fromarray((m * 255).astype(np.uint8), "L").save(outline)
-inside = ndimage.binary_erosion(m > 0.5, iterations=3)
+# The shadow in it is the table's, not paint: the crease takes the paint either side of it.
+inside = ndimage.binary_erosion(photographed, iterations=3)
 
 
 def fill(values, known, widest=64):

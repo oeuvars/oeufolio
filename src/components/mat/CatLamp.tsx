@@ -4,9 +4,9 @@ import { PROP } from './classes'
 import { lamp } from './lamp'
 
 /**
- * The desk lamp: a glazed porcelain cat in a play bow, its tail arching over its back to hold an orange dome
- * lamp head (studio/desk/objects/catlamp.py). It is in the plate, lit and unlit, and its light is in the plate
- * too. Clicking it switches it.
+ * The desk lamp: a glazed porcelain cat in a play bow, her tail arching over her back to hold a bulb in a white
+ * socket (studio/desk/objects/catlamp.py). Her picture, from a low camera of its own, lies over the plate, lit and
+ * unlit, and her light is in the plate. The button covers her picture. Clicking it switches her.
  */
 export function CatLamp() {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
@@ -17,8 +17,8 @@ export function CatLamp() {
       data-prop="catlamp"
       aria-label="Lamp"
       aria-pressed={lit}
-      // The lamp stands up off the desk, so the camera shows its head beyond its feet: the box reaches up to it.
-      className={`${PROP} z-2 [--k:0.7] -mt-[4em] h-[22em] w-[27em] cursor-pointer touch-manipulation rounded-[5em]`}
+      // Mat lays it over her in her picture, as large: --w and --h in pixels.
+      className={`${PROP} z-2 h-[calc(var(--h)*1px)] w-[calc(var(--w)*1px)] cursor-pointer touch-manipulation rounded-[5em]`}
       onClick={lamp.pull}
     />
   )

@@ -1,10 +1,10 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Fragment, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import { cn } from '../../lib/utils'
 import type { PlateId, PropId } from '../../types'
 import { Rulers } from './Rulers'
 import { lamp } from './lamp'
-import { PLATES } from './layout'
+import { PLATES, PORTRAITS } from './layout'
 
 type MatProps = {
   /** What on the mat the page needs to reach: links and the parts that move. Each marks its root with data-prop. */
@@ -37,7 +37,8 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * A cutting mat in teal leather, seen from overhead, with the things left on it as on a desk in use. All of
  * it is one photograph of one set, rendered in the studio under one light, so every object shades the others
  * and throws its own shadow. The page lays the plate over its own leather, as large as lets all of it show.
- * The room is dimly lit, and on the desk stands a lamp, a porcelain cat holding an orange dome up on its tail. Each state of
+ * The room is dimly lit, and on the desk stands a lamp, a porcelain cat holding a bulb up on her tail, seen from low
+ * beside her as she was photographed, so her face shows: her picture lies over the plate. Each state of
  * the lamp is its own plate of the same set: the objects in that light, and the light on the mat, which the
  * leather, its rules and its rulers are multiplied by: a map of the lamp's light with it on, the room's even
  * dimness with it off. Clicking the lamp switches it.
@@ -72,7 +73,19 @@ export function Mat({ children, className }: MatProps) {
       }
       frame.style.setProperty('--s', (em / 16).toFixed(4))
       board.querySelectorAll<HTMLElement>('[data-prop]').forEach((el) => {
-        const at = plate.at[el.dataset.prop as PropId]
+        const prop = el.dataset.prop as PropId
+        const seen = PORTRAITS[id]?.[prop]
+        if (seen) {
+          // A prop seen from its own camera is reached where it shows in its picture, upright, and as large.
+          const [left, top, w, h] = seen.body
+          el.style.setProperty('--x', (x + (left + w / 2) * em).toFixed(1))
+          el.style.setProperty('--y', ((top + h / 2) * em).toFixed(1))
+          el.style.setProperty('--r', '0')
+          el.style.setProperty('--w', (w * em).toFixed(1))
+          el.style.setProperty('--h', (h * em).toFixed(1))
+          return
+        }
+        const at = plate.at[prop]
         if (!at) return
         el.style.setProperty('--x', (x + at[0] * em).toFixed(1))
         el.style.setProperty('--y', (at[1] * em).toFixed(1))
@@ -188,6 +201,25 @@ export function Mat({ children, className }: MatProps) {
               className={`${FADE} opacity-[var(--lamp)]`}
               style={over(geometry, 0, 0, ...plate.size)}
             />
+            {/* The props seen from a low camera of their own, standing over the plate where they stand on it. */}
+            {Object.entries(PORTRAITS[geometry.id] ?? {}).map(([prop, seen]) => (
+              <Fragment key={prop}>
+                <img
+                  src={`/objects/mat/desk-${geometry.id}-${prop}.avif`}
+                  alt=""
+                  draggable={false}
+                  className={`${FADE} opacity-[calc(1-var(--lamp))]`}
+                  style={over(geometry, ...seen.picture)}
+                />
+                <img
+                  src={`/objects/mat/desk-${geometry.id}-${prop}-lamp.avif`}
+                  alt=""
+                  draggable={false}
+                  className={`${FADE} opacity-[var(--lamp)]`}
+                  style={over(geometry, ...seen.picture)}
+                />
+              </Fragment>
+            ))}
           </>
         )}
 

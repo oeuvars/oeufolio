@@ -37,6 +37,10 @@ ART = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 REFERENCE = os.path.join(ART, "catlamp-reference.png")
 REFERENCE_CAMERA = os.path.join(ART, "catlamp-camera.json")
 ROWS, COLS = 1104, 736
+# Her middle, and the point on the desk under it, in her own coordinates: the desk's portrait of her is drawn as
+# large as the desk round her middle, and set on the desk where she stands.
+MIDDLE = (6.0, 0.0, 6.0)
+STANDS = (6.0, 0.0, 0.0)
 # How the photographed outline corrects the modelled shape (art/fit.py): for each pixel of the photograph, how far
 # across and down the modelled shape is moved there, how far outside the figurine's outline it lies, and how far the
 # moved shape still falls short of the outline round it.
@@ -151,6 +155,13 @@ def at(field, x, y):
     return (field[i, j] * (1 - a) + field[i + 1, j] * a) * (1 - b) + (field[i, j + 1] * (1 - a) + field[i + 1, j + 1] * a) * b
 
 
+def framed(x, y):
+    """How far within the photograph's frame each point is seen: 1 inside it, fading to 0 a little way past its edge,
+    where the photograph says nothing of the shape."""
+    past = np.maximum(np.maximum(-x, x - COLS), np.maximum(-y, y - ROWS))
+    return np.clip(1 - past / 24, 0, 1)
+
+
 def warped(p):
     """Where the modelled shape is read for each point: moved across the photograph's view, as far as carries the
     modelled outline onto the photographed one there. The move up and down fades out toward the desk, so her feet
@@ -161,8 +172,9 @@ def warped(p):
     x, y, depth = in_photograph(p)
     _, axes, focal = photograph()
     size = (depth / focal)[..., None]
-    across = at(fields["across"], x, y)[..., None]
-    down = at(fields["down"], x, y)[..., None] * soft(p[..., 2:3], 2.0, 2.0)
+    inside = framed(x, y)[..., None]
+    across = at(fields["across"], x, y)[..., None] * inside
+    down = at(fields["down"], x, y)[..., None] * soft(p[..., 2:3], 2.0, 2.0) * inside
     return p + size * (across * axes[0] - down * axes[1])
 
 
@@ -177,8 +189,9 @@ def fitted(p, d):
     x, y, depth = in_photograph(p)
     size = depth / photograph()[2]
     past = at(outside, x, y)
-    d = d - at(grow, x, y) * size + SHRINK * np.maximum(past, 0) * size
-    return np.maximum(d, (past - CUT) * size)
+    inside = framed(x, y)
+    d = d - (at(grow, x, y) - SHRINK * np.maximum(past, 0)) * inside * size
+    return np.maximum(d, (past - CUT) * size - (1 - inside) * 100)
 
 
 def unit(v):
@@ -679,6 +692,26 @@ def mirrored(p, n):
     return p * flip * (1 - on) + head_p * on, n * flip * (1 - on) + head_n * on
 
 
+def softened(image, reach=4, passes=3):
+    """A copy of an image blurred by a few pixels."""
+    w, h = image.size
+    pixels = np.empty(w * h * 4, dtype=np.float32)
+    image.pixels.foreach_get(pixels)
+    pixels = pixels.reshape(h, w, 4)
+    for _ in range(passes):
+        for axis in (0, 1):
+            padded = np.concatenate([np.repeat(pixels.take([0], axis), reach + 1, axis), pixels, np.repeat(pixels.take([-1], axis), reach, axis)], axis)
+            total = np.cumsum(padded, axis=axis, dtype=np.float64)
+            n = pixels.shape[axis]
+            ahead = total.take(range(2 * reach + 1, 2 * reach + 1 + n), axis)
+            behind = total.take(range(0, n), axis)
+            pixels = ((ahead - behind) / (2 * reach + 1)).astype(np.float32)
+    out = bpy.data.images.new(image.name + "-soft", w, h, alpha=True)
+    out.colorspace_settings.name = image.colorspace_settings.name
+    out.pixels.foreach_set(pixels.ravel())
+    return out
+
+
 def photographed(cat, origin):
     """Paint the cat with its photograph wherever the photograph sees it: each corner of the mesh takes the colour
     where the solved camera shows it, faded out where the surface turns away from that camera, is hidden behind
@@ -708,8 +741,8 @@ def photographed(cat, origin):
         u, v = x / COLS, y / ROWS
         toward = centre - points
         toward /= np.linalg.norm(toward, axis=1, keepdims=True)
-        # Where the surface turns nearly edge-on to that camera, the photograph has its colour only smeared out.
-        weight = np.clip(((normals * toward).sum(1) - 0.1) / 0.15, 0, 1) * (u > 0) * (u < 1) * (v > 0) * (v < 1)
+        facing = (normals * toward).sum(1)
+        weight = np.clip(facing / 0.04, 0, 1) * (u > 0) * (u < 1) * (v > 0) * (v < 1)
         for i in np.nonzero(weight > 0)[0]:
             ray = Vector(points[i]) - eye
             length = ray.length
@@ -717,34 +750,43 @@ def photographed(cat, origin):
             nearest = min((tree.ray_cast(eye, ray, length + 1)[3] or 1e9) for tree in trees)
             if nearest < length - slack:
                 weight[i] = 0
-        return u, v, weight
+        return u, v, weight, np.clip(facing, 0, 1)
 
-    u, v, weight = seen(co, normal, 0.15)
+    u, v, weight, facing = seen(co, normal, 0.15)
     # The other side is not quite the mirror of this one, so its points need only lie near the surface seen.
     far_p, far_n = mirrored(co - origin, normal)
-    mu, mv, other = seen(far_p + origin, far_n, 0.4)
+    mu, mv, other, far_facing = seen(far_p + origin, far_n, 0.4)
     other *= 1 - weight
     loops = np.empty(len(data.loops), dtype=np.int64)
     data.loops.foreach_get("vertex_index", loops)
     data.uv_layers.new(name="photo").data.foreach_set("uv", np.column_stack((u[loops], 1 - v[loops])).ravel())
     data.uv_layers.new(name="mirror").data.foreach_set("uv", np.column_stack((mu[loops], 1 - mv[loops])).ravel())
-    data.color_attributes.new("seen", "FLOAT_COLOR", "POINT").data.foreach_set("color", np.column_stack((weight, other, weight, np.ones(count))).ravel())
+    data.color_attributes.new("seen", "FLOAT_COLOR", "POINT").data.foreach_set("color", np.column_stack((weight, other, facing, far_facing)).ravel())
     nodes, links = cat.active_material.node_tree.nodes, cat.active_material.node_tree.links
     shader = nodes["Principled BSDF"]
     colour = shader.inputs["Base Color"].links[0].from_socket
     picture = bpy.data.images.load(REFERENCE)
+    blurred = softened(picture)
     share = nodes.new("ShaderNodeVertexColor")
     share.layer_name = "seen"
     split = nodes.new("ShaderNodeSeparateColor")
     links.new(share.outputs["Color"], split.inputs[0])
-    for name, amount in (("mirror", split.outputs["Green"]), ("photo", split.outputs["Red"])):
+    for name, amount, facing in (("mirror", split.outputs["Green"], share.outputs["Alpha"]), ("photo", split.outputs["Red"], split.outputs["Blue"])):
         uv = nodes.new("ShaderNodeUVMap")
         uv.uv_map = name
-        image = nodes.new("ShaderNodeTexImage")
-        image.image = picture
-        image.extension = "EXTEND"
-        links.new(uv.outputs["UV"], image.inputs["Vector"])
-        colour = mix(nodes, links, math_node(nodes, links, "MULTIPLY", amount, image.outputs["Alpha"]), colour, image.outputs["Color"])
+        sharp, smooth = (nodes.new("ShaderNodeTexImage") for _ in range(2))
+        for image, source in ((sharp, picture), (smooth, blurred)):
+            image.image = source
+            image.extension = "EXTEND"
+            links.new(uv.outputs["UV"], image.inputs["Vector"])
+        # Seen edge-on, the photograph's detail would be drawn out into streaks over the surface: there only its
+        # colours, softened, are kept.
+        edge_on = nodes.new("ShaderNodeMapRange")
+        edge_on.inputs["From Min"].default_value = 0.08
+        edge_on.inputs["From Max"].default_value = 0.4
+        links.new(facing, edge_on.inputs["Value"])
+        photo = mix(nodes, links, edge_on.outputs["Result"], smooth.outputs["Color"], sharp.outputs["Color"])
+        colour = mix(nodes, links, math_node(nodes, links, "MULTIPLY", amount, sharp.outputs["Alpha"]), colour, photo)
     links.new(colour, shader.inputs["Base Color"])
 
 

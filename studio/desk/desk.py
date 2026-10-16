@@ -9,7 +9,8 @@ Every object is first built on its own stage, as the studio builds it for a shot
 Then each object is put down where src/components/mat/desk.json places it on the plate, and the plate is
 rendered to public/objects/mat/desk-<plate>.avif: the objects, and the shadows they throw on the mat, with
 nothing of the mat itself, which the page lays under it. Parts that move on the page, the reel of the
-recorder, are rendered on their own beside it."""
+recorder, are rendered on their own beside it, and the cat lamp from a low camera of its own, as she was
+photographed, so the page shows her face."""
 
 import argparse
 import json
@@ -25,7 +26,7 @@ sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402
 import numpy as np  # noqa: E402
-from mathutils import Vector  # noqa: E402
+from mathutils import Matrix, Vector  # noqa: E402
 
 from objects import card, catlamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
 from paint import blur  # noqa: E402
@@ -37,6 +38,8 @@ OUT = os.path.join(ROOT, "public", "objects", "mat")
 LAYOUT = os.path.join(ROOT, "src", "components", "mat", "desk.json")
 # Where the lens shows each layer, against where its prop lies: written here, read by the page.
 LEAN = os.path.join(ROOT, "src", "components", "mat", "lean.json")
+# Where on the plate each portrait lies, in em: written here, read by the page.
+PORTRAIT = os.path.join(ROOT, "src", "components", "mat", "portrait.json")
 BUILDERS = {
     **mat.SHOTS,
     **card.SHOTS,
@@ -76,6 +79,13 @@ LAYERS = {"reel": "recorder"}
 # under them. A spinning hub's shading and the side the lens sees of it do not turn with it.
 STILL = ("hub",)
 STAND_INS = {"reel": ("reel",)}
+# Props the page shows from a camera of their own, low beside them, as each was photographed, and not from overhead:
+# the cat lamp, whose face looking down on her only shows the top of her head. Each is left out of the plate's
+# camera but stays in the set, throwing its shadow and its light on the mat under it, and is rendered on its own
+# by that camera, at the plate's own size, set where she stands. Each is its shot, and the module that built it,
+# which knows the camera (photograph()) in the coordinates of its object, the middle of the object (MIDDLE), and
+# the point on the desk under that middle (STANDS).
+PORTRAITS = {"catlamp": ("catlamp", catlamp)}
 # The page shows an em of the plate at up to 22 pixels, 44 on a screen of two pixels to the point; this many leaves
 # room to zoom in before the render runs out.
 DENSITY = 64
@@ -249,14 +259,15 @@ class Desk:
         is: the mat and everything flat on it are drawn true, and anything standing on it shows its side toward
         the eye, the lamp its front."""
         scene = bpy.context.scene
-        camera = scene.camera
+        camera = getattr(self, "overhead", None)
         if camera is None:
             optics = bpy.data.cameras.new("overhead")
             optics.type = "PERSP"
             optics.sensor_fit = "AUTO"
             optics.sensor_width = 36.0
             optics.clip_end = 1000
-            camera = scene.camera = self.stage.add("overhead", optics)
+            camera = self.overhead = self.stage.add("overhead", optics)
+        scene.camera = camera
         ex, ey, height = self.layout["eye"]
         side = max(w, h)
         camera.data.lens = camera.data.sensor_width * height / side
@@ -295,6 +306,69 @@ class Desk:
         turn = math.radians(self.layout["at"][prop][2])
         local = (dx * math.cos(turn) + dy * math.sin(turn), -dx * math.sin(turn) + dy * math.cos(turn))
         return [round(local[0] / k, 4), round(local[1] / k, 4), round(grow, 4)]
+
+    def portrait(self, held, parts, density):
+        """Point the portrait camera at a shot's object as it was photographed: where that camera stood, in the
+        object's own coordinates, carried to where the object lies on the desk, drawing it as large as the plate
+        does round its middle. The picture is framed round the whole of the object. Returns where on the plate
+        the picture lies, and the object in it, each as left, top, width and height in em, set so the point on
+        the desk under her middle lies where the plate has it."""
+        scene = bpy.context.scene
+        centre, axes, _ = held.photograph()
+        body = next(obj for obj in parts if obj.type == "MESH" and obj.data.uv_layers.get("photo"))
+        placed = body.matrix_world
+        turn = placed.to_quaternion().to_matrix()
+        camera = getattr(self, "low", None)
+        if camera is None:
+            optics = bpy.data.cameras.new("portrait")
+            optics.sensor_fit = "AUTO"
+            optics.sensor_width = 36.0
+            optics.clip_end = 1000
+            camera = self.low = self.stage.add("portrait", optics)
+        where = placed @ Vector(centre)
+        looking = turn @ Matrix(axes).transposed()
+        camera.matrix_world = Matrix.Translation(where) @ looking.to_4x4()
+        into = looking.transposed()
+
+        def seen(point):
+            x, y, z = into @ (point - where)
+            return x / -z, -y / -z, -z
+
+        _, _, depth = seen(placed @ Vector(held.MIDDLE))
+        focal = depth * density
+        # The picture is framed round the object's own surface, not its boxes, which stand well off a curved thing.
+        graph = bpy.context.evaluated_depsgraph_get()
+        points = []
+        for obj in parts:
+            if obj.type not in ("MESH", "CURVE"):
+                continue
+            surface = obj.evaluated_get(graph).to_mesh()
+            co = np.empty(len(surface.vertices) * 3)
+            surface.vertices.foreach_get("co", co)
+            obj.evaluated_get(graph).to_mesh_clear()
+            world = np.asarray(obj.matrix_world)
+            points.append(co.reshape(-1, 3) @ world[:3, :3].T + world[:3, 3])
+        local = (np.concatenate(points) - np.asarray(where)) @ np.asarray(into).T
+        u, v = local[:, 0] / -local[:, 2] * focal, -local[:, 1] / -local[:, 2] * focal
+        # Room round it for the glow the lens spreads round the lit bulb, so it fades out inside the picture.
+        margin = 8 * density
+        left, right = u.min() - margin, u.max() + margin
+        top, bottom = v.min() - margin, v.max() + margin
+        w, h = math.ceil(right - left), math.ceil(bottom - top)
+        side = max(w, h)
+        camera.data.lens = camera.data.sensor_width * focal / side
+        camera.data.shift_x = (left + w / 2) / side
+        camera.data.shift_y = -(top + h / 2) / side
+        scene.camera = camera
+        scene.render.use_border = False
+        scene.render.resolution_x, scene.render.resolution_y = w, h
+        foot = placed @ Vector(held.STANDS)
+        fu, fv, _ = seen(foot)
+        gx, gy = fu * focal - left, fv * focal - top
+        x0, y0 = foot.x - gx / density, -foot.y - gy / density
+        picture = [x0, y0, w / density, h / density]
+        body = [x0 + (u.min() - left) / density, y0 + (v.min() - top) / density, (u.max() - u.min()) / density, (v.max() - v.min()) / density]
+        return {name: [round(float(value), 4) for value in rect] for name, rect in (("picture", picture), ("body", body))}
 
     def window(self, power):
         """The moon, through the window over the top left of the desk: parallel light from a disk MOON degrees
@@ -398,9 +472,10 @@ def main():
     if args.scale != 1:
         # A proof at another scale never takes the place of the page's plates, or the page would show a plate of
         # one render with a layer of another.
-        global OUT, LEAN
+        global OUT, LEAN, PORTRAIT
         OUT = args.proofs or tempfile.mkdtemp(prefix="desk-")
         LEAN = os.path.join(OUT, "lean.json")
+        PORTRAIT = os.path.join(OUT, "portrait.json")
         os.makedirs(OUT, exist_ok=True)
 
     if args.shot:
@@ -437,6 +512,9 @@ def main():
     floor = next(obj for obj in scene.objects if obj.get("stand") == "mat")
     layered = [obj for shot in LAYERS for obj in desk.parts.get(shot, []) if obj.get("layer", shot) not in STILL]
     everything = [obj for _, _, objects in desk.props.values() for obj in objects]
+    portrayed = [obj for shot, _ in PORTRAITS.values() for obj in desk.parts.get(shot, [])]
+    # What the plate's camera sees: everything but the layers and the portraits, which the page lays over it.
+    plated = [obj for obj in everything if obj not in layered and obj not in portrayed]
     raw = os.path.join(tempfile.gettempdir(), "desk.exr")
     if args.proofs:
         os.makedirs(args.proofs, exist_ok=True)
@@ -468,7 +546,29 @@ def main():
         known.setdefault(args.plate, {}).update(leans)
         with open(LEAN, "w") as file:
             file.write(json.dumps(known, indent=2) + "\n")
-        show([obj for obj in everything if obj not in layered], True)
+        show(plated, True)
+
+    def portraits(suffix, exposure, bloom=None):
+        """Each portrait on its own, by its own camera, with everything else still there to light it. Where on the
+        plate each lies goes to PORTRAIT for the page."""
+        show(everything, False)
+        frames = {}
+        for prop, (shot, held) in PORTRAITS.items():
+            if args.layers and prop not in args.layers:
+                continue
+            parts = desk.parts[shot]
+            show(parts, True)
+            frames[prop] = desk.portrait(held, parts, density)
+            pixels = stage._expose(raw)
+            develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-{prop}{suffix}.avif"), args.proofs, f"{named}-{prop}{suffix}", exposure, bloom)
+            show(parts, False)
+            print(f"PORTRAIT {prop}{suffix} {pixels.shape[1]}x{pixels.shape[0]} at {frames[prop]}")
+        desk.camera(0, 0, desk.w, desk.h, density)
+        known = json.load(open(PORTRAIT)) if os.path.exists(PORTRAIT) else {}
+        known.setdefault(args.plate, {}).update(frames)
+        with open(PORTRAIT, "w") as file:
+            file.write(json.dumps(known, indent=2) + "\n")
+        show(plated, True)
 
     room = scene.world.node_tree.nodes["Background"].inputs["Strength"]
     paint = floor.data.materials[0].node_tree.nodes["Principled BSDF"].inputs["Base Color"]
@@ -527,7 +627,7 @@ def main():
             save(mapped, os.path.join(args.proofs, f"{named}-{suffix}.png"))
         floor.visible_camera = False
         paint.default_value = mat_colour
-        show([obj for obj in everything if obj not in layered], True)
+        show(plated, True)
         desk.camera(0, 0, desk.w, desk.h, density)
         rim = np.concatenate((light[0], light[-1], light[:, 0], light[:, -1])).mean(axis=0)
         return "#" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(rim, 0, 1))
@@ -535,6 +635,7 @@ def main():
     plates = args.layers is None
     show(layered, False)
     cast(layered, False)
+    show(portrayed, False)
     if "off" in args.passes:
         # The lamp off: the dim room, lit mostly by the window. The objects in that light, the mat unseen but
         # lighting them from below and showing in them, and the light on the mat as a map.
@@ -544,6 +645,7 @@ def main():
             print(f"PLATE {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
             print("DARK RIM " + light_map("dark"))
         layers("", EXPOSURE)
+        portraits("", EXPOSURE)
 
     if "lamp" in args.passes:
         # The lamp on, in the same dim room. The objects are rendered in its light, and the mat as a map of it.
@@ -557,6 +659,7 @@ def main():
             develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-lamp.avif"), args.proofs, f"{named}-lamp", LAMP_EXPOSURE, (BLOOM[0], BLOOM[1] * density))
             print(f"LAMP {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
         layers("-lamp", LAMP_EXPOSURE)
+        portraits("-lamp", LAMP_EXPOSURE, (BLOOM[0], BLOOM[1] * density))
 
 
 main()

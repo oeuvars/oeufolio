@@ -95,6 +95,15 @@ export type Plate = {
   at: Partial<Record<PropId, [number, number, number]>>
 }
 
+/** A rectangle of a plate, in its em: left, top, width and height. */
+export type Rect = [number, number, number, number]
+
+/**
+ * Props the desk shows from a low camera of their own, as each was photographed, laid over the plate: for each, the
+ * rectangle of the plate its picture covers, glow and all, and the rectangle the prop itself fills.
+ */
+export type Portraits = Partial<Record<PropId, { picture: Rect; body: Rect }>>
+
 export type Profile = {
   handle: string
   nav: NavItem[]
