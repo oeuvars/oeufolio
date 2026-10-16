@@ -188,7 +188,9 @@ def reel(stage):
     stand_in.location = (REEL_X, -REEL_Y, 0)
     stand_in.visible_camera = False
     # Each part is in the page's layer it is named for: the reel's line, the hub, and the marks on the hub.
-    cap = prism(stage, "hub", ring(0, 0, HUB_R, 96), TOP - 0.3, HUB_TOP, hub, bevel=0.05)
+    # The cap sits on the reel. Nothing of it goes down into the case, or its own layer, which leaves the reel out,
+    # would show that part unlit as a hard black band round it.
+    cap = prism(stage, "hub", ring(0, 0, HUB_R, 96), TOP + 0.025, HUB_TOP, hub, bevel=0.05)
     cap.location = (REEL_X, -REEL_Y, 0)
     cap["layer"] = "hub"
     for turn in (103, 220.6, 347.5):

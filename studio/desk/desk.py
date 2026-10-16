@@ -392,6 +392,7 @@ def main():
     parser.add_argument("--samples", type=int, default=256)
     parser.add_argument("--proofs")
     parser.add_argument("--passes", nargs="*", default=["off", "lamp"])
+    parser.add_argument("--layers", nargs="*", help="render only these layers the page lays over the plate, or all of them, and keep the plates")
     parser.add_argument("--shot", help="photograph this one shot on a stand of its own, as a proof, and nothing else")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
     if args.scale != 1:
@@ -451,6 +452,8 @@ def main():
             for obj in desk.parts.get(shot, []):
                 groups.setdefault(obj.get("layer", shot), []).append(obj)
             for name, parts in groups.items():
+                if args.layers and name not in args.layers:
+                    continue
                 show(parts, True)
                 cast(parts, True)
                 leans[name] = desk.crop(shot, prop, parts)
@@ -529,15 +532,17 @@ def main():
         rim = np.concatenate((light[0], light[-1], light[:, 0], light[:, -1])).mean(axis=0)
         return "#" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(rim, 0, 1))
 
+    plates = args.layers is None
+    show(layered, False)
+    cast(layered, False)
     if "off" in args.passes:
         # The lamp off: the dim room, lit mostly by the window. The objects in that light, the mat unseen but
         # lighting them from below and showing in them, and the light on the mat as a map.
-        show(layered, False)
-        cast(layered, False)
-        pixels = stage._expose(raw)
-        develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}.avif"), args.proofs, named)
-        print(f"PLATE {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
-        print("DARK RIM " + light_map("dark"))
+        if plates:
+            pixels = stage._expose(raw)
+            develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}.avif"), args.proofs, named)
+            print(f"PLATE {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
+            print("DARK RIM " + light_map("dark"))
         layers("", EXPOSURE)
 
     if "lamp" in args.passes:
@@ -546,10 +551,11 @@ def main():
         # the camera exposes for the lamp, and the moonlight is left a faint cool fill.
         desk.glow(GLOW)
         window.data.energy *= LAMP_MOON
-        print("LIGHT RIM " + light_map("light"))
-        pixels = stage._expose(raw)
-        develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-lamp.avif"), args.proofs, f"{named}-lamp", LAMP_EXPOSURE, (BLOOM[0], BLOOM[1] * density))
-        print(f"LAMP {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
+        if plates:
+            print("LIGHT RIM " + light_map("light"))
+            pixels = stage._expose(raw)
+            develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-lamp.avif"), args.proofs, f"{named}-lamp", LAMP_EXPOSURE, (BLOOM[0], BLOOM[1] * density))
+            print(f"LAMP {pixels.shape[1]}x{pixels.shape[0]} {time.time() - started:.0f}s")
         layers("-lamp", LAMP_EXPOSURE)
 
 
