@@ -54,8 +54,11 @@ DARK = 0.78  # how much of the light the cat keeps off the desk where it stands 
 CATS = (
     ("gaze", 0, False, 1.7, 3.7, 2.15),
     ("curl", 0, False, 2.0, 2.6, 2.1),
+    ("tortie", 0, False, 2.0, 3.0, 2.1),
     ("belly", 0, False, 2.0, 4.2, 2.1),
+    ("inkspot", 0, False, 2.0, 2.4, 2.1),
     ("ball", 0, False, 1.6, 1.6, 2.15),
+    ("blue", 0, False, 2.0, 3.4, 2.15),
     ("dream", 0, False, 2.0, 4.2, 2.1),
     ("donut", 0, False, 2.1, 2.4, 2.1),
     ("sprawl", 0, False, 2.0, 4.0, 2.15),
