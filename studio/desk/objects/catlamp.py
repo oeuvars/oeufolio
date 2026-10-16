@@ -1,76 +1,103 @@
-"""The desk lamp: a glazed porcelain cat, stretched in a play bow, its tail rising from the rump and arching
-forward over its back. From the tail's tip hangs the lamp's head, after an arched floor lamp's: an orange enamelled
-dome gilded inside, on a brass neck, with the bulb up inside it, lighting the cat and the desk below.
+"""The desk lamp: a glazed porcelain cat figurine, stretched in a play bow, its tail rising from the rump and arching
+forward over its back. From the tail's tip a short black cord goes into a white ceramic socket, and from the socket
+hangs a frosted globe bulb, lighting the cat and the desk below.
 
-The cat is the household's own, a long-haired Turkish Van, modelled from her photographs. She is white, with a
-ginger cap over the top and back of her head and the backs of her ears, down to her upper lids in front and her
-upper neck behind, parted by a white blaze that is as wide as the gap between her eyes and narrows to a point at the
-top of her forehead. Her nose and the insides of her ears are pink, there is a ginger patch on her left upper lip,
-four ginger spots in two pairs on her shoulders, and her tail is ginger from its root. Her head is turned to her
-right and lifted, to look up at whoever stands at the near side of the desk, with amber glass eyes set in lidded
-sockets, as a figurine maker sets them. The colours are airbrushed on under a thick glossy glaze.
+It is a copy of one ceramic cat lamp, from its photograph (art/catlamp-photo.jpg): a smooth, plump ginger tabby and
+white cat with a big round head, small ears, short thick legs and round paws, its face painted on, the eyes closed
+arches, a small pink nose, a mouth and whiskers in fine brown lines, under a thick glossy glaze.
 
-The body is one smooth solid, modelled as a signed distance field (sdf.py): the head in its own turned frame, with
-its cheeks, muzzle, brows, eyelids and cupped ears, the chest and back, the legs and paws, and the tail along a
-curve, blended into each other as a figurine is modelled in clay, combed into long hair, and cut flat underneath
-where it stands. Where each colour goes is laid on the vertices.
+The body is one smooth solid, modelled as a signed distance field (sdf.py): the head in its own turned frame, the
+chest and back, the legs and paws, and the tail along a curve, blended into each other as a figurine is modelled
+in clay, and cut flat underneath where it stands. That shape is then fitted to the photograph's outline as its
+camera saw it (art/fit.py), and painted with the photograph wherever the photograph sees it; elsewhere with
+colours laid on the vertices after it.
 
 Built in its own coordinates, in em: the head toward -x, her right toward +y, the tail toward +x, standing on z = 0.
 The lamp is the light marked "bulb", at no power until desk.py turns it up."""
 
+import functools
+import json
 import math
+import os
 
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Matrix
+from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 from paint import linear
 from sdf import cone, ellipsoid, mesh, smax, smin
 from solids import lathe
 
+ART = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "art")
+# The figurine's photograph, cut out, with the light it was taken in and its highlights taken out so only its paint is
+# left (studio/desk/art/delight.py), its colours carried a little past its outline, and the camera it was taken
+# with, solved from it, in the cat's own coordinates: where the camera stands, its axes and its lens in mm.
+REFERENCE = os.path.join(ART, "catlamp-reference.png")
+REFERENCE_CAMERA = os.path.join(ART, "catlamp-camera.json")
+ROWS, COLS = 1104, 736
+# How the photographed outline corrects the modelled shape (art/fit.py): for each pixel of the photograph, how far
+# across and down the modelled shape is moved there, how far outside the figurine's outline it lies, and how far the
+# moved shape still falls short of the outline round it.
+FIT = os.path.join(ART, "catlamp-fit.npz")
+# How hard the shape is drawn in where it goes past the outline, and how many pixels past it may still stand.
+SHRINK, CUT = 2.5, 2.0
+
 # The box the cat stands in, in em, and where the cat's own origin lies in it.
 W, H = 27.0, 16.5
 ORIGIN = (2.6, 5.5)
-# Fine enough for the rims of the eyelids.
-STEP = 0.055
+STEP = 0.06
 
-# The porcelain, and the underglaze colours: her ginger, light and deep, the pink of her nose and the insides of
-# her ears, the dark brown of the rims of her eyelids, and the dusky pink of the line of her mouth.
-WHITE = "#f7ecdc"
-GINGER = "#e2934c"
-DEEP = "#bd6527"
-PINK = "#e79a94"
-LINE = "#3b2219"
-LIP = "#b9746c"
-# The glass eyes: amber, greener round the pupil, a dark ring at the rim of the iris.
-IRIS = (("#7f8a34", 0.0), ("#a7a03a", 0.3), ("#d99b2d", 0.55), ("#c27a1f", 0.76), ("#4b2c10", 0.86), ("#efe4c8", 0.92))
+# The porcelain, and the underglaze colours: her ginger, light and deep, the pink of her nose and the insides of her
+# ears, the near-black of her closed eyes, and the brown of her mouth and whiskers.
+WHITE = "#f6ebda"
+GINGER = "#eaa034"
+DEEP = "#c27414"
+PINK = "#e9a3a0"
+LINE = "#26170f"
+LIP = "#8a4a32"
 # The lamp: the same warm bulb as the pendant it replaces.
+# The tabby's dark brown stripes, brushed over the ginger.
+STRIPE = "#6f3712"
+# The lamp: a warm bulb, a round frosted globe in a white ceramic socket, on a short black cord from the tail's tip.
 BULB_COLOUR = (1.0, 0.74, 0.46)
-BULB_R = 0.8
-# The head: where the tail's tip holds it, the brass neck's length, and the dome's radius and thickness.
-ENAMEL = "#e5591a"
-NECK = 0.9
-SHADE_R = 3.0
-SHADE_T = 0.1
+BULB_R = 1.2
+GLOBE_R = 2.35
+SOCKET = "#e8dcc8"
+# Which way the socket hangs from the cord, down and forward, toward her head and a little toward her left, and where
+# the cord goes into it from the tail's tip: both solved from where the photograph shows the socket's two ends and the
+# globe's middle, and the globe's size.
+HANG = (-0.448, 0.27, -0.853)
+CORD = (-1.18, 1.45, -1.14)
 
-# The tail rises from the rump and arches forward over the cat's left side, so the lamp hangs over her head and lights
-# her lifted face, and the markings on her back are left in sight of the camera on her right. It is a long-haired
-# plume: thin at its root, full along its middle, and gathered again where it holds the lamp.
-TAIL = ((17.4, 0.0, 7.4), (22.0, -1.0, 14.5), (12.5, -4.6, 21.0), (5.5, -3.2, 17.8))
-HEAD = (5.5, -3.2, 17.8)
+# The tail rises straight up from the top of the rump and hooks forward at the top, over her back, where the lamp
+# hangs from it. It tapers a little from its root.
+TAIL = ((14.3, 0.0, 12.0), (20.7, 0.0, 18.0), (19.3, 0.0, 26.4), (13.6, 0.0, 25.2))
+# Her left foreleg, the near one, from its shoulder to its paw, measured out on her left: reaching further forward
+# than her right.
+NEAR_FORE = ((6.0, 1.75, 2.4), (-3.2, 6.0, 0.8))
+# How far each hind foot, her right then her left (measured out on her left), stands from under its thigh: her left
+# a little forward and in, as the photograph shows it.
+HIND = ((0.0, 0.0, 0.0), (-0.35, -0.3, 0.0))
+# Her right foreleg, the far one, as the photograph shows it: from its shoulder, raised, forward and in to its paw,
+# toward the camera, tapering from this thick to this thick.
+FAR_FORE = ((6.0, 1.75, 2.9), (-4.5, -0.5, 0.7), (1.15, 0.8))
+TAIL_R = (1.3, 0.72)
+HEAD = TAIL[-1]
 
-# Her head: the middle of her skull, and how it is held: turned this many degrees to her right, her chin lifted,
-# and cocked a little, to look up at whoever holds a camera over the near side of the desk, and into the lamp's light.
-SKULL = np.array([4.3, 0.35, 5.0])
-TURN, LIFT, COCK = 40.0, 50.0, -8.0
-# The eyes, in the head's frame: an eyeball's radius, how thick the lids are over it, and how far the lids are
-# open on either side of the gaze, across and up, as the tangent of the angle.
-EYE_R = 0.6
-LID = 0.1
-EYE_AT = (-1.38, 0.95, 0.12)
-OPEN = (1.4, 0.95)
-SLANT = math.radians(12)
+# Her head: the middle of it, and how it is held: turned this many degrees to her right, lifted a little, and
+# cocked, as the figurine's is.
+SKULL = np.array([2.85, 0.0, 4.85])
+TURN, LIFT, COCK = -16.0, 10.0, 1.0
+# The head is modelled at this size and made this much bigger: as wide as her rump.
+GROW = 1.1
+# The round of the skull, in the head's frame: its middle and its radii, low between the ears as the photograph shows.
+DOME = ((-0.2, 0.1, 0.35), (2.4, 2.7, 2.5))
+# The tips of her ears in the head's frame: her right, the far one, tall and leaning out, then her left.
+EARS = ((-1.05, 2.4, 3.95), (-0.85, -2.4, 3.0))
+# How broad each ear is at its foot, either way from its middle.
+EAR_HALF = 0.72
 
 
 def turned():
@@ -87,27 +114,76 @@ TURNED = turned()
 
 
 def in_head(p):
-    return (p - SKULL) @ TURNED
+    return (p - SKULL) @ TURNED / GROW
+
+
+@functools.cache
+def photograph():
+    """The camera the figurine was photographed with: where it stands, its axes, and its lens in pixels."""
+    with open(REFERENCE_CAMERA) as file:
+        solved = json.load(file)
+    return np.asarray(solved["C"]), np.asarray(solved["R"]), solved["f"] / 36 * ROWS
+
+
+def in_photograph(p):
+    """Where points in the cat's own coordinates are in the photograph, in pixels across and down, and how far they
+    are from its camera."""
+    centre, axes, focal = photograph()
+    seen = (p - centre) @ axes.T
+    depth = -seen[..., 2]
+    return COLS / 2 + focal * seen[..., 0] / depth, ROWS / 2 - focal * seen[..., 1] / depth, depth
+
+
+@functools.cache
+def fit():
+    if not FIT or not os.path.exists(FIT):
+        return {}
+    with np.load(FIT) as fields:
+        return {name: fields[name] for name in fields.files}
+
+
+def at(field, x, y):
+    """A field over the photograph's pixels, read between them, its edge carried on past the frame."""
+    x = np.clip(x - 0.5, 0, COLS - 1.001)
+    y = np.clip(y - 0.5, 0, ROWS - 1.001)
+    i, j = np.floor(y).astype(int), np.floor(x).astype(int)
+    a, b = y - i, x - j
+    return (field[i, j] * (1 - a) + field[i + 1, j] * a) * (1 - b) + (field[i, j + 1] * (1 - a) + field[i + 1, j + 1] * a) * b
+
+
+def warped(p):
+    """Where the modelled shape is read for each point: moved across the photograph's view, as far as carries the
+    modelled outline onto the photographed one there. The move up and down fades out toward the desk, so her feet
+    stay standing on it."""
+    fields = fit()
+    if "across" not in fields:
+        return p
+    x, y, depth = in_photograph(p)
+    _, axes, focal = photograph()
+    size = (depth / focal)[..., None]
+    across = at(fields["across"], x, y)[..., None]
+    down = at(fields["down"], x, y)[..., None] * soft(p[..., 2:3], 2.0, 2.0)
+    return p + size * (across * axes[0] - down * axes[1])
+
+
+def fitted(p, d):
+    """The moved shape made to fill the photographed outline and go no further than it: grown where it falls short,
+    and drawn in where it goes past, by an amount that runs smoothly over the surface, so it keeps its rounded form
+    seen from anywhere else. Only what still stands a few pixels past the outline is cut off by it."""
+    fields = fit()
+    if "grow" not in fields:
+        return d
+    outside, grow = fields["outside"], fields["grow"]
+    x, y, depth = in_photograph(p)
+    size = depth / photograph()[2]
+    past = at(outside, x, y)
+    d = d - at(grow, x, y) * size + SHRINK * np.maximum(past, 0) * size
+    return np.maximum(d, (past - CUT) * size)
 
 
 def unit(v):
     v = np.asarray(v, dtype=float)
     return v / np.linalg.norm(v)
-
-
-def eyes():
-    """Each eye, in the head's frame: its centre, where it looks, and which way is out and which up across it."""
-    out = []
-    for side in (1, -1):
-        centre = np.array([EYE_AT[0], side * EYE_AT[1], EYE_AT[2]])
-        gaze = unit((-1.0, side * 0.18, 0.07))
-        up = unit(np.array([0, 0, 1.0]) - gaze[2] * gaze)
-        across = unit(np.cross(up, gaze)) * -side
-        out.append((centre, gaze, across, up))
-    return out
-
-
-EYES = eyes()
 
 
 def sphere(p, centre, r):
@@ -124,44 +200,26 @@ def soft(x, edge, width):
     return t * t * (3 - 2 * t)
 
 
-def waves(p, size, seed, count=6, across=None, squeeze=0.15):
-    """A sum of plane waves, about -1 to 1. Given a direction, the waves run along it, as combed hair does."""
+def waves(p, size, seed, count=5):
+    """A slow irregular wander, about -1 to 1."""
     rng = np.random.default_rng(seed)
     out = np.zeros(p.shape[:-1])
     for _ in range(count):
         k = rng.normal(size=3)
-        if across is not None:
-            k = k - (1 - squeeze) * (k @ across) * np.asarray(across)
         k = k / np.linalg.norm(k) / size * rng.uniform(0.7, 1.3)
         out += np.sin(p @ k + rng.uniform(0, 6.3))
     return out / math.sqrt(count)
 
 
-def opening(h, eye):
-    """Where the lids part over an eye: a cone from the eye's centre, its mouth an almond slanted up toward the outer
-    corner, and no deeper than the lids."""
-    centre, gaze, across, up = eye
-    q = h - centre
-    g = q @ gaze
-    a0, b0 = q @ across, q @ up
-    a = a0 * math.cos(SLANT) + b0 * math.sin(SLANT)
-    b = -a0 * math.sin(SLANT) + b0 * math.cos(SLANT)
-    depth = np.maximum(g, 0.02)
-    r = np.linalg.norm(q, axis=-1)
-    spread = np.sqrt((a / (OPEN[0] * depth)) ** 2 + (np.abs(b) / (OPEN[1] * depth)) ** 2)
-    mouth = np.where(g > 0, (spread - 1) * np.minimum(r, 0.8) * 0.5, 1.0)
-    return np.maximum(mouth, r - (EYE_R + 0.45))
-
-
 def ear_frame(side):
     """An ear's base, its length up to the tip, and its axes: across the base, up to the tip, and out of its cup."""
-    base = np.array([0.45, side * 1.5, 1.45])
-    tip = np.array([0.85, side * 2.45, 3.75])
+    base = np.array([-0.7, side * 1.95, 2.0])
+    tip = np.asarray(EARS[0] if side > 0 else EARS[1])
     up = unit(tip - base)
-    front = unit((-1.0, side * 0.45, 0.1))
+    # Her far ear turns its hollow toward the camera, as the photograph shows its pink inside.
+    front = unit((-1.0, -side * 0.15, 0.2)) if side < 0 else unit((-0.75, -0.65, 0.15))
     front = unit(front - (front @ up) * up)
-    across = np.cross(up, front)
-    return base, np.linalg.norm(tip - base), across, up, front
+    return base, np.linalg.norm(tip - base), np.cross(up, front), up, front
 
 
 def triangle(u, v, corners):
@@ -180,76 +238,79 @@ def triangle(u, v, corners):
 
 
 def ear_coords(h, side):
+    """Where a point is against an ear: inside its outline or not, how far in front of the middle of its shell, how
+    thick the shell is there, and how far up the ear."""
     base, length, across, up, front = ear_frame(side)
     q = h - base
     u, v, w = q @ across, q @ up, q @ front
-    flat = triangle(u * side, v, ((-1.15, -0.7), (1.15, -0.7), (0.05, length - 0.3))) - 0.28
+    # A rounded triangle, broad at the foot.
+    half = EAR_HALF
+    flat = triangle(u, v, ((-half, -0.7), (half, -0.7), (0.0, length - 0.5))) - (0.42 if side < 0 else 0.34)
     along = np.clip(v / length, 0, 1)
-    # The cup: its sides curl forward round the hollow, and the ear is thicker where it grows from the head.
-    middle = 0.45 * (u / 1.15) ** 2 * np.clip(1 - along, 0.3, 1)
-    return flat, w - middle, 0.09 + 0.24 * (1 - along) ** 2, along
+    middle = 0.25 * (u / 1.0) ** 2
+    return flat, w - middle, 0.45 + 0.4 * (1 - along) ** 2, along
 
 
 def ear(h, side):
     flat, w, thick, _ = ear_coords(h, side)
-    return smax(flat, np.abs(w) - thick, 0.07)
+    shell = smax(flat, np.abs(w + 0.05) - thick, 0.12)
+    # The hollow in front, shallow, as a figurine's is.
+    hollow = smax(flat + 0.28, -(w - 0.02), 0.08)
+    return smax(shell, -hollow, 0.08)
 
 
 def head(h):
-    """The head in its own frame, looking along -x: a round skull, full cheeks, a short straight nose, round
-    whisker pads, a small chin, brows over the eyes, lidded eyes, big upright ears, and a ruff of long hair."""
-    d = ellipsoid(h, (0.2, 0, 0.25), (2.3, 2.15, 2.0))
-    d = smin(d, both(h, lambda q: ellipsoid(q, (-0.7, 1.45, -0.7), (1.5, 1.25, 1.25))), 0.6)
-    d = smin(d, cone(h, (-1.0, 0, 0.75), (-2.42, 0, -0.32), 0.62, 0.4), 0.45)
-    d = smin(d, both(h, lambda q: ellipsoid(q, (-2.1, 0.5, -0.95), (0.62, 0.66, 0.52))), 0.25)
-    d = smin(d, ellipsoid(h, (-1.85, 0, -1.5), (0.6, 0.52, 0.42)), 0.3)
-    d = smin(d, ellipsoid(h, (-2.5, 0, -0.45), (0.3, 0.36, 0.26)), 0.15)
-    d = smin(d, both(h, lambda q: ellipsoid(q, (-1.3, 0.95, 0.74), (0.75, 0.72, 0.36))), 0.3)
-    for centre, *_ in EYES:
-        d = smin(d, sphere(h, centre, EYE_R + LID), 0.25)
-    d = smin(d, np.minimum(ear(h, 1), ear(h, -1)), 0.3)
-    # The ruff: long hair round the backs of the cheeks and under the chin, combed back and down.
-    ruff = both(h, lambda q: np.minimum(ellipsoid(q, (0.3, 1.85, -1.0), (1.4, 1.0, 1.5)), ellipsoid(q, (1.2, 1.55, 0.1), (1.2, 0.9, 1.3))))
-    ruff = np.minimum(ruff, ellipsoid(h, (-0.6, 0, -1.9), (1.4, 1.5, 0.9)))
-    ruff = ruff - 0.07 * waves(h, 0.13, 21, across=(1, 0, 0)) - 0.1 * waves(h, 0.45, 22, across=(1, 0, 0))
-    d = smin(d, ruff, 0.5)
-    return d
+    """The head in its own frame, looking along -x: big, round and broad, with full cheeks, a small round muzzle and
+    chin, and small rounded ears set wide."""
+    d = ellipsoid(h, DOME[0], DOME[1])
+    d = smin(d, both(h, lambda q: ellipsoid(q, (-0.8, 1.5, -0.75), (1.6, 1.6, 1.35))), 0.9)
+    d = smin(d, ellipsoid(h, (-1.75, 0, -0.55), (0.6, 1.0, 0.6)), 0.6)
+    d = smin(d, ellipsoid(h, (-1.5, 0, -0.95), (0.55, 0.7, 0.4)), 0.5)
+    d = smin(d, sphere(h, (-2.32, 0, -0.48), 0.2), 0.25)
+    return smin(d, np.minimum(ear(h, 1), ear(h, -1)), 0.25)
 
 
-def foreleg(q):
-    upper = cone(q, (6.6, 1.75, 2.9), (5.3, 1.95, 0.95), 1.1, 0.82)
-    lower = cone(q, (5.3, 1.95, 0.8), (1.7, 1.6, 0.55), 0.76, 0.56)
-    paw = ellipsoid(q, (0.95, 1.55, 0.47), (0.95, 0.72, 0.47))
-    toes = np.minimum.reduce([sphere(q, (x, 1.55 + o, 0.34), 0.27) for x, o in ((0.3, -0.45), (0.1, -0.15), (0.1, 0.15), (0.3, 0.45))])
-    leg = smin(smin(upper, lower, 0.5), paw, 0.45)
-    return smin(leg, toes, 0.12)
-
-
-def hindleg(q):
-    thigh = ellipsoid(q, (15.0, 2.05, 5.0), (2.4, 1.2, 2.5))
-    shin = cone(q, (13.8, 2.3, 3.0), (16.6, 2.4, 1.5), 0.95, 0.55)
-    foot = cone(q, (16.6, 2.4, 1.5), (15.9, 2.3, 0.5), 0.55, 0.5)
-    paw = ellipsoid(q, (15.3, 2.3, 0.45), (0.95, 0.7, 0.45))
-    toes = np.minimum.reduce([sphere(q, (x, 2.3 + o, 0.32), 0.25) for x, o in ((14.65, -0.4), (14.45, -0.13), (14.45, 0.13), (14.65, 0.4))])
-    britches = ellipsoid(q, (16.6, 1.9, 3.6), (1.3, 1.1, 1.8))
-    leg = smin(smin(smin(thigh, shin, 0.6), foot, 0.3), paw, 0.4)
-    return smin(smin(leg, britches, 0.6), toes, 0.12)
+def paw(q, centre, radii):
+    """A round paw, its toes parted by two shallow grooves across its front."""
+    x0, y0, z0 = centre
+    body = ellipsoid(q, centre, radii)
+    for o in (-0.33, 0.33):
+        groove = np.maximum(np.abs(q[..., 1] - y0 - o * radii[1] / 1.0) - 0.06, x0 - 0.35 - q[..., 0])
+        body = smax(body, -np.maximum(groove, 0.2 - q[..., 2]), 0.06)
+    return body
 
 
 def torso(p):
-    """The chest low between the forelegs, the back rising to high haunches, the shoulder blades standing up
-    where the forelegs reach forward, and the neck up into the turned head."""
-    d = ellipsoid(p, (6.0, 0, 2.9), (2.4, 2.55, 2.3))
-    d = smin(d, cone(p, (7.0, 0, 3.4), (14.0, 0, 6.0), 2.4, 2.7), 1.2)
-    d = smin(d, ellipsoid(p, (15.4, 0, 6.4), (2.6, 2.7, 2.6)), 1.2)
-    d = smin(d, both(p, lambda q: ellipsoid(q, (7.2, 1.35, 4.6), (1.5, 0.9, 1.0))), 0.8)
-    nape = SKULL + TURNED @ np.array([1.0, 0, -0.9])
-    d = smin(d, cone(p, nape, (6.2, 0, 3.6), 1.7, 2.1), 1.0)
-    # Long hair, combed back along the body and down the flanks, everywhere but the legs below the elbows.
-    hairy = soft(p[..., 2] - 1.6, 0, 1.2)
-    d = d - hairy * (0.03 * waves(p, 0.09, 11, count=8, across=(1, 0, 0), squeeze=0.05) + 0.05 * waves(p, 0.35, 12, across=(1, 0, 0), squeeze=0.05) + 0.05)
-    d = smin(d, both(p, foreleg), 0.9)
-    return smin(d, both(p, hindleg), 1.0)
+    """The chest low between the forelegs stretched flat in front, the back rising to a high round rump on short
+    standing hind legs."""
+    d = ellipsoid(p, (5.0, 0, 3.3), (3.0, 2.85, 2.9))
+    d = smin(d, cone(p, (5.5, 0, 4.5), (13.0, 0, 7.8), 3.0, 3.4), 1.6)
+    d = smin(d, ellipsoid(p, (14.8, 0, 9.0), (3.4, 2.95, 3.9)), 1.6)
+    d = smin(d, ellipsoid(p, (16.4, 0, 6.6), (2.3, 2.5, 2.8)), 1.2)
+    # The back rises steeply from behind the shoulders and stays high to the rump, as the figurine's does: its crest
+    # runs through these heights, measured from the photograph.
+    crest = ((6.8, 0, 4.2), (8.2, 0, 5.8), (9.8, 0, 8.4), (11.6, 0, 9.75), (13.8, 0, 10.9))
+    for a_, b_ in zip(crest, crest[1:]):
+        d = smin(d, cone(p, a_, b_, 2.7, 2.7), 1.2)
+    d = smin(d, ellipsoid(p, (9.8, 0, 4.4), (4.2, 2.6, 2.3)), 1.5)
+    d = smin(d, cone(p, SKULL + GROW * TURNED @ np.array([1.0, 0, -0.6]), (4.6, 0, 3.4), 2.1, 2.5), 1.0)
+
+    def fore(q, shoulder, at, radii=(1.15, 0.95)):
+        """A foreleg on her right (+y), from the shoulder to its paw, this thick at either end."""
+        leg = cone(q, shoulder, np.asarray(at) + (0.4, -0.1, 0.05), *radii)
+        return smin(leg, paw(q, at, (1.55, 1.2, 0.8)), 0.7)
+
+    def hind(q, moved):
+        """A hind leg on her right (+y), its foot moved this far from under the thigh."""
+        moved = np.asarray(moved)
+        thigh = ellipsoid(q, (14.8, 1.9, 6.4), (2.8, 1.45, 3.4))
+        leg = cone(q, (15.0, 2.3, 6.0), np.array((14.9, 2.35, 0.9)) + moved, 1.55, 1.2)
+        return smin(smin(thigh, leg, 1.6), paw(q, np.array((14.4, 2.35, 0.78)) + moved, (1.5, 1.2, 0.78)), 0.6)
+
+    # She stretches them unevenly: her left paw, nearer the camera, reaches further out than her right.
+    mirrored = p * np.array([1, -1, 1])
+    d = smin(d, np.minimum(fore(p, *FAR_FORE), fore(mirrored, *NEAR_FORE)), 0.9)
+    return smin(d, np.minimum(hind(p, HIND[0]), hind(mirrored, HIND[1])), 0.9)
 
 
 def tail_curve(samples=60):
@@ -260,150 +321,168 @@ def tail_curve(samples=60):
     return points, along
 
 
-def tail_frames(points):
-    """A frame carried along the tail without twisting: its direction, and two axes round it."""
-    ahead = np.diff(points, axis=0)
-    ahead /= np.linalg.norm(ahead, axis=1, keepdims=True)
-    normal = unit(np.cross(ahead[0], (0, 1, 0)))
-    normals = []
-    for t in ahead:
-        normal = unit(normal - (normal @ t) * t)
-        normals.append(normal)
-    normals = np.array(normals)
-    return ahead, normals, np.cross(ahead, normals)
-
-
-def nearest_on_tail(p, samples=48):
-    """For each point, its distance from the tail's line, how far along the tail it is (0 to 1), and its angle
-    round it."""
+def nearest_on_tail(p, samples=60):
+    """For each point, its distance from the tail's line and how far along the tail it is, 0 to 1."""
     points, along = tail_curve(samples)
-    _, normals, binormals = tail_frames(points)
     best = np.full(len(p), np.inf)
     s = np.zeros(len(p))
-    angle = np.zeros(len(p))
     for i in range(len(points) - 1):
         a, ab = points[i], points[i + 1] - points[i]
         t = np.clip(((p - a) @ ab) / (ab @ ab), 0, 1)
-        v = p - a - t[:, None] * ab
-        dist = np.linalg.norm(v, axis=1)
+        dist = np.linalg.norm(p - a - t[:, None] * ab, axis=1)
         closer = dist < best
         best = np.where(closer, dist, best)
         s = np.where(closer, (along[i] + t * (along[i + 1] - along[i])) / along[-1], s)
-        angle = np.where(closer, np.arctan2(v @ binormals[i], v @ normals[i]), angle)
-    return best, s, angle
+    return best, s
 
 
 def tail(p):
     points, _ = tail_curve()
-    lo, hi = points.min(axis=0) - 2.6, points.max(axis=0) + 2.6
+    lo, hi = points.min(axis=0) - 2, points.max(axis=0) + 2
     near = np.all((p > lo) & (p < hi), axis=-1)
     d = np.full(p.shape[:-1], 1e3)
-    dist, s, angle = nearest_on_tail(p[near])
-    radius = 0.95 + 0.85 * np.sin(np.pi * s) ** 0.7
-    # Locks of hair along it, uneven and twisting a little, deepest where it is fullest.
-    locks = np.zeros(len(s))
-    rng = np.random.default_rng(31)
-    for count, depth in ((4, 0.1), (7, 0.07), (13, 0.07), (23, 0.07), (37, 0.045)):
-        twist, phase, uneven = rng.uniform(3, 8), rng.uniform(0, 6.3), rng.integers(2, 4)
-        clumps = 0.6 + 0.4 * np.sin(uneven * angle + rng.uniform(9, 15) * s + phase)
-        locks += depth * np.sin(count * angle + twist * s + phase) * clumps
-    d[near] = dist - radius - locks * np.sin(np.pi * s) ** 0.6
+    dist, s = nearest_on_tail(p[near])
+    d[near] = dist - (TAIL_R[0] + (TAIL_R[1] - TAIL_R[0]) * s**1.7)
     return d
 
 
 def body(p):
-    """The porcelain: the cat, without the lamp's head."""
-    d = smin(torso(p), head(in_head(p)), 0.9)
-    d = smin(d, tail(p), 0.7)
-    h = in_head(p)
-    for eye in EYES:
-        d = smax(d, -opening(h, eye), 0.05)
+    """The porcelain: the cat, without the lamp, fitted to the photograph."""
+    q = warped(p)
+    d = smin(torso(q), GROW * head(in_head(q)), 0.9)
+    d = fitted(p, smin(d, tail(q), 1.0))
     # It stands on a flat foot.
     return np.maximum(d, -p[..., 2])
 
 
-def wobble(p, seed, scale=0.6, size=1.8):
-    """A slow irregular wander, for the edges of brushed underglaze."""
-    return scale * waves(p, size, seed, count=5)
+def line(distance, width):
+    """A brushed line: how much of it covers a point this far from its middle."""
+    return soft(width - np.abs(distance), 0, 0.03)
+
+
+def stroke(u, v, a, b, width):
+    """A brushed line from a to b in a plane, tapering at its ends: how much of it covers each point."""
+    (ax, ay), (bx, by) = a, b
+    ex, ey = bx - ax, by - ay
+    t = np.clip(((u - ax) * ex + (v - ay) * ey) / (ex * ex + ey * ey), 0, 1)
+    d = np.hypot(u - ax - ex * t, v - ay - ey * t)
+    return soft(width * np.sqrt(np.clip(1 - (2 * t - 1) ** 2, 0, 1)) + 0.01 - d, 0, 0.03)
 
 
 def painted(verts, normals):
-    """Where each colour goes, as she is marked in her photographs: how much ginger, pink, dark and lip line. The
-    colours themselves are laid in the shader."""
+    """Where each colour goes, as the figurine is painted: a ginger tabby and white. How much ginger, pink, near-black,
+    brown line and dark stripe. The colours are laid in the shader."""
     p = verts
     x, y, z = p[:, 0], p[:, 1], p[:, 2]
     h = in_head(p)
     n = normals @ TURNED
     hx, hy, hz = h[:, 0], h[:, 1], h[:, 2]
     side = np.abs(hy)
-    eye_z = EYE_AT[2]
-    face = soft(-n[:, 0] - 0.1, 0, 0.3)
-    # The cap: the ginger comes down to just over the upper lids, to the outer corners of the eyes at the temples,
-    # under the ears at the sides, and low round the back of the skull, where it ends on the upper neck.
-    line = eye_z + 0.45 - 0.25 * soft(side - 1.05, 0, 0.7) - 1.8 * soft(hx - 1.7, 0, 1.0) + wobble(h, 1, 0.08, 0.6)
-    cap = soft(hz - line, 0, 0.18) * soft(2.45 - hx + wobble(h, 7, 0.18, 0.8), 0, 0.35)
-    # Only on the head: not on the shoulders the head is turned toward.
-    cap *= soft(1.0 - np.linalg.norm((h - (0.4, 0, 0.4)) / (3.2, 3.0, 3.6), axis=1), 0, 0.12)
-    # The blaze: white up the face, as wide at the eyes as the gap between them, narrowing to a point at the top of
-    # the forehead, a little toward her right.
-    up = np.clip((hz - eye_z + 0.1) / 2.1, 0, 1)
-    half = 0.47 * (1 - up) ** 1.2
-    blaze = soft(half - np.abs(hy - 0.2 * up) + wobble(h, 2, 0.04, 0.4), 0, 0.1) * soft(-0.3 - hx, 0, 0.6)
-    ginger = cap * (1 - blaze)
-    # Her moustache: ginger on her left upper lip, a smaller fleck on her right.
-    lip_left = np.linalg.norm((h - (-2.45, -0.5, -0.88)) / (0.7, 0.42, 0.32), axis=1)
-    lip_right = np.linalg.norm((h - (-2.6, 0.3, -0.72)) / (0.5, 0.17, 0.15), axis=1)
-    ginger = np.maximum(ginger, face * soft(1 - lip_left + wobble(h, 3, 0.15, 0.3), 0, 0.25))
-    ginger = np.maximum(ginger, face * soft(1 - lip_right, 0, 0.3))
-    # The ears: ginger behind, pale pink in the cup, white round its edge and in the tufts at its foot.
+    on_head = soft(1.0 - np.linalg.norm(h / (2.8, 3.1, 3.6), axis=1), 0, 0.1)
+    face = soft(-n[:, 0] - 0.15, 0, 0.3) * soft(-0.8 - hx, 0, 0.4)
+    stripe = np.zeros(len(p))
+    # The head: ginger over the top and back and down the outer cheeks; a white blaze up the middle of the forehead,
+    # and the muzzle, chin and inner cheeks white.
+    edge = 0.32 - 0.15 * soft(side - 1.3, 0, 0.8) - 0.9 * soft(hx - 0.8, 0, 1.4) + 0.06 * waves(h, 0.5, 1)
+    cap = soft(hz - edge, 0, 0.2) * soft(1.2 - hx + 0.15 * waves(h, 0.7, 7), 0, 0.35) * soft(1.0 - np.linalg.norm(h / (2.45, 2.75, 3.6), axis=1), 0, 0.08)
+    up = np.clip((hz - 0.25) / 1.4, 0, 1)
+    blaze = soft(0.55 * (1 - up) ** 1.5 - np.abs(hy - 0.05), 0, 0.1) * soft(-0.4 - hx, 0, 0.5)
+    tight = soft(1.0 - np.linalg.norm(h / (2.35, 2.75, 2.9), axis=1), 0, 0.06)
+    cheek = soft(side - 1.55 + 0.12 * waves(h, 0.4, 2), 0, 0.25) * soft(0.4 - hz, 0, 0.2) * soft(hz + 1.15, 0, 0.3) * soft(0.3 - hx, 0, 0.3) * tight
+    ginger = np.maximum(cap * (1 - blaze), cheek)
+    # Its stripes: lines up the forehead either side of the blaze and back over the crown, and two across each cheek.
+    for c in (0.42, 0.75, 1.1, 1.45, -0.42, -0.75, -1.1, -1.45):
+        bend = 0.2 * np.sign(c) * np.clip(hz - 0.5, 0, None)
+        stripe = np.maximum(stripe, 0.85 * cap * soft(hz - 0.55, 0, 0.15) * soft(0.065 - np.abs(hy - c - bend + 0.04 * waves(h, 0.3, 30)), 0, 0.05))
+    for z0 in (-0.1, -0.55):
+        for s_ in (1, -1):
+            stripe = np.maximum(stripe, cheek * stroke(s_ * hy, hz, (1.7, z0 + 0.1), (2.6, z0 - 0.15), 0.09))
+    # The ears: ginger behind, pale pink in the hollow, and a dark brown rim.
     pink = np.zeros(len(p))
     for s_ in (1, -1):
         flat, w, thick, along = ear_coords(h, s_)
-        on = soft(-flat + 0.05, 0, 0.1) * soft(along - 0.05, 0, 0.1)
-        cup = on * soft(w, 0, 0.12)
-        ginger = np.maximum(ginger, on * (1 - cup))
-        ginger *= 1 - cup
-        pink = np.maximum(pink, 0.75 * cup * soft(-flat - 0.3, 0, 0.25) * soft(along - 0.2, 0, 0.2))
-    # The back, from above: four spots in two pairs either side of the spine, on the shoulders, measured from her
-    # photograph against the width of her back. A small round pair almost touching just behind the withers, and
-    # behind them a larger pair splayed outward like wings: each a petal from a point beside the spine, fanning
-    # back and out over the top of the shoulder.
-    top = soft(normals[:, 2] - 0.1, 0, 0.3) * soft(z - 3.5, 0, 0.5)
+        on = soft(0.08 - flat, 0, 0.1) * soft(along - 0.02, 0, 0.1) * soft(thick + 0.25 - np.abs(w), 0, 0.1)
+        hollow = on * soft(w - 0.0, 0, 0.1) * soft(-flat - 0.22, 0, 0.12)
+        ginger = np.maximum(ginger, on * (1 - hollow))
+        ginger *= 1 - hollow
+        pink = np.maximum(pink, 0.85 * hollow)
+        dark_rim = on * soft(0.14 - np.abs(flat + 0.12), 0, 0.05) * soft(along - 0.08, 0, 0.1)
+        stripe = np.maximum(stripe, dark_rim)
+    # The body, as the figurine's is painted: two big ginger patches over the back, one on the shoulders and one from
+    # the middle of the back to the root of the tail, parted by white across the back, each brushed down the flank to
+    # past halfway and crossed by two or three broad dark strokes that run down it; a round ginger spot on the back of
+    # each haunch; the chest, belly and legs white.
+    middle = np.interp(x, (5.5, 13.0, 15.0, 16.8), (3.9, 7.6, 9.4, 11.4))
+    dist, s = nearest_on_tail(p, 120)
+    on_tail = (dist < 2.1) * soft(s - 0.02, 0, 0.05)
+    body_part = (1 - on_head) * (1 - on_tail)
+    lean = x + 0.35 * (middle + 3.2 - z) + 0.22 * waves(p, 0.6, 42)
+    shoulder = soft(lean - 5.9, 0, 0.5) * soft(8.9 - lean + 0.25 * waves(p, 0.6, 45), 0, 0.5) * soft(z - middle + 1.3 + 0.3 * waves(p, 0.8, 40), 0, 0.4)
+    back = soft(lean - 10.3 + 0.25 * waves(p, 0.6, 46), 0, 0.5) * soft(z - np.interp(x, (9.0, 14.5, 16.4), (4.8, 8.6, 11.8)) + 0.3 * waves(p, 0.8, 41), 0, 0.45)
+    patches = np.maximum(shoulder, back) * body_part * (z < 13.0)
+    ginger = np.maximum(ginger, patches)
+    # Each stroke is broad over the back and tapers as it runs down the flank, darkest along its middle.
+    down = np.clip((middle + 3.2 - z) / 4.0, 0, 1)
+    for c, width in ((6.6, 0.4), (7.8, 0.45), (11.4, 0.55), (13.1, 0.55), (14.9, 0.45)):
+        reach = width * (1 - 0.5 * down)
+        stripe = np.maximum(stripe, patches * soft(reach - np.abs(lean - c + 0.1 * waves(p, 0.5, 50)), 0, 0.3))
+    for s_ in (1, -1):
+        haunch = np.linalg.norm((p - (14.85, s_ * 3.95, 5.1)) / (0.85, 0.9, 1.25), axis=1)
+        ginger = np.maximum(ginger, 0.85 * soft(1 - haunch + 0.15 * waves(p, 0.4, 43), 0, 0.35) * body_part)
+    # The forelegs: a ginger band part way along each, with dark strokes across it.
     for s_ in (1, -1):
         out = s_ * y
-        front = np.hypot((x - 8.95) / 0.52, (out - 0.5) / 0.47)
-        front = front * (1 + 0.15 * np.clip((8.95 - x) / 0.52, 0, 1))
-        ginger = np.maximum(ginger, top * soft(1 - front + wobble(p, 4 + (s_ > 0), 0.1, 0.4), 0.05, 0.15))
-        da, db = x - 9.6, out - 0.16
-        fan = (np.arctan2(db, da) - math.radians(52 if s_ > 0 else 47)) / math.radians(44)
-        reach = 2.3 * np.clip(np.cos(np.clip(fan, -1, 1) * np.pi / 2), 0, 1) ** 0.22 * (np.abs(fan) < 1)
-        wing = (reach - np.hypot(da, db)) / 0.5
-        ginger = np.maximum(ginger, top * soft(wing + wobble(p, 6 + (s_ > 0), 0.15, 0.4), 0.05, 0.25))
-    # The tail, all of it, from its root.
-    dist, s, _ = nearest_on_tail(p, 120)
-    ginger = np.maximum(ginger, (dist < 2.8) * soft(s - 0.015, 0, 0.05))
-    # The nose: a pink leather, broad at the top and coming to a point at the lip.
-    narrow = 0.36 - 0.3 * np.clip(-(hz + 0.42) / 0.3, 0, 1)
-    nose = np.linalg.norm((h - (-2.72, 0, -0.42)) / np.column_stack((np.full(len(p), 0.26), narrow, np.full(len(p), 0.24))), axis=1)
-    pink = np.maximum(pink, face * soft(1 - nose, 0, 0.2))
-    ginger *= 1 - face * soft(1 - nose, 0, 0.2)
-    # The lids: a dark rim round each eye, where the lids part.
+        leg = (out > 1.2) * (out < 5.6) * (z < 2.3) * soft(z - 0.85 + 0.15 * waves(p, 0.4, 47), 0, 0.3)
+        wash = leg * soft(x + 1.2 + 0.2 * waves(p, 0.4, 48), 0, 0.5) * soft(1.3 - x + 0.2 * waves(p, 0.4, 49), 0, 0.5)
+        ginger = np.maximum(ginger, wash)
+        across = x + 0.3 * (out - 2.8)
+        for c in (-0.6, 0.1, 0.8):
+            stripe = np.maximum(stripe, 0.9 * wash * soft(0.16 - np.abs(across - c + 0.06 * waves(p, 0.3, 44)), 0, 0.12))
+    # The tail: ginger at the root, then cream and ginger in turn, each ginger band dark in its middle, and cream at
+    # the tip.
+    ring = np.zeros(len(p))
+    core = np.zeros(len(p))
+    for a, b in ((0.0, 0.2), (0.235, 0.38), (0.43, 0.61), (0.645, 0.76), (0.81, 0.92)):
+        ring = np.maximum(ring, soft(s - a, 0, 0.03) * soft(b - s, 0, 0.03))
+        core = np.maximum(core, soft(0.24 * (b - a) - np.abs(s - (a + b) / 2 - 0.03 + 0.015 * waves(p, 0.3, 51)), 0, 0.03))
+    ginger = np.maximum(ginger, (0.3 * (s < 0.94) + 0.7 * ring) * on_tail)
+    stripe = np.maximum(stripe, 0.9 * core * on_tail * (s > 0.15))
+    # The face, painted on the front of the head, read across it (hy) and up it (hz).
+    narrow = np.clip((hz + 0.64) / 0.32, 0, 1)
+    nose = np.maximum(np.abs(hy) / (0.05 + 0.27 * narrow), np.abs(hz + 0.47) / 0.18)
+    nose_at = face * soft(1 - nose, 0, 0.25)
+    pink = np.maximum(pink, nose_at)
+    ginger *= 1 - nose_at
+    # The eyes, closed and content: two arches, thickest in the middle.
     dark = np.zeros(len(p))
-    for eye in EYES:
-        r = np.linalg.norm(h - eye[0], axis=1)
-        rim = soft(EYE_R + LID + 0.04 - r, 0, 0.05) * soft(0.06 - opening(h, eye), 0, 0.07)
-        dark = np.maximum(dark, rim)
-    ginger *= 1 - dark
-    # The nostrils, and the mouth: a short line down from the nose, parting each way under the whisker pads.
-    nostril = np.minimum(*(np.linalg.norm((h - (-2.78, o, -0.5)) / (0.1, 0.07, 0.05), axis=1) for o in (0.12, -0.12)))
-    dark = np.maximum(dark, 0.7 * face * soft(1 - nostril, 0, 0.4))
-    face = face * soft(-1.7 - hx, 0, 0.3)
-    lip = face * soft(0.05 - np.abs(hy), 0, 0.04) * soft(hz + 0.62, 0, 0.05) * soft(-0.95 - hz, 0, 0.05)
     for s_ in (1, -1):
-        t = np.clip((s_ * hy) / 0.55, 0, 1)
-        curve = -1.0 - 0.12 * np.sin(np.pi * t) - 0.08 * t
-        lip = np.maximum(lip, face * (s_ * hy > 0) * (s_ * hy < 0.6) * soft(0.045 - np.abs(hz - curve), 0, 0.04))
-    return np.column_stack((np.clip(ginger, 0, 1), np.clip(pink, 0, 1), np.clip(dark, 0, 1), np.clip(lip, 0, 1)))
+        t = (hy - s_ * 1.2) / 0.62
+        arch = -0.08 + 0.24 * (1 - t**2)
+        dark = np.maximum(dark, face * (np.abs(t) < 1) * line(hz - arch, 0.035 + 0.06 * np.sqrt(np.clip(1 - t**2, 0, 1))))
+    # The mouth: a short line down from the nose, parting each way in a smile.
+    lip = face * (np.abs(hy) < 0.045) * soft(hz + 0.68, 0, 0.03) * soft(-0.88 - hz, 0, 0.03)
+    for s_ in (1, -1):
+        t = np.clip(s_ * hy / 0.62, 0, 1)
+        smile = -0.86 - 0.2 * np.sin(np.pi * t) + 0.14 * t
+        lip = np.maximum(lip, face * (s_ * hy > 0) * (s_ * hy < 0.64) * line(hz - smile, 0.042))
+    # The whiskers: three fine lines a side, fanning out over the cheeks.
+    cheeks = soft(-n[:, 0] + 0.35, 0, 0.3) * soft(-0.3 - hx, 0, 0.4)
+    for s_ in (1, -1):
+        out = s_ * hy
+        for z0, slope in ((-0.6, 0.18), (-0.72, 0.0), (-0.84, -0.18)):
+            along = np.clip((out - 0.8) / 1.8, 0, 1)
+            fade = (out > 0.8) * (out < 2.6) * (1 - along) ** 0.4
+            lip = np.maximum(lip, cheeks * fade * line(hz - (z0 + slope * (out - 0.8)), 0.024))
+    # The toes: two short brown lines down the front of each paw, as the figurine's are drawn.
+    # Each paw's middle, measured out on its own side (her right is +y), and its size.
+    paws = ((FAR_FORE[1], 1, (1.55, 1.2)), (NEAR_FORE[1], -1, (1.55, 1.2)), (np.add((14.4, 2.35, 0.78), HIND[0]), 1, (1.5, 1.2)), (np.add((14.4, 2.35, 0.78), HIND[1]), -1, (1.5, 1.2)))
+    for (px, py, pz), s_, (rx, ry) in paws:
+        for o in (-0.33, 0.33):
+            toe = soft(0.035 - np.abs(s_ * y - py - o * ry), 0, 0.02) * soft(px - 0.45 * rx - x, 0, 0.1) * soft(z - 0.12, 0, 0.06) * soft(pz + 0.45 - z, 0, 0.1) * (np.abs(x - px) < rx + 0.2)
+            lip = np.maximum(lip, toe)
+    ginger *= 1 - np.maximum(dark, lip)
+    stripe *= 1 - np.maximum(dark, lip)
+    return np.column_stack((np.clip(ginger, 0, 1), np.clip(pink, 0, 1), np.clip(dark, 0, 1), np.clip(lip, 0, 1))), np.clip(stripe, 0, 1)
 
 
 def rgb(nodes, hex_):
@@ -434,8 +513,8 @@ def math_node(nodes, links, operation, a, b=None, value=None):
 
 def porcelain():
     """Glazed ceramic as the figurine is: a creamy white body under a thick, smooth, very glossy glaze, the ginger
-    airbrushed on, deep in the middle of each patch and fading softly into the white at its edge. A little light
-    goes into the ceramic and comes out warm."""
+    airbrushed on, deep in the middle of each patch and fading softly into the white at its edge, the face drawn on
+    in fine lines. A little light goes into the ceramic and comes out warm."""
     material = bpy.data.materials.new("ceramic")
     material.use_nodes = True
     nodes, links = material.node_tree.nodes, material.node_tree.links
@@ -446,132 +525,41 @@ def porcelain():
     links.new(marks.outputs["Color"], split.inputs[0])
     ginger = split.outputs["Red"]
     # Airbrushed: the colour builds up toward the middle of a patch, lighter where the spray thinned.
-    depth = math_node(nodes, links, "POWER", ginger, value=2.5)
+    # Brushed on: the strokes run along the body and break up the edge of each patch.
+    coord = nodes.new("ShaderNodeTexCoord")
+    stretch = nodes.new("ShaderNodeMapping")
+    stretch.inputs["Scale"].default_value = (1.2, 2.2, 2.2)
+    links.new(coord.outputs["Object"], stretch.inputs["Vector"])
+    strokes = nodes.new("ShaderNodeTexNoise")
+    strokes.inputs["Scale"].default_value = 1.6
+    strokes.inputs["Detail"].default_value = 4.0
+    links.new(stretch.outputs["Vector"], strokes.inputs["Vector"])
+    brush = math_node(nodes, links, "MULTIPLY_ADD", strokes.outputs["Fac"], value=0.3)
+    brush.node.inputs[2].default_value = 0.95
+    ginger = math_node(nodes, links, "MINIMUM", math_node(nodes, links, "MULTIPLY", ginger, brush), value=1.0)
+    streak = math_node(nodes, links, "MULTIPLY_ADD", strokes.outputs["Fac"], value=0.6)
+    streak.node.inputs[2].default_value = 0.2
+    depth = math_node(nodes, links, "MULTIPLY", math_node(nodes, links, "POWER", ginger, value=2.0), streak)
     paint = mix(nodes, links, depth, rgb(nodes, GINGER), rgb(nodes, DEEP))
     colour = mix(nodes, links, math_node(nodes, links, "POWER", ginger, value=0.7), rgb(nodes, WHITE), paint)
+    stripes = nodes.new("ShaderNodeVertexColor")
+    stripes.layer_name = "stripes"
+    split2 = nodes.new("ShaderNodeSeparateColor")
+    links.new(stripes.outputs["Color"], split2.inputs[0])
+    stripe = math_node(nodes, links, "MINIMUM", math_node(nodes, links, "MULTIPLY", split2.outputs["Red"], brush), value=1.0)
+    colour = mix(nodes, links, stripe, colour, rgb(nodes, STRIPE))
     colour = mix(nodes, links, split.outputs["Green"], colour, rgb(nodes, PINK))
     colour = mix(nodes, links, marks.outputs["Alpha"], colour, rgb(nodes, LIP))
     colour = mix(nodes, links, split.outputs["Blue"], colour, rgb(nodes, LINE))
     links.new(colour, shader.inputs["Base Color"])
-    # The hair is drawn into the clay in fine strokes under the glaze: they shade the colour, not the glaze.
-    coord = nodes.new("ShaderNodeTexCoord")
-    along = nodes.new("ShaderNodeMapping")
-    along.inputs["Scale"].default_value = (1.2, 14.0, 6.0)
-    links.new(coord.outputs["Object"], along.inputs["Vector"])
-    strands = nodes.new("ShaderNodeTexNoise")
-    strands.inputs["Scale"].default_value = 1.0
-    strands.inputs["Detail"].default_value = 6.0
-    links.new(along.outputs["Vector"], strands.inputs["Vector"])
-    combed = nodes.new("ShaderNodeBump")
-    combed.inputs["Strength"].default_value = 0.3
-    combed.inputs["Distance"].default_value = 0.05
-    links.new(strands.outputs["Fac"], combed.inputs["Height"])
-    links.new(combed.outputs["Normal"], shader.inputs["Normal"])
-    shader.inputs["Roughness"].default_value = 0.4
-    shader.inputs["Subsurface Weight"].default_value = 0.25
-    shader.inputs["Subsurface Radius"].default_value = (1.0, 0.7, 0.45)
+    shader.inputs["Roughness"].default_value = 0.35
+    shader.inputs["Subsurface Weight"].default_value = 0.08
+    shader.inputs["Subsurface Radius"].default_value = (1.0, 0.85, 0.7)
     shader.inputs["Subsurface Scale"].default_value = 0.15
     shader.inputs["Coat Weight"].default_value = 1.0
     shader.inputs["Coat IOR"].default_value = 1.52
-    shader.inputs["Coat Roughness"].default_value = 0.04
+    shader.inputs["Coat Roughness"].default_value = 0.1
     return material
-
-
-def glass():
-    """A glass eye, as a figurine maker sets one: the iris painted on the back of a clear dome, amber with fibres
-    running out from the pupil, greener round it and ringed dark at its rim, the pupil a tall dark oval, all under
-    a clear, glassy surface that holds a sharp reflection of the light."""
-    material = bpy.data.materials.new("eye")
-    material.use_nodes = True
-    nodes, links = material.node_tree.nodes, material.node_tree.links
-    shader = nodes["Principled BSDF"]
-    coord = nodes.new("ShaderNodeTexCoord")
-    xyz = nodes.new("ShaderNodeSeparateXYZ")
-    links.new(coord.outputs["Object"], xyz.inputs[0])
-    flat = nodes.new("ShaderNodeCombineXYZ")
-    links.new(xyz.outputs["X"], flat.inputs["X"])
-    links.new(xyz.outputs["Y"], flat.inputs["Y"])
-    length = nodes.new("ShaderNodeVectorMath")
-    length.operation = "LENGTH"
-    links.new(flat.outputs[0], length.inputs[0])
-    out = math_node(nodes, links, "DIVIDE", length.outputs["Value"], value=EYE_R)
-    # Fibres: noise round the pupil, stretched outward.
-    round_ = nodes.new("ShaderNodeVectorMath")
-    round_.operation = "NORMALIZE"
-    links.new(flat.outputs[0], round_.inputs[0])
-    spokes = nodes.new("ShaderNodeVectorMath")
-    spokes.operation = "SCALE"
-    spokes.inputs["Scale"].default_value = 7.0
-    links.new(round_.outputs[0], spokes.inputs[0])
-    fibres_at = nodes.new("ShaderNodeVectorMath")
-    fibres_at.operation = "ADD"
-    links.new(spokes.outputs[0], fibres_at.inputs[0])
-    lift = nodes.new("ShaderNodeCombineXYZ")
-    links.new(math_node(nodes, links, "MULTIPLY", out, value=2.5), lift.inputs["Z"])
-    links.new(lift.outputs[0], fibres_at.inputs[1])
-    fibres = nodes.new("ShaderNodeTexNoise")
-    fibres.inputs["Scale"].default_value = 1.6
-    fibres.inputs["Detail"].default_value = 8.0
-    fibres.inputs["Roughness"].default_value = 0.65
-    links.new(fibres_at.outputs[0], fibres.inputs["Vector"])
-    ramp = nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements.remove(ramp.color_ramp.elements[1])
-    first = ramp.color_ramp.elements[0]
-    first.position, first.color = IRIS[0][1], (*linear(IRIS[0][0]), 1)
-    for hex_, at in IRIS[1:]:
-        stop = ramp.color_ramp.elements.new(at)
-        stop.color = (*linear(hex_), 1)
-    links.new(out, ramp.inputs["Fac"])
-    shade = math_node(nodes, links, "MULTIPLY_ADD", fibres.outputs["Fac"], value=0.9)
-    shade.node.inputs[2].default_value = 0.55
-    iris = nodes.new("ShaderNodeMix")
-    iris.data_type = "RGBA"
-    iris.blend_type = "MULTIPLY"
-    iris.inputs["Factor"].default_value = 1.0
-    links.new(ramp.outputs["Color"], iris.inputs["A"])
-    grey = nodes.new("ShaderNodeCombineColor")
-    for channel in ("Red", "Green", "Blue"):
-        links.new(shade, grey.inputs[channel])
-    links.new(grey.outputs[0], iris.inputs["B"])
-    # The pupil, tall in the lamp's light.
-    pupil = nodes.new("ShaderNodeCombineXYZ")
-    links.new(math_node(nodes, links, "DIVIDE", xyz.outputs["X"], value=0.3 * EYE_R), pupil.inputs["X"])
-    links.new(math_node(nodes, links, "DIVIDE", xyz.outputs["Y"], value=0.47 * EYE_R), pupil.inputs["Y"])
-    pupil_r = nodes.new("ShaderNodeVectorMath")
-    pupil_r.operation = "LENGTH"
-    links.new(pupil.outputs[0], pupil_r.inputs[0])
-    edge = nodes.new("ShaderNodeMapRange")
-    edge.inputs["From Min"].default_value = 0.92
-    edge.inputs["From Max"].default_value = 1.06
-    links.new(pupil_r.outputs["Value"], edge.inputs["Value"])
-    colour = mix(nodes, links, edge.outputs["Result"], rgb(nodes, "#060403"), iris.outputs["Result"])
-    links.new(colour, shader.inputs["Base Color"])
-    shader.inputs["Roughness"].default_value = 0.45
-    shader.inputs["Coat Weight"].default_value = 1.0
-    shader.inputs["Coat IOR"].default_value = 1.5
-    shader.inputs["Coat Roughness"].default_value = 0.0
-    return material
-
-
-def glass_eyes(stage):
-    """The eyes, each a ball of glass set in its socket behind the lids, looking where the head looks."""
-    material = glass()
-    parts = []
-    for i, (centre, gaze, across, up) in enumerate(EYES):
-        ball = bmesh.new()
-        bmesh.ops.create_uvsphere(ball, u_segments=64, v_segments=32, radius=EYE_R)
-        data = bpy.data.meshes.new("eye")
-        ball.to_mesh(data)
-        ball.free()
-        data.polygons.foreach_set("use_smooth", [True] * len(data.polygons))
-        data.materials.append(material)
-        eye = stage.add(f"eye-{'right' if i == 0 else 'left'}", data)
-        # Its own z looks out of the pupil, and its y runs up the pupil.
-        y_, z_ = TURNED @ up, TURNED @ gaze
-        x_ = np.cross(y_, z_)
-        eye.matrix_world = Matrix.Translation(SKULL + TURNED @ centre) @ Matrix(np.column_stack((x_, y_, z_)).tolist()).to_4x4()
-        parts.append(eye)
-    return parts
 
 
 def lathed(stage, name, profile, material):
@@ -581,86 +569,201 @@ def lathed(stage, name, profile, material):
     return obj
 
 
-def shade(stage):
-    """The lamp's head, after the arched floor lamp's: a dome of spun steel enamelled a glossy orange, gilded
-    inside, on a short brass neck from the tail's tip, with a frosted bulb up inside it. Its light falls out of
-    the open bottom onto the cat and the desk; the dome holds back all that goes up."""
-    x, y, tip = HEAD
-    rim = tip - NECK - SHADE_R
-    orange = bpy.data.materials.new("enamel")
-    orange.use_nodes = True
-    o = orange.node_tree.nodes["Principled BSDF"]
-    o.inputs["Base Color"].default_value = (*linear(ENAMEL), 1)
-    o.inputs["Roughness"].default_value = 0.3
-    o.inputs["Coat Weight"].default_value = 1.0
-    o.inputs["Coat Roughness"].default_value = 0.03
-    gold = bpy.data.materials.new("gilt")
-    gold.use_nodes = True
-    g = gold.node_tree.nodes["Principled BSDF"]
-    g.inputs["Base Color"].default_value = (1.0, 0.78, 0.38, 1)
-    g.inputs["Metallic"].default_value = 1.0
-    g.inputs["Roughness"].default_value = 0.3
-    brass = bpy.data.materials.new("brass")
-    brass.use_nodes = True
-    b = brass.node_tree.nodes["Principled BSDF"]
-    b.inputs["Base Color"].default_value = (0.86, 0.64, 0.3, 1)
-    b.inputs["Metallic"].default_value = 1.0
-    b.inputs["Roughness"].default_value = 0.22
+def turned_to(axis):
+    """The turn that lays an object's own x along axis."""
+    from mathutils import Vector
+
+    return Vector((1, 0, 0)).rotation_difference(Vector(axis))
+
+
+def turned_solid(stage, name, profile, material):
+    """A solid turned about its own x, from (distance along, radius) pairs."""
+    obj = lathe(stage, name, profile, material, steps=96, axis="X", caps=False)
+    obj.data.polygons.foreach_set("use_smooth", [True] * len(obj.data.polygons))
+    obj.rotation_mode = "QUATERNION"
+    return obj
+
+
+def glazed(name, hex_, roughness, coat=1.0):
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+    shader = material.node_tree.nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (*linear(hex_), 1)
+    shader.inputs["Roughness"].default_value = roughness
+    shader.inputs["Coat Weight"].default_value = coat
+    shader.inputs["Coat Roughness"].default_value = 0.03
+    return material
+
+
+def lamp(stage):
+    """The lamp, as the figurine's: from the tail's tip a short black cord bends down into a white ceramic socket, and
+    from the socket hangs a round frosted globe, the bulb lit inside it, forward and down over her back."""
+    tip = np.asarray(HEAD)
+    hang = unit(HANG)
+    top = tip + np.asarray(CORD)
+    length = 3.66
+    bottom = top + hang * length
+    centre = bottom + hang * 2.9
+    rubber = glazed("cord", "#0b0a09", 0.45, 0.2)
+    ceramic = glazed("socket", SOCKET, 0.3)
     frosted = bpy.data.materials.new("frosted")
     frosted.use_nodes = True
     f = frosted.node_tree.nodes["Principled BSDF"]
     f.inputs["Base Color"].default_value = (1, 1, 1, 1)
     f.inputs["Transmission Weight"].default_value = 1.0
-    f.inputs["Roughness"].default_value = 0.6
-    t = SHADE_T
-    arc = np.linspace(0, math.pi / 2, 40)
-    outer = [(rim + SHADE_R * math.sin(a), SHADE_R * math.cos(a)) for a in arc[::-1]]
-    inner = [(rim + (SHADE_R - t) * math.sin(a), (SHADE_R - t) * math.cos(a)) for a in arc]
-    parts = [
-        # The enamelled dome: its outside down to the rim, and the rim's edge.
-        lathed(stage, "shade", [(rim + SHADE_R, 0.0)] + outer[1:] + [(rim, SHADE_R - t)] + [(rim + 0.001, SHADE_R - t)], orange),
-        # The gilded inside.
-        lathed(stage, "shade-inside", [(rim + 0.001, SHADE_R - t)] + inner[1:-1] + [(rim + SHADE_R - t, 0.0)], gold),
-        # The neck: a collar on the dome, a knurled nut and a short stem up into the tail.
-        lathed(stage, "neck", [(rim + SHADE_R - 0.05, 0.0), (rim + SHADE_R - 0.05, 0.55), (rim + SHADE_R + 0.15, 0.55), (rim + SHADE_R + 0.2, 0.36), (rim + SHADE_R + 0.45, 0.36), (rim + SHADE_R + 0.5, 0.42), (rim + SHADE_R + 0.7, 0.42), (rim + SHADE_R + 0.75, 0.24), (tip + 0.4, 0.24), (tip + 0.4, 0.0)], brass),
-    ]
-    bulb = bmesh.new()
-    bmesh.ops.create_uvsphere(bulb, u_segments=48, v_segments=24, radius=BULB_R)
-    data = bpy.data.meshes.new("bulb")
-    bulb.to_mesh(data)
-    bulb.free()
-    data.polygons.foreach_set("use_smooth", [True] * len(data.polygons))
-    data.materials.append(frosted)
-    glass = stage.add("bulb-glass", data)
-    glass.location = (x, y, rim + 0.25 * SHADE_R)
+    f.inputs["Roughness"].default_value = 0.55
+    # The glass glows when the lamp is on: desk.py turns this up with the bulb.
+    f.inputs["Emission Color"].default_value = (*BULB_COLOUR, 1)
+    f.inputs["Emission Strength"].default_value = 0.0
+    parts = []
+    # The cord: out of the tip along the tail, bending down into the top of the socket.
+    curve = bpy.data.curves.new("cord", "CURVE")
+    curve.dimensions = "3D"
+    curve.bevel_depth = 0.3
+    curve.bevel_resolution = 6
+    curve.resolution_u = 24
+    spline = curve.splines.new("BEZIER")
+    spline.bezier_points.add(1)
+    ahead = unit(tip - np.asarray(TAIL[2]))
+    for point, at, out in ((spline.bezier_points[0], tip - ahead * 0.3, ahead), (spline.bezier_points[1], top + hang * 0.2, hang)):
+        point.co = tuple(at)
+        point.handle_left_type = point.handle_right_type = "FREE"
+        point.handle_right = tuple(at + out * 0.8)
+        point.handle_left = tuple(at - out * 0.8)
+    curve.materials.append(rubber)
+    parts.append(stage.add("cord", curve))
+    # The socket: a white ceramic cup, rounded where the cord goes in, a lip where the globe comes out.
+    socket = turned_solid(stage, "socket", [(0.0, 1.2), (0.02, 1.58), (0.32, 1.64), (0.42, 1.48), (2.9, 1.46), (3.1, 1.34), (3.25, 1.05), (3.27, 0.5), (3.6, 0.45), (3.65, 0.3), (3.66, 0.0)], ceramic)
+    socket.rotation_quaternion = turned_to(-hang)
+    socket.location = tuple(bottom)
+    parts.append(socket)
+    # The globe, and its neck up into the socket.
+    # Round for most of the way, then drawing in smoothly toward the neck, as the photograph's globe does, and
+    # meeting the socket's mouth just inside its lip.
+    turn = math.radians(125)
+    arc = np.linspace(0, turn, 44)
+    profile = [(GLOBE_R - GLOBE_R * math.cos(a), GLOBE_R * math.sin(a)) for a in arc]
+    x0, r0 = profile[-1]
+    slope = math.cos(turn) / math.sin(turn)
+    mouth = GLOBE_R + 2.9
+    x1, r1 = mouth - 0.1, 1.18
+    for t in np.linspace(0, 1, 13)[1:]:
+        h10, h01 = t**3 - 2 * t**2 + t, -2 * t**3 + 3 * t**2
+        profile.append((x0 + (x1 - x0) * t, r0 * (1 - h01) + r1 * h01 + h10 * (x1 - x0) * slope))
+    profile = [(0.0, 0.0)] + profile[1:] + [(mouth + 0.35, 1.1), (mouth + 0.35, 0.0)]
+    globe = turned_solid(stage, "bulb-glass", profile, frosted)
+    globe.rotation_quaternion = turned_to(-hang)
+    globe.location = tuple(centre + hang * GLOBE_R)
     # The bulb's own light is the lamp's; its glass lets it out.
-    glass.visible_shadow = False
-    parts.append(glass)
+    globe.visible_shadow = False
+    parts.append(globe)
     source = bpy.data.lights.new("bulb", "POINT")
     source.color = BULB_COLOUR
     source.energy = 0.0
-    source.shadow_soft_size = BULB_R * 0.8
+    source.shadow_soft_size = BULB_R
     light = stage.add("bulb", source)
-    light.location = (x, y, rim + 0.25 * SHADE_R)
+    light.location = tuple(centre)
     light["bulb"] = True
     parts.append(light)
-    for part in parts[:3]:
-        part.location = (x, y, 0)
     return parts
+
+
+def mirrored(p, n):
+    """Each point and its normal on the cat's other side: across her middle for the body, and across the head's own
+    turned middle for the head."""
+    flip = np.array([1, -1, 1])
+    h = in_head(p)
+    head_p = SKULL + GROW * (h * flip) @ TURNED.T
+    head_n = ((n @ TURNED) * flip) @ TURNED.T
+    on = soft(1.0 - np.linalg.norm(h / (2.8, 3.1, 3.6), axis=1), 0, 0.2)[:, None]
+    return p * flip * (1 - on) + head_p * on, n * flip * (1 - on) + head_n * on
+
+
+def photographed(cat, origin):
+    """Paint the cat with its photograph wherever the photograph sees it: each corner of the mesh takes the colour
+    where the solved camera shows it, faded out where the surface turns away from that camera, is hidden behind
+    something, or falls outside the cut-out. Her far side, which the photograph never shows, takes the colour the
+    photograph shows at the same place on her near side, the figurine being painted much alike on both. Elsewhere
+    the painted colours stay."""
+    bpy.context.view_layer.update()
+    graph = bpy.context.evaluated_depsgraph_get()
+    trees = [BVHTree.FromObject(obj, graph) for obj in bpy.context.scene.objects if obj.type == "MESH"]
+    data = cat.data
+    count = len(data.vertices)
+    co = np.empty(count * 3)
+    data.vertices.foreach_get("co", co)
+    normal = np.empty(count * 3)
+    data.vertices.foreach_get("normal", normal)
+    world = np.asarray(cat.matrix_world)
+    co = co.reshape(-1, 3) @ world[:3, :3].T + world[:3, 3]
+    normal = normal.reshape(-1, 3) @ world[:3, :3].T
+    normal /= np.linalg.norm(normal, axis=1, keepdims=True)
+    origin = np.asarray(origin)
+    centre = photograph()[0] + origin
+    eye = Vector(centre)
+
+    def seen(points, normals, slack):
+        """Where the photograph shows these points, and how much of its colour they take."""
+        x, y, _ = in_photograph(points - origin)
+        u, v = x / COLS, y / ROWS
+        toward = centre - points
+        toward /= np.linalg.norm(toward, axis=1, keepdims=True)
+        # Where the surface turns nearly edge-on to that camera, the photograph has its colour only smeared out.
+        weight = np.clip(((normals * toward).sum(1) - 0.1) / 0.15, 0, 1) * (u > 0) * (u < 1) * (v > 0) * (v < 1)
+        for i in np.nonzero(weight > 0)[0]:
+            ray = Vector(points[i]) - eye
+            length = ray.length
+            ray.normalize()
+            nearest = min((tree.ray_cast(eye, ray, length + 1)[3] or 1e9) for tree in trees)
+            if nearest < length - slack:
+                weight[i] = 0
+        return u, v, weight
+
+    u, v, weight = seen(co, normal, 0.15)
+    # The other side is not quite the mirror of this one, so its points need only lie near the surface seen.
+    far_p, far_n = mirrored(co - origin, normal)
+    mu, mv, other = seen(far_p + origin, far_n, 0.4)
+    other *= 1 - weight
+    loops = np.empty(len(data.loops), dtype=np.int64)
+    data.loops.foreach_get("vertex_index", loops)
+    data.uv_layers.new(name="photo").data.foreach_set("uv", np.column_stack((u[loops], 1 - v[loops])).ravel())
+    data.uv_layers.new(name="mirror").data.foreach_set("uv", np.column_stack((mu[loops], 1 - mv[loops])).ravel())
+    data.color_attributes.new("seen", "FLOAT_COLOR", "POINT").data.foreach_set("color", np.column_stack((weight, other, weight, np.ones(count))).ravel())
+    nodes, links = cat.active_material.node_tree.nodes, cat.active_material.node_tree.links
+    shader = nodes["Principled BSDF"]
+    colour = shader.inputs["Base Color"].links[0].from_socket
+    picture = bpy.data.images.load(REFERENCE)
+    share = nodes.new("ShaderNodeVertexColor")
+    share.layer_name = "seen"
+    split = nodes.new("ShaderNodeSeparateColor")
+    links.new(share.outputs["Color"], split.inputs[0])
+    for name, amount in (("mirror", split.outputs["Green"]), ("photo", split.outputs["Red"])):
+        uv = nodes.new("ShaderNodeUVMap")
+        uv.uv_map = name
+        image = nodes.new("ShaderNodeTexImage")
+        image.image = picture
+        image.extension = "EXTEND"
+        links.new(uv.outputs["UV"], image.inputs["Vector"])
+        colour = mix(nodes, links, math_node(nodes, links, "MULTIPLY", amount, image.outputs["Alpha"]), colour, image.outputs["Color"])
+    links.new(colour, shader.inputs["Base Color"])
 
 
 def build(stage):
     ox, oy = ORIGIN
-    lo, hi = (-2.4, -10.2, -0.2), (25.5, 5.8, 22.8)
+    lo, hi = (-8.0, -8.0, -0.2), (21.6, 8.0, 28.6)
     cat, verts = mesh(stage, "cat", body, lo, hi, STEP, porcelain())
     normals = np.zeros_like(verts)
     for e, column in zip(np.eye(3) * 0.01, range(3)):
         normals[:, column] = body(verts + e) - body(verts - e)
     normals /= np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-9)
+    paint, stripe = painted(warped(verts), normals)
     layer = cat.data.color_attributes.new("paint", "FLOAT_COLOR", "POINT")
-    layer.data.foreach_set("color", painted(verts, normals).ravel())
-    for part in [cat] + glass_eyes(stage) + shade(stage):
+    layer.data.foreach_set("color", paint.ravel())
+    layer = cat.data.color_attributes.new("stripes", "FLOAT_COLOR", "POINT")
+    layer.data.foreach_set("color", np.column_stack((stripe, stripe, stripe, np.ones(len(stripe)))).ravel())
+    for part in [cat] + lamp(stage):
         part.location = (part.location.x + ox, part.location.y - oy, part.location.z)
+    photographed(cat, (ox, -oy, 0))
     stage.shoot("catlamp", (0, 0, W, H), lens=False)
 
 
