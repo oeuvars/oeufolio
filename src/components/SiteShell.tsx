@@ -151,7 +151,7 @@ const pageTones: Tone[] = [
   { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
-  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-apple.avif' },
+  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]

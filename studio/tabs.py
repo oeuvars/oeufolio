@@ -11,8 +11,8 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
               front of a Blackstar ID:Core in red round it: its black grille cloth between edges of its wine tolex,
               under Blackstar's badge
-    apple     a Mac Studio's bead-blasted aluminium, with the six-colour apple let into it over the case's
-              drilled grille
+    teenage   a Mac Studio's bead-blasted aluminium, with teenage engineering's bolt and nut let into it over
+              the case's drilled grille
 
 Uses the copy stand in studio/desk. Run from the repository root:
 
@@ -675,7 +675,7 @@ def drill(case, centres, bore, sink, depth, material):
     return cutter
 
 
-def apple(name, height):
+def teenage(name, height):
     """A slab of a Mac Studio's case. It is milled from one block of aluminium, bead blasted to a fine
     even satin and anodised clear, so it shines softly and all of a piece. The milling leaves a chamfer
     round the top that is cut with a diamond, and that alone is bright as a mirror."""
@@ -690,7 +690,8 @@ def apple(name, height):
     sheet.height -= 0.028 * np.clip(1 + edge / chamfer, 0, 1)
     sheet.finish(ramp(-chamfer - 0.012, -chamfer + 0.004, edge), rough=0.05)
     # The badge is enamel, fired in a pocket milled for it. It sets proud and a little domed, and glazed.
-    badge, colour = placed(sheet, artwork("logos/apple"), MIDDLE - 0.98, 1.35, MIDDLE + 0.98, 3.75)
+    # The mark is teenage engineering's own, cut from the header of teenage.engineering, in their black.
+    badge, colour = placed(sheet, artwork("logos/teenage-engineering"), MIDDLE - 1.05, 1.5, MIDDLE + 1.05, 4.3)
     sheet.rgb += badge[..., None] * (colour - sheet.rgb)
     sheet.finish(badge, rough=0.18, metal=0.0, coat=1.0)
     sheet.height += 0.012 * blur(badge, 6.0) * badge
@@ -885,7 +886,7 @@ WINE = "#6e3438"
 TABS = {
     "lacoste": (10, "#e3d3c1", (0.9, 0.02, -0.03), lacoste),
     "proraso": (10, "#d9d4c2", (-0.7, -0.02, 0.02), proraso),
-    "apple": (10, "#1e2740", (0.5, 0.03, 0.03), apple),
+    "teenage": (10, "#1e2740", (0.5, 0.03, 0.03), teenage),
     "prs": (10, "#ece8df", (-1.0, 0.0, -0.02), prs),
     "tagheuer": (11.5, "#8a8b78", (0.5, 0.0, 0.02), tagheuer),
 }
