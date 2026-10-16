@@ -6,17 +6,14 @@
 //   node studio/ticket/plate.mjs
 //
 // Writes studio/ticket/art/plate-<ink>.png, the ticket's 15 x 29.6 em at DENSITY pixels to the em. Uses the headless
-// Chromium helper from the oeusume studio; set OEUSUME if that checkout is not in ~/Documents/oeusume, and URL if
-// the site is not on localhost:3000. Run it again after changing anything printed on the ticket.
+// Chromium helper in studio/browser.mjs; set URL if the site is not on localhost:3000. Run it again after changing anything printed on the ticket.
 import { writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OEUSUME = process.env.OEUSUME ?? join(homedir(), "Documents", "oeusume");
-const { open } = await import(join(OEUSUME, "studio", "browser.mjs"));
+const { open } = await import(join(HERE, "..", "browser.mjs"));
 const URL = process.env.URL ?? "http://localhost:3000/contact";
 // Texture pixels per em: ticket.py lays its sheet out at this density.
 const DENSITY = 96;

@@ -17,8 +17,7 @@ keeper, and runs off the leather.
 
 The model is scaled to the props' scale (PROP, em to the millimetre), turned and laid at AT, in the em of the scene
 it is put down in (scene.py, which photographs it with everything else on the leather). Run on its own, it writes
-public/objects/ticket-camera.avif, the camera alone on the stand, for a look at it. Set OEUSUME if that checkout is
-not in ~/Documents/oeusume.
+public/objects/ticket-camera.avif, the camera alone on the stand, for a look at it.
 """
 
 import argparse
@@ -28,8 +27,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
-sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, os.path.join(ROOT, "studio", "desk"))
 sys.path.insert(0, HERE)
 
 import bmesh  # noqa: E402

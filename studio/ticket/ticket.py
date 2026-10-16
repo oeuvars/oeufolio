@@ -11,8 +11,7 @@ studio/ticket/ink.py, hand.py, cats.py, typed.py, stamps.py and plate.mjs:
 
 Writes public/objects/ticket.avif, the ticket and the shadow it leaves; public/objects/ticket-punched.avif, the same
 with the conductor's punch through it, for the page to show in its place; and public/objects/ticket-stamps.avif, the
-stamps. Uses the copy stand from the oeusume studio, so it is lit as every other object on the site is. Set OEUSUME
-if that checkout is not in ~/Documents/oeusume.
+stamps. Uses the copy stand in studio/desk, so it is lit as every other object on the site is.
 
 Every measure is in the ticket's em, from src/components/ticket/ticket.json, which the page reads too. What is
 printed comes from the page's own type, captured by plate.mjs into studio/ticket/art as one plate per ink
@@ -30,8 +29,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
-sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, os.path.join(ROOT, "studio", "desk"))
 sys.path.insert(0, HERE)
 
 import numpy as np  # noqa: E402

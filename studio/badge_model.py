@@ -5,12 +5,12 @@ reference's frame, so the render can be laid over it. The card is the reference'
 type, logo and handwriting are lifted from the photograph as an ink plate (studio/assets/plate.png),
 and only the portrait is replaced.
 
-Uses the copy stand and the glass from the oeusume studio, and its headless Chromium for
+Uses the copy stand in studio/desk, and the headless Chromium in studio/browser.mjs for
 studio/assets/overlay.png (see studio/plate.html). Run from the repository root:
 
     blender -b --factory-startup -P studio/badge.py -- [--scale 0.5] [--samples 64]
 
-Writes public/objects/badge.avif. Set OEUSUME if that checkout is not in ~/Documents/oeusume.
+Writes public/objects/badge.avif.
 """
 
 import argparse
@@ -20,8 +20,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
-sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, os.path.join(HERE, "desk"))
 
 import bmesh  # noqa: E402
 import bpy  # noqa: E402
@@ -29,7 +28,6 @@ import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
 import stage as stage_module  # noqa: E402
-from objects.form import glass  # noqa: E402
 from paint import blur, cloud, linear  # noqa: E402
 from solids import finish, principled, prism, rect, ring, worn  # noqa: E402
 from stage import Stage  # noqa: E402
@@ -158,6 +156,33 @@ def em(value):
 
 def box(x0, y0, x1, y1, r=0.0, steps=10):
     return rect(em(x0), em(y0), em(x1), em(y1), em(r), steps)
+
+
+def glass():
+    """The studio's glass: a mirror in its faces, by Fresnel, and clear through. The eye sees through it by
+    refraction, but light from the lamps passes it straight, so it leaves no shadow of its own."""
+    material = bpy.data.materials.new("glass")
+    material.use_nodes = True
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    nodes.clear()
+    path = nodes.new("ShaderNodeLightPath")
+    bent = nodes.new("ShaderNodeBsdfRefraction")
+    bent.inputs["Roughness"].default_value = 0.0
+    straight = nodes.new("ShaderNodeBsdfTransparent")
+    through = nodes.new("ShaderNodeMixShader")
+    links.new(path.outputs["Is Shadow Ray"], through.inputs["Fac"])
+    links.new(bent.outputs[0], through.inputs[1])
+    links.new(straight.outputs[0], through.inputs[2])
+    shine = nodes.new("ShaderNodeBsdfGlossy")
+    shine.inputs["Roughness"].default_value = 0.0
+    fresnel = nodes.new("ShaderNodeFresnel")
+    face = nodes.new("ShaderNodeMixShader")
+    links.new(fresnel.outputs[0], face.inputs["Fac"])
+    links.new(through.outputs[0], face.inputs[1])
+    links.new(shine.outputs[0], face.inputs[2])
+    out = nodes.new("ShaderNodeOutputMaterial")
+    links.new(face.outputs[0], out.inputs["Surface"])
+    return material
 
 
 def vinyl(lets_through):

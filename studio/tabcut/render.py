@@ -8,7 +8,7 @@ tab's own coordinates (x from where the band starts, y down from the tab's top),
 The paper is a sheet THICK thick, cut to the strip's edge and the tab's outline exactly as SiteShell draws it, its
 cut a little ragged with fibres, lying on the page below. The tab stands off the folder, lifting a little towards its
 tip, as a folder's tab does once it has been handled. Everything is white, under the copy stand's own studio light
-(the oeusume stage's room and octabox), so what is rendered is only light and shadow. Writes OUT_DIR/cut.exr, that
+(studio/desk's stage, its room and octabox), so what is rendered is only light and shadow. Writes OUT_DIR/cut.exr, that
 render, and OUT_DIR/bare.exr, the same frame with nothing on the page, for tabcut.py to divide one by the other.
 """
 
@@ -22,8 +22,7 @@ import bpy
 import numpy as np
 from mathutils import Quaternion
 
-OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
-sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "desk"))
 import stage  # noqa: E402
 
 spec_path, out_dir = sys.argv[sys.argv.index("--") + 1 :]

@@ -15,8 +15,7 @@ enough to read: the pebbles from the cells of a jittered grid (a Voronoi pattern
 rounding each cell into a dome), the creases from where cells meet, the pores and the long creases from noise. It is
 grown on a torus, so the square meets itself on every side and the page can repeat it.
 
-Writes public/objects/leather.avif, one square of the hide, which the page repeats under the contact strip. Set
-OEUSUME if that checkout is not in ~/Documents/oeusume.
+Writes public/objects/leather.avif, one square of the hide, which the page repeats under the contact strip.
 """
 
 import argparse
@@ -27,8 +26,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
-sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, os.path.join(ROOT, "studio", "desk"))
 sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402

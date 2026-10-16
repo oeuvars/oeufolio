@@ -14,12 +14,11 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
     apple     a Mac Studio's bead-blasted aluminium, with the six-colour apple let into it over the case's
               drilled grille
 
-Uses the copy stand from the oeusume studio. Run from the repository root:
+Uses the copy stand in studio/desk. Run from the repository root:
 
     blender -b --factory-startup -P studio/tabs.py -- [tab ...] [--scale 0.5] [--samples 64] [--proofs DIR]
 
-Writes public/objects/tab-<name>.avif for each tab named, or for all five. Set OEUSUME if that checkout
-is not in ~/Documents/oeusume.
+Writes public/objects/tab-<name>.avif for each tab named, or for all five.
 
 The frame is the paper tab SiteShell cuts, in the page's own rem, so the render lies straight over it. A
 piece is smaller than the paper, with paper left showing all round it, and it was stuck down by hand, so
@@ -37,8 +36,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
-sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, os.path.join(HERE, "desk"))
 
 import bmesh  # noqa: E402
 import bpy  # noqa: E402

@@ -18,7 +18,7 @@ the key lamp (key.py), four times as bright, up to the left; the exposure is the
 hide's dye is dark enough to be its deep crimson at that exposure, as it would be in one photograph.
 
 Writes public/objects/contact-<plate>.avif and src/components/ticket/contact.json, the box each covers, in the em of
-the page that places it. Set OEUSUME if that checkout is not in ~/Documents/oeusume.
+the page that places it.
 """
 
 import argparse
@@ -28,8 +28,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-OEUSUME = os.environ.get("OEUSUME", os.path.expanduser("~/Documents/oeusume"))
-sys.path.insert(0, os.path.join(OEUSUME, "studio"))
+sys.path.insert(0, os.path.join(ROOT, "studio", "desk"))
 sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402
