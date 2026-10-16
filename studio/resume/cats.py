@@ -54,7 +54,7 @@ DARK = 0.78  # how much of the light the cat keeps off the desk where it stands 
 CATS = (
     ("gaze", 0, False, 1.7, 3.7, 2.15),
     ("curl", 0, False, 2.0, 2.6, 2.1),
-    ("tortie", 0, False, 2.0, 3.0, 2.1),
+    ("cap", 0, False, 2.0, 2.8, 2.1),
     ("belly", 0, False, 2.0, 4.2, 2.1),
     ("inkspot", 0, False, 2.0, 2.4, 2.1),
     ("ball", 0, False, 1.6, 1.6, 2.15),
@@ -65,6 +65,9 @@ CATS = (
     ("upside", 180, False, 2.0, 4.2, 2.1),
 )
 ABOVE = 2.3  # em down the page to the middle of the cat above the tab
+# Cats whose photograph cuts a part of them off at its bottom edge, and how far up from that edge, as a share of the
+# cat's height, the part is rounded off into a fur-edged end, so no straight cut shows.
+MEND = {"cap": 0.16}
 
 
 def srgb_to_linear(c):
@@ -91,6 +94,25 @@ def soft_mean(values, weight, sigma):
     return np.dstack([ndimage.gaussian_filter(values[..., c] * weight, sigma) for c in range(3)]) / np.maximum(w, 1e-6)[..., None]
 
 
+def mend(alpha, share):
+    """Round off what the photograph's bottom edge cuts across: over the last share of the cat's height, keep only a
+    half ellipse as wide as the cut part is where that stretch begins, its rim broken up by wisps of fur."""
+    rows, cols = alpha.shape
+    ys, xs = np.nonzero(alpha > 0.5)
+    band = share * (ys.max() - ys.min())
+    y0 = rows - 1 - band
+    across = np.nonzero(alpha[int(y0)] > 0.5)[0]
+    xl, xr = across.min(), across.max()
+    Y, X = np.mgrid[0:rows, 0:cols].astype(np.float32)
+    e = np.hypot((X - (xl + xr) / 2) / ((xr - xl) / 2), np.maximum(Y - y0, 0) / band)
+    # Wisps: noise drawn out along the fur, which runs down and across the tail here.
+    rng = np.random.default_rng(3)
+    wisp = ndimage.gaussian_filter(rng.standard_normal((rows, cols)), (6, 1.5))
+    wisp /= wisp.std()
+    keep = np.clip((1 - e + 0.05 * wisp) / 0.1, 0, 1)
+    return alpha * np.where(Y > y0, keep, 1)
+
+
 def cut(name, turn, mirror, wide, tall):
     source = os.path.join(ART, f"{name}.jpg")
     image = Image.open(source).convert("RGB")
@@ -113,6 +135,8 @@ def cut(name, turn, mirror, wide, tall):
         body = labels == (np.argmax(sizes) + 1)
         near = ndimage.binary_dilation(body, iterations=max(8, int(0.01 * max(alpha.shape))))
         alpha = alpha * near
+    if name in MEND:
+        alpha = mend(alpha, MEND[name])
 
     lin = srgb_to_linear(rgb)
     # What lay behind the cat, filled in under it from round it, and the cat's own colour at its edge: the observed
