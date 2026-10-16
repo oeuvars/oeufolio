@@ -68,11 +68,13 @@ PROPS = {
     "catlamp": {"box": (27.0, 10.0), "k": 0.7, "shots": {"catlamp": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
-# stand-in for the reel under the hub, which the recorder's own shot has for real.
+# stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
+# each is tagged for, in its "layer" property, or else in the one named for the shot.
 LAYERS = {"reel": "recorder"}
-# Parts of a layer's shot that are round and stay put while the rest turns: they stay in the plate, shadow and all,
-# and only what turns is in the layer. A spinning hub's shading does not turn with it.
-STILL = {"reel": ("hub",)}
+# Layers that are round and stay put while those under and over them turn: a raised hub over a turning line. They
+# stay in the plate too, to throw their shadow there, and are drawn again as a layer of their own over what turns
+# under them. A spinning hub's shading and the side the lens sees of it do not turn with it.
+STILL = ("hub",)
 STAND_INS = {"reel": ("reel",)}
 # The page shows an em of the plate at up to 22 pixels, 44 on a screen of two pixels to the point; this many leaves
 # room to zoom in before the render runs out.
@@ -197,7 +199,8 @@ class Desk:
                 kept = json.load(file)
             with bpy.data.libraries.load(os.path.join(SETS, f"{shot}.blend"), link=False) as (source, target):
                 names = list(source.objects)
-                target.objects = names
+                # Blender fills the list it is given with the objects in place, so it gets a copy and the names stay names.
+                target.objects = list(names)
             anchor = self.stage.add(f"{prop}-{shot}", None)
             anchor.parent = root
             anchor.location = (ox - bw / 2, -oy + bh / 2, oz / k)
@@ -211,8 +214,6 @@ class Desk:
                     obj.parent = anchor
                 if was in kept["shadowless"]:
                     self.shadowless.append(obj)
-                if was in STILL.get(shot, ()):
-                    obj["still"] = True
                 if obj.type == "MESH" and not obj.visible_camera:
                     # A shot's own lights shine on its object alone. Its flags and cards, which only
                     # reflections see, would show in everything else on the desk, and the room is light enough.
@@ -433,7 +434,7 @@ def main():
     desk.camera(0, 0, desk.w, desk.h, density)
     scene = bpy.context.scene
     floor = next(obj for obj in scene.objects if obj.get("stand") == "mat")
-    layered = [obj for shot in LAYERS for obj in desk.parts.get(shot, []) if not obj.get("still")]
+    layered = [obj for shot in LAYERS for obj in desk.parts.get(shot, []) if obj.get("layer", shot) not in STILL]
     everything = [obj for _, _, objects in desk.props.values() for obj in objects]
     raw = os.path.join(tempfile.gettempdir(), "desk.exr")
     if args.proofs:
@@ -446,18 +447,20 @@ def main():
         show(everything, False)
         leans = {}
         for shot, prop in LAYERS.items():
-            parts = [obj for obj in desk.parts.get(shot, []) if not obj.get("still")]
-            if not parts:
-                continue
-            show(parts, True)
-            cast(parts, True)
-            leans[shot] = desk.crop(shot, prop, parts)
-            layer = stage._expose(raw)
-            scene.render.use_border = False
-            develop(layer, np.zeros(layer.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-{shot}{suffix}.avif"), args.proofs, f"{named}-{shot}{suffix}", exposure)
-            show(parts, False)
-            cast(parts, False)
-            print(f"LAYER {shot}{suffix} {layer.shape[1]}x{layer.shape[0]}")
+            groups = {}
+            for obj in desk.parts.get(shot, []):
+                groups.setdefault(obj.get("layer", shot), []).append(obj)
+            for name, parts in groups.items():
+                show(parts, True)
+                cast(parts, True)
+                leans[name] = desk.crop(shot, prop, parts)
+                layer = stage._expose(raw)
+                scene.render.use_border = False
+                develop(layer, np.zeros(layer.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-{name}{suffix}.avif"), args.proofs, f"{named}-{name}{suffix}", exposure)
+                show(parts, False)
+                if name not in STILL:
+                    cast(parts, False)
+                print(f"LAYER {name}{suffix} {layer.shape[1]}x{layer.shape[0]}")
         known = json.load(open(LEAN)) if os.path.exists(LEAN) else {}
         known.setdefault(args.plate, {}).update(leans)
         with open(LEAN, "w") as file:

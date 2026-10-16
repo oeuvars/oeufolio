@@ -1,5 +1,6 @@
 """Industrial design: the front of a Teenage Engineering TP-7, measured off the maker's product photo.
-The hub of the reel and the line engraved across it are shot on their own, so the page can turn them."""
+The line engraved across the reel, the hub over it and the marks on the hub are shot on their own, so the page can
+turn the line and the marks while the hub, which shows its side, stays put between them."""
 
 import math
 
@@ -12,6 +13,8 @@ W, H = 11.875, 17.0
 TOP = 2.4  # height of the front face above the mat
 REEL_X, REEL_Y, REEL_R = 5.885, 6.88, 5.44
 HUB_R = 1.445
+# The hub's cap stands a few millimetres proud of the reel, so it shows its side and throws a shadow on the reel.
+HUB_TOP = TOP + 0.33
 REEL_FRAME = (REEL_X - REEL_R, REEL_Y - REEL_R, REEL_R * 2, REEL_R * 2)
 
 
@@ -184,15 +187,18 @@ def reel(stage):
     stand_in = plate(stage, "reel", ring(0, 0, REEL_R, 96), TOP + 0.03, turned)
     stand_in.location = (REEL_X, -REEL_Y, 0)
     stand_in.visible_camera = False
-    prism(stage, "hub", ring(0, 0, HUB_R, 96), TOP - 0.3, TOP + 0.07, hub, bevel=0.05).location = (REEL_X, -REEL_Y, 0)
+    # Each part is in the page's layer it is named for: the reel's line, the hub, and the marks on the hub.
+    cap = prism(stage, "hub", ring(0, 0, HUB_R, 96), TOP - 0.3, HUB_TOP, hub, bevel=0.05)
+    cap.location = (REEL_X, -REEL_Y, 0)
+    cap["layer"] = "hub"
     for turn in (103, 220.6, 347.5):
         x = REEL_X + math.cos(math.radians(turn))
         y = REEL_Y - math.sin(math.radians(turn))
-        prism(stage, f"pin-{turn}", ring(x, y, 0.11, 24), TOP, TOP + 0.085, pin, bevel=0.02)
+        prism(stage, f"pin-{turn}", ring(x, y, 0.11, 24), HUB_TOP - 0.005, HUB_TOP + 0.015, pin, bevel=0.02)["layer"] = "marks"
     line = stroke(REEL_X - reach, REEL_Y + reach, REEL_X + reach, REEL_Y - reach, 0.035)
-    plate(stage, "line", line, TOP + 0.032, engraved)
+    plate(stage, "line", line, TOP + 0.032, engraved)["layer"] = "reel"
     across = HUB_R * math.sqrt(0.5) * 0.96
-    plate(stage, "hub-line", stroke(REEL_X - across, REEL_Y + across, REEL_X + across, REEL_Y - across, 0.035), TOP + 0.072, engraved)
+    plate(stage, "hub-line", stroke(REEL_X - across, REEL_Y + across, REEL_X + across, REEL_Y - across, 0.035), HUB_TOP + 0.002, engraved)["layer"] = "marks"
     stage.shoot("reel", REEL_FRAME)
 
 

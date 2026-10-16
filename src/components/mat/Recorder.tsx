@@ -12,19 +12,54 @@ type RecorderProps = {
 
 /**
  * The industrial design like: a Teenage Engineering TP-7, rendered from a model of its front. The title is
- * the readout on its display, in the plate. The reel's hub is a layer of its own, by day and by the lamp, so
- * it can turn. Nothing moves
+ * the readout on its display, in the plate. Over the plate lie three layers, by day and by the lamp: the line
+ * across the reel, the raised hub, and the marks on the hub. The line and the marks turn; the hub, which shows
+ * its side and throws its shadow, stays put between them. Nothing moves
  * under the pointer. Pressing it plays a few bars off tape, and the reel turns for as long as they last,
  * then runs down.
  */
-// Where studio/desk/desk.py found the lens shows the hub, against where the recorder lies: a shift in em of the
+// Where studio/desk/desk.py found the lens shows each layer, against where the recorder lies: a shift in em of the
 // recorder and a scale.
-const LEAN = { wide: lean.wide.reel, tall: lean.tall.reel }
+type Lean = { wide: number[]; tall: number[] }
+
+type LayerProps = {
+  lean: Lean
+  day: string
+  lamp: string
+  turning?: React.Ref<HTMLSpanElement>
+}
+
+// Each layer stands off the mat, so the lens shows it a little out from where it lies and a little larger.
+function Layer({ lean, day, lamp, turning }: LayerProps) {
+  return (
+    <span
+      aria-hidden
+      className="absolute top-[1.44em] left-[0.445em] aspect-square w-[10.88em] [--lean:var(--lean-wide)] group-data-[plate=tall]/mat:[--lean:var(--lean-tall)]"
+      style={
+        {
+          '--lean-wide': `translate(${lean.wide[0]}em, ${lean.wide[1]}em) scale(${lean.wide[2]})`,
+          '--lean-tall': `translate(${lean.tall[0]}em, ${lean.tall[1]}em) scale(${lean.tall[2]})`,
+          // The render is already turned as the recorder lies, so it is turned back by as much as the recorder is.
+          transform: 'var(--lean) rotate(calc(var(--r, 0) * -1deg))',
+        } as React.CSSProperties
+      }
+    >
+      <span
+        ref={turning}
+        className={turning ? 'absolute inset-0 animate-reel revving [--rate:0] group-data-[playing=true]/recorder:[--rate:3]' : 'absolute inset-0'}
+      >
+        <i className={`${RENDER} absolute inset-0 opacity-[calc(1-var(--lamp))] ${day}`} />
+        <i className={`${RENDER} absolute inset-0 opacity-[var(--lamp)] ${lamp}`} />
+      </span>
+    </span>
+  )
+}
 
 export function Recorder({ like }: RecorderProps) {
   const [playing, setPlaying] = useState(false)
   const pressedAt = useRef({ x: 0, y: 0 })
-  const reel = useRevving<HTMLElement>()
+  const reel = useRevving<HTMLSpanElement>()
+  const marks = useRevving<HTMLSpanElement>()
 
   const play = (event: React.MouseEvent) => {
     // Carrying it across the mat is not pressing play.
@@ -41,27 +76,23 @@ export function Recorder({ like }: RecorderProps) {
       onPointerDown={(event) => (pressedAt.current = { x: event.clientX, y: event.clientY })}
       onClick={play}
     >
-      {/* The hub stands off the mat, so the lens shows it a little out from where it lies and a little larger. */}
-      <span
-        aria-hidden
-        className="absolute top-[1.44em] left-[0.445em] aspect-square w-[10.88em] [--lean:var(--lean-wide)] group-data-[plate=tall]/mat:[--lean:var(--lean-tall)]"
-        style={
-          {
-            '--lean-wide': `translate(${LEAN.wide[0]}em, ${LEAN.wide[1]}em) scale(${LEAN.wide[2]})`,
-            '--lean-tall': `translate(${LEAN.tall[0]}em, ${LEAN.tall[1]}em) scale(${LEAN.tall[2]})`,
-            // The render is already turned as the recorder lies, so it is turned back by as much as the recorder is.
-            transform: 'var(--lean) rotate(calc(var(--r, 0) * -1deg))',
-          } as React.CSSProperties
-        }
-      >
-      <span
-        ref={reel}
-        className="absolute inset-0 animate-reel revving [--rate:0] group-data-[playing=true]/recorder:[--rate:3]"
-      >
-        <i className={`${RENDER} absolute inset-0 bg-[url(/objects/mat/desk-wide-reel.avif)] opacity-[calc(1-var(--lamp))] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel.avif)]`} />
-        <i className={`${RENDER} absolute inset-0 bg-[url(/objects/mat/desk-wide-reel-lamp.avif)] opacity-[var(--lamp)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel-lamp.avif)]`} />
-      </span>
-      </span>
+      <Layer
+        lean={{ wide: lean.wide.reel, tall: lean.tall.reel }}
+        turning={reel}
+        day="bg-[url(/objects/mat/desk-wide-reel.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel.avif)]"
+        lamp="bg-[url(/objects/mat/desk-wide-reel-lamp.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel-lamp.avif)]"
+      />
+      <Layer
+        lean={{ wide: lean.wide.hub, tall: lean.tall.hub }}
+        day="bg-[url(/objects/mat/desk-wide-hub.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-hub.avif)]"
+        lamp="bg-[url(/objects/mat/desk-wide-hub-lamp.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-hub-lamp.avif)]"
+      />
+      <Layer
+        lean={{ wide: lean.wide.marks, tall: lean.tall.marks }}
+        turning={marks}
+        day="bg-[url(/objects/mat/desk-wide-marks.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-marks.avif)]"
+        lamp="bg-[url(/objects/mat/desk-wide-marks-lamp.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-marks-lamp.avif)]"
+      />
       <h2 className="sr-only">
         {like.subject}: {like.title}
       </h2>
