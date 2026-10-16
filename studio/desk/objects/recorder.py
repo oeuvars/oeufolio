@@ -13,8 +13,9 @@ W, H = 11.875, 17.0
 TOP = 2.4  # height of the front face above the mat
 REEL_X, REEL_Y, REEL_R = 5.885, 6.88, 5.44
 HUB_R = 1.445
-# The hub's cap stands a few millimetres proud of the reel, so it shows its side and throws a shadow on the reel.
-HUB_TOP = TOP + 0.33
+# The hub's cap stands about half a millimetre proud of the reel, as on the maker's photos: a mirror-polished disc with
+# a hairline seam round it, and no side to speak of.
+HUB_TOP = TOP + 0.09
 REEL_FRAME = (REEL_X - REEL_R, REEL_Y - REEL_R, REEL_R * 2, REEL_R * 2)
 
 
@@ -178,8 +179,9 @@ def body(stage):
 
 
 def reel(stage):
-    hub = turned_disc("hub", (0.62, 0.62, 0.61))
-    pin = principled("pin", (0.36, 0.36, 0.35), rough=0.35, metal=1.0)
+    hub = principled("hub", (0.82, 0.82, 0.81), rough=0.07, metal=1.0)
+    pin = principled("pin", (0.62, 0.62, 0.61), rough=0.38, metal=1.0)
+    seam = principled("seam", (0.03, 0.03, 0.03), rough=0.8)
     engraved = principled("engraved", (0.2, 0.2, 0.2), rough=0.6)
     reach = (REEL_R - 0.12) * math.sqrt(0.5)
     # The reel itself is in the other shot. A stand-in keeps its tone in the hub's edge, where the mat would show.
@@ -187,20 +189,21 @@ def reel(stage):
     stand_in = plate(stage, "reel", ring(0, 0, REEL_R, 96), TOP + 0.03, turned)
     stand_in.location = (REEL_X, -REEL_Y, 0)
     stand_in.visible_camera = False
-    # Each part is in the page's layer it is named for: the reel's line, the hub, and the marks on the hub.
+    # Each part is in the page's layer it is named for: the reel's line, the hub, and the screws in the hub.
     # The cap sits on the reel. Nothing of it goes down into the case, or its own layer, which leaves the reel out,
-    # would show that part unlit as a hard black band round it.
-    cap = prism(stage, "hub", ring(0, 0, HUB_R, 96), TOP + 0.025, HUB_TOP, hub, bevel=0.05)
+    # would show that part unlit as a hard black band round it. The reel's line runs only up to its edge.
+    cap = prism(stage, "hub", ring(0, 0, HUB_R, 96), TOP + 0.025, HUB_TOP, hub, bevel=0.03)
     cap.location = (REEL_X, -REEL_Y, 0)
     cap["layer"] = "hub"
+    annulus(stage, "seam", REEL_X, REEL_Y, HUB_R - 0.01, HUB_R + 0.018, TOP + 0.031, seam)["layer"] = "hub"
     for turn in (103, 220.6, 347.5):
         x = REEL_X + math.cos(math.radians(turn))
         y = REEL_Y - math.sin(math.radians(turn))
-        prism(stage, f"pin-{turn}", ring(x, y, 0.11, 24), HUB_TOP - 0.005, HUB_TOP + 0.015, pin, bevel=0.02)["layer"] = "marks"
+        # A countersunk screw head, flush with the cap, in its dark seam.
+        annulus(stage, f"pin-seam-{turn}", x, y, 0.1, 0.125, HUB_TOP + 0.001, seam, steps=32)["layer"] = "marks"
+        prism(stage, f"pin-{turn}", ring(x, y, 0.1, 24), HUB_TOP - 0.01, HUB_TOP + 0.004, pin, bevel=0.012)["layer"] = "marks"
     line = stroke(REEL_X - reach, REEL_Y + reach, REEL_X + reach, REEL_Y - reach, 0.035)
     plate(stage, "line", line, TOP + 0.032, engraved)["layer"] = "reel"
-    across = HUB_R * math.sqrt(0.5) * 0.96
-    plate(stage, "hub-line", stroke(REEL_X - across, REEL_Y + across, REEL_X + across, REEL_Y - across, 0.035), HUB_TOP + 0.002, engraved)["layer"] = "marks"
     stage.shoot("reel", REEL_FRAME)
 
 
