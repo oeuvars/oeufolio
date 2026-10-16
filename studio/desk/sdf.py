@@ -26,14 +26,37 @@ def smin(a, b, k):
     return b + (a - b) * h - k * h * (1 - h)
 
 
+def smax(a, b, k):
+    return -smin(-a, -b, k)
+
+
+def sample(field, lo, hi, step, coarse=4):
+    """The field on the grid. Only the band round the surface is sampled at the full step: the rest takes the
+    value of the coarse grid, coarse steps apart, which is enough to tell inside from out."""
+    axes = [np.arange(a, b + step, step) for a, b in zip(lo, hi)]
+    shape = tuple(len(a) for a in axes)
+    origin = np.asarray(lo, dtype=np.float32)
+
+    def evaluate(index):
+        cells = np.stack(index, axis=-1)
+        if not len(cells):
+            return np.empty(0, dtype=np.float32)
+        return np.concatenate([field(origin + chunk.astype(np.float32) * step) for chunk in np.array_split(cells, max(1, len(cells) // 1_000_000))])
+
+    coarse_shape = tuple((n - 1) // coarse + 2 for n in shape)
+    rough = evaluate(tuple(i.ravel() * coarse for i in np.indices(coarse_shape))).reshape(coarse_shape)
+    nearest = np.ix_(*[(np.arange(n) + coarse // 2) // coarse for n in shape])
+    values = rough[nearest].astype(np.float32)
+    # A field drawn from blended parts is no true distance: the band is kept wide.
+    near = np.nonzero(np.abs(values) < 2.5 * coarse * step)
+    values[near] = evaluate(near)
+    return values
+
+
 def nets(field, lo, hi, step):
     """Surface nets: a vertex in every cell the surface passes through, drawn onto the surface, and a quad
     across every edge of the grid the surface cuts."""
-    axes = [np.arange(a, b + step, step) for a, b in zip(lo, hi)]
-    X, Y, Z = np.meshgrid(*axes, indexing="ij")
-    grid = np.stack((X, Y, Z), axis=-1).reshape(-1, 3).astype(np.float32)
-    values = np.concatenate([field(chunk) for chunk in np.array_split(grid, max(1, len(grid) // 2_000_000))]).reshape(X.shape)
-    del grid
+    values = sample(field, lo, hi, step)
     inside = values < 0
     corners = [inside[i : inside.shape[0] - 1 + i, j : inside.shape[1] - 1 + j, k : inside.shape[2] - 1 + k] for i in (0, 1) for j in (0, 1) for k in (0, 1)]
     some = np.logical_or.reduce(corners)
