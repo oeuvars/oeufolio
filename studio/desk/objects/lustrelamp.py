@@ -39,70 +39,100 @@ SECTION = [
     (2.35, 1.8),
     (2.38, 2.25),
     (2.5, 2.55),
-    (2.72, 2.72),
-    (3.05, 2.88),
-    (3.4, 2.95),
-    (4.0, 2.86),
-    (4.5, 2.62),
-    (4.95, 2.3),
-    (5.35, 1.88),
-    (5.7, 1.35),
-    (5.92, 0.9),
-    (5.88, 0.6),
+    (2.72, 2.84),
+    (3.05, 2.93),
+    (3.4, 2.96),
+    (4.0, 2.9),
+    (4.5, 2.74),
+    (5.0, 2.48),
+    (5.35, 2.22),
+    (5.6, 1.95),
+    (5.78, 1.6),
+    (5.9, 1.15),
+    (5.95, 0.8),
+    (5.88, 0.55),
     (5.6, 0.42),
     (5.3, 0.36),
 ]
-THICK = 0.1
+THICK = 0.07
 # Blown glass is out of true: its surface waves by up to this much, in em, slowly round it and along it.
 WOBBLE = 0.015
-# The back it is mounted on, inside it: steel painted dark bronze, its radius and height.
+# The back it is mounted on, inside it: steel painted a warm stone colour, which the light inside the glass shows
+# through the smoke as the photograph's brown; its radius and height.
 BACK_R = 5.3
 BACK_H = 0.36
 # The bronze housing in the tube: its radius, and the height of its top, where the brass ring is; the opal lens is
 # sunk in it, doming up this much to the ring. A collar round its top reaches out to the glass. The clips stand at these angles round it, as the photograph shows them.
 CAN_R = 2.12
 COLLAR = 2.27
-CAN_TOP = 1.95
+CAN_TOP = 2.65
 DOME = 0.32
 CLIPS = (48, 176, 206, 290, 318)
 BRASS = "#b08a4a"
 BRONZE = "#2a1d14"
+STONE = "#8a7a62"
+STONE_R = 4.4
 OPAL = "#f4efe4"
 # The glass, the share of each colour its smoke lets through at each face; the lustre, the colour it throws back and
 # how much of the light it throws back rather than lets through; the film it is, this many nanometres thick on
 # most, and none at all over most of the glass.
-SMOKE = (0.94, 0.68, 0.4)
-GOLD = (1.0, 0.7, 0.35)
+SMOKE = (0.82, 0.64, 0.46)
+GOLD = (1.0, 0.8, 0.52)
 COAT = 0.62
 # The lustre was sprayed at the face: it is thickest there, nearly a mirror, and thinner over the funnel and the
 # shoulder, where the light inside shows through it. Its share by the distance out, in shares of R.
-COATS = [(0.0, 0.9), (0.4, 0.9), (0.45, 0.85), (0.58, 0.85), (0.66, 0.995), (0.82, 0.995)]
+COATS = [(0.0, 0.9), (0.4, 0.9), (0.45, 0.88), (0.58, 0.9), (0.66, 0.985), (0.82, 0.985)]
 # Past the face it went on by how squarely the glass faced the spray: by the height of the surface's normal, the
 # shoulder half coated, the side, seen edge on, thinnest, so the light inside gets out there across the desk, and
 # the curl under it, which the spray caught at its back edge on the turning table, a little more.
-FACING = [(-0.6, 0.5), (-0.2, 0.35), (0.0, 0.2), (0.3, 0.6), (0.75, 0.995)]
+FACING = [(-0.6, 0.35), (-0.35, 0.35), (-0.1, 0.9), (0.3, 0.97), (0.75, 0.985)]
 FILM = 350.0
 # The lens gives warm white light, this share of the lamp's power in desk.py. Inside the glass, a frosted strip of
 # LEDs on the back lights the glass from within, at this share: a ring round the housing this far out, in em, lit
 # over the top and fading toward the sides by this power of the sine of the angle, where the photograph shows its
 # glow through the funnel.
-BULB = (1.0, 0.86, 0.66)
-SHARE = 0.0004
-LED_SHARE = 0.0012
+BULB = (1.0, 0.72, 0.32)
+SHARE = 0.00075
+LED_SHARE = 0.003
 LED_SPREAD = 3.0
+LED_COLOUR = (1.0, 0.66, 0.3)
 # A band of LEDs on a riser round the edge of the back, this far out, this high and this wide, lights the shoulder
 # from inside at this share; it is what lights the desk round the lamp, through the thin lustre on the side.
 BAND_R = 5.0
-BAND_Z = 0.85
+BAND_Z = 0.4
 BAND_W = 0.25
-BAND_SHARE = 0.07
-LED_R = (2.55, 3.7)
+BAND_SHARE = 0.025
+LED_R = (2.6, 4.3)
 # Glass that bends light lets a shadow ray through in a render only if told: what each face lets through, in its
 # own colour, and on the outside less what the lustre there throws back.
 SHADOW = SMOKE
 # The box the lamp stands in, in em.
 W = H = D + 2.0
 TOP = max(z for _, z in SECTION) + THICK
+
+# The photograph's studio, which its glass throws back: the wall it hangs on, all round it out to this far, giving
+# this light (its colour as the photograph shows it), and a soft key off its right, this far out and up, this large,
+# this bright. The page shows the lamp lit as it was photographed, so its picture, lit, is taken in this studio
+# (desk.py puts the parts marked "studio" in the lamp's lit portrait alone); its light on the desk is the desk's own.
+STUDIO_R = 40.0
+WALL_LIGHT = (0.8, 0.7, 0.55)
+# Close round it the wall is lit by the lamp's own glow, warmer and brighter: this much more light at the glass,
+# falling off over this many em.
+NEAR_LIGHT = (0.9, 0.76, 0.56)
+NEAR_FALL = 2.5
+# The studio's own walls stand round it at this distance, this high, giving this light; the glass's rim, seen edge
+# on, throws them back.
+ROOM_R = 40.0
+ROOM_H = 9.0
+ROOM_LIGHT = (1.35, 1.2, 0.95)
+KEY_AT = (55.0, -10.0, 45.0)
+KEY_SIZE = 60.0
+KEY_LIGHT = 40.0
+# and a long low strip of light off its upper left, which the photograph shows as a thin streak along the rim there:
+# where it is, its width and height, and how bright.
+STRIP_AT = (-48.0, 26.0, 14.0)
+STRIP_SIZE = (60.0, 4.0)
+STRIP_LIGHT = 12.0
 
 # The page shows the lamp from a camera of its own (desk.py PORTRAITS), straight over it as far off as the plate's
 # camera, as its face was photographed. Its middle, and the point on the desk under it.
@@ -270,10 +300,13 @@ def glass(stage):
 
 
 def back(stage):
-    """The steel back the glass is mounted on, painted dark bronze."""
+    """The steel back the glass is mounted on, painted a warm stone colour under the face and dark bronze out under
+    the shoulder, where the band of LEDs lights it."""
     outline_ = [(0.0, 0.0)] + corner(BACK_R - 0.12, 0.12, 0.12, start=-math.pi / 2, end=0.0) + corner(BACK_R - 0.12, BACK_H - 0.12, 0.12, end=math.pi / 2) + [(0.0, BACK_H)]
     mesh = turned("lustre-back", outline_)
-    mesh.materials.append(painted("lustre-back", BRONZE, 0.5))
+    mesh.materials.append(painted("lustre-back", STONE, 0.6))
+    mesh.materials.append(painted("lustre-back-edge", BRONZE, 0.6))
+    mesh.polygons.foreach_set("material_index", [int(math.hypot(p.center.x, p.center.y) > STONE_R) for p in mesh.polygons])
     return stage.add("lustre-back", mesh)
 
 
@@ -356,7 +389,7 @@ def leds(stage):
     weight = up**LED_SPREAD * np.exp(-(((across - 0.4) / 0.3) ** 2))
     weigh(mesh, weight / weight.mean())
     area = math.pi * (LED_R[1] ** 2 - LED_R[0] ** 2)
-    mesh.materials.append(glowing("lustre-leds", BULB, LED_SHARE, area, diffuse=BRONZE))
+    mesh.materials.append(glowing("lustre-leds", LED_COLOUR, LED_SHARE, area, diffuse=BRONZE))
     obj = stage.add("lustre-leds", mesh)
     obj["bulb"] = True
     obj["share"] = LED_SHARE
@@ -374,15 +407,74 @@ def band(stage):
     area = 2 * math.pi * BAND_R * BAND_W
     mesh.materials.append(glowing("lustre-band", BULB, BAND_SHARE, area))
     obj = stage.add("lustre-band", mesh)
+    # What its light makes of the glass's wall seen edge on, piped round inside it, is a set of hard bright lines
+    # the photograph does not show: the glass, sharp in reflection and refraction, does not see the band, only what
+    # it lights.
+    obj.visible_glossy = False
+    obj.visible_transmission = False
     obj["bulb"] = True
     obj["share"] = BAND_SHARE
     obj["area"] = area
     return [obj, stage.add("lustre-riser", riser)]
 
 
+def studio(stage):
+    """The photograph's wall round the lamp, the studio's walls, its key light and the strip off its left, seen only
+    in what the glass throws back and shows through it, and in nothing else."""
+    made = []
+    around = np.linspace(0, 2 * math.pi, 128, endpoint=False)
+    wall = bpy.data.meshes.new("lustre-wall")
+    rings = (R + 0.05, R + 1.0, R + 4.0, STUDIO_R)
+    verts = [(r * math.cos(a), r * math.sin(a), 0.004) for a in around for r in rings]
+    n = len(rings)
+    wall.from_pydata(verts, [], [(k * n + j, ((k + 1) % 128) * n + j, ((k + 1) % 128) * n + j + 1, k * n + j + 1) for k in range(128) for j in range(n - 1)])
+    def panel(name, at, width, height):
+        """A flat light at at, facing the lamp, width across and height up."""
+        mesh = bpy.data.meshes.new(name)
+        centre = np.array(at)
+        facing = -centre / np.linalg.norm(centre)
+        across = np.cross(facing, (0.0, 0.0, 1.0))
+        across /= np.linalg.norm(across)
+        up = np.cross(across, facing)
+        mesh.from_pydata([tuple(centre + i * width / 2 * across + j * height / 2 * up) for i, j in ((-1, -1), (1, -1), (1, 1), (-1, 1))], [], [(0, 1, 2, 3)])
+        return mesh
+
+    room = bpy.data.meshes.new("lustre-room")
+    room.from_pydata([(ROOM_R * math.cos(a), ROOM_R * math.sin(a), z) for a in around for z in (0.0, ROOM_H)], [], [(2 * k, 2 * ((k + 1) % 128), 2 * ((k + 1) % 128) + 1, 2 * k + 1) for k in range(128)])
+    key = panel("lustre-key", KEY_AT, KEY_SIZE, KEY_SIZE)
+    strip = panel("lustre-strip", STRIP_AT, *STRIP_SIZE)
+    rings = np.hypot(*np.array(verts)[:, :2].T) - R
+    near = wall.attributes.new("near", "FLOAT", "POINT")
+    near.data.foreach_set("value", np.exp(-np.maximum(rings, 0) / NEAR_FALL).astype(np.float32))
+    for mesh, light in ((wall, WALL_LIGHT), (room, ROOM_LIGHT), (key, (KEY_LIGHT,) * 3), (strip, (STRIP_LIGHT,) * 3)):
+        material = bpy.data.materials.new(mesh.name)
+        material.use_nodes = True
+        nodes, links = material.node_tree.nodes, material.node_tree.links
+        nodes.remove(nodes["Principled BSDF"])
+        emit = node(nodes, "ShaderNodeEmission", Color=(*light, 1), Strength=1.0)
+        if mesh is wall:
+            weight = nodes.new("ShaderNodeAttribute")
+            weight.attribute_name = "near"
+            glow = nodes.new("ShaderNodeVectorMath")
+            glow.operation = "MULTIPLY_ADD"
+            glow.inputs[1].default_value = NEAR_LIGHT
+            glow.inputs[2].default_value = light
+            links.new(weight.outputs["Fac"], glow.inputs[0])
+            links.new(glow.outputs[0], emit.inputs["Color"])
+        links.new(emit.outputs[0], nodes["Material Output"].inputs["Surface"])
+        mesh.materials.append(material)
+        obj = stage.add(mesh.name, mesh)
+        for flag in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_volume_scatter"):
+            setattr(obj, flag, False)
+        obj["unseen"] = True
+        obj["studio"] = True
+        made.append(obj)
+    return made
+
+
 def parts(stage):
     """Every part of the lamp, standing on z = 0 about its axis."""
-    return [glass(stage), back(stage), housing(stage), ring(stage), *clips(stage), lens(stage), leds(stage), *band(stage)]
+    return [glass(stage), back(stage), housing(stage), ring(stage), *clips(stage), lens(stage), leds(stage), *band(stage), *studio(stage)]
 
 
 def build(stage):

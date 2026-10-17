@@ -243,7 +243,7 @@ class Desk:
                     obj.parent = anchor
                 if was in kept["shadowless"]:
                     self.shadowless.append(obj)
-                if obj.type == "MESH" and not obj.visible_camera and not obj.get("bulb"):
+                if obj.type == "MESH" and not obj.visible_camera and not obj.get("bulb") and not obj.get("studio"):
                     # A shot's own lights shine on its object alone. Its flags and cards, which only
                     # reflections see, would show in everything else on the desk, and the room is light enough.
                     if any(node.type == "EMISSION" for slot in obj.material_slots if slot.material for node in slot.material.node_tree.nodes):
@@ -551,6 +551,8 @@ def main():
     portrayed = [obj for shot, _ in PORTRAITS.values() for obj in desk.parts.get(shot, []) if not obj.get("plated")]
     # What the plate's camera sees: everything but the layers and the portraits, which the page lays over it.
     plated = [obj for obj in everything if obj not in layered and obj not in portrayed]
+    studio = [obj for obj in everything if obj.get("studio")]
+    cast(studio, False)
     raw = os.path.join(tempfile.gettempdir(), "desk.exr")
     if args.proofs:
         os.makedirs(args.proofs, exist_ok=True)
@@ -586,7 +588,8 @@ def main():
 
     def portraits(suffix, exposure, bloom=None):
         """Each portrait on its own, by its own camera, with everything else still there to light it. Where on the
-        plate each lies goes to PORTRAIT for the page."""
+        plate each lies goes to PORTRAIT for the page. A lamp shown lit as it was photographed brings the parts of
+        its photograph's studio ("studio"), which are in its lit portrait and nowhere else."""
         show(everything, False)
         frames = {}
         for prop, (shot, held) in PORTRAITS.items():
@@ -595,7 +598,9 @@ def main():
             parts = [obj for obj in desk.parts[shot] if not obj.get("plated")]
             show(parts, True)
             frames[prop] = desk.portrait(held, parts, density)
+            cast(studio, suffix == "-lamp")
             pixels = stage._expose(raw)
+            cast(studio, False)
             develop(pixels, np.zeros(pixels.shape[:2], dtype=np.float32), os.path.join(OUT, f"{named}-{prop}{suffix}.avif"), args.proofs, f"{named}-{prop}{suffix}", exposure, bloom)
             show(parts, False)
             print(f"PORTRAIT {prop}{suffix} {pixels.shape[1]}x{pixels.shape[0]} at {frames[prop]}")
