@@ -5,8 +5,8 @@ import { lamp } from './lamp'
 
 /**
  * The desk lamp: a donut of blown orange opal glass lying on the mat, lit from inside
- * (studio/desk/objects/donutlamp.py). It is in the plate, lit and unlit, and so is its light on everything round
- * it. The button covers the glass, a little up the page, where the lens shows its top. Clicking it switches it.
+ * (studio/desk/objects/donutlamp.py). Its picture, from a camera of its own straight over it, lies over the plate,
+ * lit and unlit, and its light is in the plate. The button covers the glass. Clicking it switches it.
  */
 export function DonutLamp() {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
@@ -17,7 +17,8 @@ export function DonutLamp() {
       data-prop="donutlamp"
       aria-label="Lamp"
       aria-pressed={lit}
-      className={`${PROP} z-2 -mt-[1.5em] size-[15em] cursor-pointer touch-manipulation rounded-full`}
+      // Mat lays it over the glass in its picture, as large: --w and --h in pixels.
+      className={`${PROP} z-2 h-[calc(var(--h)*1px)] w-[calc(var(--w)*1px)] cursor-pointer touch-manipulation rounded-full`}
       onClick={lamp.pull}
     />
   )

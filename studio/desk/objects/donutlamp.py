@@ -1,14 +1,15 @@
-"""The desk lamp: a donut of blown orange opal glass, lying flat on the desk on three small white feet, lit from inside.
+"""The desk lamp: a donut of blown orange opal glass, resting on a flat round white base, lit by a bulb in its hole.
 
 It is the lamp in the user's Pinterest pin (a glass donut table lamp, glowing orange on a book by a bed) and the
 pins beside it: a fat ring whose tube is nearly as thick as the ring is wide, so the hole through the middle is
-only a small hole from above, the glass a deep glossy orange when it is off, and when it is on a hot yellow over
-the bulb, low in the tube, deepening to orange over the far side.
+only a small hole from above, the glass a deep glossy orange when it is off, and when it is on glowing all round,
+hottest and yellow round the hole, deeper toward the rim. The glass rests on a flat round base, and the bulb stands in
+the base's middle, up into the hole, its mirrored crown showing through it (the user's photograph of it lit).
 
 The glass is a thin shell. Seen from outside it is a clear, polished skin over milky orange glass: a mirror-smooth
 reflection, faintly smudged where it is handled, over a surface that scatters what lights it from outside, and lets
-through, diffused, what lights it from inside. The bulb inside lights the glass from behind, which is what shows of
-it. The lit glass is then the lamp: a surface just inside it gives out its light onto everything round it, most
+through, diffused, what lights it from inside. The bulb's light fills the tube and lights the glass from behind,
+which is what shows of it. The lit glass is then the lamp: a surface just inside it gives out its light onto everything round it, most
 where it glows most, in the colour it passes, and the glass, which that light has already come through, holds none
 of it back (light linking).
 
@@ -25,45 +26,69 @@ from paint import linear
 
 # The donut: how wide it is across, how far its tube's middle runs from the middle of the ring, and the tube's
 # half-width and half-height. The hole at its narrowest is the ring's radius less the tube's half-width.
-D = 15.0
+D = 10.5
 RING = 0.58 * D / 2
 TUBE = (0.42 * D / 2, 0.42 * D / 2)
-# It stands on three small white plastic feet under the tube, this tall and this wide.
-FOOT = (0.32, 0.75)
-LIFT = FOOT[0]
+# It sits on a flat round base of white plastic, this wide across and this tall, its edge rounded this much, the
+# glass resting on it this far down into its top. The bulb stands in the middle of the base, up into the hole: a
+# frosted globe this wide with a mirrored crown over it down past its middle, which is all that shows of it through
+# the hole: a dark mirror, round it the lit glass of the hole, and none of the frosted globe's own glow.
+BASE = (0.78 * D, 0.45, 0.15)
+SEAT = 0.03
+LIFT = BASE[1] - SEAT
+GLOBE = 0.06 * D
 # The box the lamp stands in, in em.
 W = H = D + 2.0
 
 # The glass: its orange when the light falls on it from outside, as it does when the lamp is off; how much of the
-# light reaching it from inside it lets through, and in what colour, the warm white of the bulb deepened by it.
+# light reaching it from inside it lets through, and in what colour, the warm white of the bulb turned a yellow orange by it.
 GLASS = "#f06a0a"
-THROUGH = (1.0, 0.3, 0.04)
+THROUGH = (1.0, 0.45, 0.08)
 # How much of what lights the glass it lets through, against what it scatters back, and how much of the
 # glass's orange it scatters back inside the tube.
 TRANSLUCENT = 0.6
+# The orange is in the glass, so the slanter the eye looks through it, the more glass the light crosses on its way
+# out and the more of its green and blue the glass takes (Beer and Lambert): THROUGH is its colour seen square on,
+# and it deepens toward red where the glass turns away, to the rim and round the hole. The path is taken as this
+# power of the slant, and no longer than at this slant, past which the light leaves by a shorter way.
+PATH = 1.6
+GRAZING = 0.15
 INSIDE = 0.15
 # What comes out of the lamp onto the desk: the bulb's warm light as the orange glass passes it. The bulb's own
 # warm white, which lights the glass from inside, and how bright it is there against the lamp's light outside.
-BULB_COLOUR = (1.0, 0.22, 0.03)
+BULB_COLOUR = (1.0, 0.55, 0.1)
 BULB_WHITE = (1.0, 0.7, 0.4)
-GLASS_SHARE = 0.15
-# The bulb: low in the tube, this high over the glass's foot and this wide, under the side toward the near edge of
-# the desk, this many degrees round from the right. Of the light on the glass, this share is the bulb's own; the
-# rest it fills the tube with, bounced round it, which this many lights round the ring stand for, each this wide.
-# What comes out of the glass lies round the ring as it glows, the far side this much darker than the near one, and
-# is, all told, this many times the lamp's power in desk.py.
-BULB_HIGH = 1.1
-BULB_R = 1.0
-BULB_AT = -75
-BULB_SHARE = 0.75
+GLASS_SHARE = 0.034
+# The bulb in the hole lights the glass all round from inside it, most on the side toward the hole. What it fills
+# the tube with stands for as this many lights round the ring, each this wide, this far in toward the hole from the
+# middle of the tube (as a share of the tube's half-width), this high over the glass's foot. What comes out of the
+# glass lies round all of it alike, this much more on the side toward the hole, and is, all told, this many times
+# the lamp's power in desk.py. The bulb's own globe gives this share of it.
 BULBS = 12
-FILL_R = 0.6
-BULB_SIDE = 0.6
-POWER = 0.55
+FILL_R = 0.053 * D
+INWARD = 0.4
+BULB_HIGH = 0.16 * D
+INNER = 0.4
+POWER = 0.8
+# How much of its light the underside of the tube, facing the desk, gives against the rest of it.
+UNDER = 0.15
+GLOBE_SHARE = 0.0001
 # Opal glass is not opaque: what light it lets through it colours, so its shadow is orange and not black.
 SHADOW = (0.5, 0.22, 0.05)
+# The page shows the lamp from a camera of its own (desk.py PORTRAITS), straight over it at this height, the
+# plate's camera's: round, as it is, wherever it stands on the desk. Its middle, and the point on the desk under it,
+# in the coordinates of the glass, which the camera is placed by.
+OVERHEAD = 100.0
+MIDDLE = (0.0, 0.0, LIFT + TUBE[1])
+STANDS = (0.0, 0.0, 0.0)
+BODY = "donut-glass"
 # A hand-blown shell is not quite true: it swells and dips this much, in em, over a few hand-widths.
 WOBBLE = 0.05
+
+
+def photograph():
+    """The camera over the lamp: where it stands, looking straight down, and its axes."""
+    return np.array([0.0, 0.0, OVERHEAD]), np.eye(3), None
 
 
 def shell(stage, material, name="donut-glass", inset=0.0, around=288, tube=128):
@@ -138,7 +163,31 @@ def glass():
     path = nodes.new("ShaderNodeLightPath")
     glowing = nodes.new("ShaderNodeMix")
     glowing.data_type = "RGBA"
-    glowing.inputs["A"].default_value = (*THROUGH, 1)
+    # How much glass the light leaving toward the eye crosses, against square on, and what colour that leaves it.
+    view = nodes.new("ShaderNodeNewGeometry")
+    square = nodes.new("ShaderNodeVectorMath")
+    square.operation = "DOT_PRODUCT"
+    links.new(view.outputs["Normal"], square.inputs[0])
+    links.new(view.outputs["Incoming"], square.inputs[1])
+    slant = node(nodes, "ShaderNodeMath")
+    slant.operation = "ABSOLUTE"
+    links.new(square.outputs["Value"], slant.inputs[0])
+    held = nodes.new("ShaderNodeMath")
+    held.operation = "MAXIMUM"
+    held.inputs[1].default_value = GRAZING
+    links.new(slant.outputs[0], held.inputs[0])
+    crossed = nodes.new("ShaderNodeMath")
+    crossed.operation = "POWER"
+    crossed.inputs[1].default_value = -PATH
+    links.new(held.outputs[0], crossed.inputs[0])
+    passed = nodes.new("ShaderNodeCombineColor")
+    for channel, face_on in zip(("Red", "Green", "Blue"), THROUGH):
+        taken = nodes.new("ShaderNodeMath")
+        taken.operation = "POWER"
+        taken.inputs[0].default_value = face_on
+        links.new(crossed.outputs[0], taken.inputs[1])
+        links.new(taken.outputs[0], passed.inputs[channel])
+    links.new(passed.outputs["Color"], glowing.inputs["A"])
     glowing.inputs["B"].default_value = (0, 0, 0, 1)
     links.new(path.outputs["Is Diffuse Ray"], glowing.inputs["Factor"])
     links.new(glowing.outputs["Result"], through.inputs["Color"])
@@ -177,7 +226,7 @@ def glass():
 
 
 def plastic():
-    material = bpy.data.materials.new("donut-foot")
+    material = bpy.data.materials.new("donut-base")
     material.use_nodes = True
     shader = material.node_tree.nodes["Principled BSDF"]
     shader.inputs["Base Color"].default_value = (*linear("#ecebe6"), 1)
@@ -187,57 +236,94 @@ def plastic():
     return material
 
 
-def feet(stage):
-    """Three short rounded white feet under the middle of the tube."""
-    tall, wide = FOOT
-    material = plastic()
-    parts = []
-    for k in range(3):
-        turn = math.radians(90 + 120 * k)
-        bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=wide / 2, depth=tall + 0.2, location=(RING * math.cos(turn), RING * math.sin(turn), (tall + 0.2) / 2))
-        foot = bpy.context.active_object
-        foot.name = "donut-foot"
-        bevel = foot.modifiers.new("round", "BEVEL")
-        bevel.width = 0.08
-        bevel.segments = 4
-        foot.data.materials.append(material)
-        foot.data.polygons.foreach_set("use_smooth", [True] * len(foot.data.polygons))
-        parts.append(foot)
-    return parts
+def base(stage):
+    """The flat round base the glass rests on, its edge rounded, flat on the desk."""
+    wide, tall, round_ = BASE
+    bpy.ops.mesh.primitive_cylinder_add(vertices=192, radius=wide / 2, depth=tall, location=(0, 0, tall / 2))
+    plinth = bpy.context.active_object
+    plinth.name = "donut-base"
+    bevel = plinth.modifiers.new("round", "BEVEL")
+    bevel.width = round_
+    bevel.segments = 6
+    plinth.modifiers.new("smooth", "WEIGHTED_NORMAL")
+    plinth.data.materials.append(plastic())
+    plinth.data.polygons.foreach_set("use_smooth", [True] * len(plinth.data.polygons))
+    return plinth
 
 
-def bulbs(stage, glass_obj):
-    """The light inside the tube, as it shows on the glass: one bulb, low in it, under the side toward the near edge
-    of the desk, and the light it fills the tube with, round all of it. These light the glass from behind and
+def globe(stage):
+    """The bulb in the hole: a frosted globe on the base that glows when the lamp is on, under a mirrored crown."""
+    frosted = bpy.data.materials.new("donut-globe")
+    frosted.use_nodes = True
+    nodes, links = frosted.node_tree.nodes, frosted.node_tree.links
+    shader = nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (1, 1, 1, 1)
+    shader.inputs["Roughness"].default_value = 0.5
+    shader.inputs["Emission Color"].default_value = (*BULB_WHITE, 1)
+    power = nodes.new("ShaderNodeValue")
+    power.name = "power"
+    power.outputs[0].default_value = 0.0
+    links.new(power.outputs[0], shader.inputs["Emission Strength"])
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=64, ring_count=32, radius=GLOBE, location=(0, 0, BASE[1] + GLOBE))
+    bulb = bpy.context.active_object
+    bulb.name = "donut-globe"
+    bulb.data.materials.append(frosted)
+    bulb.data.polygons.foreach_set("use_smooth", [True] * len(bulb.data.polygons))
+    bulb["bulb"] = True
+    bulb["share"] = GLOBE_SHARE
+    bulb["area"] = 4 * math.pi * GLOBE**2
+    mirror = bpy.data.materials.new("donut-crown")
+    mirror.use_nodes = True
+    chrome = mirror.node_tree.nodes["Principled BSDF"]
+    chrome.inputs["Base Color"].default_value = (0.92, 0.92, 0.92, 1)
+    chrome.inputs["Metallic"].default_value = 1.0
+    chrome.inputs["Roughness"].default_value = 0.05
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=64, ring_count=32, radius=GLOBE * 1.01, location=(0, 0, BASE[1] + GLOBE))
+    crown = bpy.context.active_object
+    crown.name = "donut-crown"
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="DESELECT")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for vertex in crown.data.vertices:
+        vertex.select = vertex.co.z < -0.3 * GLOBE
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.delete(type="VERT")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    crown.data.materials.append(mirror)
+    crown.data.polygons.foreach_set("use_smooth", [True] * len(crown.data.polygons))
+    return [bulb, crown]
+
+
+def bulbs(stage, glass_obj, plinth):
+    """The light the bulb in the hole fills the tube with, as it shows on the glass: lights round the ring, in toward
+    the hole, alike all round. They light the glass from behind, and the base under it, through the glass, and
     nothing else."""
     only = bpy.data.collections.new("donut-only")
     only.objects.link(glass_obj)
+    only.objects.link(plinth)
     lights = []
-
-    def light(k, turn, share, size):
+    for k in range(BULBS):
+        turn = 2 * math.pi * (k + 0.5) / BULBS
+        reach = RING - INWARD * TUBE[0]
         source = bpy.data.lights.new(f"glow-{k}", "POINT")
         source.color = BULB_WHITE
         source.energy = 0.0
-        source.shadow_soft_size = size
+        source.shadow_soft_size = FILL_R
         obj = stage.add(f"glow-{k}", source)
-        obj.location = (RING * math.cos(turn), RING * math.sin(turn), LIFT + BULB_HIGH)
+        obj.location = (reach * math.cos(turn), reach * math.sin(turn), LIFT + BULB_HIGH)
         obj.visible_camera = False
         obj.visible_glossy = False
         obj["bulb"] = True
-        obj["share"] = share
+        obj["share"] = GLASS_SHARE / BULBS
         obj.light_linking.receiver_collection = only
         lights.append(obj)
-
-    light("bulb", math.radians(BULB_AT), GLASS_SHARE * BULB_SHARE, BULB_R)
-    for k in range(BULBS):
-        light(k, 2 * math.pi * (k + 0.5) / BULBS, GLASS_SHARE * (1 - BULB_SHARE) / BULBS, FILL_R)
     return lights
 
 
-def luminaire(stage, glass_obj):
+def luminaire(stage, glass_obj, plinth):
     """The lamp's light on everything round it, which comes from the whole of the glowing glass: a surface just
-    inside the glass, as large, giving out light where the glass glows, most over the bulb, in the colour the glass
-    passes. The glass neither takes its light nor stands in its way, and nothing sees it but the light it gives."""
+    inside the glass, as large, giving out light where the glass glows, all round it and most toward the hole, in
+    the colour the glass passes. The glass neither takes its light nor stands in its way, and nothing sees it but the light it gives."""
     clear = bpy.data.collections.new("donut-clear")
     clear.objects.link(glass_obj)
     clear.collection_objects[0].light_linking.link_state = "EXCLUDE"
@@ -262,8 +348,11 @@ def luminaire(stage, glass_obj):
     co = np.empty(len(mesh.vertices) * 3)
     mesh.vertices.foreach_get("co", co)
     co = co.reshape(-1, 3)
-    turn = np.arctan2(co[:, 1], co[:, 0])
-    weight = 1 - BULB_SIDE + BULB_SIDE * (1 + np.cos(turn - math.radians(BULB_AT))) / 2
+    weight = 1 + INNER * (RING - np.hypot(co[:, 0], co[:, 1])) / TUBE[0]
+    # The bulb stands over the base, so the underside of the tube, facing the desk, is in the base's shade and gives
+    # little light: the desk at the lamp's foot is dark, as under anything that sits on it.
+    facing = (co[:, 2] - LIFT - TUBE[1]) / TUBE[1]
+    weight *= UNDER + (1 - UNDER) * np.clip((facing + 0.6) / 1.2, 0, 1)
     weight /= weight.mean()
     attribute = mesh.attributes.new("glow", "FLOAT", "POINT")
     attribute.data.foreach_set("value", weight.astype(np.float32))
@@ -273,14 +362,23 @@ def luminaire(stage, glass_obj):
     obj["bulb"] = True
     obj["share"] = POWER
     obj["area"] = area
-    obj.light_linking.receiver_collection = clear
+    # Nor does it light the base, which shows only at the bottom of the hole, walled in by the glass a hair away:
+    # lit by the lamp's whole power from there it would outshine the glass that lights it. It is lit as the glass
+    # is, from inside the tube (bulbs).
+    unlit = bpy.data.collections.new("donut-unlit")
+    for part in (glass_obj, plinth):
+        unlit.objects.link(part)
+    for linked in unlit.collection_objects:
+        linked.light_linking.link_state = "EXCLUDE"
+    obj.light_linking.receiver_collection = unlit
     obj.light_linking.blocker_collection = clear
     return obj
 
 
 def build(stage):
     body = shell(stage, glass())
-    parts = [body] + feet(stage) + bulbs(stage, body) + [luminaire(stage, body)]
+    plinth = base(stage)
+    parts = [body, plinth] + globe(stage) + bulbs(stage, body, plinth) + [luminaire(stage, body, plinth)]
     for part in parts:
         part.location = (part.location.x + W / 2, part.location.y - H / 2, part.location.z)
     stage.shoot("donutlamp", (0, 0, W, H), lens=False)

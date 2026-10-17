@@ -28,7 +28,7 @@ import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
-from objects import card, catlamp, donutlamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
+from objects import card, catlamp, donutlamp, flutelamp, ilolamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
 from paint import blur, linear  # noqa: E402
 from stage import GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
 
@@ -53,6 +53,8 @@ BUILDERS = {
     **razor.SHOTS,
     **catlamp.SHOTS,
     **donutlamp.SHOTS,
+    **ilolamp.SHOTS,
+    **flutelamp.SHOTS,
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
@@ -71,6 +73,8 @@ PROPS = {
     "razor": {"box": (17.5, 7.3), "shots": {"razor": (0, 0, 0)}},
     "catlamp": {"box": (27.0, 10.0), "k": 0.7, "shots": {"catlamp": (0, 0, 0)}},
     "donutlamp": {"box": (donutlamp.W, donutlamp.H), "shots": {"donutlamp": (0, 0, 0)}},
+    "ilolamp": {"box": (ilolamp.W, ilolamp.H), "shots": {"ilolamp": (0, 0, 0)}},
+    "flutelamp": {"box": (flutelamp.W, flutelamp.H), "shots": {"flutelamp": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
@@ -81,13 +85,16 @@ LAYERS = {"reel": "recorder"}
 # under them. A spinning hub's shading and the side the lens sees of it do not turn with it.
 STILL = ("hub",)
 STAND_INS = {"reel": ("reel",)}
-# Props the page shows from a camera of their own, low beside them, as each was photographed, and not from overhead:
-# the cat lamp, whose face looking down on her only shows the top of her head. Each is left out of the plate's
-# camera but stays in the set, throwing its shadow and its light on the mat under it, and is rendered on its own
-# by that camera, at the plate's own size, set where she stands. Each is its shot, and the module that built it,
-# which knows the camera (photograph()) in the coordinates of its object, the middle of the object (MIDDLE), and
-# the point on the desk under that middle (STANDS).
-PORTRAITS = {"catlamp": ("catlamp", catlamp)}
+# Props the page shows from a camera of their own, and not from the plate's. The cat lamp is seen low beside her, as
+# she was photographed, whose face looking down on her only shows the top of her head. The donut lamp is seen from
+# straight over it, at the height the plate's camera is held: the plate's camera, off to one side of it, would draw
+# the tall round glass leaning away from it, egg-shaped. So are the ILO lamp, its dock hidden under its ring, and
+# the fluted copper lamp, lying on its back with its face up, as its face was photographed. Each
+# is left out of the plate's camera but stays in the set, throwing its shadow and its light on the mat under it,
+# and is rendered on its own by that camera, at the plate's own size, set where it stands. Each is its shot, and the module that built it, which knows the camera
+# (photograph()) in the coordinates of its object (the mesh named BODY, or else the one carrying the photograph),
+# the middle of the object (MIDDLE), and the point on the desk under that middle (STANDS).
+PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp)}
 # The page shows an em of the plate at up to 22 pixels, 44 on a screen of two pixels to the point; this many leaves
 # room to zoom in before the render runs out.
 DENSITY = 64
@@ -103,15 +110,16 @@ WINDOW_FROM = (-0.55, 0.6, 0.58)
 MOON = 0.55
 # How much of the moon's light is left beside the lamp's, as the camera exposes for the lamp.
 LAMP_MOON = 0.25
-GLOW = 28000.0
+GLOW = 45000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
 LAMP_EXPOSURE = 0.0
-# The lamp's light is the deep orange a bulb gives through orange glass: its green, in a render, is yellow light
-# near 580 nm, where the teal dye of the leather reflects about as little as it does red. Multiplied by the
-# leather's green it would turn the leather by the lamp lime; the leather takes this share of it instead, about its
-# red reflectance over its green, and goes the warm dark brown it does in a photograph.
-LEATHER_GREEN = 0.25
+# The lamp's light is the yellow orange a bulb gives through orange glass: its green, in a render, is mostly yellow
+# light near 580 nm, where the teal dye of the leather reflects little. Multiplied by the leather's green it would
+# turn the leather by the lamp lime; the leather takes this share of it instead, and goes the warm dark olive it does
+# in a photograph. Its blue, what little the glass lets through, the leather takes no more of than its green, or
+# the leather by the lamp, where green is cut and blue kept, goes purple.
+LEATHER_GREEN = 0.3
 # The maps of the light on the mat are drawn this many pixels to the em, enough for a shadow's sharp edge where an
 # object touches the mat.
 MAP_DENSITY = 32
@@ -322,7 +330,7 @@ class Desk:
         the desk under her middle lies where the plate has it."""
         scene = bpy.context.scene
         centre, axes, _ = held.photograph()
-        body = next(obj for obj in parts if obj.type == "MESH" and obj.data.uv_layers.get("photo"))
+        body = next(obj for obj in parts if obj.type == "MESH" and (obj.name == getattr(held, "BODY", None) or obj.data.uv_layers.get("photo")))
         placed = body.matrix_world
         turn = placed.to_quaternion().to_matrix()
         camera = getattr(self, "low", None)
@@ -347,7 +355,7 @@ class Desk:
         graph = bpy.context.evaluated_depsgraph_get()
         points = []
         for obj in parts:
-            if obj.type not in ("MESH", "CURVE"):
+            if obj.type not in ("MESH", "CURVE") or obj.get("unseen"):
                 continue
             surface = obj.evaluated_get(graph).to_mesh()
             co = np.empty(len(surface.vertices) * 3)
@@ -416,8 +424,10 @@ def cast(objects, there):
 
 
 def show(objects, seen):
+    """Whether cameras see objects. Parts marked "unseen" (a lamp's glowing stand-ins, a studio only its glass
+    reflects) no camera ever sees."""
     for obj in objects:
-        obj.visible_camera = seen
+        obj.visible_camera = seen and not obj.get("unseen")
 
 
 def rolled(x, knee=0.72, brightest=6.0, soft=0.5):
@@ -533,7 +543,8 @@ def main():
     floor = next(obj for obj in scene.objects if obj.get("stand") == "mat")
     layered = [obj for shot in LAYERS for obj in desk.parts.get(shot, []) if obj.get("layer", shot) not in STILL]
     everything = [obj for _, _, objects in desk.props.values() for obj in objects]
-    portrayed = [obj for shot, _ in PORTRAITS.values() for obj in desk.parts.get(shot, [])]
+    # A portrayed shot's parts marked "plated" (a lamp's cord across the desk) lie in the plate all the same.
+    portrayed = [obj for shot, _ in PORTRAITS.values() for obj in desk.parts.get(shot, []) if not obj.get("plated")]
     # What the plate's camera sees: everything but the layers and the portraits, which the page lays over it.
     plated = [obj for obj in everything if obj not in layered and obj not in portrayed]
     raw = os.path.join(tempfile.gettempdir(), "desk.exr")
@@ -577,7 +588,7 @@ def main():
         for prop, (shot, held) in PORTRAITS.items():
             if shot not in desk.parts or (args.layers and prop not in args.layers):
                 continue
-            parts = desk.parts[shot]
+            parts = [obj for obj in desk.parts[shot] if not obj.get("plated")]
             show(parts, True)
             frames[prop] = desk.portrait(held, parts, density)
             pixels = stage._expose(raw)
@@ -645,7 +656,7 @@ def main():
             room.default_value, window.data.energy = 0.0, 0.0
             lamp = stage._expose(raw, samples=max(128, args.samples // 2))[..., :3] / daylight
             room.default_value, window.data.energy = was
-            light = light - lamp * (1 - np.array([1.0, LEATHER_GREEN, 1.0], dtype=np.float32))
+            light = light - lamp * (1 - np.array([1.0, LEATHER_GREEN, LEATHER_GREEN], dtype=np.float32))
         light = light * 2.0**LAMP_EXPOSURE
         # The map multiplies the leather, so it holds the light up to what it was photographed in. Close to a lamp
         # the leather is brighter than that, and the rest goes to a second map, which the page adds over it: what
@@ -694,7 +705,7 @@ def main():
         desk.glow(GLOW)
         window.data.energy *= LAMP_MOON
         # The leather the objects stand on throws the lamp's light back onto them as it takes it (LEATHER_GREEN).
-        paint.default_value = (mat_colour[0], mat_colour[1] * LEATHER_GREEN, mat_colour[2], mat_colour[3])
+        paint.default_value = (mat_colour[0], mat_colour[1] * LEATHER_GREEN, mat_colour[2] * LEATHER_GREEN, mat_colour[3])
         if plates:
             print("LIGHT RIM " + light_map("light"))
             pixels = stage._expose(raw)
