@@ -78,6 +78,7 @@ export type PropId =
   | 'donutlamp'
   | 'ilolamp'
   | 'flutelamp'
+  | 'lustrelamp'
 
 /** One rendered picture of the desk: wide for a mat in a window, tall for a phone. */
 export type PlateId = 'wide' | 'tall'

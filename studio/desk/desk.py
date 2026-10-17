@@ -28,7 +28,7 @@ import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
-from objects import card, catlamp, donutlamp, flutelamp, ilolamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
+from objects import card, catlamp, donutlamp, flutelamp, ilolamp, lustrelamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
 from paint import blur, linear  # noqa: E402
 from stage import GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
 
@@ -55,6 +55,7 @@ BUILDERS = {
     **donutlamp.SHOTS,
     **ilolamp.SHOTS,
     **flutelamp.SHOTS,
+    **lustrelamp.SHOTS,
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
@@ -75,6 +76,7 @@ PROPS = {
     "donutlamp": {"box": (donutlamp.W, donutlamp.H), "shots": {"donutlamp": (0, 0, 0)}},
     "ilolamp": {"box": (ilolamp.W, ilolamp.H), "shots": {"ilolamp": (0, 0, 0)}},
     "flutelamp": {"box": (flutelamp.W, flutelamp.H), "shots": {"flutelamp": (0, 0, 0)}},
+    "lustrelamp": {"box": (lustrelamp.W, lustrelamp.H), "shots": {"lustrelamp": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
@@ -89,12 +91,13 @@ STAND_INS = {"reel": ("reel",)}
 # she was photographed, whose face looking down on her only shows the top of her head. The donut lamp is seen from
 # straight over it, at the height the plate's camera is held: the plate's camera, off to one side of it, would draw
 # the tall round glass leaning away from it, egg-shaped. So are the ILO lamp, its dock hidden under its ring, and
-# the fluted copper lamp, lying on its back with its face up, as its face was photographed. Each
+# the fluted copper lamp and the smoked lustre glass lamp, lying on their backs with their faces up, as their faces
+# were photographed. Each
 # is left out of the plate's camera but stays in the set, throwing its shadow and its light on the mat under it,
 # and is rendered on its own by that camera, at the plate's own size, set where it stands. Each is its shot, and the module that built it, which knows the camera
 # (photograph()) in the coordinates of its object (the mesh named BODY, or else the one carrying the photograph),
 # the middle of the object (MIDDLE), and the point on the desk under that middle (STANDS).
-PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp)}
+PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp), "lustrelamp": ("lustrelamp", lustrelamp)}
 # The page shows an em of the plate at up to 22 pixels, 44 on a screen of two pixels to the point; this many leaves
 # room to zoom in before the render runs out.
 DENSITY = 64
@@ -108,8 +111,9 @@ ROOM = 0.04
 WINDOW = 0.16
 WINDOW_FROM = (-0.55, 0.6, 0.58)
 MOON = 0.55
-# How much of the moon's light is left beside the lamp's, as the camera exposes for the lamp.
-LAMP_MOON = 0.25
+# How much of the moon's light is left beside the lamp's, as the camera exposes for the lamp. The lustre lamp lights
+# only a glow round itself, its lens facing the ceiling: the camera, metering the moonlit desk, hardly stops down.
+LAMP_MOON = 0.85
 GLOW = 45000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
@@ -699,9 +703,8 @@ def main():
         portraits("", EXPOSURE)
 
     if "lamp" in args.passes:
-        # The lamp on, in the same dim room. The objects are rendered in its light, and the mat as a map of it.
-        # The lamp, a few hand-widths from everything on the desk, outshines the moon there many times over:
-        # the camera exposes for the lamp, and the moonlight is left a faint cool fill.
+        # The lamp on, in the same dim room. The objects are rendered in its light, and the mat as a map of it,
+        # with the moonlight the camera still takes in beside it (LAMP_MOON).
         desk.glow(GLOW)
         window.data.energy *= LAMP_MOON
         # The leather the objects stand on throws the lamp's light back onto them as it takes it (LEATHER_GREEN).
