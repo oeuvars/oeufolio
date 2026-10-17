@@ -37,11 +37,13 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * A cutting mat in teal leather, seen from overhead, with the things left on it as on a desk in use. All of
  * it is one photograph of one set, rendered in the studio under one light, so every object shades the others
  * and throws its own shadow. The page lays the plate over its own leather, as large as lets all of it show.
- * The room is dimly lit, and on the desk stands a lamp, a porcelain cat holding a bulb up on her tail, seen from low
- * beside her as she was photographed, so her face shows: her picture lies over the plate. Each state of
- * the lamp is its own plate of the same set: the objects in that light, and the light on the mat, which the
- * leather, its rules and its rulers are multiplied by: a map of the lamp's light with it on, the room's even
- * dimness with it off. Clicking the lamp switches it.
+ * The room is dimly lit, and on the desk lies a lamp, a donut of orange opal glass lit from inside. A prop
+ * the plate's camera does not show, seen from a low camera of its own (PORTRAITS), lies over the plate as its
+ * picture: the cat lamp was shown so, and is off the desk. Each state of the lamp is its own plate of the same
+ * set: the objects in that light, and the light on the mat, which the leather, its rules and its rulers are
+ * multiplied by: a map of the lamp's light with it on, the room's even dimness with it off. Where the lamp
+ * lights the leather brighter than it was photographed, a second map adds the rest. Clicking the lamp
+ * switches it.
  */
 export function Mat({ children, className }: MatProps) {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
@@ -190,6 +192,17 @@ export function Mat({ children, className }: MatProps) {
               style={{
                 backgroundColor: plate.rim,
                 backgroundImage: `url(/objects/mat/desk-${geometry.id}-light.avif)`,
+                backgroundSize: `${(plate.size[0] + 2 * plate.bleed[0]) * geometry.em}px ${(plate.size[1] + 2 * plate.bleed[1]) * geometry.em}px`,
+                backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
+              }}
+            />
+            {/* Close to the lamp the leather is lit brighter than it was photographed, which multiplying cannot
+                show: the rest of its light is added over it. */}
+            <div
+              aria-hidden
+              className={`${FADE} inset-0 bg-no-repeat opacity-[var(--lamp)] mix-blend-plus-lighter`}
+              style={{
+                backgroundImage: `url(/objects/mat/desk-${geometry.id}-light-past.avif)`,
                 backgroundSize: `${(plate.size[0] + 2 * plate.bleed[0]) * geometry.em}px ${(plate.size[1] + 2 * plate.bleed[1]) * geometry.em}px`,
                 backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
               }}

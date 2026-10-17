@@ -75,6 +75,7 @@ export type PropId =
   | 'pick-fin'
   | 'pick-wedge'
   | 'catlamp'
+  | 'donutlamp'
 
 /** One rendered picture of the desk: wide for a mat in a window, tall for a phone. */
 export type PlateId = 'wide' | 'tall'

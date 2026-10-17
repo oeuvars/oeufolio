@@ -1,6 +1,6 @@
 import { profile } from '../../content'
 import { BusinessCard } from './BusinessCard'
-import { CatLamp } from './CatLamp'
+import { DonutLamp } from './DonutLamp'
 import { KeyBunch } from './KeyBunch'
 import { Mat } from './Mat'
 import { MatchTicket } from './MatchTicket'
@@ -28,7 +28,7 @@ export function Desk() {
       <Recorder like={likes.recorder} />
       <MatchTicket like={likes.ticket} />
       <Wallet />
-      <CatLamp />
+      <DonutLamp />
     </Mat>
   )
 }

@@ -9,8 +9,8 @@ Every object is first built on its own stage, as the studio builds it for a shot
 Then each object is put down where src/components/mat/desk.json places it on the plate, and the plate is
 rendered to public/objects/mat/desk-<plate>.avif: the objects, and the shadows they throw on the mat, with
 nothing of the mat itself, which the page lays under it. Parts that move on the page, the reel of the
-recorder, are rendered on their own beside it, and the cat lamp from a low camera of its own, as she was
-photographed, so the page shows her face."""
+recorder, are rendered on their own beside it, and any prop the page shows from a low camera of its own
+(PORTRAITS), as it was photographed, by that camera."""
 
 import argparse
 import json
@@ -28,8 +28,8 @@ import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
-from objects import card, catlamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
-from paint import blur  # noqa: E402
+from objects import card, catlamp, donutlamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
+from paint import blur, linear  # noqa: E402
 from stage import GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -52,6 +52,7 @@ BUILDERS = {
     **proraso.SHOTS,
     **razor.SHOTS,
     **catlamp.SHOTS,
+    **donutlamp.SHOTS,
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
@@ -69,6 +70,7 @@ PROPS = {
     "proraso": {"box": (25.5, 7.95), "shots": {"proraso": (0, 0, 0)}},
     "razor": {"box": (17.5, 7.3), "shots": {"razor": (0, 0, 0)}},
     "catlamp": {"box": (27.0, 10.0), "k": 0.7, "shots": {"catlamp": (0, 0, 0)}},
+    "donutlamp": {"box": (donutlamp.W, donutlamp.H), "shots": {"donutlamp": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
@@ -105,6 +107,11 @@ GLOW = 28000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
 LAMP_EXPOSURE = 0.0
+# The lamp's light is the deep orange a bulb gives through orange glass: its green, in a render, is yellow light
+# near 580 nm, where the teal dye of the leather reflects about as little as it does red. Multiplied by the
+# leather's green it would turn the leather by the lamp lime; the leather takes this share of it instead, about its
+# red reflectance over its green, and goes the warm dark brown it does in a photograph.
+LEATHER_GREEN = 0.25
 # The maps of the light on the mat are drawn this many pixels to the em, enough for a shadow's sharp edge where an
 # object touches the mat.
 MAP_DENSITY = 32
@@ -224,7 +231,7 @@ class Desk:
                     obj.parent = anchor
                 if was in kept["shadowless"]:
                     self.shadowless.append(obj)
-                if obj.type == "MESH" and not obj.visible_camera:
+                if obj.type == "MESH" and not obj.visible_camera and not obj.get("bulb"):
                     # A shot's own lights shine on its object alone. Its flags and cards, which only
                     # reflections see, would show in everything else on the desk, and the room is light enough.
                     if any(node.type == "EMISSION" for slot in obj.material_slots if slot.material for node in slot.material.node_tree.nodes):
@@ -383,10 +390,15 @@ class Desk:
         return light
 
     def glow(self, power):
-        """Switch the cat lamp: each bulb in its head gives this many watts, or none."""
+        """Switch the lamp: its bulbs give this many watts between them, each its share, or none. A glowing surface
+        spreads its share over its area."""
         for obj in bpy.context.scene.objects:
-            if obj.get("bulb"):
-                obj.data.energy = power
+            if not obj.get("bulb"):
+                continue
+            if obj.type == "LIGHT":
+                obj.data.energy = power * obj.get("share", 1.0)
+            else:
+                obj.material_slots[0].material.node_tree.nodes["power"].outputs[0].default_value = power * obj["share"] / obj["area"]
 
 
 def middle_of(anchor, frame):
@@ -414,6 +426,12 @@ def rolled(x, knee=0.72, brightest=6.0, soft=0.5):
     shows its shape instead of burning out flat."""
     over = np.maximum(x - knee, 0)
     return np.where(x <= knee, x, knee + (1 - knee) * np.minimum(np.log1p(over / soft) / np.log1p(brightest / soft), 1))
+
+
+def encoded(colour):
+    """Linear light as sRGB."""
+    colour = np.maximum(colour, 0)
+    return np.where(colour <= 0.0031308, colour * 12.92, 1.055 * colour ** (1 / 2.4) - 0.055)
 
 
 def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE, bloom=None):
@@ -497,7 +515,10 @@ def main():
         return pixels
 
     stage._expose = timed
-    wanted = [shot for spec in PROPS.values() for shot in spec["shots"]]
+    with open(LAYOUT) as file:
+        placed = {prop for plate in json.load(file).values() for prop in plate["at"]}
+    # Only the props some plate puts down are built: the cat lamp's builder is kept, but she is off the desk.
+    wanted = [shot for prop, spec in PROPS.items() if prop in placed for shot in spec["shots"]]
     unknown = [shot for shot in args.build if shot not in BUILDERS]
     if unknown:
         sys.exit(f"Unknown shots: {', '.join(unknown)}")
@@ -554,7 +575,7 @@ def main():
         show(everything, False)
         frames = {}
         for prop, (shot, held) in PORTRAITS.items():
-            if args.layers and prop not in args.layers:
+            if shot not in desk.parts or (args.layers and prop not in args.layers):
                 continue
             parts = desk.parts[shot]
             show(parts, True)
@@ -565,7 +586,8 @@ def main():
             print(f"PORTRAIT {prop}{suffix} {pixels.shape[1]}x{pixels.shape[0]} at {frames[prop]}")
         desk.camera(0, 0, desk.w, desk.h, density)
         known = json.load(open(PORTRAIT)) if os.path.exists(PORTRAIT) else {}
-        known.setdefault(args.plate, {}).update(frames)
+        # A portrait of a prop no longer on the plate goes with it, or the page would still draw it.
+        known[args.plate] = {prop: frame for prop, frame in {**known.get(args.plate, {}), **frames}.items() if PORTRAITS[prop][0] in desk.parts}
         with open(PORTRAIT, "w") as file:
             file.write(json.dumps(known, indent=2) + "\n")
         show(plated, True)
@@ -612,21 +634,39 @@ def main():
         in. Returns the colour round its edge, which the page carries on past it."""
         show(everything, False)
         floor.visible_camera = True
+        was_paint = tuple(paint.default_value)
         paint.default_value = (0.8, 0.8, 0.8, 1)
         bx, by = desk.layout["bleed"]
         desk.camera(-bx, -by, desk.w + 2 * bx, desk.h + 2 * by, min(density, MAP_DENSITY))
         light = stage._expose(raw, samples=max(128, args.samples // 2))[..., :3] / daylight
-        # Where the light is brighter on the leather than it was photographed, it eases into that, as film does.
-        light = shoulder(light * 2.0**LAMP_EXPOSURE)
-        light = np.where(light <= 0.0031308, light * 12.92, 1.055 * light ** (1 / 2.4) - 0.055)
-        light += (np.random.default_rng(1).random(light.shape, dtype=np.float32) - 0.5) / 255
-        mapped = np.dstack((np.clip(light, 0, 1), np.ones(light.shape[:2]))).astype(np.float32)
-        save(mapped, os.path.join(tempfile.gettempdir(), "desk-light.png"))
-        subprocess.run(["uv", "run", "--quiet", os.path.join(HERE, "encode.py"), os.path.join(tempfile.gettempdir(), "desk-light.png"), os.path.join(OUT, f"{named}-{suffix}.avif")], check=True)
-        if args.proofs:
-            save(mapped, os.path.join(args.proofs, f"{named}-{suffix}.png"))
+        if suffix == "light":
+            # The lamp's own light on the leather, alone, as the leather takes it: see LEATHER_GREEN.
+            was = room.default_value, window.data.energy
+            room.default_value, window.data.energy = 0.0, 0.0
+            lamp = stage._expose(raw, samples=max(128, args.samples // 2))[..., :3] / daylight
+            room.default_value, window.data.energy = was
+            light = light - lamp * (1 - np.array([1.0, LEATHER_GREEN, 1.0], dtype=np.float32))
+        light = light * 2.0**LAMP_EXPOSURE
+        # The map multiplies the leather, so it holds the light up to what it was photographed in. Close to a lamp
+        # the leather is brighter than that, and the rest goes to a second map, which the page adds over it: what
+        # the camera sees of the leather there, rolled off as the objects' own highlights are in the same
+        # photograph, less what the first map already shows of it.
+        held = np.clip(light, 0, 1)
+        leather = np.array(linear(MAT), dtype=np.float32)
+        past = np.clip(encoded(rolled(light * leather)) - encoded(held * leather), 0, 1)
+        dither = (np.random.default_rng(1).random(light.shape, dtype=np.float32) - 0.5) / 255
+        maps = [(suffix, np.clip(encoded(held) + dither, 0, 1))]
+        if past.max() > 2 / 255:
+            maps.append((f"{suffix}-past", np.where(past > 0, np.clip(past + dither, 0, 1), 0)))
+        for name, colour in maps:
+            mapped = np.dstack((colour, np.ones(light.shape[:2]))).astype(np.float32)
+            save(mapped, os.path.join(tempfile.gettempdir(), "desk-light.png"))
+            subprocess.run(["uv", "run", "--quiet", os.path.join(HERE, "encode.py"), os.path.join(tempfile.gettempdir(), "desk-light.png"), os.path.join(OUT, f"{named}-{name}.avif")], check=True)
+            if args.proofs:
+                save(mapped, os.path.join(args.proofs, f"{named}-{name}.png"))
+        light = maps[0][1]
         floor.visible_camera = False
-        paint.default_value = mat_colour
+        paint.default_value = was_paint
         show(plated, True)
         desk.camera(0, 0, desk.w, desk.h, density)
         rim = np.concatenate((light[0], light[-1], light[:, 0], light[:, -1])).mean(axis=0)
@@ -653,6 +693,8 @@ def main():
         # the camera exposes for the lamp, and the moonlight is left a faint cool fill.
         desk.glow(GLOW)
         window.data.energy *= LAMP_MOON
+        # The leather the objects stand on throws the lamp's light back onto them as it takes it (LEATHER_GREEN).
+        paint.default_value = (mat_colour[0], mat_colour[1] * LEATHER_GREEN, mat_colour[2], mat_colour[3])
         if plates:
             print("LIGHT RIM " + light_map("light"))
             pixels = stage._expose(raw)
