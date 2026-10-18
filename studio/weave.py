@@ -35,16 +35,22 @@ from stage import Stage  # noqa: E402
 OUT = os.path.join(ROOT, "public", "objects")
 WIDTH, HEIGHT = 36.0, 24.0  # the plate the page shows, in em
 MARGIN = 1.5  # the weave runs on past the frame, so no strip ends in it
-UPRIGHT = (2.0, 1.8)  # the upright strips' pitch and width, in em
+# The strips are made at the sizes below, in strip units, and the whole weave is shrunk to SIZE em to the unit.
+SIZE = 0.45
+UPRIGHT = (2.0, 1.8)  # the upright strips' pitch and width, in strip units
 ACROSS = (1.9, 1.45)  # the strips across: pitch and width
-LIFT = 0.08  # how far a strip rises over the strip it crosses, and dips under the next, in em
+LIFT = 0.11  # how far a strip rises over the strip it crosses, and dips under the next
 THICK = 0.03  # how thick a strip is
 PAD = 0.1  # how far past a strip's edge its ribbon runs, for fibres the fraying leaves sticking out
-BAND = 2.2  # how wide a strip's band of the painted atlas is, in em
-PPE = 64  # pixels to the em of the painted atlas
+BAND = 2.2  # how wide a strip's band of the painted atlas is
+PPE = 40  # pixels to the strip unit of the painted atlas
 STRAW = ["#c99f63", "#be9156", "#d4b07a", "#b0834b", "#946537", "#d8b985"]  # the strips' colours, pale to brown
 BOARD = "#0d0a07"  # the board behind the weave
 EXPOSURE = 0.0
+TISSUE_EXPOSURE = 0.3  # the tissue is white paper: shot a little brighter, so it reads white and not grey
+TISSUE = "#f8f6f1"  # the tissue paper laid over the weave, with --tissue
+TISSUE_COVER = 0.5  # how much of the light the tissue catches rather than lets straight through
+TISSUE_STEP = 0.04  # the pitch of the tissue's mesh, in em
 EYE = 60.0  # how high above the weave the lens is, in em
 
 
@@ -79,6 +85,7 @@ class Strip:
         self.wide = width * rng.uniform(0.86, 1.08)
         self.cup = rng.uniform(0.02, 0.05) if upright else rng.uniform(0.0, 0.03)
         self.colour = linear(STRAW[rng.integers(len(STRAW))]) * rng.uniform(0.92, 1.05)
+        self.curl = rng.uniform(-0.015, 0.02)  # its edges, turned up or down as it dried
         self.crossings, self.signs = crossings, signs
 
     def _smooth(self, s, scale, amount, k):
@@ -95,7 +102,7 @@ class Strip:
     def twist(self, s):
         return self._smooth(s, 6.0, 0.025, 3)
 
-    def mesh(self, band_row, atlas_w, atlas_h, step=0.08, across=12):
+    def mesh(self, band_row, atlas_w, atlas_h, step=0.1, across=12):
         """The strip's ribbon: rows of vertices along it, each across it, in page em (y down) and height."""
         s = np.arange(self.start, self.start + self.length + step, step)
         v = np.linspace(-1, 1, across + 1)
@@ -104,8 +111,7 @@ class Strip:
         a = V * half
         c = self.centre(S)
         lift = heights(S, self.crossings, self.signs)
-        # Cupped across, highest along its middle, and turned a little about its length.
-        z = lift + self.cup * (1 - (a / (self.width(S) / 2)) ** 2) + self.twist(S) * a
+        z = lift + self.shape(S, a)
         x, y = (c + a, S) if self.upright else (S, c + a)
         verts = np.column_stack((x.ravel(), -y.ravel(), z.ravel() + 0.4))
         n, m = len(s), across + 1
@@ -117,6 +123,13 @@ class Strip:
         w = 1 - (band_row + (a + BAND / 2) * PPE) / atlas_h
         return verts, faces, np.column_stack((u.ravel(), w.ravel()))
 
+    def shape(self, s, a):
+        """How far the strip's face stands off its line, at s along it and a across it: cupped, highest along its
+        middle, its edges curled, turned a little about its length, and rippled along it where it dried unevenly."""
+        across = np.clip(a / (self.width(s) / 2), -1.2, 1.2)
+        ripple = self._smooth(s, 1.6, 0.012, 5) + self._smooth(s + 3.1 * across, 0.9, 0.005, 6)
+        return self.cup * (1 - across**2) + self.curl * across**4 + self.twist(s) * a + ripple
+
     def paint(self):
         """The strip's face, as its band of the atlas: colour and cover, and height and roughness, rows across it
         from one edge and columns along it."""
@@ -126,11 +139,17 @@ class Strip:
         half = self.width(S) / 2
         inside = half - np.abs(A)  # em in from the nearer edge
         seed = self.seed * 10
-        # A leaf's fibres run its whole length: fine striations, nearly even, with no figure as wood has.
-        # Each striation is dead straight and runs on for em, fading in and out along it.
-        fine = streaks((rows, cols), seed + 1, length=24.0 * PPE, width=0.4)
-        fine = fine * (0.75 + 0.25 * streaks((rows, cols), seed + 8, length=2.0 * PPE, width=0.6))
-        coarse = streaks((rows, cols), seed + 2, length=30.0 * PPE, width=1.2)
+        # A leaf's fibres run its whole length: striations, nearly even, with no figure as wood has. Each is dead
+        # straight and runs on a long way, fading in and out along it. They stand up as ridges a pixel or two of
+        # the photograph apart, so the face is ribbed and not smooth.
+        fine = streaks((rows, cols), seed + 1, length=24.0 * PPE, width=1.0)
+        fine = fine * (0.7 + 0.3 * streaks((rows, cols), seed + 8, length=2.0 * PPE, width=1.0))
+        ribs = 1 - np.abs(np.tanh(streaks((rows, cols), seed + 9, length=20.0 * PPE, width=2.2)))
+        coarse = streaks((rows, cols), seed + 2, length=30.0 * PPE, width=3.0)
+        # Pits and specks where the skin of the leaf flaked, all over it.
+        pits = ramp(1.6, 3.0, -streaks((rows, cols), seed + 10, length=1.2, width=1.2))
+        # Veins: a few fibres darker than the rest, in thin lines, and a few paler ones.
+        veins = ramp(2.2, 3.2, streaks((rows, cols), seed + 11, length=12.0 * PPE, width=0.8))
         # Fraying: the edge eaten back by a few hundredths of an em, more in places, along the grain.
         fray = 0.02 + 0.035 * np.clip(streaks((rows, cols), seed + 3, length=0.3 * PPE, width=0.7), 0, None)
         cover = ramp(-0.006, 0.006, inside - fray)
@@ -160,15 +179,17 @@ class Strip:
         rgb = rgb * (1 - bright[..., None] * 0.35) + linear("#ead9b6")[None, None, :] * bright[..., None] * 0.35
         rgb = rgb * (1 - 0.25 * ramp(0.08, 0.0, inside))[..., None]
         rgb = rgb * (1 - 0.5 * blur(crack, 2))[..., None]
-        height = 0.5 * np.clip(fine, -2.5, 2.5) + 0.4 * coarse - 0.8 * grooves
-        rough = 0.5 - 0.08 * bright + 0.12 * grooves + 0.06 * stain
+        rgb = rgb * (1 - 0.45 * veins[..., None]) + linear("#6b4a2a")[None, None, :] * 0.45 * veins[..., None]
+        rgb = rgb * (1 + 0.1 * (ribs - 0.5))[..., None] * (1 - 0.3 * pits)[..., None]
+        height = 0.45 * np.clip(fine, -2.5, 2.5) + 1.2 * ribs + 0.3 * coarse - 0.8 * grooves - 1.0 * pits
+        rough = 0.66 - 0.06 * bright + 0.1 * grooves + 0.06 * stain + 0.1 * pits
         return np.dstack((rgb, cover)), np.dstack((height, rough, np.zeros_like(rough), np.zeros_like(rough)))
 
 
 def weave():
     """Both sets of strips, the uprights over and under the strips across in turn."""
-    x0, y0 = -MARGIN, -MARGIN
-    w, h = WIDTH + 2 * MARGIN, HEIGHT + 2 * MARGIN
+    x0, y0 = -MARGIN / SIZE, -MARGIN / SIZE
+    w, h = (WIDTH + 2 * MARGIN) / SIZE, (HEIGHT + 2 * MARGIN) / SIZE
     cols = np.arange(x0 - UPRIGHT[0], x0 + w + UPRIGHT[0], UPRIGHT[0]) + UPRIGHT[0] / 2
     rows = np.arange(y0 - ACROSS[0], y0 + h + ACROSS[0], ACROSS[0]) + ACROSS[0] / 2
     strips = []
@@ -181,12 +202,13 @@ def weave():
     return strips
 
 
-def image(name, pixels):
+def image(name, pixels, colour=False):
+    """An 8-bit image of an atlas held as bytes, rows from the top. The colour one is sRGB."""
     rows, cols = pixels.shape[:2]
-    img = bpy.data.images.new(name, cols, rows, alpha=True, float_buffer=True)
-    img.colorspace_settings.name = "Non-Color"
+    img = bpy.data.images.new(name, cols, rows, alpha=True)
+    img.colorspace_settings.name = "sRGB" if colour else "Non-Color"
     img.alpha_mode = "CHANNEL_PACKED"
-    img.pixels.foreach_set(pixels[::-1].astype(np.float32).ravel())
+    img.pixels.foreach_set((pixels[::-1].astype(np.float32) / 255).ravel())
     img.pack()
     return img
 
@@ -210,7 +232,7 @@ def material(colour, data):
     links.new(maps[1].outputs["Color"], split.inputs["Color"])
     bump = nodes.new("ShaderNodeBump")
     bump.inputs["Strength"].default_value = 1.0
-    bump.inputs["Distance"].default_value = 0.004
+    bump.inputs["Distance"].default_value = 0.08 * SIZE
     links.new(split.outputs["Red"], bump.inputs["Height"])
     tangent = nodes.new("ShaderNodeTangent")
     tangent.direction_type = "UV_MAP"
@@ -219,8 +241,8 @@ def material(colour, data):
     links.new(split.outputs["Green"], shader.inputs["Roughness"])
     links.new(bump.outputs["Normal"], shader.inputs["Normal"])
     links.new(tangent.outputs["Tangent"], shader.inputs["Tangent"])
-    shader.inputs["Anisotropic"].default_value = 0.5
-    shader.inputs["Specular IOR Level"].default_value = 0.45
+    shader.inputs["Anisotropic"].default_value = 0.3
+    shader.inputs["Specular IOR Level"].default_value = 0.35
     return mat
 
 
@@ -229,18 +251,22 @@ def lay(stage, proof=None):
     band = int(BAND * PPE)
     atlas_w = math.ceil(max(s.length for s in strips) * PPE) + 1
     atlas_h = band * len(strips)
-    colour = np.zeros((atlas_h, atlas_w, 4), dtype=np.float32)
-    data = np.zeros((atlas_h, atlas_w, 4), dtype=np.float32)
+    # Held as bytes: the atlas of a fine weave is too big to hold as floats. The colour is stored as sRGB, the
+    # height about the middle of the range.
+    colour = np.zeros((atlas_h, atlas_w, 4), dtype=np.uint8)
+    data = np.zeros((atlas_h, atlas_w, 4), dtype=np.uint8)
     meshes = []
     for strip in strips:
         face, finish = strip.paint()
+        face[..., :3] = np.where(face[..., :3] <= 0.0031308, 12.92 * face[..., :3], 1.055 * np.clip(face[..., :3], 0, None) ** (1 / 2.4) - 0.055)
+        finish[..., 0] = 0.5 + finish[..., 0] / 8
         r0 = strip.index * band
-        colour[r0 : r0 + band, : face.shape[1]] = face
-        data[r0 : r0 + band, : finish.shape[1]] = finish
+        colour[r0 : r0 + band, : face.shape[1]] = np.round(np.clip(face, 0, 1) * 255)
+        data[r0 : r0 + band, : finish.shape[1]] = np.round(np.clip(finish, 0, 1) * 255)
         meshes.append(strip.mesh(r0, atlas_w, atlas_h))
     if proof:
         np.save(os.path.join(proof, "weave-atlas.npy"), colour[: band * 4, :1200])
-    mat = material(image("weave-colour", colour), image("weave-data", data))
+    mat = material(image("weave-colour", colour, colour=True), image("weave-data", data))
     del colour, data
 
     verts, faces, uvs, offset = [], [], [], 0
@@ -249,7 +275,7 @@ def lay(stage, proof=None):
         faces.append(f + offset)
         uvs.append(uv)
         offset += len(v)
-    verts, faces, uvs = np.vstack(verts), np.vstack(faces), np.vstack(uvs)
+    verts, faces, uvs = np.vstack(verts) * SIZE, np.vstack(faces), np.vstack(uvs)
     mesh = bpy.data.meshes.new("weave")
     mesh.from_pydata(verts.tolist(), [], faces.tolist())
     loops = np.empty(len(mesh.loops), dtype=np.int32)
@@ -259,7 +285,7 @@ def lay(stage, proof=None):
     mesh.materials.append(mat)
     obj = stage.add("weave", mesh)
     body = obj.modifiers.new("body", "SOLIDIFY")
-    body.thickness = THICK
+    body.thickness = THICK * SIZE
     body.offset = -1
 
     board = bpy.data.meshes.new("board")
@@ -270,6 +296,95 @@ def lay(stage, proof=None):
     paint.node_tree.nodes["Principled BSDF"].inputs["Roughness"].default_value = 0.85
     board.materials.append(paint)
     stage.add("board", board)
+    return strips
+
+
+def widest(a, reach):
+    """The highest of each point's neighbours up to `reach` pixels off along either axis."""
+    for axis in (0, 1):
+        out = a.copy()
+        for k in range(1, reach + 1):
+            out = np.maximum(out, np.roll(a, k, axis=axis))
+            out = np.maximum(out, np.roll(a, -k, axis=axis))
+        a = out
+    return a
+
+
+def top(strips, X, Y):
+    """The height of the weave's top face over each point (strip units, y down), or 0 where only the board is."""
+    out = np.zeros_like(X)
+    for strip in strips:
+        s, across = (Y, X) if strip.upright else (X, Y)
+        a = across - strip.centre(s)
+        half = strip.width(s) / 2
+        z = 0.4 + heights(s, strip.crossings, strip.signs) + strip.shape(s, a)
+        out = np.where(np.abs(a) < half, np.maximum(out, z), out)
+    return out
+
+
+def tissue(stage, strips):
+    """A sheet of tissue paper laid over the weave. It rests on the strips' tops and bridges the gaps between them,
+    crinkled all over in fine creases from being crumpled and smoothed out, and lifting off in a few soft bubbles. It
+    lets most of the light through, scattered, so the weave shows through it, sharp where it touches and soft where
+    it lifts."""
+    x0, y0 = -MARGIN, -MARGIN
+    w, h = WIDTH + 2 * MARGIN, HEIGHT + 2 * MARGIN
+    xs, ys = np.arange(x0, x0 + w + TISSUE_STEP, TISSUE_STEP), np.arange(y0, y0 + h + TISSUE_STEP, TISSUE_STEP)
+    X, Y = np.meshgrid(xs, ys)
+    per = 1 / TISSUE_STEP
+    # Where it rests: the tops of the strips, bridged over the gaps, as a sheet with any stiffness lies.
+    rest = widest(top(strips, X / SIZE, Y / SIZE) * SIZE, round(0.15 * per))
+    rest = blur(rest, 0.15 * per)
+    # Creases: thin ridges along where crumpling folded it, a coarse network and a fine one.
+    coarse = np.exp(-((cloud(X.shape, 51, falloff=1.7) / 0.18) ** 2))
+    fine = np.exp(-((cloud(X.shape, 52, falloff=1.4) / 0.15) ** 2))
+    creases = 0.07 * blur(coarse, 1.0) + 0.025 * blur(fine, 0.7)
+    lifts = 0.22 * ramp(0.6, 2.2, blur(cloud(X.shape, 53, falloff=2.2), 4 * per / 10))
+    Z = rest + 0.012 + creases + lifts
+
+    rows, cols = X.shape
+    index = np.arange(rows * cols).reshape(rows, cols)
+    faces = np.column_stack((index[:-1, :-1].ravel(), index[1:, :-1].ravel(), index[1:, 1:].ravel(), index[:-1, 1:].ravel()))
+    verts = np.column_stack((X.ravel(), -Y.ravel(), Z.ravel()))
+    mesh = bpy.data.meshes.new("tissue")
+    mesh.from_pydata(verts.tolist(), [], faces[:, ::-1].tolist())
+    mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
+
+    mat = bpy.data.materials.new("tissue")
+    mat.use_nodes = True
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    nodes.clear()
+    colour = (*linear(TISSUE), 1)
+    face = nodes.new("ShaderNodeBsdfDiffuse")
+    face.inputs["Color"].default_value = colour
+    through = nodes.new("ShaderNodeBsdfTranslucent")
+    through.inputs["Color"].default_value = colour
+    clear = nodes.new("ShaderNodeBsdfTransparent")
+    sheet = nodes.new("ShaderNodeMixShader")
+    sheet.inputs[0].default_value = 0.2
+    links.new(face.outputs[0], sheet.inputs[1])
+    links.new(through.outputs[0], sheet.inputs[2])
+    # The paper is thicker in clouds and thinner between, and its fibres show as a fine mottle.
+    place = nodes.new("ShaderNodeTexCoord")
+    cloudy = nodes.new("ShaderNodeTexNoise")
+    cloudy.inputs["Scale"].default_value = 0.35
+    cloudy.inputs["Detail"].default_value = 8.0
+    cloudy.inputs["Roughness"].default_value = 0.65
+    links.new(place.outputs["Object"], cloudy.inputs["Vector"])
+    density = nodes.new("ShaderNodeMapRange")
+    density.inputs["From Min"].default_value = 0.3
+    density.inputs["From Max"].default_value = 0.7
+    density.inputs["To Min"].default_value = TISSUE_COVER - 0.12
+    density.inputs["To Max"].default_value = TISSUE_COVER + 0.12
+    links.new(cloudy.outputs["Fac"], density.inputs["Value"])
+    seen = nodes.new("ShaderNodeMixShader")
+    links.new(density.outputs["Result"], seen.inputs[0])
+    links.new(clear.outputs[0], seen.inputs[1])
+    links.new(sheet.outputs[0], seen.inputs[2])
+    out = nodes.new("ShaderNodeOutputMaterial")
+    links.new(seen.outputs[0], out.inputs["Surface"])
+    mesh.materials.append(mat)
+    stage.add("tissue", mesh)
 
 
 def main():
@@ -277,13 +392,18 @@ def main():
     parser.add_argument("--scale", type=float, default=1.0)
     parser.add_argument("--samples", type=int, default=128)
     parser.add_argument("--proof")
+    parser.add_argument("--tissue", action="store_true", help="lay tissue paper over the weave")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
     if args.proof:
         os.makedirs(args.proof, exist_ok=True)
     stage = Stage(OUT, args.proof, scale=args.scale, samples=args.samples)
     stage.clear()
-    lay(stage, args.proof)
-    stage.shoot("weave", (0, 0, WIDTH, HEIGHT), exposure=EXPOSURE, lens=False, mat=False, eye=EYE, level=0.4, sharp=1.6)
+    strips = lay(stage, args.proof)
+    name, exposure = "weave", EXPOSURE
+    if args.tissue:
+        tissue(stage, strips)
+        name, exposure = "weave-tissue", TISSUE_EXPOSURE
+    stage.shoot(name, (0, 0, WIDTH, HEIGHT), exposure=exposure, lens=False, mat=False, eye=EYE, level=0.4 * SIZE, sharp=1.6)
 
 
 if __name__ == "__main__":

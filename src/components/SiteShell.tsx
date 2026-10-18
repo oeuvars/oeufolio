@@ -43,7 +43,7 @@ type Tone = {
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
    * from it, so they are the page's own paper and not a flat colour. */
   paper?: Paper
-  /** What the page is made of when it is one photographed plate, not a tile: the badge's woven palm (studio/weave.py). It
+  /** What the page is made of when it is one photographed plate, not a tile: the badge's woven palm under tissue paper (studio/weave.py --tissue). It
    * is laid from the strip's top left at least as big as the window, so opening the strip uncovers more of the same
    * plate, and it is not paper, so it has none of the paper's grain over it. */
   plate?: string
@@ -153,7 +153,7 @@ const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills ||
 
 const pageTones: Tone[] = [
   // The plate is cut, not torn, and its colours are the weave's middle tone, under the plate before it loads.
-  { band: '#947751', bandInk: '#f4ead8', panel: '#947751', panelInk: '#f4ead8', hangs: true, cut: true, plate: '/objects/weave.avif', tab: '/objects/tab-lacoste.avif' },
+  { band: '#b8ab9c', bandInk: '#2e2418', panel: '#b8ab9c', panelInk: '#2e2418', hangs: true, cut: true, plate: '/objects/weave-tissue.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
