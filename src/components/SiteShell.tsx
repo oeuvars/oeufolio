@@ -43,6 +43,10 @@ type Tone = {
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
    * from it, so they are the page's own paper and not a flat colour. */
   paper?: Paper
+  /** What the page is made of when it is one photographed plate, not a tile: the badge's steel (studio/steel.py). It
+   * is laid from the strip's top left at least as big as the window, so opening the strip uncovers more of the same
+   * plate, and it is metal, so it has none of the paper's grain over it. */
+  plate?: string
   /** What is stuck on the strip's paper tab in place of words: a render from studio/tabs.py. */
   tab: string
 }
@@ -148,7 +152,8 @@ const sheets = (tone: Tone) => !tone.fills && !tone.roll
 const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll || tone.paper)
 
 const pageTones: Tone[] = [
-  { band: '#e3d3c1', bandInk: '#3a281c', panel: '#e3d3c1', panelInk: '#3a281c', hangs: true, tab: '/objects/tab-lacoste.avif' },
+  // The plate is cut, not torn, and its colours are the steel's middle tone, under the plate before it loads.
+  { band: '#566f6b', bandInk: '#eef2f0', panel: '#566f6b', panelInk: '#eef2f0', hangs: true, cut: true, plate: '/objects/steel.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
@@ -411,7 +416,7 @@ export function SiteShell({ children }: SiteShellProps) {
   // A page of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
   // is cut to the strip, its edge torn or cut as the strip's is, and to the tab's outline, so the tab is the same
   // piece of paper as the page, its tile and grain running on unbroken, with no join between them.
-  const sheet = (i: number, paper?: Paper): CSSProperties => {
+  const sheet = (i: number, { paper, plate }: Tone): CSSProperties => {
     const shape = tabShape(i + 1)
     // The outline with its foot, so the tab and the page overlap over the band and no hairline opens between them.
     const { reach, path } = tabOutline(shape)
@@ -422,7 +427,8 @@ export function SiteShell({ children }: SiteShellProps) {
     const out = reachesOver(i) ? TEAR_WIDTH : 0
     return {
       right: -shape.protrude,
-      ...grained(paper),
+      // The plate is 36 by 24 em (studio/steel.py), 3 by 2.
+      ...(plate ? { backgroundImage: `url(${plate})`, backgroundSize: 'max(100vw, 150vh) auto', backgroundPosition: '0 0' } : grained(paper)),
       maskImage: `linear-gradient(#000, #000), var(--torn-core, linear-gradient(#000, #000)), url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       // The page runs a pixel into its edge's strip, so no hairline opens where they meet.
       maskSize: `calc(100% - ${shape.protrude - out + TEAR_WIDTH - 1}px) 100%, ${TEAR_WIDTH}px ${TEAR_LENGTH}px, ${w}px ${h}px`,
@@ -533,7 +539,7 @@ export function SiteShell({ children }: SiteShellProps) {
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
-                style={sheets(tones[i]) ? sheet(i, tones[i].paper) : undefined}
+                style={sheets(tones[i]) ? sheet(i, tones[i]) : undefined}
               >
                 {tones[i].surface && (
                   <div
