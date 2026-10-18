@@ -2,9 +2,10 @@ import '@fontsource-variable/geist'
 import '@fontsource-variable/geist-mono'
 
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 
 import { cv, profile } from '../content'
+import Waves from './bits/Waves'
 import { Activity, useActivity } from './resume/Activity'
 import { CommandPalette, PaletteKey } from './resume/CommandPalette'
 import { TechIcon } from './resume/TechIcon'
@@ -434,30 +435,16 @@ function Index() {
   )
 }
 
-/** The dot grid closing the page, which brightens in a circle around the pointer. */
-function Field() {
-  const glow = useRef<HTMLDivElement>(null)
-  const dots: CSSProperties = { backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '16px 16px', backgroundPosition: 'center' }
-
+/** The field closing the page: React Bits' Waves, fine zinc lines that sway and part around the pointer, fading out at
+ * the edges. */
+function Field({ dark }: { dark: boolean }) {
   return (
-    <div
-      className="relative -mx-4 mt-4 h-[300px] w-[calc(100%+32px)] grow print:hidden"
-      onMouseMove={(event) => {
-        const box = event.currentTarget.getBoundingClientRect()
-        const mask = `radial-gradient(250px circle at ${event.clientX - box.left}px ${event.clientY - box.top}px, black, transparent)`
-        if (glow.current) Object.assign(glow.current.style, { maskImage: mask, webkitMaskImage: mask, opacity: '1' })
-      }}
-      onMouseLeave={() => glow.current && (glow.current.style.opacity = '0')}
-    >
+    <div className="relative -mx-4 mt-4 h-[300px] w-[calc(100%+32px)] grow print:hidden">
       <div aria-hidden="true" className={`${RULE} top-0 right-[-100vw] left-[-100vw] z-10 border-t`} style={DASH_X} />
       <div aria-hidden="true" className={`${KNOT} top-0 left-0 -translate-x-1/2 -translate-y-1/2`} />
       <div aria-hidden="true" className={`${KNOT} top-0 right-0 translate-x-1/2 -translate-y-1/2`} />
-      <div aria-hidden="true" className="absolute inset-0 h-full w-full overflow-hidden">
-        <div
-          className="pointer-events-none absolute inset-0 h-full w-full text-zinc-400 opacity-20 transition-opacity duration-500 dark:text-zinc-500 dark:opacity-[0.1]"
-          style={{ ...dots, maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)' }}
-        />
-        <div ref={glow} className="pointer-events-none absolute inset-0 h-full w-full text-zinc-500 opacity-0 transition-opacity duration-700 ease-in-out dark:text-zinc-400" style={dots} />
+      <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
+        <Waves lineColor={dark ? '#52525b' : '#a1a1aa'} spacing={9} amplitude={26} speed={0.6} fade={0.3} opacity={dark ? 0.7 : 0.8} clickRipple={false} />
       </div>
     </div>
   )
@@ -751,27 +738,14 @@ export function ResumePage() {
           </div>
         </Section>
 
-        <div className="relative mt-2 flex flex-col items-center justify-center py-6 print:hidden">
-          <figure className="flex w-full max-w-[480px] flex-col items-center">
-            <blockquote className="mb-6 text-center text-[16px] leading-relaxed font-medium text-zinc-500 italic dark:text-zinc-400">
-              "A ship in harbor is safe,
-              <br className="hidden md:block" /> but that is not what ships are built for."
-            </blockquote>
-            <figcaption className="flex items-center gap-3 text-[10px] font-medium tracking-[0.2em] text-zinc-400 uppercase dark:text-zinc-600">
-              <div className="h-[1px] w-4 bg-zinc-200 dark:bg-zinc-800" />
-              John A. Shedd
-              <div className="h-[1px] w-4 bg-zinc-200 dark:bg-zinc-800" />
-            </figcaption>
-          </figure>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-2 pb-6 print:hidden">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2 pb-8 print:hidden">
           <Link to="/" className={STAMP}>
             {glyph('back', 'size-3')}
             Back to the site
           </Link>
         </div>
 
-        <Field />
+        <Field dark={dark} />
       </main>
     </div>
   )
