@@ -14,7 +14,8 @@ vinyl and the card are the photograph's and not a likeness of them. Three things
   laid on, and on a white one it reads as the photograph does.
 - The portrait is replaced inside the print's own outline, which sits a little askew in its printed box. It is
   a passport photograph: a white border of photo paper round the picture, and the paper a little bigger than
-  the print it replaces. It is an old one, faded and warm, and scratched and specked from being carried about.
+  the print it replaces. It is an old one, faded and warm, scratched (from a scan of real scratches), creased
+  across a corner, its edge frayed and nicked, a corner torn away and a split torn into one side.
 - The words in REWRITTEN are rubbed out to bare card and put back in the reference's own letters, lifted
   and set in a new order. That goes for the type, the dot-matrix stamp and the handwriting. A letter the
   reference never used is made from ones it did: a G from a C, a 5 from an E and a 3, stamp figures from
@@ -28,6 +29,7 @@ Writes public/objects/badge.avif at twice the reference's size. studio/badge_mod
 Blender model of the same badge; the page does not use it.
 """
 
+import math
 import os
 
 import numpy as np
@@ -174,65 +176,93 @@ def portrait(card, X, Y):
         u -= (fx * j11 - fy * j01) / det
         v -= (fy * j00 - fx * j10) / det
     w, h = np.linalg.norm(e), np.linalg.norm(f)
-    # How far in from the old print's outline, in output pixels: below 0 outside it.
-    edge = np.minimum(np.minimum(u, 1 - u) * w, np.minimum(v, 1 - v) * h)
-    # The photo paper, and where it lies on the card a faint shadow round it.
-    sheet = edge + GROW * UP
-    cover = np.clip(sheet + 0.8, 0, 1)
-    card = card * (1 - 0.07 * np.exp(np.minimum(sheet, 0) / (1.5 * UP)) * (sheet < 0))[..., None]
-    # The picture, inside the white border.
-    inset = (BORDER - GROW) * UP
-    picture = np.clip(edge - inset + 0.8, 0, 1)
-    pw, ph = w - 2 * inset, h - 2 * inset
+    # The photo paper's own frame, in output pixels from its top left: it is the old print grown by GROW all round.
+    grow = GROW * UP
+    lx, ly = u * w + grow, v * h + grow
+    pw, ph = w + 2 * grow, h + 2 * grow
+    shape = (math.ceil(ph) + 1, math.ceil(pw) + 1)
+    rng = np.random.default_rng(21)
 
+    def field(sigma):
+        """Smooth noise of unit deviation in the paper's frame, sigma in output pixels, read at every pixel."""
+        n = blurred(rng.standard_normal(shape), sigma)
+        return ndimage.map_coordinates(n / n.std(), [ly, lx], order=1, mode="nearest")
+
+    def scan(name, scale, at, turn=0.0):
+        """An ambientCG scan laid over the paper, `scale` of its pixels to one of the paper's, from `at`, the scan
+        turned by `turn` degrees first."""
+        path = os.path.join(HERE, "desk", "assets", name, f"{name}_1K-JPG_Opacity.jpg")
+        img = Image.open(path).convert("L").rotate(turn, resample=Image.Resampling.BICUBIC)
+        box = (at[0], at[1], at[0] + round(shape[1] * scale), at[1] + round(shape[0] * scale))
+        n = np.asarray(img.crop(box).resize(shape[::-1], Image.Resampling.BOX), dtype=np.float64) / 255
+        return ndimage.map_coordinates(n, [ly, lx], order=1, mode="nearest")
+
+    # The paper's edge: cut straight once, now frayed and nicked, one corner torn away and one side split.
+    sheet = np.minimum(np.minimum(lx, pw - lx), np.minimum(ly, ph - ly))
+    sheet = sheet + 0.3 * UP * field(0.5 * UP) + 0.35 * UP * field(4 * UP)
+    torn = np.full(lx.shape, np.inf)
+    for side, at, r in ((0, 0.3, 1.6), (1, 0.7, 1.1), (2, 0.55, 2.0), (3, 0.2, 1.3), (1, 0.15, 0.9), (2, 0.85, 1.2)):
+        cx, cy = ((at * pw, 0), (pw, at * ph), (at * pw, ph), (0, at * ph))[side]
+        torn = np.minimum(torn, np.hypot(lx - cx, ly - cy) - r * UP)
+    # The bottom left corner, torn off across.
+    c1, c2 = 24 * UP, 15 * UP
+    across = (lx * c1 - (ly - (ph - c1)) * c2) / math.hypot(c1, c2)
+    torn = np.minimum(torn, across + 0.9 * UP * field(0.8 * UP) + 1.2 * UP * field(4 * UP))
+    # A split in from the right edge, a third of the way down, closing as it goes in.
+    sx, sy, ex, ey = pw, 0.36 * ph, pw - 15 * UP, 0.36 * ph + 4 * UP
+    t = np.clip(((lx - sx) * (ex - sx) + (ly - sy) * (ey - sy)) / ((ex - sx) ** 2 + (ey - sy) ** 2), 0, 1)
+    split = np.hypot(lx - sx - t * (ex - sx), ly - sy - t * (ey - sy)) - 1.4 * UP * (1 - t) ** 1.5 - 0.15 * UP
+    torn = np.minimum(torn, split + 0.25 * UP * field(0.6 * UP))
+    sheet = np.minimum(sheet, torn)
+    cover = np.clip(sheet + 0.8, 0, 1)
+    # Where the paper tore away, the card shows: bare, with nothing of the old print left on it.
+    old = np.minimum(np.minimum(lx, pw - lx), np.minimum(ly, ph - ly)) - grow
+    under = np.clip(old + 2 * UP, 0, 1)
+    card = card * (1 - under[..., None]) + paper(card, X, Y) * under[..., None]
+    # Its shadow on the card, deeper where a torn edge has lifted off it.
+    lifted = 1 + 1.5 * np.exp(-np.maximum(torn, 0) / (3 * UP)) * (torn < sheet + 1.0)
+    card = card * (1 - 0.1 * lifted * np.exp(np.minimum(sheet, 0) / (1.8 * UP)) * (sheet < 0))[..., None]
+
+    # The picture, inside the white border.
+    border = BORDER * UP
+    picture = np.clip(np.minimum(np.minimum(lx, pw - lx), np.minimum(ly, ph - ly)) - border + 0.8, 0, 1)
     face = np.asarray(Image.open(os.path.join(HERE, "assets", "face.png")).convert("RGB"), dtype=np.float64) / 255
     fh, fw = face.shape[:2]
     face = face[round(fh * 0.13) : round(fh * 0.88), round(fw * 0.2) : round(fw * 0.8)]
-    side = (round(ph), round(pw))
+    side = (round(ph - 2 * border), round(pw - 2 * border))
     face = np.dstack([np.asarray(Image.fromarray((face[..., c] * 255).astype(np.uint8)).resize(side[::-1], Image.Resampling.LANCZOS), dtype=np.float64) / 255 for c in range(3)])
     face = blurred(face, 0.3 * UP)
     # An old print: its contrast and colour faded, its blacks lifted, and the whole gone a little warm.
     grey = face.mean(axis=-1, keepdims=True)
     face = (grey + (face - grey) * 0.8) * 0.84 + 0.07
     face *= np.array([1.04, 1.0, 0.93])
-    iy = np.clip(((v * h - inset) / ph * side[0]).astype(int), 0, side[0] - 1)
-    ix = np.clip(((u * w - inset) / pw * side[1]).astype(int), 0, side[1] - 1)
+    iy = np.clip((ly - border).astype(int), 0, side[0] - 1)
+    ix = np.clip((lx - border).astype(int), 0, side[1] - 1)
+    # Where the paper tore, the picture came away with it a little way back from the tear, to the white core.
+    core = np.clip((1.8 * UP - torn - 0.3 * UP * field(1.2 * UP)) / (0.5 * UP), 0, 1)
+    picture = picture * (1 - core)
     photo = PHOTO_PAPER * (1 - picture[..., None]) + face[iy, ix] * picture[..., None]
+    photo = photo * (1 - core[..., None] * 0.5) + np.array([0.975, 0.97, 0.96]) * core[..., None] * 0.5
 
-    # Wear, drawn in the paper's own frame so it lies on the print however the print is turned.
-    wear = scuffs((round(h + 2 * GROW * UP), round(w + 2 * GROW * UP)))
-    wy = np.clip((v * h + GROW * UP).astype(int), 0, wear.shape[0] - 1)
-    wx = np.clip((u * w + GROW * UP).astype(int), 0, wear.shape[1] - 1)
-    scratch = wear[wy, wx]
-    # A scratch takes the emulsion off the picture, down to the paper's white; on the bare border it only dulls it.
-    photo = photo * (1 - (scratch * picture)[..., None]) + PHOTO_PAPER * (scratch * picture * 0.85)[..., None]
-    photo = photo * (1 - 0.18 * scratch * (1 - picture))[..., None]
+    # A crease across the top right corner: a fold's light and shade, and the picture cracked along it.
+    fx0, fy0, fx1, fy1 = 0.62 * pw, 0.0, pw, 0.3 * ph
+    fold = ((lx - fx0) * (fy1 - fy0) - (ly - fy0) * (fx1 - fx0)) / math.hypot(fx1 - fx0, fy1 - fy0)
+    fold = fold + 1.2 * UP * field(10 * UP)
+    photo = photo * (1 - 0.1 * np.tanh(fold / (1.2 * UP)) * np.exp(-np.abs(fold) / (3 * UP)))[..., None]
+    crack = np.clip(1 - np.abs(fold) / (0.4 * UP), 0, 1) * np.clip(field(1.0 * UP) + 0.3, 0, 1)
+    photo = photo * (1 - (crack * picture * 0.5)[..., None]) + PHOTO_PAPER * (crack * picture * 0.5)[..., None]
+    photo = photo * (1 - 0.12 * crack * (1 - picture))[..., None]
+
+    # Scratches, from a scan of real ones, and grime worked into the paper along its edges.
+    # The scan's long scratches all run one way, so it is turned to lay them on a slant, and its faintest web is
+    # left out: what is left is the few that went through the emulsion.
+    scratch = np.clip(scan("Scratches003", 1.3, (330, 300), turn=28) * 1.6, 0, 1) ** 2.0
+    photo = photo * (1 - (scratch * picture * 0.45)[..., None]) + PHOTO_PAPER * (scratch * picture * 0.45)[..., None]
+    photo = photo * (1 - 0.2 * scratch * (1 - picture))[..., None]
+    grime = scan("SurfaceImperfections003", 1.2, (300, 200))
+    near = np.exp(-np.maximum(sheet, 0) / (3 * UP)) * np.clip(grime * 2.2, 0, 1)
+    photo = photo * (1 - near[..., None] * np.array([0.16, 0.2, 0.3]))
     return card * (1 - cover[..., None]) + photo * cover[..., None]
-
-
-def scuffs(shape):
-    """Scratches and specks on an old print, from 0 to 1, rows by columns of output pixels: a few dozen hairlines,
-    nearly all short and faint, a few long, in every direction, and white specks where dust took the emulsion off."""
-    rows, cols = shape
-    big = Image.new("F", (cols * 3, rows * 3), 0.0)
-    draw = ImageDraw.Draw(big)
-    rng = np.random.default_rng(11)
-    for _ in range(60):
-        x, y = rng.uniform(0, cols), rng.uniform(0, rows)
-        turn = rng.uniform(0, np.pi) if rng.random() < 0.6 else rng.normal(1.2, 0.25)
-        length = np.exp(rng.uniform(np.log(4 * UP), np.log(70 * UP)))
-        bend = rng.normal(0, 0.04) * length
-        strength = 0.08 + 0.4 * rng.random() ** 3
-        t = np.linspace(-0.5, 0.5, 12)
-        px = x + t * length * np.cos(turn) - bend * (4 * t * t - 1) * np.sin(turn)
-        py = y + t * length * np.sin(turn) + bend * (4 * t * t - 1) * np.cos(turn)
-        draw.line([(a * 3, b * 3) for a, b in zip(px, py)], fill=float(strength), width=max(1, round(rng.uniform(0.6, 1.6) * UP)))
-    for _ in range(25):
-        x, y, r = rng.uniform(0, cols) * 3, rng.uniform(0, rows) * 3, rng.uniform(0.25, 0.6) * UP * 3
-        draw.ellipse((x - r, y - r, x + r, y + r), fill=float(0.2 + 0.35 * rng.random()))
-    small = big.resize((cols, rows), Image.Resampling.BOX)
-    # The marks are in the emulsion, under the print's own softness.
-    return np.clip(blurred(np.asarray(small, dtype=np.float64), 0.2 * UP), 0, 1)
 
 
 def pen(shape, strokes):
