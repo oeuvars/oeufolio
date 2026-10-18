@@ -14,6 +14,123 @@
 /* The résumé's dark theme, switched by a class on the page rather than by the system's setting. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* The résumé's PDF button, after the reference's: on hover its face flips up on its bottom edge like a lid, showing
+   the link to the file beneath it. */
+.resume-flip {
+  perspective: 300px;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  background: #a9adb6;
+  border-radius: 4px;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+  position: relative;
+  box-shadow: 0 -1px 2px #fff, inset 0 1px 2px #0003, inset 0 0.2rem 0.6rem #0000001a;
+}
+.dark .resume-flip {
+  background: #3f3f46;
+  box-shadow: 0 -1px 2px #ffffff1a, inset 0 1px 2px #0009, inset 0 0.2rem 0.6rem #00000080;
+}
+.resume-flip,
+.resume-flip div {
+  transition-duration: 0.6s;
+  transition-timing-function: cubic-bezier(0.2, 0.7, 0.1, 1.1);
+}
+.resume-flip-link {
+  opacity: 0;
+  z-index: 5;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+  inset: 0;
+}
+.resume-flip-cover {
+  transform-origin: bottom;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+  inset: 0;
+}
+.resume-flip-inside,
+.resume-flip-outside,
+.resume-flip-spine,
+.resume-flip-shadow {
+  width: 100%;
+  position: absolute;
+}
+.resume-flip-inside,
+.resume-flip-outside {
+  white-space: nowrap;
+  border-radius: 4px;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  display: flex;
+}
+.resume-flip-inside {
+  text-shadow: 0 -1px 2px #0006;
+  background-color: #18181b;
+  background-image: linear-gradient(#0000 0%, #0000004d 100%);
+}
+.resume-flip-spine {
+  transform-origin: top;
+  background: #27272a;
+  height: 0.15rem;
+  top: 0.15rem;
+  left: 0;
+  transform: rotateX(90deg);
+}
+.resume-flip-outside {
+  transform: translateZ(0.15rem);
+}
+.resume-flip-shadow {
+  transform-origin: top;
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(#0009 0%, #0000 100%);
+  border-radius: 0.3rem;
+  height: 2.2rem;
+  top: 100%;
+  left: 0;
+  transform: rotateX(90deg);
+}
+.resume-flip:is(:hover, :focus-within) {
+  background: #ebeff2;
+}
+.dark .resume-flip:is(:hover, :focus-within) {
+  background: #52525b;
+}
+.resume-flip:is(:hover, :focus-within) .resume-flip-link {
+  opacity: 1;
+}
+.resume-flip:is(:hover, :focus-within) .resume-flip-cover {
+  transform: rotateX(-120deg);
+}
+.resume-flip:is(:hover, :focus-within) .resume-flip-inside {
+  background-color: #27272a;
+}
+.resume-flip:is(:hover, :focus-within) .resume-flip-spine {
+  background-color: #3f3f46;
+}
+.resume-flip:is(:hover, :focus-within) .resume-flip-shadow {
+  opacity: 1;
+  transform: rotateX(45deg) scale(0.95);
+}
+@media (prefers-reduced-motion: reduce) {
+  .resume-flip,
+  .resume-flip div {
+    transition-duration: 0s !important;
+  }
+}
+
 /* The résumé's highlights, running sideways on a loop of two copies. */
 @keyframes highlights-marquee {
   to {

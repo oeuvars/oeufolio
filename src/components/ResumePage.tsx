@@ -159,7 +159,7 @@ function Crossing({ edge }: { edge: 'top' | 'bottom' }) {
 }
 
 /** A section: rules above and below its name, its content, and a rule closing it. */
-function Section({ id, title, aside, children, className = '' }: { id: string; title: string; aside?: ReactNode; children: ReactNode; className?: string }) {
+function Section({ id, title, aside, after, children, className = '' }: { id: string; title: string; aside?: ReactNode; after?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={`relative z-10 mt-6 flex scroll-mt-24 flex-col ${className}`}>
       <Crossing edge="top" />
@@ -174,35 +174,103 @@ function Section({ id, title, aside, children, className = '' }: { id: string; t
       </div>
       {children}
       <Crossing edge="bottom" />
+      {after}
     </section>
   )
 }
 
-/** A button as the reference draws one: a face, a highlight, a shadow and a sheen stacked under the label. */
-function Button({ href, dark = false, children }: { href: string; dark?: boolean; children: ReactNode }) {
+/** A button's face as the reference draws one: a fill, a highlight, a shadow and a sheen stacked under the label. */
+function Face({ dark = false }: { dark?: boolean }) {
+  return dark ? (
+    <span className="absolute inset-0 overflow-hidden rounded-[4px] border border-black/10 bg-[#18181b] transition-colors duration-200 group-hover:bg-[#27272a] group-active:duration-[50ms] dark:border-white/10 dark:bg-white dark:group-hover:bg-neutral-100">
+      <span className="absolute inset-0 opacity-[0.12] transition duration-200 group-active:opacity-0 group-active:duration-[50ms]" style={GRADIENT_TOP} />
+      <span className="absolute inset-0 opacity-[0.32] transition duration-200 group-active:duration-[50ms]" style={GRADIENT_FOOT} />
+      <span className="absolute inset-0 rounded-[4px] p-px opacity-[0.24]" style={GRADIENT_EDGE} />
+    </span>
+  ) : (
+    <span className="absolute inset-0 overflow-hidden rounded-[4px] border border-black/5 bg-white/90 transition-colors duration-200 group-hover:border-black/10 group-active:duration-[50ms] dark:border-white/5 dark:bg-[#0c0c0e] dark:group-hover:border-white/10 dark:group-hover:bg-[#121214]">
+      <span className="absolute inset-0 rounded-[4px] bg-black/[0.02] transition duration-200 group-hover:bg-transparent group-active:bg-black/[0.04] group-active:duration-[50ms] dark:bg-transparent dark:group-hover:bg-white/[0.02] dark:group-active:bg-white/[0.04]" />
+      <span className="absolute inset-0 opacity-[0.16] transition duration-200 group-active:opacity-0 group-active:duration-[50ms] dark:opacity-[0.04]" style={GRADIENT_TOP} />
+      <span className="absolute inset-0 opacity-[0.04] transition duration-200 group-active:duration-[50ms] dark:opacity-[0.1]" style={GRADIENT_FOOT} />
+      <span className="absolute inset-0 opacity-[0.4] transition duration-200 group-active:opacity-0 group-active:duration-[50ms] dark:opacity-[0.04]" style={GRADIENT_SHEEN} />
+    </span>
+  )
+}
+
+const FACE_TEXT = 'rounded-[4px] px-3 py-1.5 text-center text-[12px] font-medium tracking-tight [backdrop-filter:blur(6px)]'
+
+/** The reference's light button: a link on the light face, its label brightening on hover. */
+function Button({ href, children }: { href: string; children: ReactNode }) {
   return (
     <a
       href={href}
-      className={`group relative block rounded-[4px] px-3 py-1.5 text-center text-[12px] font-medium tracking-tight transition-[transform] duration-200 [backdrop-filter:blur(6px)] active:scale-[0.99] active:duration-[50ms] ${FOCUS} ${dark ? 'text-neutral-50 dark:text-neutral-950' : 'text-neutral-900 dark:text-neutral-300'}`}
+      className={`group relative block ${FACE_TEXT} text-neutral-900 transition-[transform] duration-200 active:scale-[0.99] active:duration-[50ms] dark:text-neutral-300 ${FOCUS}`}
     >
-      {dark ? (
-        <span className="absolute inset-0 overflow-hidden rounded-[4px] border border-black/10 bg-[#18181b] transition-colors duration-200 group-hover:bg-[#27272a] group-active:duration-[50ms] dark:border-white/10 dark:bg-white dark:group-hover:bg-neutral-100">
-          <span className="absolute inset-0 opacity-[0.12] transition duration-200 group-active:opacity-0 group-active:duration-[50ms]" style={GRADIENT_TOP} />
-          <span className="absolute inset-0 opacity-[0.32] transition duration-200 group-active:duration-[50ms]" style={GRADIENT_FOOT} />
-          <span className="absolute inset-0 rounded-[4px] p-px opacity-[0.24]" style={GRADIENT_EDGE} />
-        </span>
-      ) : (
-        <span className="absolute inset-0 overflow-hidden rounded-[4px] border border-black/5 bg-white/90 transition-colors duration-200 group-hover:border-black/10 group-active:duration-[50ms] dark:border-white/5 dark:bg-[#0c0c0e] dark:group-hover:border-white/10 dark:group-hover:bg-[#121214]">
-          <span className="absolute inset-0 rounded-[4px] bg-black/[0.02] transition duration-200 group-hover:bg-transparent group-active:bg-black/[0.04] group-active:duration-[50ms] dark:bg-transparent dark:group-hover:bg-white/[0.02] dark:group-active:bg-white/[0.04]" />
-          <span className="absolute inset-0 opacity-[0.16] transition duration-200 group-active:opacity-0 group-active:duration-[50ms] dark:opacity-[0.04]" style={GRADIENT_TOP} />
-          <span className="absolute inset-0 opacity-[0.04] transition duration-200 group-active:duration-[50ms] dark:opacity-[0.1]" style={GRADIENT_FOOT} />
-          <span className="absolute inset-0 opacity-[0.4] transition duration-200 group-active:opacity-0 group-active:duration-[50ms] dark:opacity-[0.04]" style={GRADIENT_SHEEN} />
-        </span>
-      )}
+      <Face />
       <span className="relative">
-        <span className={`flex items-center gap-1.5 ${dark ? '' : 'opacity-70 transition-opacity duration-300 group-hover:opacity-100'}`}>{children}</span>
+        <span className="flex items-center gap-1.5 opacity-70 transition-opacity duration-300 group-hover:opacity-100">{children}</span>
       </span>
     </a>
+  )
+}
+
+/**
+ * The reference's lid button: a dark face that flips up on its bottom edge when hovered or focused, showing the real
+ * link under it. The flip itself is in styles.css (.resume-flip).
+ */
+function FlipButton({ href, label, children, back }: { href: string; label: string; children: ReactNode; back: ReactNode }) {
+  const front = (
+    <span className="relative">
+      <span className="flex items-center gap-1.5 whitespace-nowrap">{children}</span>
+    </span>
+  )
+  return (
+    <div className="resume-flip">
+      <div aria-hidden="true" className={`group pointer-events-none relative block opacity-0 ${FACE_TEXT} text-neutral-50 dark:text-neutral-950`}>
+        <Face dark />
+        {front}
+      </div>
+      <div className="resume-flip-link">
+        <a
+          href={href}
+          aria-label={label}
+          className={`inline-flex h-full w-full items-center justify-center gap-1.5 rounded-[4px] border border-white/10 bg-zinc-900 px-3 py-1.5 text-[12px] font-semibold tracking-wide whitespace-nowrap text-white shadow-sm transition-colors hover:bg-black dark:border-black/10 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 ${FOCUS}`}
+        >
+          {back}
+        </a>
+      </div>
+      <div aria-hidden="true" className="resume-flip-cover">
+        <div className="resume-flip-inside">
+          <div className="flex items-center gap-1.5 text-[12px] font-semibold whitespace-nowrap text-white">{back}</div>
+        </div>
+        <div className="resume-flip-spine" />
+        <div className="resume-flip-outside">
+          <div className={`group pointer-events-none relative flex h-full w-full items-center justify-center whitespace-nowrap ${FACE_TEXT} text-neutral-50 dark:text-neutral-950`}>
+            <Face dark />
+            {front}
+          </div>
+        </div>
+      </div>
+      <div aria-hidden="true" className="resume-flip-shadow" />
+    </div>
+  )
+}
+
+/** The reference's View All button, opening the site's page with more of a section. */
+function ViewAll({ to, overlap = false }: { to: string; overlap?: boolean }) {
+  const link = (
+    <Link to={to} className={`group relative block ${FOCUS}`}>
+      <div className="pointer-events-none absolute -inset-[5px] rounded-[11px] border border-black/5 transition-colors duration-300 group-hover:border-black/10 dark:border-white/5 dark:group-hover:border-white/10" />
+      <div className="relative flex items-center gap-1.5 rounded-[6px] border border-black/5 bg-zinc-50 px-4 py-2 text-[13px] font-medium text-zinc-600 shadow-sm shadow-black/20 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/5 dark:bg-[#09090b] dark:text-zinc-400 dark:shadow-lg dark:shadow-black/80 dark:hover:bg-[#121214] dark:hover:text-zinc-100">
+        View All
+        {glyph('out', 'size-3.5 text-zinc-500 transition-colors group-hover:text-zinc-900 dark:group-hover:text-zinc-300')}
+      </div>
+    </Link>
+  )
+  return overlap ? (
+    <div className="relative z-20 -mt-[19px] flex justify-center pb-0 print:hidden">{link}</div>
+  ) : (
+    <div className="relative -mx-4 flex cursor-pointer justify-center rounded-b-lg px-4 py-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/20 print:hidden">{link}</div>
   )
 }
 
@@ -214,7 +282,7 @@ function Role({ role }: { role: (typeof cv.roles)[number] }) {
 
   return (
     <div className="group/role relative">
-      <div aria-hidden="true" className={`${RULE} right-[-16px] bottom-0 left-[-16px] z-10 border-b group-last/role:hidden`} style={DASH_X} />
+      <div aria-hidden="true" className={`${RULE} right-[-16px] bottom-0 left-[-16px] z-10 border-b`} style={DASH_X} />
       <button
         type="button"
         aria-expanded={open}
@@ -578,10 +646,19 @@ export function ResumePage() {
         </ul>
 
         <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
-          <Button href={profile.resume.href} dark>
+          <FlipButton
+            href={profile.resume.href}
+            label="Download the PDF"
+            back={
+              <>
+                {glyph('Résumé')}
+                <span>resume.pdf</span>
+              </>
+            }
+          >
             {glyph('download')}
             <span className="whitespace-nowrap">Download the PDF</span>
-          </Button>
+          </FlipButton>
           <Button href={`mailto:${profile.email}`}>
             {glyph('mail')}
             Send an email
@@ -610,10 +687,11 @@ export function ResumePage() {
               <Role key={role.company} role={role} />
             ))}
           </div>
+          <ViewAll to="/work" />
         </Section>
 
-        <Section id="projects" title="Projects">
-          <div className="relative px-4 pt-6 pb-6">
+        <Section id="projects" title="Projects" after={<ViewAll to="/work" overlap />}>
+          <div className="relative px-4 pt-6 pb-12">
             <div aria-hidden="true" className="pointer-events-none absolute top-0 bottom-6 left-1/2 hidden w-0 -translate-x-1/2 border-r border-black/30 md:block dark:border-white/[0.15]" style={DASH_Y} />
             <div className="relative z-10 flex w-full flex-col">
               {[PROJECTS.slice(0, 2), PROJECTS.slice(2)].map((row, r) => (
@@ -717,7 +795,7 @@ export function ResumePage() {
         </Section>
 
         <Section id="likes" title="Likes & Music" className="print:hidden">
-          <div className="relative flex flex-col gap-5 pt-6 pb-6">
+          <div className="relative flex flex-col gap-5 pt-6 pb-2">
             <div className="group relative">
               <div className={RING} />
               <div className={CARD}>
@@ -770,16 +848,20 @@ export function ResumePage() {
               </div>
             </div>
           </div>
+          <ViewAll to="/extras" />
         </Section>
 
         <Section id="highlights" title="Highlights" className="print:hidden">
-          <div className="relative mt-4 mb-6 overflow-hidden py-2">
+          <div className="relative mt-4 overflow-hidden py-2">
             <div aria-hidden="true" className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-5 bg-linear-to-r from-white/70 to-transparent dark:from-black/70" />
             <div aria-hidden="true" className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-5 bg-linear-to-l from-white/70 to-transparent dark:from-black/70" />
             <div className="flex w-max animate-[highlights-marquee_28s_linear_infinite] items-start gap-4 px-1 hover:[animation-play-state:paused] motion-reduce:animate-none">
               {HIGHLIGHTS.map((page) => highlight(page, false))}
               {HIGHLIGHTS.map((page) => highlight(page, true))}
             </div>
+          </div>
+          <div className="mt-2">
+            <ViewAll to="/" />
           </div>
         </Section>
 
