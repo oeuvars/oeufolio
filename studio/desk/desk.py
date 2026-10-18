@@ -28,7 +28,7 @@ import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
-from objects import card, catlamp, donutlamp, flutelamp, ilolamp, lustrelamp, mat, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
+from objects import card, catlamp, donutlamp, flutelamp, ilolamp, lustrelamp, mat, mushroomlamp, name, pick, proraso, razor, record, recorder, ticket, wallet  # noqa: E402
 from paint import blur, linear  # noqa: E402
 from stage import GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
 
@@ -56,6 +56,7 @@ BUILDERS = {
     **ilolamp.SHOTS,
     **flutelamp.SHOTS,
     **lustrelamp.SHOTS,
+    **mushroomlamp.SHOTS,
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
@@ -77,6 +78,7 @@ PROPS = {
     "ilolamp": {"box": (ilolamp.W, ilolamp.H), "shots": {"ilolamp": (0, 0, 0)}},
     "flutelamp": {"box": (flutelamp.W, flutelamp.H), "shots": {"flutelamp": (0, 0, 0)}},
     "lustrelamp": {"box": (lustrelamp.W, lustrelamp.H), "shots": {"lustrelamp": (0, 0, 0)}},
+    "mushroomlamp": {"box": (mushroomlamp.W, mushroomlamp.H), "k": 0.9, "shots": {"mushroomlamp": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
@@ -92,12 +94,12 @@ STAND_INS = {"reel": ("reel",)}
 # straight over it, at the height the plate's camera is held: the plate's camera, off to one side of it, would draw
 # the tall round glass leaning away from it, egg-shaped. So are the ILO lamp, its dock hidden under its ring, and
 # the fluted copper lamp and the smoked lustre glass lamp, lying on their backs with their faces up, as their faces
-# were photographed. Each
-# is left out of the plate's camera but stays in the set, throwing its shadow and its light on the mat under it,
-# and is rendered on its own by that camera, at the plate's own size, set where it stands. Each is its shot, and the module that built it, which knows the camera
+# were photographed. The lacquered mushroom lamp is seen level, from in front, as it was photographed: from over it
+# only its shade would show. Each is left out of the plate's camera but stays in the set, throwing its shadow and
+# its light on the mat under it, and is rendered on its own by that camera, at the plate's own size, set where it stands. Each is its shot, and the module that built it, which knows the camera
 # (photograph()) in the coordinates of its object (the mesh named BODY, or else the one carrying the photograph),
 # the middle of the object (MIDDLE), and the point on the desk under that middle (STANDS).
-PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp), "lustrelamp": ("lustrelamp", lustrelamp)}
+PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp), "lustrelamp": ("lustrelamp", lustrelamp), "mushroomlamp": ("mushroomlamp", mushroomlamp)}
 # The page shows an em of the plate at up to 22 pixels, 44 on a screen of two pixels to the point; this many leaves
 # room to zoom in before the render runs out.
 DENSITY = 64
@@ -111,9 +113,9 @@ ROOM = 0.04
 WINDOW = 0.16
 WINDOW_FROM = (-0.55, 0.6, 0.58)
 MOON = 0.55
-# How much of the moon's light is left beside the lamp's, as the camera exposes for the lamp. The lustre lamp lights
-# only a glow round itself, its lens facing the ceiling: the camera, metering the moonlit desk, hardly stops down.
-LAMP_MOON = 0.85
+# How much of the moon's light is left beside the lamp's, as the camera exposes for the lamp. The mushroom lamp throws
+# its light down from under its shade onto the desk round it, and the camera, metering the lit desk, stops down.
+LAMP_MOON = 0.6
 GLOW = 45000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)

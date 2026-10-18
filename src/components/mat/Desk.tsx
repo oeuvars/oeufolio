@@ -1,9 +1,9 @@
 import { profile } from '../../content'
 import { BusinessCard } from './BusinessCard'
-import { LustreLamp } from './LustreLamp'
 import { KeyBunch } from './KeyBunch'
 import { Mat } from './Mat'
 import { MatchTicket } from './MatchTicket'
+import { MushroomLamp } from './MushroomLamp'
 import { RecordSleeve } from './RecordSleeve'
 import { Recorder } from './Recorder'
 import { Wallet } from './Wallet'
@@ -28,7 +28,7 @@ export function Desk() {
       <Recorder like={likes.recorder} />
       <MatchTicket like={likes.ticket} />
       <Wallet />
-      <LustreLamp />
+      <MushroomLamp />
     </Mat>
   )
 }
