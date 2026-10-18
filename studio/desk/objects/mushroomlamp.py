@@ -1,13 +1,14 @@
 """The desk lamp: a mushroom lamp in deep oxblood lacquer, a wide domed shade over a tapering stem.
 
-It is the lamp in the user's photograph, seen from the side at the height of its shade. The stem stands on a
+It is the lamp in the user's photograph, seen on the desk from straight over it. The stem stands on a
 rounded foot, swells a little above it and tapers up to a rounded shoulder, where a short neck carries the
 shade. The shade is a squashed dome with straight sides and a rounded rim that curls in under it. Both are
 lacquered so deep and glossy that they show the room more than their own red: a window off to the left lies
 across the shade and runs in long streaks down the stem.
 
 Under the shade, an opal ring gives a soft yellow light down onto the shoulder of the stem and the
-desk round the lamp. The shade, opaque, keeps it off the ceiling.
+desk round the lamp. The shade, opaque, keeps it off the ceiling: from over it, the lamp is its red dome in a ring
+of its own light on the desk.
 
 The lamp stands upright on the desk. Built in its own coordinates, in em: standing on z = 0, its axis through the
 middle of its box. Its ring is marked "bulb", at no power until desk.py turns it up, its "share" of the lamp's
@@ -98,36 +99,34 @@ OPAL = "#f6efe2"
 D = 2 * max(r for r, _ in SHADE)
 W = H = D + 2.0
 
-# The photograph's studio, which the lacquer throws back: a tall window off to the left and a little toward the
-# camera (its reflection lies on the left of the shade and down the stem), a warm plaster wall behind the lamp and
-# round it, and the stone floor it stands on. The page shows the lamp lit as it was photographed, so its picture, lit,
-# is taken in this studio (desk.py puts the parts marked "studio" in the lamp's lit portrait alone).
-WINDOW_AT = (-36.0, -20.0, 18.0)
+# The photograph's studio, which the lacquer throws back: a tall window, off over the top left of the desk as the
+# desk's own window is (desk.py WINDOW_FROM), its reflection lying on the upper left of the dome, and a warm plaster
+# wall round the lamp. The page shows the lamp lit as it was photographed, so its picture, lit, is taken in this
+# studio (desk.py puts the parts marked "studio" in the lamp's lit portrait alone).
+WINDOW_AT = (-30.0, 27.0, 26.0)
 WINDOW_SIZE = (26.0, 46.0)
 WINDOW_PANES = (3, 4)
 WINDOW_BAR = 0.05
 WINDOW_LIGHT = (4.5, 4.4, 4.2)
 WALL_R = 45.0
-WALL_H = 60.0
-WALL_LIGHT = (1.1, 0.94, 0.8)
+WALL_H = 120.0
+WALL_LIGHT = (0.75, 0.64, 0.54)
 # The wall is lit from the window: brighter on the left, falling off round to the right, where the shade's dark side
 # looks.
 WALL_FALL = 0.85
 
-# The page shows the lamp from a camera of its own (desk.py PORTRAITS), as it was photographed: from in front, down
-# the page, level, at about the height of the shade's rim, which shows the light under the shade. Its middle, and
-# the point on the desk where the front of its foot stands: the picture's lowest point, which the page sets where
-# the foot stands on the plate, so the picture covers the ground the foot stands on.
-DISTANCE = 60.0
-EYE = 8.0
+# The page shows the lamp from a camera of its own (desk.py PORTRAITS), straight over it as far off as the plate's
+# camera: the plate's camera, off to one side of it, would draw it leaning away. Its middle, and the point on the
+# desk under it.
+DISTANCE = 100.0
 MIDDLE = (0.0, 0.0, TOP / 2)
-STANDS = (0.0, -2.0, 0.0)
+STANDS = (0.0, 0.0, 0.0)
 BODY = "mushroom-stem"
 
 
 def photograph():
-    """The camera in front of the lamp: where it stands, looking level at it, and its axes."""
-    return np.array([0.0, -DISTANCE, EYE]), np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]]), None
+    """The camera over the lamp: where it stands, looking straight down, and its axes."""
+    return np.array(MIDDLE) + np.array([0.0, 0.0, DISTANCE]), np.eye(3), None
 
 
 def smooth(points):
@@ -220,7 +219,9 @@ def studio(stage):
     lit = wall.attributes.new("lit", "FLOAT", "POINT")
     # Facing the window across the room, the wall is lit full; turned away from it, less.
     towards = np.array([math.cos(a) * -centre[0] + math.sin(a) * -centre[1] for a in around]) / np.hypot(centre[0], centre[1])
-    lit.data.foreach_set("value", np.repeat(1 - WALL_FALL * (1 - towards) / 2, 2).astype(np.float32))
+    # and up it the light falls off into the dark of the room, so the dome, which throws back the wall round its
+    # shoulder and the room's ceiling over its top, shades from one to the other.
+    lit.data.foreach_set("value", (np.repeat(1 - WALL_FALL * (1 - towards) / 2, 2) * np.tile((1.0, 0.0), len(around))).astype(np.float32))
     for mesh, light in ((window, WINDOW_LIGHT), (wall, WALL_LIGHT)):
         material = bpy.data.materials.new(mesh.name)
         material.use_nodes = True

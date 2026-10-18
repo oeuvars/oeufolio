@@ -94,9 +94,8 @@ STAND_INS = {"reel": ("reel",)}
 # straight over it, at the height the plate's camera is held: the plate's camera, off to one side of it, would draw
 # the tall round glass leaning away from it, egg-shaped. So are the ILO lamp, its dock hidden under its ring, and
 # the fluted copper lamp and the smoked lustre glass lamp, lying on their backs with their faces up, as their faces
-# were photographed. The lacquered mushroom lamp is seen level, from in front, as it was photographed: from over it
-# only its shade would show. Each is left out of the plate's camera but stays in the set, throwing its shadow and
-# its light on the mat under it, and is rendered on its own by that camera, at the plate's own size, set where it stands. Each is its shot, and the module that built it, which knows the camera
+# were photographed, and the lacquered mushroom lamp standing on its foot. Each is left out of the plate's camera
+# but stays in the set, throwing its shadow and its light on the mat under it, and is rendered on its own by that camera, at the plate's own size, set where it stands. Each is its shot, and the module that built it, which knows the camera
 # (photograph()) in the coordinates of its object (the mesh named BODY, or else the one carrying the photograph),
 # the middle of the object (MIDDLE), and the point on the desk under that middle (STANDS).
 PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp), "lustrelamp": ("lustrelamp", lustrelamp), "mushroomlamp": ("mushroomlamp", mushroomlamp)}
