@@ -25,8 +25,8 @@ type PlateProps = {
 }
 
 /**
- * One photograph of the book (studio/error/book.py), filling the window and cropped round the pages, never into
- * them. Every word is in the photograph; over each lies the same text, clear, where it lies, so it can be read aloud,
+ * One photograph of the book (studio/error/book.py), as large as the window holds it whole, the dark cloth it lies on
+ * carried on out to the window's edges. Every word is in the photograph; over each lies the same text, clear, where it lies, so it can be read aloud,
  * selected and copied, and the two things to do are links over their printed words.
  */
 function Plate({ name, className, again, home }: PlateProps) {
@@ -88,11 +88,11 @@ function Plate({ name, className, again, home }: PlateProps) {
 }
 
 /**
- * The page for a page that broke: a photograph of a book of poems lying open on white silk, after the decorated
- * anthologies of the Heian court, with Ki no Tomonori's poem on blossoms that fall on a calm day for no reason anyone
- * can give, what happened, and how to open the page again. A window at least 0.95 times as wide as it is tall shows
- * the open book; a narrower one, one loose page of it. Each photograph takes in enough silk to fill a window of
- * its own range of shapes with the pages whole.
+ * The page for a page that broke: a photograph of a book of poems lying open on a dark cloth, after the decorated
+ * anthologies of the Heian court, painted all over with cranes, a weeping cherry, the moon, Mount Fuji and a river of
+ * maple leaves, with Ki no Tomonori's poem on blossoms that fall on a calm day for no reason anyone can give, what
+ * happened, and how to open the page again. A window at least 0.95 times as wide as it is tall shows the open book; a
+ * narrower one, one loose page of it.
  */
 export function ErrorPage({ error, reset }: ErrorComponentProps) {
   const router = useRouter()
@@ -103,7 +103,7 @@ export function ErrorPage({ error, reset }: ErrorComponentProps) {
   }
 
   const page = (
-    <main className="fixed inset-0 z-50 overflow-hidden bg-[#d8d3c9]">
+    <main className="fixed inset-0 z-50 overflow-hidden" style={{ backgroundColor: PLATES.wide.edge }}>
       <Plate name="wide" className="hidden [@media(min-aspect-ratio:19/20)]:flex" again={again} home={reset} />
       <Plate name="tall" className="flex [@media(min-aspect-ratio:19/20)]:hidden" again={again} home={reset} />
       {import.meta.env.DEV && error instanceof Error && <p className="absolute bottom-2 left-3 m-0 font-mono text-[11px] text-black/60">{error.message}</p>}

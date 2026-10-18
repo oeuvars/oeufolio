@@ -2,13 +2,15 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow>=11.3", "scipy"]
 # ///
-"""The error page: a book of poems lying open on white silk, after the decorated anthologies of the Heian court,
+"""The error page: a book of poems lying open on a dark cloth, after the decorated anthologies of the Heian court,
 photographed from above in soft window light.
 
     uv run studio/error/book.py [--plates wide tall] [--scale 0.5] [--samples 256] [--proof DIR]
 
-Each page is washi, kozo fibres and all, with sheets of dyed paper joined on along torn edges, waves printed in mica,
-cut gold leaf sprinkled over it and bands of gold dust laid across it like mist. Ki no Tomonori's poem (Kokinshū 84)
+Each page is washi, kozo fibres and all, with sheets of dyed paper joined on along torn edges, patterns printed in
+mica, cut gold leaf sprinkled over it, bands of gold dust and gold-leaf mist laid across it, and painted in mineral
+colours, sumi and gold: cranes in flight, a weeping cherry in flower, a moon in silver, Mount Fuji in mist, pampas
+grass, plovers over water and a river carrying maple leaves. Ki no Tomonori's poem (Kokinshū 84)
 is brushed down the right-hand page in sumi, his name under it and a seal in cinnabar under that; the left-hand page
 is printed with a reading of the poem, what happened and the two things to do about it. Every word is in the
 photograph: the page lays clear live text over the same places, from src/components/error.json.
@@ -68,7 +70,54 @@ SUMI = linear("#151311")
 GOLD = np.array([1.0, 0.74, 0.33])  # gold leaf, as metal
 PALE_GOLD = np.array([0.98, 0.83, 0.52])  # leaf beaten with a little silver in it
 SILVER = np.array([0.30, 0.29, 0.27])  # silver leaf, gone dark as old silver leaf does
+BRIGHT_SILVER = np.array([0.78, 0.78, 0.76])  # silver leaf where it has kept its shine
 SHU = linear("#b3322a")  # cinnabar seal paste
+# Mineral paints, ground and bound in glue, as the painters of the court used them.
+GOFUN = linear("#f8f4ec")  # shell white
+SAKURA = linear("#eaa9b6")  # the pink at a blossom's heart
+ENJI = linear("#c25a6e")  # safflower red
+MOMIJI = [linear("#c2412b"), linear("#d8692f"), linear("#b8322f"), linear("#cf8a36")]  # maple reds and ochres
+ROKUSHO = linear("#5f8a64")  # malachite green
+BARK = linear("#2b231d")  # sumi with a little brown in it
+FUJI = linear("#8193ad")  # an indigo wash, as a filter over the paper
+
+
+def catmull(points, step=0.12):
+    """A smooth path through points (mm), sampled every step mm or so."""
+    p = np.asarray(points, np.float64)
+    p = np.vstack([2 * p[0] - p[1], p, 2 * p[-1] - p[-2]])
+    out = []
+    for i in range(1, len(p) - 2):
+        p0, p1, p2, p3 = p[i - 1 : i + 3]
+        n = max(2, int(np.hypot(*(p2 - p1)) / step))
+        t = np.linspace(0, 1, n, endpoint=False)[:, None]
+        out.append(0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t**2 + (3 * p1 - p0 - 3 * p2 + p3) * t**3))
+    out.append(p[-2][None])
+    return np.vstack(out)
+
+
+def place(points, x, y, size, turn=0.0, flip=False):
+    """Points drawn round 0, 0 at unit size, scaled, mirrored, turned and moved to x, y (mm)."""
+    p = np.asarray(points, np.float64) * size
+    if flip:
+        p[:, 0] = -p[:, 0]
+    c, s = math.cos(turn), math.sin(turn)
+    return np.stack([x + p[:, 0] * c - p[:, 1] * s, y + p[:, 0] * s + p[:, 1] * c], -1)
+
+
+# A red-crowned crane in flight, flying to the right, at a wingspan of about one: its near wing raised, white with a
+# black trailing edge, and the far wing behind it.
+CRANE_WING_OUTLINE = [(0.06, -0.02), (0.11, -0.13), (0.10, -0.26), (0.05, -0.39), (-0.02, -0.50), (-0.06, -0.47), (-0.05, -0.42), (-0.09, -0.45), (-0.11, -0.39), (-0.14, -0.41), (-0.15, -0.34), (-0.19, -0.35), (-0.18, -0.28), (-0.22, -0.27), (-0.19, -0.20), (-0.21, -0.14), (-0.14, -0.08), (-0.07, -0.02)]
+CRANE_WING = [(x * 1.35, y) for x, y in CRANE_WING_OUTLINE]
+CRANE_TRAILING_LINE = [(-0.07, -0.03), (-0.15, -0.09), (-0.20, -0.15), (-0.19, -0.21), (-0.21, -0.27)]
+CRANE_TRAILING = [(x * 1.35, y) for x, y in CRANE_TRAILING_LINE]
+CRANE_BODY = [(0.15, -0.04), (0.08, -0.07), (-0.04, -0.07), (-0.14, -0.04), (-0.19, 0.0), (-0.13, 0.04), (-0.02, 0.05), (0.09, 0.03)]
+CRANE_TAIL = [(-0.13, -0.04), (-0.22, -0.03), (-0.25, 0.01), (-0.20, 0.04), (-0.12, 0.04)]
+CRANE_NECK = [(0.12, -0.03), (0.22, -0.05), (0.33, -0.065), (0.41, -0.07)]
+CRANE_BEAK = [(0.44, -0.07), (0.50, -0.066), (0.545, -0.06)]
+CRANE_LEGS = [[(-0.12, 0.02), (-0.27, 0.04), (-0.44, 0.055)], [(-0.12, 0.03), (-0.27, 0.06), (-0.43, 0.08)]]
+# A plover (chidori), as it is drawn over waves: a round body, two pointed wings up, a short beak, facing left.
+PLOVER = [(-0.62, -0.10), (-0.46, -0.13), (-0.40, -0.22), (-0.28, -0.26), (-0.16, -0.22), (-0.12, -0.30), (-0.20, -0.52), (-0.30, -0.70), (-0.08, -0.56), (0.06, -0.36), (0.10, -0.24), (0.20, -0.30), (0.34, -0.56), (0.52, -0.74), (0.44, -0.44), (0.34, -0.20), (0.48, -0.16), (0.70, -0.14), (0.50, -0.02), (0.30, 0.10), (0.06, 0.16), (-0.18, 0.12), (-0.34, 0.02), (-0.44, -0.06)]
 
 
 class Page:
@@ -254,6 +303,334 @@ class Page:
         m *= np.clip((self.x - x0) * PX, 0, 1) * np.clip((x1 - self.x) * PX, 0, 1)
         self.lay_metal(m, GOLD, 0.32, self.noise(0.3, 2))
 
+    # ---------------------------------------------------------------- painting
+
+    def cached(self, key, make):
+        if not hasattr(self, "_cache"):
+            self._cache = {}
+        if key not in self._cache:
+            self._cache[key] = make()
+        return self._cache[key]
+
+    def canvas(self):
+        img = Image.new("L", (self.W, self.H), 0)
+        return img, ImageDraw.Draw(img)
+
+    @staticmethod
+    def mask(img, soften=0.5):
+        return ndimage.gaussian_filter(np.asarray(img, np.float32) / 255, soften)
+
+    def stroke(self, draw, points, w0, w1, taper=(0.08, 0.2), fill=255):
+        """A brush stroke along points (mm), w0 mm wide where it starts and w1 where it ends, swelling in from its
+        start and lifting off at its end over the given shares of its length."""
+        path = catmull(points)
+        s = np.concatenate([[0], np.cumsum(np.hypot(*np.diff(path, axis=0).T))])
+        t = s / max(s[-1], 1e-6)
+        width = w0 + (w1 - w0) * t
+        if taper[0]:
+            width *= np.clip(0.35 + 0.65 * t / taper[0], 0, 1)
+        if taper[1]:
+            width *= np.clip((1 - t) / taper[1], 0.08, 1) ** 0.7
+        for (x, y), w in zip(path, width):
+            r = max(w / 2, 0.06) * PX
+            draw.ellipse([x * PX - r, y * PX - r, x * PX + r, y * PX + r], fill=fill)
+
+    def polygon(self, draw, points, fill=255):
+        draw.polygon([(x * PX, y * PX) for x, y in points], fill=fill)
+
+    def pigment(self, m, colour, body=0.025, rough=0.92, vary=0.05):
+        """Mineral paint laid on the paper: opaque, a little raised and grainy, missing a fleck here and there."""
+        grain = self.cached("grain", lambda: np.clip(1.06 - 0.3 * np.clip(self.noise(0.08, 0.5) - 1.1, 0, 3), 0, 1))
+        swirl = self.cached("swirl", lambda: self.noise(1, 8))
+        a = np.clip(m, 0, 1) * grain
+        tint = colour * (1 + vary * swirl)[..., None] if np.ndim(colour) == 1 else colour
+        self.albedo = self.albedo * (1 - a[..., None]) + tint * a[..., None]
+        self.rough = self.rough * (1 - a) + rough * a
+        self.metal *= 1 - a
+        self.coat *= 1 - a
+        self.height += body * ndimage.gaussian_filter(m, 0.8)
+
+    def wash(self, m, colour, pool=0.35):
+        """A wash of thin colour, a filter over the paper, pooling at its edges and drying in blooms (tarashikomi)."""
+        bloom = self.cached("bloom", lambda: self.noise(2, 14))
+        edge = np.clip(m - ndimage.gaussian_filter(m, 0.8 * PX), 0, 1)
+        a = np.clip(m * (0.8 + 0.2 * bloom) + pool * edge, 0, 1)
+        self.albedo *= 1 - a[..., None] * (1 - colour)
+        self.coat *= 1 - 0.5 * a
+
+    def gilt(self, m, colour=GOLD, rough=0.42):
+        """Gold ground fine and painted on in glue (kindei): softer than leaf, with a duller shine."""
+        self.lay_metal(np.clip(m, 0, 1), colour * 0.9, rough, self.cached("crinkle", lambda: self.noise(0.3, 2.5)))
+
+    def outline(self, m, density=0.55, width=0.35):
+        """A fine line of sumi round what is painted, as the painter drew it before laying the colour in."""
+        rim = np.clip(ndimage.grey_dilation(m, size=int(width * PX) | 1) - m, 0, 1)
+        self.ink(self.brush(rim, density))
+
+    def kasumi(self, bands, seed, leaf=True):
+        """Bands of mist in cut gold leaf (suyari-gasumi), each x0, x1, y (its middle) and depth in mm: long and flat,
+        rounded at the ends, their edges easing in and out. The leaf was laid in squares, and its seams show."""
+        rng = np.random.default_rng(seed)
+        field = np.zeros((self.H, self.W), np.float32)
+        for x0, x1, y, depth in bands:
+            r = depth / 2
+            sway = r * 0.18 * np.sin(self.x / rng.uniform(14, 26) + rng.uniform(0, 6)) + r * 0.1 * np.sin(self.x / rng.uniform(5, 9))
+            cx = np.clip(self.x, x0 + r, x1 - r)
+            d = np.hypot(self.x - cx, (self.y - y) * 1.0) - (r + sway)
+            field = np.maximum(field, np.clip(-d * PX + 0.5, 0, 1))
+        if not leaf:
+            return field
+        seams = ((np.abs((self.x + 7) % 36 - 18) > 17.85) | (np.abs((self.y + 3) % 36 - 18) > 17.85)).astype(np.float32)
+        crinkle = self.cached("crinkle", lambda: self.noise(0.3, 2.5))
+        self.lay_metal(field, GOLD * (1 - 0.12 * seams)[..., None], 0.3, crinkle)
+        self.rough += 0.12 * seams * field
+        self.height += 0.01 * seams * field
+        return field
+
+    def moon(self, cx, cy, r):
+        """A full moon in silver leaf, kept bright in places and gone dark in others."""
+        d = np.hypot(self.x - cx, self.y - cy)
+        m = np.clip((r - d) * PX + 0.5, 0, 1)
+        tarnish = np.clip(0.18 + 0.14 * self.noise(10, 60) + 0.04 * self.noise(0.5, 3), 0, 1)[..., None]
+        colour = BRIGHT_SILVER * (1 - tarnish) + SILVER * tarnish
+        # Burnished flat, so it takes the light as one soft sheen rather than as crinkles.
+        self.lay_metal(m, colour, 0.48, 0.15 * self.cached("crinkle", lambda: self.noise(0.3, 2.5)))
+
+    def fuji(self, cx, peak, base, half):
+        """Mount Fuji in an indigo wash fading down into mist, its summit under snow in shell white."""
+        u = np.abs(self.x - cx) / half
+        height = base - peak
+        crown = np.clip(u - 0.05, 0, None) / 0.95
+        profile = peak + height * (1 - np.clip(1 - crown, 0, 1) ** 2.4)
+        inside = (self.y >= profile) & (u < 1)
+        t = np.clip((self.y - peak) / height, 0, 1)
+        body = inside * np.clip(1 - t, 0, 1) ** 0.9 * 0.75
+        self.wash(ndimage.gaussian_filter(body.astype(np.float32), 0.6), FUJI)
+        # The snow comes down further in the gullies.
+        gullies = np.abs(np.sin((self.x - cx) / half * 9.0)) ** 3
+        line = peak + height * (0.24 + 0.1 * gullies + 0.03 * np.sin((self.x - cx) * 1.3))
+        snow = (inside & (self.y < line)).astype(np.float32)
+        self.pigment(ndimage.gaussian_filter(snow, 0.7), GOFUN, body=0.03)
+        img, draw = self.canvas()
+        xs = np.linspace(cx - half * 0.98, cx + half * 0.98, 80)
+        ridge = peak + height * (1 - np.clip(1 - np.clip(np.abs(xs - cx) / half - 0.05, 0, None) / 0.95, 0, 1) ** 2.4)
+        left, right = xs < cx, xs >= cx
+        for pick in (left, right):
+            pts = list(zip(xs[pick], ridge[pick] - 0.15))
+            pts = pts if pts[0][1] < pts[-1][1] else pts[::-1]
+            self.stroke(draw, pts[:: max(1, len(pts) // 14)], 0.7, 0.15, taper=(0.02, 0.5))
+        self.ink(self.brush(self.mask(img), 0.6))
+
+    def water(self, region, lines, seed, silver=False):
+        """Water running in long lines of gold (ryūsui), the lines bunching and parting as the current goes, with a
+        curl of wave lifting off here and there. region is x0, y0, x1, y1 in mm."""
+        rng = np.random.default_rng(seed)
+        x0, y0, x1, y1 = region
+        img, draw = self.canvas()
+        phases = rng.uniform(0, 2 * np.pi, 3)
+        for i in range(lines):
+            base = y0 + (y1 - y0) * (i + 0.5) / lines
+            xs = np.linspace(x0, x1, 28)
+            ys = base + 2.6 * np.sin(xs / 31 + phases[0] + i * 0.35) + 1.2 * np.sin(xs / 11 + phases[1] + i * 0.8)
+            self.stroke(draw, list(zip(xs, ys)), rng.uniform(0.5, 0.8), rng.uniform(0.35, 0.6), taper=(0.04, 0.06))
+            # Curls where the water breaks: an arc lifting off the line and rolling over.
+            for _ in range(rng.integers(1, 3)):
+                k = rng.integers(4, 24)
+                cx, cy = xs[k], ys[k]
+                r = rng.uniform(2.5, 4.5)
+                a = np.linspace(math.pi * 1.0, math.pi * 2.6, 14)
+                curl = [(cx + r * (1 - j / 18) * math.cos(t) + j * 0.3, cy - r * 0.9 + r * (1 - j / 18) * math.sin(t) * 0.9) for j, t in enumerate(a)]
+                self.stroke(draw, [(cx - r * 1.4, cy + 0.2)] + curl, 0.6, 0.15, taper=(0.1, 0.4))
+        m = self.mask(img)
+        if silver:
+            self.lay_metal(m, BRIGHT_SILVER * 0.8, 0.4, self.cached("crinkle", lambda: self.noise(0.3, 2.5)))
+        else:
+            self.gilt(m)
+
+    def plovers(self, flock):
+        """Plovers flying low over the water, in sumi, as they are drawn on lacquer and paper: a round body, a short
+        beak and two wings swept up into points. Each is x, y, size (mm), turn and whether it faces right."""
+        img, draw = self.canvas()
+        for x, y, size, turn, flip in flock:
+            at = lambda pts: place(pts, x, y, size, turn, flip)
+            self.polygon(draw, at([(0.32 * math.cos(t) * (1.25 if math.cos(t) > 0 else 1.0), 0.2 * math.sin(t)) for t in np.linspace(0, 2 * np.pi, 30, endpoint=False)]))
+            head = at([(-0.33, -0.1)])[0]
+            r = size * 0.14
+            draw.ellipse([(head[0] - r) * PX, (head[1] - r) * PX, (head[0] + r) * PX, (head[1] + r) * PX], fill=255)
+            self.stroke(draw, at([(-0.42, -0.1), (-0.6, -0.06)]), size * 0.07, size * 0.02, taper=(0, 0.3))
+            self.stroke(draw, at([(-0.1, -0.12), (-0.18, -0.4), (-0.36, -0.66)]), size * 0.2, size * 0.03, taper=(0, 0.6))
+            self.stroke(draw, at([(0.1, -0.12), (0.22, -0.42), (0.46, -0.72)]), size * 0.2, size * 0.03, taper=(0, 0.6))
+            self.stroke(draw, at([(0.3, 0.0), (0.66, -0.1)]), size * 0.14, size * 0.03, taper=(0, 0.6))
+        m = self.mask(img, 0.6)
+        self.ink(np.clip(m * (0.9 + 0.03 * self.cached("bloom", lambda: self.noise(2, 14))), 0, 1))
+
+    def cranes(self, flock):
+        """Red-crowned cranes in flight, each x, y, wingspan (mm), turn and whether it flies left: shell white, the
+        neck, legs and trailing edges of the wings in sumi, the crown in red, all drawn round in a fine line."""
+        white, w_draw = self.canvas()
+        shade, s_draw = self.canvas()
+        black, b_draw = self.canvas()
+        red, r_draw = self.canvas()
+        far_black, f_draw = self.canvas()
+        for x, y, span, turn, flip in flock:
+            far = place(place(CRANE_WING, 0, 0, 1, -0.3), 0, 0, 0.82, -0.32)
+            far = place(far + np.array([-0.02, -0.01]), x, y, span, turn, flip)
+            self.polygon(s_draw, far)
+            self.polygon(w_draw, place(CRANE_BODY, x, y, span, turn, flip))
+            self.polygon(w_draw, place(place(CRANE_WING, 0, 0, 1, -0.3), x, y, span, turn, flip))
+            self.polygon(b_draw, place(CRANE_TAIL, x, y, span, turn, flip))
+            self.stroke(b_draw, place(place(CRANE_TRAILING, 0, 0, 1, -0.3), x, y, span, turn, flip), span * 0.07, span * 0.05, taper=(0.15, 0.3))
+            far_trail = place(place(place(CRANE_TRAILING, 0, 0, 1, -0.3), 0, 0, 0.82, -0.32) + np.array([-0.02, -0.01]), x, y, span, turn, flip)
+            self.stroke(f_draw, far_trail, span * 0.06, span * 0.04, taper=(0.15, 0.3))
+            self.stroke(b_draw, place(CRANE_NECK, x, y, span, turn, flip), span * 0.035, span * 0.026, taper=(0, 0))
+            head = place([(0.425, -0.07)], x, y, span, turn, flip)[0]
+            rh = span * 0.024
+            b_draw.ellipse([(head[0] - rh) * PX, (head[1] - rh * 0.8) * PX, (head[0] + rh) * PX, (head[1] + rh * 0.8) * PX], fill=255)
+            self.stroke(b_draw, place(CRANE_BEAK, x, y, span, turn, flip), span * 0.014, span * 0.004, taper=(0, 0.3))
+            for leg in CRANE_LEGS:
+                self.stroke(b_draw, place(leg, x, y, span, turn, flip), span * 0.012, span * 0.008, taper=(0, 0.1))
+            crown = place([(0.42, -0.083)], x, y, span, turn, flip)[0]
+            rc = span * 0.012
+            r_draw.ellipse([(crown[0] - rc) * PX, (crown[1] - rc) * PX, (crown[0] + rc) * PX, (crown[1] + rc) * PX], fill=255)
+        near = self.mask(white)
+        far_wing = self.mask(shade) * (1 - near)
+        ink = np.clip(self.mask(black) + self.mask(far_black) * self.mask(shade) * (1 - near), 0, 1)
+        self.pigment(far_wing, GOFUN * 0.86)
+        self.pigment(near * (1 - ink), GOFUN)
+        self.outline(np.clip(near + far_wing + ink, 0, 1), 0.5, 0.3)
+        self.ink(self.brush(ink, 0.95))
+        self.pigment(self.mask(red), SHU, body=0.02)
+
+    def maples(self, leaves, seed):
+        """Maple leaves floating on the water, each x, y, size (mm) and turn: seven pointed, toothed lobes in red and
+        ochre, some in gold leaf, a stem and pale veins."""
+        rng = np.random.default_rng(seed)
+        for x, y, size, turn in leaves:
+            angles = np.radians([-128, -86, -43, 0, 43, 86, 128])
+            lengths = np.array([0.5, 0.78, 0.95, 1.0, 0.95, 0.78, 0.5])
+            pts = []
+            # Along a lobe, how far out and how far to either side: broad at the base, narrowing to a point, toothed.
+            side = [(0.34, -0.13), (0.42, -0.17), (0.52, -0.19), (0.6, -0.17), (0.68, -0.16), (0.76, -0.12), (0.83, -0.10), (0.9, -0.06), (1.0, 0.0)]
+            for i, (a, L) in enumerate(zip(angles, lengths)):
+                ux, uy = math.sin(a), -math.cos(a)
+                lobe = side + [(u, -v) for u, v in side[-2::-1]]
+                for k, (u, v) in enumerate(lobe):
+                    tooth = 0.025 * (1 if k % 2 else -1) if 0.4 < u < 0.98 else 0.0
+                    v = v + tooth * np.sign(v)
+                    pts.append((L * (u * ux - v * uy), L * (u * uy + v * ux)))
+            leaf = place(pts, x, y, size, turn)
+            img, draw = self.canvas()
+            self.polygon(draw, leaf)
+            m = self.mask(img)
+            if rng.random() < 0.25:
+                self.lay_metal(m, GOLD, 0.34, self.cached("crinkle", lambda: self.noise(0.3, 2.5)))
+            else:
+                self.pigment(m, MOMIJI[rng.integers(len(MOMIJI))], vary=0.12)
+            img, draw = self.canvas()
+            for a, L in zip(angles, lengths):
+                self.stroke(draw, place([(0, 0), (0.7 * L * math.sin(a), -0.7 * L * math.cos(a))], x, y, size, turn), 0.35, 0.1, taper=(0, 0.3))
+            self.pigment(self.mask(img) * m * 0.45, GOFUN * 0.85 + MOMIJI[3] * 0.15, body=0.0)
+            img, draw = self.canvas()
+            self.stroke(draw, place([(0, 0), (0.06, 0.28), (0.02, 0.55)], x, y, size, turn), 0.55, 0.3, taper=(0, 0.1))
+            self.pigment(self.mask(img), MOMIJI[2] * 0.7)
+
+    def cherry(self, branches, blossoms, buds, seed):
+        """A branch of mountain cherry in flower: the branches in sumi with a little brown, wet ink run into them and
+        dots of moss in malachite; the blossoms five petals of shell white, pink at the heart, gold at the stamens."""
+        rng = np.random.default_rng(seed)
+        img, draw = self.canvas()
+        moss, m_draw = self.canvas()
+        for points, w0, w1 in branches:
+            self.stroke(draw, points, w0, w1, taper=(0.0, 0.25))
+            path = catmull(points, 2.0)
+            for x, y in path[rng.random(len(path)) < 0.35]:
+                r = rng.uniform(0.35, 0.9) * max(w0 * 0.25, 0.5)
+                m_draw.ellipse([(x - r) * PX, (y - r) * PX, (x + r) * PX, (y + r) * PX], fill=255)
+        # Wet ink: a second, paler ink dropped into the first while it was wet, drying in blooms with dark rims.
+        a = self.warp(self.mask(img), 0.08, 0.8)
+        pool = np.clip(a - ndimage.gaussian_filter(a, 0.35 * PX), 0, 1)
+        bloom = np.clip(0.5 + 0.4 * self.noise(5, 25), 0, 1)
+        self.ink(np.clip(a * (0.74 + 0.18 * bloom) + 0.4 * pool, 0, 1), BARK)
+        self.pigment(self.mask(moss) * 0.85, ROKUSHO, body=0.02)
+        petals, p_draw = self.canvas()
+        heart, h_draw = self.canvas()
+        stamen, s_draw = self.canvas()
+        for x, y, r, turn in blossoms:
+            for k in range(5):
+                a = turn + k * 2 * math.pi / 5
+                ts = np.linspace(0, 1, 14)
+                half = 0.42 * np.sin(np.pi * np.clip(ts * 0.95, 0, 1)) ** 0.55
+                left = [(-h, t) for h, t in zip(half, ts)]
+                right = [(h, t) for h, t in zip(half[::-1], ts[::-1])]
+                shape = left[:-1] + [(-0.1, 0.99), (0.0, 0.9), (0.1, 0.99)] + right[1:]
+                self.polygon(p_draw, place(shape, x, y, r, a + math.pi))
+            for i in range(10, 0, -1):
+                rr = r * 0.5 * i / 10
+                h_draw.ellipse([(x - rr) * PX, (y - rr) * PX, (x + rr) * PX, (y + rr) * PX], fill=int(255 * (1 - i / 11) ** 0.6))
+            for k in range(11):
+                a = turn + k * 2 * math.pi / 11 + rng.normal(0, 0.1)
+                L = r * rng.uniform(0.38, 0.55)
+                tip = (x + L * math.cos(a), y + L * math.sin(a))
+                self.stroke(s_draw, [(x, y), tip], 0.18, 0.12, taper=(0, 0))
+                rd = 0.32
+                s_draw.ellipse([(tip[0] - rd) * PX, (tip[1] - rd) * PX, (tip[0] + rd) * PX, (tip[1] + rd) * PX], fill=255)
+        for x, y, r, turn in buds:
+            pts = [(0.3 * math.sin(t), -0.5 * math.cos(t) - 0.1 * math.cos(t) ** 2) for t in np.linspace(0, 2 * np.pi, 24, endpoint=False)]
+            self.polygon(p_draw, place(pts, x, y, r, turn))
+            self.polygon(h_draw, place(pts, x, y, r * 0.8, turn), fill=200)
+        petal = self.mask(petals)
+        self.pigment(petal, GOFUN, body=0.035)
+        self.pigment(petal * self.mask(heart, 1.2) * 0.85, SAKURA, body=0.0)
+        self.outline(petal, 0.28, 0.25)
+        self.gilt(self.mask(stamen, 0.4))
+
+    def falling(self, region, count, seed, size=(2.6, 4.2)):
+        """Single petals falling, painted, scattered over region (x0, y0, x1, y1 mm)."""
+        rng = np.random.default_rng(seed)
+        img, draw = self.canvas()
+        x0, y0, x1, y1 = region
+        ts = np.linspace(0, 1, 12)
+        half = 0.42 * np.sin(np.pi * np.clip(ts * 0.95, 0, 1)) ** 0.55
+        shape = [(-h, t - 0.5) for h, t in zip(half, ts)][:-1] + [(-0.1, 0.49), (0.0, 0.4), (0.1, 0.49)] + [(h, t - 0.5) for h, t in zip(half[::-1], ts[::-1])][1:]
+        for _ in range(count):
+            self.polygon(draw, place(shape, rng.uniform(x0, x1), rng.uniform(y0, y1), rng.uniform(*size), rng.uniform(0, 2 * math.pi)))
+        m = self.mask(img)
+        self.pigment(m, GOFUN, body=0.02)
+        self.pigment(m * 0.4, SAKURA, body=0.0)
+        self.outline(m, 0.22, 0.2)
+
+    def susuki(self, stems, seed, density=0.55):
+        """Autumn pampas grass drawn in gold under the writing (shita-e): long blades and drooping plumes."""
+        rng = np.random.default_rng(seed)
+        img, draw = self.canvas()
+        for x, top, bottom, lean in stems:
+            pts = [(x, bottom), (x + lean * 0.3, bottom - (bottom - top) * 0.4), (x + lean * 0.75, bottom - (bottom - top) * 0.8), (x + lean, top)]
+            self.stroke(draw, pts, 0.5, 0.15, taper=(0, 0.3))
+            for _ in range(7):
+                a = rng.uniform(0.3, 1.1) * np.sign(lean or 1)
+                L = rng.uniform(8, 16)
+                sx, sy = x + lean, top
+                self.stroke(draw, [(sx, sy), (sx + L * 0.5 * math.sin(a), sy + L * 0.25), (sx + L * math.sin(a) * 0.8, sy + L * 0.75)], 0.35, 0.1, taper=(0, 0.4))
+            for _ in range(3):
+                side = rng.choice([-1, 1])
+                L = rng.uniform(30, 60)
+                y0 = bottom - rng.uniform(0, 12)
+                self.stroke(draw, [(x, y0), (x + side * L * 0.3, y0 - L * 0.55), (x + side * L * 0.75, y0 - L * 0.7)], 0.9, 0.12, taper=(0, 0.5))
+        self.gilt(self.mask(img) * density)
+
+    def shippo(self, region, s=11.0):
+        """Linked rings printed in mica (shippō), where region is."""
+        best = np.full(self.y.shape, np.inf, np.float32)
+        for ox, oy in ((0, 0), (s / 2, s / 2)):
+            cx = np.round((self.x - ox) / s) * s + ox
+            cy = np.round((self.y - oy) / s) * s + oy
+            best = np.minimum(best, np.abs(np.hypot(self.x - cx, self.y - cy) - s / math.sqrt(2) / 1.0 * 0.72))
+        m = ndimage.gaussian_filter((best < 0.32).astype(np.float32), 0.6) * region
+        m *= np.clip(0.75 + 0.35 * self.noise(0.4, 3), 0, 1)
+        self.coat = np.maximum(self.coat, m)
+        self.albedo = self.albedo * (1 + 0.07 * m[..., None])
+        self.rough -= 0.25 * m
+
     # ---------------------------------------------------------------- ink
 
     def glyphs(self, draw_fn):
@@ -400,63 +777,109 @@ PAGE = (205.0, 285.0)
 
 
 def right_page():
-    """The poem's page, its gutter at its left edge."""
+    """The poem's page, its gutter at its left edge: a weeping cherry in flower hanging in from the top right and
+    dropping its petals down through the poem, a moon in silver behind a band of gold mist, and below, the indigo
+    sheet as a river carrying maple leaves."""
     p = Page(*PAGE, seed=11)
     p.washi()
-    p.joined(INDIGO, [(0, 196), (60, 204), (125, 229), (205, 214)], below=True, seed=4)
-    p.dust((70, 14, 230, 44), seed=8)
-    p.dust((-20, 238, 120, 262), seed=9, density=7)
-    p.leaf([(168, 30, 20, 40), (120, 214, 18, 28), (192, 262, 12, 18), (30, 60, 10, 12)], seed=12)
-    p.poem(right=166, top=50, pitch=24, em=16, starts=[0, 1.7, 0.6, 2.8, 1.2], sizes=[1, 0.94, 1, 0.9, 1])
-    p.signature(x=44, bottom=214, em=8.2)
-    p.seal(37.5, 222, 13.5)
+    river = p.joined(INDIGO, [(0, 198), (60, 206), (125, 230), (205, 216)], below=True, seed=4)
+    p.shippo(river)
+    p.dust((60, 4, 230, 34), seed=8, density=14)
+    p.moon(31, 50, 19)
+    p.kasumi([(-10, 74, 64, 9), (8, 58, 74, 6)], seed=3)
+    p.dust((-20, 52, 90, 84), seed=10, density=10)
+    p.water((0, 228, 205, 283), 7, seed=15)
+    p.maples([(66, 247, 13, 0.4), (96, 266, 11, -0.6), (128, 243, 12, 1.2), (160, 270, 14, 2.4), (186, 246, 10, -1.8), (124, 280, 9, 0.9), (54, 276, 10, -2.6), (198, 278, 11, 0.2)], seed=16)
+    p.leaf([(120, 214, 16, 18), (192, 262, 10, 10), (30, 100, 9, 8)], seed=12)
+    branches = [
+        ([(214, 4), (196, 12), (180, 20), (166, 22), (150, 17), (134, 21), (120, 15)], 5.2, 1.0),
+        ([(180, 20), (184, 30), (186, 48), (190, 70), (191, 96), (189, 124)], 1.6, 0.4),
+        ([(196, 12), (199, 34), (201, 62), (200, 88)], 1.4, 0.4),
+        ([(166, 22), (170, 36), (174, 52), (176, 74)], 1.2, 0.35),
+        ([(150, 17), (146, 8), (140, 2)], 1.4, 0.5),
+        ([(134, 21), (128, 32), (118, 38)], 1.0, 0.35),
+    ]
+    blossoms = [(176, 13, 5.2, 0.2), (160, 27, 4.8, 1.1), (143, 12, 4.6, 0.6), (126, 26, 4.4, 2.0), (118, 39, 4.0, 0.3), (192, 22, 4.6, 1.6), (187, 40, 4.2, 0.9), (190, 60, 4.0, 2.2), (191, 82, 3.8, 0.5), (189, 104, 3.6, 1.4), (200, 44, 4.0, 2.6), (201, 72, 3.6, 0.1), (172, 44, 4.0, 1.9), (176, 66, 3.6, 0.7), (205, 22, 4.4, 1.2), (157, 9, 4.2, 2.4)]
+    buds = [(189, 122, 3.0, 0.2), (200, 90, 2.8, -0.2), (177, 77, 2.6, 0.1), (139, 2, 2.6, -0.5), (186, 92, 2.4, 0.3), (182, 52, 2.4, -0.4)]
+    p.cherry(branches, blossoms, buds, seed=17)
+    p.falling((60, 40, 200, 200), 14, seed=18)
+    p.poem(right=150, top=50, pitch=24, em=16, starts=[0, 1.7, 0.6, 2.8, 1.2], sizes=[1, 0.94, 1, 0.9, 1])
+    p.signature(x=29, bottom=214, em=8.2)
+    p.seal(22.5, 222, 13.5)
     return p
 
 
 def left_page():
-    """The reading's page, its gutter at its right edge."""
+    """The reading's page, its gutter at its right edge: cranes flying over the wisteria sheet, a band of gold mist
+    under them, pampas grass drawn in gold behind the writing, and at its foot Mount Fuji rising out of mist over
+    water, with plovers flying low over it."""
     p = Page(*PAGE, seed=21)
     p.washi()
-    p.joined(WISTERIA, [(0, 72), (70, 62), (140, 79), (205, 66)], below=False, seed=6, mica=True)
-    p.dust((-30, 236, 140, 262), seed=13)
-    p.dust((40, 255, 190, 276), seed=14, density=6)
-    p.leaf([(40, 30, 22, 36), (150, 52, 16, 22), (180, 210, 14, 16), (12, 170, 8, 9)], seed=22)
-    x = 38
-    p.text(READING, x, 108, 8.4, 12.8, prefix="reading")
-    p.text([SOURCE], x, 160, 5.8, 0, density=0.6, prefix="source")
-    p.rule(x, 177, x + 30, 0.6)
-    p.text(p.wrap(MESSAGE, 6.8, 205 - x - 30), x, 195, 6.8, 9.6, font=SERIF_MEDIUM, prefix="message")
-    p.links(x, 214, 6.8, 12)
+    p.joined(WISTERIA, [(0, 74), (70, 64), (140, 81), (205, 68)], below=False, seed=6, mica=True)
+    p.dust((-30, 2, 140, 30), seed=23, density=10)
+    p.kasumi([(-10, 112, 88, 8), (30, 96, 99, 5)], seed=7)
+    p.susuki([(176, 120, 236, 10), (186, 104, 238, -6), (166, 140, 236, 14), (196, 128, 240, 4)], seed=24)
+    p.fuji(158, 226, 266, 52)
+    p.kasumi([(-10, 160, 254, 9), (96, 215, 262, 6)], seed=9)
+    p.dust((-30, 240, 140, 266), seed=13, density=12)
+    p.water((0, 266, 205, 284), 4, seed=25, silver=True)
+    p.plovers([(24, 242, 9, 0.1, False), (46, 233, 8, -0.15, False), (68, 245, 8.5, 0.05, False), (88, 236, 7, 0.2, False)])
+    p.leaf([(14, 170, 8, 6), (190, 160, 8, 6)], seed=22)
+    p.cranes([(46, 36, 52, -0.12, False), (112, 21, 42, 0.06, False), (164, 48, 34, -0.2, False)])
+    x = 44
+    p.text(READING, x, 112, 8.4, 12.8, prefix="reading")
+    p.text([SOURCE], x, 164, 5.8, 0, density=0.6, prefix="source")
+    p.rule(x, 181, x + 30, 0.6)
+    p.text(p.wrap(MESSAGE, 6.8, 205 - x - 26), x, 198, 6.8, 9.6, font=SERIF_MEDIUM, prefix="message")
+    p.links(x, 217, 6.8, 12)
     return p
 
 
 def loose_page():
-    """One page of the book on its own, for a tall window: the poem above, the reading below it."""
+    """One page of the book on its own, for a tall window: the cherry and the moon over the poem, Mount Fuji in mist
+    between the poem and the reading, pampas grass in gold beside the reading, and the river of maple leaves at its foot."""
     p = Page(160.0, 335.0, seed=31)
     p.washi()
     p.joined(WISTERIA, [(0, 17), (60, 24), (110, 15), (160, 21)], below=False, seed=7, mica=True)
-    p.joined(INDIGO, [(0, 314), (50, 306), (115, 318), (160, 309)], below=True, seed=5)
-    p.dust((40, 22, 190, 46), seed=18)
-    p.dust((-30, 168, 110, 186), seed=19, density=7)
-    p.leaf([(128, 36, 16, 30), (98, 160, 12, 15), (136, 178, 10, 12), (122, 324, 14, 16)], seed=32)
-    p.poem(right=130, top=36, pitch=21, em=14, starts=[0, 1.7, 0.6, 2.8, 1.2], sizes=[1, 0.94, 1, 0.9, 1])
-    p.signature(x=27, bottom=152, em=7.2)
-    p.seal(21, 159, 11.5)
-    x = 22
-    p.text(READING, x, 206, 7.2, 11.0, prefix="reading")
-    p.text([SOURCE], x, 251, 5.0, 0, density=0.6, prefix="source")
-    p.rule(x, 263, x + 26, 0.55)
-    p.text(p.wrap(MESSAGE, 6.1, 160 - 2 * x), x, 278, 6.1, 8.6, font=SERIF_MEDIUM, prefix="message")
-    p.links(x, 298, 6.1, 9)
+    river = p.joined(INDIGO, [(0, 312), (50, 304), (115, 316), (160, 307)], below=True, seed=5)
+    p.shippo(river)
+    p.moon(22, 50, 14)
+    p.kasumi([(-10, 52, 62, 7)], seed=3)
+    p.fuji(112, 160, 194, 46)
+    p.kasumi([(-10, 120, 186, 8), (60, 170, 192, 5)], seed=9)
+    p.dust((-30, 168, 120, 196), seed=19, density=9)
+    p.water((0, 312, 160, 334), 4, seed=15)
+    p.maples([(40, 322, 10, 0.4), (78, 327, 9, -0.6), (112, 320, 10, 1.2), (146, 326, 9, 2.4)], seed=16)
+    p.leaf([(98, 160, 8, 6), (14, 230, 8, 6)], seed=32)
+    branches = [
+        ([(166, 3), (152, 12), (138, 17), (122, 14), (108, 18), (94, 13)], 4.4, 0.9),
+        ([(152, 12), (150, 28), (151, 48), (150, 74), (148, 96)], 1.4, 0.35),
+        ([(138, 17), (141, 32), (142, 52)], 1.1, 0.35),
+        ([(122, 14), (118, 6), (112, 1)], 1.2, 0.45),
+    ]
+    blossoms = [(144, 8, 4.4, 0.2), (130, 22, 4.2, 1.1), (114, 8, 4.0, 0.6), (98, 22, 3.8, 2.0), (156, 20, 4.0, 1.6), (149, 38, 3.8, 0.9), (152, 60, 3.6, 2.2), (149, 82, 3.4, 0.5), (142, 42, 3.4, 1.9), (160, 34, 3.8, 1.2)]
+    buds = [(148, 98, 2.6, 0.1), (142, 55, 2.4, -0.2), (111, 1, 2.4, -0.5)]
+    p.cherry(branches, blossoms, buds, seed=17)
+    p.falling((40, 30, 156, 150), 8, seed=18, size=(2.2, 3.6))
+    p.susuki([(146, 214, 292, -8), (154, 230, 294, -4), (138, 238, 292, 6)], seed=34)
+    p.plovers([(130, 297, 7, 0.1, False), (146, 289, 6, -0.1, False)])
+    p.poem(right=126, top=36, pitch=20, em=14, starts=[0, 1.7, 0.6, 2.8, 1.2], sizes=[1, 0.94, 1, 0.9, 1])
+    p.signature(x=24, bottom=150, em=7.2)
+    p.seal(18, 157, 11.5)
+    x = 18
+    p.text(READING, x, 210, 7.2, 11.0, prefix="reading")
+    p.text([SOURCE], x, 255, 5.0, 0, density=0.6, prefix="source")
+    p.rule(x, 266, x + 26, 0.55)
+    p.text(p.wrap(MESSAGE, 6.1, 160 - 2 * x), x, 280, 6.1, 8.6, font=SERIF_MEDIUM, prefix="message")
+    p.links(x, 299, 6.1, 9)
     return p
 
 
 PLATES = {
-    # px across and down, and how many mm of the set the frame takes in across and down. Each takes in enough silk
-    # round the pages that a window can crop it to its own shape and still show every page whole: the open book any
-    # window from 0.95 to 2.4 times as wide as it is tall, the loose page any from 0.42 to 0.95.
-    "wide": {"px": [3050, 1800], "frame": [780.0, 460.0], "pages": {"left": left_page, "right": right_page}},
-    "tall": {"px": [2100, 2550], "frame": [333.0, 405.0], "pages": {"loose": loose_page}},
+    # px across and down, and how many mm of the set the frame takes in across and down: the book, and a little of
+    # the dark cloth it lies on, which the page carries on out to the window's edges.
+    "wide": {"px": [3000, 2056], "frame": [470.0, 322.0], "pages": {"left": left_page, "right": right_page}},
+    "tall": {"px": [1500, 3000], "frame": [176.0, 352.0], "pages": {"loose": loose_page}},
 }
 
 
@@ -499,6 +922,12 @@ def finish(rgb, pages):
     rng = np.random.default_rng(7)
     grain = ndimage.gaussian_filter(rng.standard_normal((h, w)).astype(np.float32), 0.6)
     out = out + (0.018 * grain * (1 - 0.6 * out.mean(-1)))[..., None]
+    # The cloth eases to one flat colour at the frame's edges, so the page can carry it on out to the window's.
+    band = int(min(h, w) * 0.03)
+    rim = np.concatenate([out[:band].reshape(-1, 3), out[-band:].reshape(-1, 3), out[:, :band].reshape(-1, 3), out[:, -band:].reshape(-1, 3)]).mean(0)
+    inset = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy)) / (min(h, w) * 0.06)
+    keep = np.clip(inset, 0, 1) ** 1.5
+    out = out * keep[..., None] + rim * (1 - keep[..., None])
     return np.clip(out, 0, 1)
 
 

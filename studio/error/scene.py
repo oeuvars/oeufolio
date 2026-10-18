@@ -2,10 +2,10 @@
 
     blender -b --factory-startup -P studio/error/scene.py -- WORK
 
-WORK holds layout.json and each page's maps. The wide plate is the book lying open on white silk: boards covered in
+WORK holds layout.json and each page's maps. The wide plate is the book lying open on a dark cloth: boards covered in
 indigo silk, and on them the two halves of the text block, each page rising out of the gutter and easing down at its
-fore-edge, the edges of the leaves under it showing. The tall plate is one loose page of it lying on the same silk. A
-few cherry petals have fallen on them. The light is a big window to the top left, a soft box high over the camera for
+fore-edge, the edges of the leaves under it showing. The tall plate is one loose page of it on the same cloth. A
+cherry petal or two has fallen on the pages. The light is a big window to the top left, a soft box high over the camera for
 the gold to catch, and the room.
 
 The camera is a long lens straight overhead. Writes render.npy (linear RGBA, top row first) and boxes.json: where each
@@ -28,7 +28,7 @@ MM = 0.001
 ASSETS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "desk", "assets")
 BOARD = 3.2  # mm, the boards' thickness
 OVERHANG = 6.0  # mm the boards stand out past the leaves
-HEIGHT = 2.6  # m, the camera over the silk
+HEIGHT = 2.6  # m, the camera over the cloth
 rng = np.random.default_rng(5)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -277,25 +277,11 @@ def box(name, x0, y0, x1, y1, z0, z1, material, bevel=0.6):
     return obj
 
 
-def cloth(material, keep_out, frame):
-    """White silk spread under the book, in long soft folds that flatten out where the book weighs it down."""
-    w, h = frame[0] * 1.6, frame[1] * 1.6
-    nx, ny = 361, 261
-    xs, ys = np.meshgrid(np.linspace(-w / 2, w / 2, nx), np.linspace(-h / 2, h / 2, ny))
-    z = np.zeros_like(xs)
-    for _ in range(9):
-        a = rng.uniform(-0.5, 0.5) + math.radians(18)
-        cx, cy = rng.uniform(-w / 2, w / 2), rng.uniform(-h / 2, h / 2)
-        u = (xs - cx) * math.cos(a) + (ys - cy) * math.sin(a)
-        v = -(xs - cx) * math.sin(a) + (ys - cy) * math.cos(a)
-        z += rng.uniform(5.0, 13.0) * np.exp(-(v / rng.uniform(25, 70)) ** 2) * np.exp(-(u / rng.uniform(150, 400)) ** 2)
-    x0, y0, x1, y1 = keep_out
-    dx = np.maximum(np.maximum(x0 - xs, xs - x1), 0)
-    dy = np.maximum(np.maximum(y0 - ys, ys - y1), 0)
-    away = smoothstep(4, 60, np.hypot(dx, dy))
-    z = z * away - 0.4
-    verts = np.stack([xs * MM, ys * MM, z * MM], -1).reshape(-1, 3)
-    return mesh("silk", verts, grid_faces(nx, ny), None, material)
+def cloth(frame):
+    """The dark cloth the book lies on: a matte black weave, flat, reaching well past the frame."""
+    m = silk("cloth", (0.010, 0.010, 0.012), rough=0.8, weave=700, sheen=0.25)
+    w, h = frame[0] * 1.6 * MM, frame[1] * 1.6 * MM
+    return mesh("cloth", [(-w / 2, -h / 2, -0.4 * MM), (w / 2, -h / 2, -0.4 * MM), (w / 2, h / 2, -0.4 * MM), (-w / 2, h / 2, -0.4 * MM)], [(0, 1, 2, 3)], None, m)
 
 
 def petal(material, at, turn, size, cup, base):
@@ -342,26 +328,21 @@ if plate == "wide":
     surfaces["left"] = Surface(w, h, -w, h / 2, "right", lift_base)
     board = silk("board", (0.018, 0.03, 0.075), rough=0.4, weave=1400, sheen=0.5)
     box("boards", -w - OVERHANG, -h / 2 - OVERHANG, w + OVERHANG, h / 2 + OVERHANG, 0, BOARD, board)
-    keep_out = (-w - OVERHANG, -h / 2 - OVERHANG, w + OVERHANG, h / 2 + OVERHANG)
     for name, surface in surfaces.items():
         surface.build(name, paper(name, pages[name]))
         surface.walls(name, edges, BOARD)
-    petals = [((188, -128), 2.1, 15.5, 0.9, "right"), ((-176, -116), -0.6, 14.0, 1.1, "left"), ((262, -150), 0.9, 15.0, 1.0, None), ((-268, 148), 2.8, 13.5, 0.8, None), ((236, 160), -1.4, 12.5, 1.2, None), ((318, -186), 0.4, 14.0, 1.0, None), ((-352, -170), 1.9, 13.0, 0.9, None), ((-300, 200), -2.2, 12.0, 1.1, None), ((362, 128), 2.6, 13.5, 0.8, None)]
+    petals = [((176, -100), 2.1, 15.5, 0.9, "right"), ((-176, -60), -0.6, 14.0, 1.1, "left")]
 else:
     w, h = pages["loose"]["size"]
     surfaces["loose"] = Surface(w, h, -w / 2, h / 2, None, 0.0)
     surfaces["loose"].build("loose", paper("loose", pages["loose"]))
-    keep_out = (-w / 2, -h / 2, w / 2, h / 2)
-    petals = [((60, 12), 2.0, 13.0, 1.0, "loose"), ((-74, -176), -0.4, 11.5, 1.1, None), ((84, 188), 1.2, 12.0, 0.9, None), ((-122, 64), 2.4, 12.5, 1.0, None), ((126, -112), -1.1, 11.5, 0.9, None)]
+    petals = [((58, 6), 2.0, 12.0, 1.0, "loose")]
 
-cloth(silk("silk", (0.80, 0.77, 0.72)), keep_out, frame)
+cloth(frame)
 petal_mat = petal_material()
 for at, turn, size, cup, on in petals:
-    if on:
-        s = surfaces[on]
-        base = float(s.z(np.array(at[0] - s.left), np.array(s.top - at[1]))) + 0.15
-    else:
-        base = 0.2
+    s = surfaces[on]
+    base = float(s.z(np.array(at[0] - s.left), np.array(s.top - at[1]))) + 0.15
     petal(petal_mat, at, turn, size, cup, base)
 
 # ---------------------------------------------------------------- light
