@@ -254,9 +254,23 @@ def portrait(card, X, Y):
     photo = photo * (1 - 0.12 * crack * (1 - picture))[..., None]
 
     # Scratches, from a scan of real ones, and grime worked into the paper along its edges.
-    # The scan's long scratches all run one way, so it is turned to lay them on a slant, and its faintest web is
-    # left out: what is left is the few that went through the emulsion.
-    scratch = np.clip(scan("Scratches003", 1.3, (330, 300), turn=28) * 1.6, 0, 1) ** 2.0
+    # Scratches come where the print was rubbed, a cluster at a time, each its own way: patches of the scan, each
+    # from somewhere else in it, turned and sized its own way and laid over one patch of the print, with clean
+    # print between them. The scan's faintest web is left out: what is left went through the emulsion.
+    scatter = np.random.default_rng(33)
+    scratch = np.zeros(lx.shape)
+    for _ in range(14):
+        size = scatter.uniform(0.7, 1.9)
+        room = (1024 - shape[1] * size, 1024 - shape[0] * size)
+        at = (int(scatter.uniform(0, max(room[0], 1))), int(scatter.uniform(0, max(room[1], 1))))
+        patch = np.clip(scan("Scratches003", size, at, turn=scatter.uniform(0, 360)) * 1.7, 0, 1) ** 2.0
+        cx, cy = scatter.uniform(-0.1, 1.1) * pw, scatter.uniform(-0.1, 1.1) * ph
+        reach = scatter.uniform(0.15, 0.45) * pw
+        lean = scatter.uniform(0, np.pi)
+        a = (lx - cx) * np.cos(lean) + (ly - cy) * np.sin(lean)
+        b = (ly - cy) * np.cos(lean) - (lx - cx) * np.sin(lean)
+        rubbed = np.exp(-((a / reach) ** 2 + (b / (reach * scatter.uniform(0.3, 0.8))) ** 2))
+        scratch = np.maximum(scratch, patch * rubbed * scatter.uniform(0.5, 1.0))
     photo = photo * (1 - (scratch * picture * 0.45)[..., None]) + PHOTO_PAPER * (scratch * picture * 0.45)[..., None]
     photo = photo * (1 - 0.2 * scratch * (1 - picture))[..., None]
     grime = scan("SurfaceImperfections003", 1.2, (300, 200))
