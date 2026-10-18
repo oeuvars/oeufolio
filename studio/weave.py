@@ -36,21 +36,22 @@ OUT = os.path.join(ROOT, "public", "objects")
 WIDTH, HEIGHT = 36.0, 24.0  # the plate the page shows, in em
 MARGIN = 1.5  # the weave runs on past the frame, so no strip ends in it
 # The strips are made at the sizes below, in strip units, and the whole weave is shrunk to SIZE em to the unit.
-SIZE = 0.45
-UPRIGHT = (2.0, 1.8)  # the upright strips' pitch and width, in strip units
+SIZE = 0.2
+UPRIGHT = (2.0, 1.7)  # the upright strips' pitch and width, in strip units
 ACROSS = (1.9, 1.45)  # the strips across: pitch and width
 LIFT = 0.11  # how far a strip rises over the strip it crosses, and dips under the next
 THICK = 0.03  # how thick a strip is
 PAD = 0.1  # how far past a strip's edge its ribbon runs, for fibres the fraying leaves sticking out
 BAND = 2.2  # how wide a strip's band of the painted atlas is
-PPE = 40  # pixels to the strip unit of the painted atlas
+PPE = 20  # pixels to the strip unit of the painted atlas: 100 to the em, about twice what the page shows
 STRAW = ["#c99f63", "#be9156", "#d4b07a", "#b0834b", "#946537", "#d8b985"]  # the strips' colours, pale to brown
 BOARD = "#0d0a07"  # the board behind the weave
 EXPOSURE = 0.0
-TISSUE_EXPOSURE = 0.3  # the tissue is white paper: shot a little brighter, so it reads white and not grey
+TISSUE_EXPOSURE = 0.4  # the tissue is white paper: shot a little brighter, so it reads white and not grey
 TISSUE = "#f8f6f1"  # the tissue paper laid over the weave, with --tissue
-TISSUE_COVER = 0.5  # how much of the light the tissue catches rather than lets straight through
-TISSUE_STEP = 0.04  # the pitch of the tissue's mesh, in em
+TISSUE_COVER = 0.8  # how much of the light the tissue's fibres catch; the rest goes straight through, unscattered
+TISSUE_THROUGH = 0.7  # of the light the fibres catch, how much they pass on through the sheet rather than back
+TISSUE_STEP = 0.025  # the pitch of the tissue's mesh, in em
 EYE = 60.0  # how high above the weave the lens is, in em
 
 
@@ -62,12 +63,13 @@ def wobble(rng, s, scale, amount):
     return amount * out / 1.875
 
 
-def heights(at, crossings, signs):
+def heights(at, crossings, signs, hold):
     """A strip's height along it, at positions `at` in em: LIFT over each crossing whose sign is 1, under each
-    whose sign is -1, eased between them."""
+    whose sign is -1, held level for `hold` of the pitch either side of each, across the strip it crosses, and eased
+    between them in the gap."""
     k = np.clip(np.searchsorted(crossings, at) - 1, 0, len(crossings) - 2)
     a, b = crossings[k], crossings[k + 1]
-    t = np.clip((at - a) / (b - a), 0, 1)
+    t = np.clip(((at - a) / (b - a) - hold) / (1 - 2 * hold), 0, 1)
     ease = (1 - np.cos(math.pi * t)) / 2
     return LIFT * (signs[k] * (1 - ease) + signs[k + 1] * ease)
 
@@ -80,13 +82,16 @@ class Strip:
         self.index, self.upright, self.start, self.length = index, upright, start, length
         self.seed = seed
         width = (UPRIGHT if upright else ACROSS)[1]
-        self.at = at + rng.normal(0, 0.06)
-        self.lean = rng.normal(0, 0.005)
+        self.at = at + rng.normal(0, 0.03)
+        self.lean = rng.normal(0, 0.001)
         self.wide = width * rng.uniform(0.86, 1.08)
         self.cup = rng.uniform(0.02, 0.05) if upright else rng.uniform(0.0, 0.03)
         self.colour = linear(STRAW[rng.integers(len(STRAW))]) * rng.uniform(0.92, 1.05)
         self.curl = rng.uniform(-0.015, 0.02)  # its edges, turned up or down as it dried
         self.crossings, self.signs = crossings, signs
+        # It stays level across the widest of the strips it crosses, and turns in the gaps between them.
+        pitch, crossed = ACROSS if upright else UPRIGHT
+        self.hold = min(0.54 * crossed / pitch, 0.45)
 
     def _smooth(self, s, scale, amount, k):
         """The strip's own wobble k, the same each time it is asked for."""
@@ -97,12 +102,12 @@ class Strip:
         return self.wide * (1 + self._smooth(s, 9.0, 0.04, 1))
 
     def centre(self, s):
-        return self.at + self.lean * (s - self.start) + self._smooth(s, 16.0, 0.08, 2)
+        return self.at + self.lean * (s - self.start) + self._smooth(s, 16.0, 0.05, 2)
 
     def twist(self, s):
         return self._smooth(s, 6.0, 0.025, 3)
 
-    def mesh(self, band_row, atlas_w, atlas_h, step=0.1, across=12):
+    def mesh(self, band_row, atlas_w, atlas_h, step=0.2, across=8):
         """The strip's ribbon: rows of vertices along it, each across it, in page em (y down) and height."""
         s = np.arange(self.start, self.start + self.length + step, step)
         v = np.linspace(-1, 1, across + 1)
@@ -110,7 +115,7 @@ class Strip:
         half = self.width(S) / 2 + PAD
         a = V * half
         c = self.centre(S)
-        lift = heights(S, self.crossings, self.signs)
+        lift = heights(S, self.crossings, self.signs, self.hold)
         z = lift + self.shape(S, a)
         x, y = (c + a, S) if self.upright else (S, c + a)
         verts = np.column_stack((x.ravel(), -y.ravel(), z.ravel() + 0.4))
@@ -199,6 +204,13 @@ def weave():
     for j, y in enumerate(rows):
         signs = np.array([-1 if (i + j) % 2 == 0 else 1 for i in range(len(cols))])
         strips.append(Strip(len(strips), False, y, x0 - 0.5, w + 1, cols, signs, 300 + j))
+    # Each strip crosses the others where they really are, leaning and wandering, not where they were laid out.
+    upright = [s for s in strips if s.upright]
+    across = [s for s in strips if not s.upright]
+    for strip in upright:
+        strip.crossings = np.array([a.centre(strip.centre(a.at)) for a in across])
+    for strip in across:
+        strip.crossings = np.array([u.centre(strip.centre(u.at)) for u in upright])
     return strips
 
 
@@ -311,36 +323,78 @@ def widest(a, reach):
 
 
 def top(strips, X, Y):
-    """The height of the weave's top face over each point (strip units, y down), or 0 where only the board is."""
+    """The height of the weave's top face over each point of a grid laid out as np.meshgrid lays it (strip units,
+    y down), or 0 where only the board is. Each strip is only looked for in the rows or columns it can reach."""
     out = np.zeros_like(X)
     for strip in strips:
-        s, across = (Y, X) if strip.upright else (X, Y)
+        lines = X[0] if strip.upright else Y[:, 0]
+        reach = strip.wide * 0.6 + abs(strip.lean) * strip.length + 0.2
+        near = np.flatnonzero(np.abs(lines - strip.at) < reach)
+        if not len(near):
+            continue
+        cut = (slice(None), near) if strip.upright else (near, slice(None))
+        s, across = (Y[cut], X[cut]) if strip.upright else (X[cut], Y[cut])
         a = across - strip.centre(s)
-        half = strip.width(s) / 2
-        z = 0.4 + heights(s, strip.crossings, strip.signs) + strip.shape(s, a)
-        out = np.where(np.abs(a) < half, np.maximum(out, z), out)
+        z = 0.4 + heights(s, strip.crossings, strip.signs, strip.hold) + strip.shape(s, a)
+        out[cut] = np.where(np.abs(a) < strip.width(s) / 2, np.maximum(out[cut], z), out[cut])
+    return out
+
+
+def creases(X, Y, seed, count, reach, height, width):
+    """Creases pressed into a sheet by crumpling it: zig-zags of straight runs, each run up to `reach` em long and
+    turned off the last at an angle, as paper folds. Each stands up in a ridge `height` em high at most, coming to a
+    sharp crest and spreading `width` em either side."""
+    rng = np.random.default_rng(seed)
+    step, x0, y0 = X[0, 1] - X[0, 0], X[0, 0], Y[0, 0]
+    rows, cols = X.shape
+    out = np.zeros_like(X)
+    for _ in range(count):
+        # The crease's corners first, then the patch of the sheet it reaches.
+        corners = [(rng.uniform(x0, X[0, -1]), rng.uniform(y0, Y[-1, 0]))]
+        turn = rng.uniform(0, 2 * math.pi)
+        for _ in range(rng.integers(2, 6)):
+            run = reach * rng.uniform(0.3, 1.0)
+            corners.append((corners[-1][0] + run * math.cos(turn), corners[-1][1] + run * math.sin(turn)))
+            turn += rng.choice([-1, 1]) * rng.uniform(0.35, 1.2)
+        rise, spread = height * rng.uniform(0.3, 1.0), width * rng.uniform(0.7, 1.3)
+        cx, cy = np.array(corners).T
+        pad = 4 * spread
+        c0, c1 = max(int((cx.min() - pad - x0) / step), 0), min(int((cx.max() + pad - x0) / step) + 2, cols)
+        r0, r1 = max(int((cy.min() - pad - y0) / step), 0), min(int((cy.max() + pad - y0) / step) + 2, rows)
+        if c1 <= c0 or r1 <= r0:
+            continue
+        PX, PY = X[r0:r1, c0:c1], Y[r0:r1, c0:c1]
+        crease = np.zeros_like(PX)
+        for (ax, ay), (bx, by) in zip(corners, corners[1:]):
+            dx, dy = bx - ax, by - ay
+            t = np.clip(((PX - ax) * dx + (PY - ay) * dy) / (dx * dx + dy * dy), 0, 1)
+            crease = np.maximum(crease, rise * np.exp(-np.hypot(PX - ax - t * dx, PY - ay - t * dy) / spread))
+            rise *= rng.uniform(0.6, 1.1)
+        out[r0:r1, c0:c1] += crease
     return out
 
 
 def tissue(stage, strips):
-    """A sheet of tissue paper laid over the weave. It rests on the strips' tops and bridges the gaps between them,
-    crinkled all over in fine creases from being crumpled and smoothed out, and lifting off in a few soft bubbles. It
-    lets most of the light through, scattered, so the weave shows through it, sharp where it touches and soft where
-    it lifts."""
+    """A sheet of tissue paper laid over the weave, after it was crumpled and smoothed out again. Most of it lies
+    down on the strips' tops, bridging the narrow gaps between them; along the creases the crumpling left it stands
+    up in thin sharp ridges, a network of long ones and finer ones between, and here and there it lifts off in a
+    soft bubble. Its fibres catch most of the light and scatter it, on through the sheet and back, so the weave
+    shows through crisp where the paper touches it and goes milky where the paper stands off."""
     x0, y0 = -MARGIN, -MARGIN
     w, h = WIDTH + 2 * MARGIN, HEIGHT + 2 * MARGIN
     xs, ys = np.arange(x0, x0 + w + TISSUE_STEP, TISSUE_STEP), np.arange(y0, y0 + h + TISSUE_STEP, TISSUE_STEP)
     X, Y = np.meshgrid(xs, ys)
     per = 1 / TISSUE_STEP
-    # Where it rests: the tops of the strips, bridged over the gaps, as a sheet with any stiffness lies.
-    rest = widest(top(strips, X / SIZE, Y / SIZE) * SIZE, round(0.15 * per))
-    rest = blur(rest, 0.15 * per)
-    # Creases: thin ridges along where crumpling folded it, a coarse network and a fine one.
-    coarse = np.exp(-((cloud(X.shape, 51, falloff=1.7) / 0.18) ** 2))
-    fine = np.exp(-((cloud(X.shape, 52, falloff=1.4) / 0.15) ** 2))
-    creases = 0.07 * blur(coarse, 1.0) + 0.025 * blur(fine, 0.7)
-    lifts = 0.22 * ramp(0.6, 2.2, blur(cloud(X.shape, 53, falloff=2.2), 4 * per / 10))
-    Z = rest + 0.012 + creases + lifts
+    # Where it rests: the tops of the strips, bridged over the gaps between them, as a sheet with any stiffness lies.
+    under = top(strips, X / SIZE, Y / SIZE) * SIZE
+    rest = np.maximum(blur(widest(under, round(0.05 * per)), 0.04 * per), under)
+    # The creases: long ones from the first crumpling, shorter ones between, and fine crinkles all over.
+    area = w * h
+    folds = creases(X, Y, 61, round(0.4 * area), 2.5, 0.08, 0.08)
+    folds += creases(X, Y, 62, round(2.0 * area), 0.8, 0.03, 0.045)
+    folds += creases(X, Y, 63, round(4.0 * area), 0.3, 0.01, 0.03)
+    lifts = 0.09 * ramp(0.8, 2.4, blur(cloud(X.shape, 53, falloff=2.2), 0.6 * per))
+    Z = rest + 0.002 + folds + lifts
 
     rows, cols = X.shape
     index = np.arange(rows * cols).reshape(rows, cols)
@@ -355,28 +409,40 @@ def tissue(stage, strips):
     nodes, links = mat.node_tree.nodes, mat.node_tree.links
     nodes.clear()
     colour = (*linear(TISSUE), 1)
+    place = nodes.new("ShaderNodeTexCoord")
+    # Its fibres: a fine felt in the paper's face, which the light rakes.
+    felt = nodes.new("ShaderNodeTexNoise")
+    felt.inputs["Scale"].default_value = 60.0
+    felt.inputs["Detail"].default_value = 6.0
+    felt.inputs["Roughness"].default_value = 0.7
+    links.new(place.outputs["Object"], felt.inputs["Vector"])
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.25
+    bump.inputs["Distance"].default_value = 0.002
+    links.new(felt.outputs["Fac"], bump.inputs["Height"])
     face = nodes.new("ShaderNodeBsdfDiffuse")
     face.inputs["Color"].default_value = colour
     through = nodes.new("ShaderNodeBsdfTranslucent")
     through.inputs["Color"].default_value = colour
+    for shader in (face, through):
+        links.new(bump.outputs["Normal"], shader.inputs["Normal"])
     clear = nodes.new("ShaderNodeBsdfTransparent")
     sheet = nodes.new("ShaderNodeMixShader")
-    sheet.inputs[0].default_value = 0.2
+    sheet.inputs[0].default_value = TISSUE_THROUGH
     links.new(face.outputs[0], sheet.inputs[1])
     links.new(through.outputs[0], sheet.inputs[2])
-    # The paper is thicker in clouds and thinner between, and its fibres show as a fine mottle.
-    place = nodes.new("ShaderNodeTexCoord")
-    cloudy = nodes.new("ShaderNodeTexNoise")
-    cloudy.inputs["Scale"].default_value = 0.35
-    cloudy.inputs["Detail"].default_value = 8.0
-    cloudy.inputs["Roughness"].default_value = 0.65
-    links.new(place.outputs["Object"], cloudy.inputs["Vector"])
+    # The paper is thicker in flocs, where its fibres clumped as it was made, and thinner between.
+    flocs = nodes.new("ShaderNodeTexNoise")
+    flocs.inputs["Scale"].default_value = 4.0
+    flocs.inputs["Detail"].default_value = 8.0
+    flocs.inputs["Roughness"].default_value = 0.6
+    links.new(place.outputs["Object"], flocs.inputs["Vector"])
     density = nodes.new("ShaderNodeMapRange")
     density.inputs["From Min"].default_value = 0.3
     density.inputs["From Max"].default_value = 0.7
-    density.inputs["To Min"].default_value = TISSUE_COVER - 0.12
-    density.inputs["To Max"].default_value = TISSUE_COVER + 0.12
-    links.new(cloudy.outputs["Fac"], density.inputs["Value"])
+    density.inputs["To Min"].default_value = TISSUE_COVER - 0.07
+    density.inputs["To Max"].default_value = TISSUE_COVER + 0.07
+    links.new(flocs.outputs["Fac"], density.inputs["Value"])
     seen = nodes.new("ShaderNodeMixShader")
     links.new(density.outputs["Result"], seen.inputs[0])
     links.new(clear.outputs[0], seen.inputs[1])

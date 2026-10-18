@@ -153,7 +153,7 @@ const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills ||
 
 const pageTones: Tone[] = [
   // The plate is cut, not torn, and its colours are the weave's middle tone, under the plate before it loads.
-  { band: '#b8ab9c', bandInk: '#2e2418', panel: '#b8ab9c', panelInk: '#2e2418', hangs: true, cut: true, plate: '/objects/weave-tissue.avif', tab: '/objects/tab-lacoste.avif' },
+  { band: '#ae9c88', bandInk: '#2e2418', panel: '#ae9c88', panelInk: '#2e2418', hangs: true, cut: true, plate: '/objects/weave-tissue.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
