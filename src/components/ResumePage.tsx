@@ -4,12 +4,11 @@ import '@fontsource-variable/geist-mono'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 
-import { cv, pages, profile } from '../content'
+import { cv, profile } from '../content'
 import { Activity, useActivity } from './resume/Activity'
 import { CommandPalette, PaletteKey } from './resume/CommandPalette'
-import { Guestbook, signHref, useGuestbook } from './resume/Guestbook'
 import { TechIcon } from './resume/TechIcon'
-import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
+import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, RING, RULE, STAMP } from './resume/styles'
 
 const LOGOS: Record<string, string> = {
   'Cybership.io': '/objects/resume/cybership.png',
@@ -49,11 +48,8 @@ const PROJECTS = [
   },
 ]
 
-const HIGHLIGHTS = (['basics', 'likes', 'work', 'extras', 'contact'] as const).map((id) => ({ id, ...pages[id] }))
-
 const home = profile.extras.particulars.find((particular) => particular.label === 'Based in')?.value ?? ''
 const user = profile.socials.find((social) => social.label === 'GitHub')?.href.split('/').pop() ?? ''
-const repo = `${user}/${user}`
 
 const GRADIENT_TOP: CSSProperties = { background: 'linear-gradient(rgb(255, 255, 255) 0%, rgba(255, 255, 255, 0) 100%)' }
 const GRADIENT_FOOT: CSSProperties = { background: 'radial-gradient(65.62% 65.62% at 50% 100%, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%)' }
@@ -112,15 +108,12 @@ const PATHS: Record<string, ReactNode> = {
   download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />,
   out: <path d="M7 17 17 7M7 7h10v10" />,
   pin: <path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />,
-  message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
   back: <path d="m12 19-7-7 7-7M19 12H5" />,
   briefcase: <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" />,
   code: <path d="m16 18 6-6-6-6M8 6l-6 6 6 6" />,
   activity: <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />,
   book: <path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />,
   cap: <path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0zM22 10v6M6 12.5V16a6 3 0 0 0 12 0v-3.5" />,
-  music: <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />,
-  sparkles: <path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96l-6.14 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0zM20 3v4M22 5h-4" />,
   sun: <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />,
   moon: <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />,
   laptop: <path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2zM20.054 15.987H3.946" />,
@@ -141,9 +134,6 @@ const SECTIONS = [
   { id: 'activity', label: 'GitHub Activity', icon: 'activity', key: 'A' },
   { id: 'skills', label: 'Skills', icon: 'book', key: 'S' },
   { id: 'education', label: 'Education', icon: 'cap', key: 'G' },
-  { id: 'likes', label: 'Likes & Music', icon: 'music', key: 'L' },
-  { id: 'highlights', label: 'Highlights', icon: 'sparkles', key: 'H' },
-  { id: 'guestbook', label: 'Guestbook', icon: 'message', key: 'B' },
 ]
 
 /** A rule run the whole width of the window, with its two knots where it crosses the column's rails. */
@@ -478,16 +468,14 @@ type Theme = 'light' | 'dark' | 'system'
 /**
  * The résumé, copied from parascodes.is-a.dev down to its classes: one column between dotted rails, a banner over a
  * band holding the portrait and name, a few lines on the work, then each job as a row that opens on its points, the
- * systems it built as cards, a year of GitHub activity, the skills, the schooling, the likes from the desk, the site's
- * other pages running past, and a guestbook kept on GitHub. ⌘K opens a menu of all of it. Every job's points are word
- * for word what resume.pdf says.
+ * systems it built as cards, a year of GitHub activity, the skills and the schooling. ⌘K opens a menu of all of it.
+ * Every job's points are word for word what resume.pdf says.
  */
 export function ResumePage() {
   const navigate = useNavigate()
   const [theme, setTheme] = useState<Theme>('system')
   const [system, setSystem] = useState(false)
   const year = useActivity(user)
-  const notes = useGuestbook(repo)
   const dark = theme === 'dark' || (theme === 'system' && system)
 
   useEffect(() => {
@@ -509,8 +497,6 @@ export function ResumePage() {
   const coursework = cv.skills.find((skill) => skill.label === 'Relevant coursework')
   const skills = cv.skills.filter((skill) => skill !== coursework)
   const [college, school] = cv.education
-  const { likes, playlist } = profile.extras
-  const playlistId = playlist.href.split('/').pop()
   const open = (href: string) => window.open(href, '_blank', 'noopener')
 
   const commands = [
@@ -529,35 +515,6 @@ export function ResumePage() {
     { group: 'Theme', label: 'Dark', key: 'D', icon: glyph('moon', 'size-4'), run: () => choose('dark') },
     { group: 'Theme', label: 'System', key: 'U', icon: glyph('laptop', 'size-4'), run: () => choose('system') },
   ]
-
-  const highlight = (page: (typeof HIGHLIGHTS)[number], copy: boolean) => (
-    <Link key={`${page.id}${copy ? '-copy' : ''}`} to={page.path} tabIndex={copy ? -1 : undefined} aria-hidden={copy || undefined} className={`block ${FOCUS}`}>
-      <div className="group relative w-[300px] flex-shrink-0">
-        <div className="pointer-events-none absolute -inset-[4px] rounded-[10px] border border-black/5 transition-colors duration-300 group-hover:border-black/10 dark:border-white/5 dark:group-hover:border-white/10" />
-        <div className="relative flex flex-col overflow-hidden rounded-[6px] border border-black/5 bg-zinc-50 shadow-sm shadow-black/5 transition-all duration-300 group-hover:bg-zinc-100/80 dark:border-white/5 dark:bg-[#09090b] dark:shadow-lg dark:shadow-black/80 dark:group-hover:bg-[#121214]">
-          <div className="relative h-[200px] w-full overflow-hidden bg-zinc-100 dark:bg-[#0a0a0a]">
-            <img
-              src={page.preview.src}
-              alt={copy ? '' : page.preview.alt}
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover object-top grayscale transition-[filter,transform] duration-500 ease-out group-hover:grayscale-0 motion-safe:group-hover:scale-[1.025]"
-            />
-          </div>
-          <div className="flex h-[86px] flex-col gap-1.5 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center rounded-[4px] border border-black/5 bg-black/5 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-zinc-600 uppercase dark:border-white/5 dark:bg-white/5 dark:text-zinc-400">
-                {page.path === '/' ? 'Basics' : page.path.slice(1)}
-              </span>
-              <div className="flex shrink-0 items-center gap-2">
-                {glyph('out', 'size-3.5 text-zinc-400 transition-colors group-hover:text-zinc-900 dark:text-zinc-500 dark:group-hover:text-zinc-100')}
-              </div>
-            </div>
-            <p className="line-clamp-2 text-[13px] leading-snug font-medium text-zinc-800 transition-colors group-hover:text-zinc-900 dark:text-zinc-200 dark:group-hover:text-white">{page.preview.alt}</p>
-          </div>
-        </div>
-      </div>
-    </Link>
-  )
 
   return (
     <div
@@ -794,91 +751,6 @@ export function ResumePage() {
           </div>
         </Section>
 
-        <Section id="likes" title="Likes & Music" className="print:hidden">
-          <div className="relative flex flex-col gap-5 pt-6 pb-2">
-            <div className="group relative">
-              <div className={RING} />
-              <div className={CARD}>
-                <header className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-3 pb-2.5">
-                  <h3 className="text-[14px] font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Likes</h3>
-                  <span className="text-[12px] text-zinc-400 dark:text-zinc-600">what the desk holds</span>
-                  <span className={`${MONO} ml-auto text-[11px] text-zinc-400 tabular-nums dark:text-zinc-600`}>{Object.keys(likes).length} things · 1 playlist</span>
-                </header>
-                <div className="h-px bg-black/30 dark:bg-white/[0.15]" style={DASH_X} />
-                <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
-                  {Object.values(likes).map((like) => (
-                    <div key={like.subject} className="group/card relative">
-                      <div className="relative flex aspect-[2/3] w-full flex-col justify-between overflow-hidden rounded-[5px] border border-black/5 bg-zinc-100 p-2.5 dark:border-white/5 dark:bg-[#0a0a0a]">
-                        <span className={`${MONO} text-[10px] text-zinc-400 dark:text-zinc-600`}>{like.title}</span>
-                        <span className="text-[12px] leading-snug text-zinc-500 italic dark:text-zinc-400">{like.note}</span>
-                      </div>
-                      <p className="mt-1.5 truncate text-[11px] font-medium text-zinc-600 dark:text-zinc-400">{like.subject}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="h-px bg-black/30 dark:bg-white/[0.15]" style={DASH_X} />
-                <div className="flex flex-col gap-3 px-4 py-3.5">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <h3 className="text-[14px] font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Music</h3>
-                    <span className="text-[12px] text-zinc-400 dark:text-zinc-600">the playlist on the record on my desk</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <a href={playlist.href} className={`${CHIP} hover:text-zinc-900 dark:hover:text-zinc-200`}>
-                      {playlist.title}
-                    </a>
-                  </div>
-                </div>
-                <div className="h-px bg-black/30 dark:bg-white/[0.15]" style={DASH_X} />
-                <div className="px-4 py-3.5">
-                  <div className="flex items-baseline gap-2 pb-2.5">
-                    <p className={LABEL}>On repeat</p>
-                    <span className={`${MONO} text-[10px] text-zinc-400 dark:text-zinc-600`}>{playlist.title}</span>
-                  </div>
-                  <div className="overflow-hidden rounded-[10px]">
-                    <iframe
-                      title={`${playlist.title} on Spotify`}
-                      src={`https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator`}
-                      height="152"
-                      loading="lazy"
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      className="block w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <ViewAll to="/extras" />
-        </Section>
-
-        <Section id="highlights" title="Highlights" className="print:hidden">
-          <div className="relative mt-4 overflow-hidden py-2">
-            <div aria-hidden="true" className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-5 bg-linear-to-r from-white/70 to-transparent dark:from-black/70" />
-            <div aria-hidden="true" className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-5 bg-linear-to-l from-white/70 to-transparent dark:from-black/70" />
-            <div className="flex w-max animate-[highlights-marquee_28s_linear_infinite] items-start gap-4 px-1 hover:[animation-play-state:paused] motion-reduce:animate-none">
-              {HIGHLIGHTS.map((page) => highlight(page, false))}
-              {HIGHLIGHTS.map((page) => highlight(page, true))}
-            </div>
-          </div>
-          <div className="mt-2">
-            <ViewAll to="/" />
-          </div>
-        </Section>
-
-        <section id="guestbook" aria-labelledby="guestbook-title" className="relative mt-6 flex scroll-mt-24 flex-col print:hidden">
-          <Crossing edge="top" />
-          <div className="relative py-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 id="guestbook-title" className="text-[18px] font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                Guestbook
-              </h2>
-              <span className={`${MONO} shrink-0 text-[10px] tracking-[0.14em] text-zinc-400 uppercase dark:text-zinc-600`}>via GitHub</span>
-            </div>
-            <Crossing edge="bottom" />
-          </div>
-          <Guestbook repo={repo} notes={notes} />
-        </section>
-
         <div className="relative mt-2 flex flex-col items-center justify-center py-6 print:hidden">
           <figure className="flex w-full max-w-[480px] flex-col items-center">
             <blockquote className="mb-6 text-center text-[16px] leading-relaxed font-medium text-zinc-500 italic dark:text-zinc-400">
@@ -893,10 +765,6 @@ export function ResumePage() {
           </figure>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2 pb-6 print:hidden">
-          <a href={signHref(repo)} className={STAMP}>
-            {glyph('message', 'size-3')}
-            Sign the guestbook
-          </a>
           <Link to="/" className={STAMP}>
             {glyph('back', 'size-3')}
             Back to the site

@@ -131,12 +131,6 @@
   }
 }
 
-/* The résumé's highlights, running sideways on a loop of two copies. */
-@keyframes highlights-marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
 
 /* How fast a turning part on the mat turns, as a multiple of its own pace. It is a number so that it can ease. */
 @property --rate {
