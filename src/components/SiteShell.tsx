@@ -549,7 +549,7 @@ export function SiteShell({ children }: SiteShellProps) {
                   />
                 )}
                 {tones[i].hangs ? (
-                  <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} />
+                  <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} past={protrude} />
                 ) : tones[i].fills || tones[i].roll ? null : (
                   <motion.div
                     aria-hidden
