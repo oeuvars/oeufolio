@@ -1,34 +1,8 @@
-import { Link, useRouterState } from '@tanstack/react-router'
-import type { CSSProperties } from 'react'
+import { useRouterState } from '@tanstack/react-router'
 
 import { profile } from '../content'
 
 import notFoundCss from './not-found.css?url'
-
-/**
- * An edge torn along one side of a box, as a clip-path polygon: straight on the other three sides, and wandering
- * in by up to depth percent of the box along the torn one. Each seed tears it differently, and the same way on the
- * server and in the browser.
- */
-function ragged(seed: number, side: 'bottom' | 'ends', depth: number, teeth = 34) {
-  let state = seed
-  const random = () => {
-    state = (state * 16807) % 2147483647
-    return state / 2147483647
-  }
-  const along = Array.from({ length: teeth + 1 }, (_, i) => [(i / teeth) * 100, random() * depth] as const)
-  if (side === 'bottom') {
-    const edge = along.map(([x, d]) => `${(100 - x).toFixed(2)}% ${(100 - d).toFixed(2)}%`)
-    return `polygon(0 0, 100% 0, ${edge.join(', ')})`
-  }
-  // Tape torn off the roll at both ends.
-  const right = along.map(([y, d]) => `${(100 - d).toFixed(2)}% ${y.toFixed(2)}%`)
-  const left = Array.from({ length: teeth + 1 }, (_, i) => `${(random() * depth).toFixed(2)}% ${(100 - (i / teeth) * 100).toFixed(2)}%`)
-  return `polygon(${right.join(', ')}, ${left.join(', ')})`
-}
-
-const NOTE_EDGE = ragged(404, 'bottom', 3.2, 48)
-const TAPE_EDGES = [ragged(17, 'ends', 7, 12), ragged(91, 'ends', 7, 12)]
 
 const HAZARD = ['SIGNAL LOST', '信号なし', 'ERR 404', 'PAGE NOT FOUND', 'ページが見つかりません']
 const BREACH = ['NO SUCH ROUTE', '0x194', 'DEAD LINK', 'エラー']
@@ -54,7 +28,6 @@ function Track({ words }: { words: string[] }) {
 /** The page for a path that is not one: a 404 pasted up on a wall at night, out of photocopies, tape and spray paint. */
 export function NotFound() {
   const path = useRouterState({ select: (state) => state.location.pathname })
-  const exits = profile.nav.filter((item) => item.to !== '/')
 
   return (
     <main className="nf">
@@ -141,37 +114,6 @@ export function NotFound() {
       <p aria-hidden className="nf-vertical">
         ページが見つかりません
       </p>
-
-      <div className="nf-note-shadow">
-        <section className="nf-note" style={{ clipPath: NOTE_EDGE }}>
-          <p className="nf-note-ref">
-            ref <span>{path}</span>
-          </p>
-          <p className="nf-note-body">Nothing in the stack is filed under this name. It was moved, torn out, or never written.</p>
-          <ul className="nf-note-exits">
-            {exits.map((item) => (
-              <li key={item.to}>
-                <Link to={item.to}>{item.label}</Link>
-              </li>
-            ))}
-          </ul>
-          <span aria-hidden className="nf-stamp">
-            not found
-          </span>
-        </section>
-        {TAPE_EDGES.map((edge, i) => (
-          <span key={i} aria-hidden className={`nf-stick nf-stick-${i}`} style={{ clipPath: edge } as CSSProperties} />
-        ))}
-      </div>
-
-      <Link to="/" className="nf-home">
-        <span className="nf-home-plate">
-          <span aria-hidden className="nf-home-arrow">
-            &larr;
-          </span>
-          Back to the stack
-        </span>
-      </Link>
 
       <footer className="nf-hud nf-hud-bottom">
         <span>status 404</span>

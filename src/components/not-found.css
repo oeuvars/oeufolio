@@ -1,11 +1,10 @@
-@import '@fontsource/special-elite/400.css';
 @import '@fontsource/permanent-marker/400.css';
 @import '@fontsource/dotgothic16/400.css';
 
 /*
  * The 404: a paste-up on a wall at night. Every piece is a layer laid over the last with a blend, as a
  * photomontage is built: the stained wall, a halftone wash and two gels of light, the number printed three times
- * out of register, two runs of tape across it, a typed note taped on, and over all of it the screen's own lines
+ * out of register, two runs of tape across it, and over all of it the screen's own lines
  * and grain. The filters are in NotFound.tsx.
  */
 .nf {
@@ -14,9 +13,7 @@
   --nf-acid: #d4ff1f;
   --nf-hot: #ff2d55;
   --nf-cyan: #19e6ff;
-  --nf-paper: #e7e1d1;
   --nf-pixel: 'DotGothic16', 'JetBrains Mono Variable', ui-monospace, monospace;
-  --nf-type: 'Special Elite', 'Courier New', monospace;
   --nf-marker: 'Permanent Marker', 'Marker Felt', cursive;
   --nf-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --nf-stain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.011' numOctaves='5' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.58 0 0 0 0 0.55 1.6 0 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
@@ -398,171 +395,6 @@
   to { translate: -50% 0; }
 }
 
-/* --------------------------------------------------------------------- note */
-
-/* A clip cuts away a box-shadow, so the note casts its shadow from the wrapper, round the torn shape. */
-.nf-note-shadow {
-  position: absolute;
-  right: 7vw;
-  bottom: 11vh;
-  z-index: 5;
-  width: min(25rem, 86vw);
-  rotate: 2.4deg;
-  filter: drop-shadow(0 18px 22px rgb(0 0 0 / 0.6)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.5));
-}
-
-.nf-note {
-  position: relative;
-  padding: 2.1rem 1.9rem 2.6rem;
-  background-color: var(--nf-paper);
-  background-image:
-    var(--nf-grain),
-    linear-gradient(97deg, transparent 0 61%, rgb(0 0 0 / 0.08) 61.3%, rgb(255 255 255 / 0.25) 61.8%, transparent 63%),
-    radial-gradient(120% 80% at 30% 10%, transparent 40%, rgb(120 96 60 / 0.22) 100%);
-  background-size: 240px 240px, 100% 100%, 100% 100%;
-  background-blend-mode: multiply, normal, normal;
-  color: #1b1a17;
-  font-family: var(--nf-type);
-  font-size: 15px;
-  line-height: 1.55;
-}
-
-.nf-note-ref {
-  margin: 0 0 0.9rem;
-  font-family: var(--nf-pixel);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #6b675c;
-}
-
-.nf-note-ref span {
-  display: block;
-  margin-top: 0.15rem;
-  overflow-wrap: anywhere;
-  text-transform: none;
-  letter-spacing: 0.04em;
-  color: #1b1a17;
-}
-
-.nf-note-body {
-  margin: 0 0 1.1rem;
-  filter: url(#nf-bleed);
-}
-
-.nf-note-exits {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.2rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.nf-note-exits a {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
-.nf-note-exits a::before {
-  content: '> ';
-  color: var(--nf-hot);
-}
-
-.nf-note-exits a:hover,
-.nf-note-exits a:focus-visible {
-  background: #1b1a17;
-  color: var(--nf-acid);
-  outline: none;
-  text-decoration: none;
-}
-
-/* A rubber stamp, inked unevenly and pressed at a slant. */
-.nf-stamp {
-  position: absolute;
-  right: 1.1rem;
-  top: 1.2rem;
-  padding: 0.2em 0.5em;
-  border: 3px double rgb(214 31 59 / 0.85);
-  rotate: -11deg;
-  font-family: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
-  font-stretch: 70%;
-  font-weight: 900;
-  font-size: 1.35rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgb(214 31 59 / 0.85);
-  mix-blend-mode: multiply;
-  filter: url(#nf-distress);
-}
-
-/* Two pieces of masking tape holding the note up, torn off the roll at both ends. */
-.nf-stick {
-  position: absolute;
-  top: -14px;
-  width: 104px;
-  height: 30px;
-  background-color: rgb(226 220 196 / 0.62);
-  background-image: var(--nf-grain), linear-gradient(to bottom, rgb(255 255 255 / 0.3), transparent 60%);
-  background-size: 240px 240px, 100% 100%;
-  background-blend-mode: multiply, normal;
-  backdrop-filter: blur(0.6px);
-}
-
-.nf-stick-0 { left: -26px; rotate: -38deg; }
-.nf-stick-1 { right: -24px; rotate: 33deg; }
-
-/* --------------------------------------------------------------------- home */
-
-.nf-home {
-  position: absolute;
-  left: 6vw;
-  bottom: 13vh;
-  z-index: 5;
-  rotate: -2deg;
-  text-decoration: none;
-  /* The plate's clip would cut away a shadow of its own, so the link casts it, round the cut corners. */
-  filter: drop-shadow(7px 7px 0 var(--nf-hot));
-  transition: translate 160ms var(--ease-spring, ease), filter 160ms ease;
-}
-
-.nf-home-plate {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7em;
-  padding: 0.85em 1.3em 0.8em;
-  background-color: var(--nf-acid);
-  background-image: var(--nf-grain);
-  background-size: 240px 240px;
-  background-blend-mode: multiply;
-  color: #0b0b0b;
-  font-family: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
-  font-size: clamp(14px, 1.15vw, 18px);
-  font-stretch: 125%;
-  font-weight: 850;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
-}
-
-.nf-home:hover,
-.nf-home:focus-visible {
-  translate: -3px -3px;
-  outline: none;
-  filter: drop-shadow(10px 10px 0 var(--nf-hot)) drop-shadow(-2px 0 0 var(--nf-cyan));
-}
-
-.nf-home:focus-visible .nf-home-plate {
-  background-color: var(--nf-bone);
-}
-
-.nf-home-arrow {
-  font-family: var(--nf-pixel);
-  font-weight: 400;
-}
-
 /* ------------------------------------------------------------------ screen */
 
 .nf-scanlines {
@@ -597,29 +429,17 @@
 
 /* ------------------------------------------------------------------ phone */
 
-/* A short window: the note and the button shrink and move out of the number's way. */
-@media (min-width: 761px) and (max-height: 760px) {
-  .nf-note-shadow { width: 21rem; right: 4.5vw; bottom: 9vh; }
-  .nf-note { padding: 1.6rem 1.5rem 2rem; font-size: 13.5px; }
-  .nf-stamp { font-size: 1.1rem; }
-  .nf-home { bottom: 9vh; }
-  .nf-tape-hazard { top: 60vh; }
-}
-
 @media (max-width: 760px) {
   .nf-hud { left: 22px; right: 22px; font-size: 10px; gap: 1rem; }
   .nf-barcode { display: none; }
   .nf-target { display: none; }
   .nf-hud-bottom > :last-child { display: none; }
-  .nf-code { top: 28%; font-size: 45vw; font-stretch: 100%; translate: -50% -50%; }
-  .nf-scrawl { top: 6.5vh; right: 8vw; font-size: 2.1rem; }
-  .nf-tape-breach { top: 17vh; }
-  .nf-tape-hazard { top: 39vh; font-size: 14px; padding: 10px 0; }
+  .nf-code { top: 47%; font-size: 45vw; font-stretch: 100%; translate: -50% -50%; }
+  .nf-scrawl { top: 28vh; right: 8vw; font-size: 2.1rem; }
+  .nf-tape-breach { top: 37vh; }
+  .nf-tape-hazard { top: 57vh; font-size: 14px; padding: 10px 0; }
   .nf-vertical { display: none; }
-  .nf-note-shadow { right: 50%; translate: 50% 0; bottom: 19vh; rotate: 1.5deg; }
-  .nf-note { padding: 1.7rem 1.4rem 2.2rem; font-size: 14px; }
-  .nf-home { left: 50%; translate: -50% 0; bottom: 9vh; rotate: -1.5deg; }
-  .nf-home:hover, .nf-home:focus-visible { translate: calc(-50% - 3px) -3px; }
+  .nf-spray-hot { top: 32vh; left: -12vw; width: 95vw; height: 95vw; }
 }
 
 @media (prefers-reduced-motion: reduce) {
