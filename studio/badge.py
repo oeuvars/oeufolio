@@ -42,6 +42,7 @@ UP = 2  # output pixels to one of the reference's
 HOLDER = (105, 15, 620, 882, 22)
 RING = (345, 0, 442, 18)  # the part of the ring that stands clear of the holder
 CARD = (162, 195, 577, 850)
+EDGE = (163.5, 191.5, 579, 848.5)  # the card's own cut edge, measured where its shadow starts
 # The corners of the portrait print, clockwise from the top left. It was stuck down by hand.
 PRINT = ((274.2, 372.0), (456.8, 373.4), (458.4, 600.2), (271.4, 601.0))
 BLANK = (478, 385, 566, 595)  # bare card, to take paper grain from
@@ -127,6 +128,11 @@ def veil(ref):
     lighter = np.clip((lum - page) / (1 - page), 0, 1)
     white = (lum > page).astype(np.float64)
     amount = np.where(lum > page, lighter, darker)
+    # The vinyl lies flat on the page for a little way round the card. The page there is only a touch brighter
+    # than the fit, and the photograph's grain would make that a ragged white film, so there it only darkens.
+    x0, y0, x1, y1 = EDGE
+    round_card = inside(X + 0.5, Y + 0.5, x0 - 26, y0 - 26, x1 + 26, y1 + 26, 4.0)
+    amount = amount * (1 - white * round_card)
     x0, y0, x1, y1, r = HOLDER
     kept = np.maximum(inside(X + 0.5, Y + 0.5, x0 - 2, y0 - 2, x1 + 2, y1 + 2, 1.5, r + 2), inside(X + 0.5, Y + 0.5, *RING, 1.5))
     return white, amount * kept
@@ -573,9 +579,10 @@ def main():
     amount = np.clip(enlarged(amount), 0, 1)
     white = np.clip(enlarged(white * veil(ref)[1]) / np.maximum(amount, 1e-4), 0, 1)
 
-    # The card, and a few pixels of the vinyl round it, stay solid: they are the photograph as it is.
-    x0, y0, x1, y1 = CARD
-    solid = inside(X, Y, (x0 - 5) * UP, (y0 - 5) * UP, (x1 + 5) * UP, (y1 + 5) * UP, 3.0)
+    # The card stays solid, out to its own edge: it is the photograph as it is. Past it is only vinyl, and its
+    # shadow on the page under the vinyl comes through as the vinyl's darkening.
+    x0, y0, x1, y1 = EDGE
+    solid = inside(X, Y, x0 * UP, y0 * UP, x1 * UP, y1 * UP, 1.5)
     alpha = solid + (1 - solid) * amount
     colour = (card * solid[..., None] + white[..., None] * ((1 - solid) * amount)[..., None]) / np.maximum(alpha, 1e-4)[..., None]
 
