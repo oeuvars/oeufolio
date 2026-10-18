@@ -304,9 +304,9 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
         <path d={path} fill={leather ? `url(#${hide})` : surface || paper ? 'none' : undefined} />
       </svg>
       {leather && (
-        // The leather is the mat's, so it is in the mat's light: the lamp's, or the dark. The mat
-        // lends this its lamp and where its map of the lamp's light lies (mat/Mat.tsx). The clip
-        // isolates what is in it, so the layers multiply on white and the whole multiplies the leather.
+        // The leather is the mat's, so it is in the mat's light. The mat lends this where its map of the
+        // light lies (mat/Mat.tsx). The clip isolates what is in it, so the map multiplies on white and the
+        // whole multiplies the leather.
         <div
           aria-hidden
           data-mat-light
@@ -314,12 +314,8 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
           style={{ top: -reach, width, height: shape.height + 2 * reach, clipPath: `url(#${cut})` }}
         >
           <div
-            className="absolute inset-0 bg-no-repeat opacity-[var(--lit,0)] mix-blend-multiply"
-            style={{ backgroundColor: 'var(--light-rim)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
-          />
-          <div
-            className="absolute inset-0 bg-no-repeat opacity-[calc(1-var(--lit,0))] mix-blend-multiply"
-            style={{ backgroundColor: 'var(--light-dark)', backgroundImage: 'var(--dark-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
+            className="absolute inset-0 bg-no-repeat mix-blend-multiply"
+            style={{ backgroundColor: 'var(--light-rim, white)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
           />
         </div>
       )}

@@ -1,9 +1,8 @@
-import { Fragment, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 import { cn } from '../../lib/utils'
 import type { PlateId, PropId } from '../../types'
 import { Rulers } from './Rulers'
-import { lamp } from './lamp'
 import { PLATES, PORTRAITS } from './layout'
 
 type MatProps = {
@@ -24,8 +23,8 @@ type Geometry = {
 const WIDE_FROM = 420
 // An em of the plate is drawn at most this many pixels, where its render is still sharp.
 const LARGEST = 22
-// The plates and the lamp's light lie over the rulers, which are printed on the mat under everything on it.
-const FADE = 'pointer-events-none absolute z-1 max-w-none transition-opacity duration-500'
+// The plate and its light lie over the rulers, which are printed on the mat under everything on it.
+const LAID = 'pointer-events-none absolute z-1 max-w-none'
 
 /** Where a rectangle of the plate, given in its em, lies on the mat. */
 function over(geometry: Geometry, x: number, y: number, w: number, h: number): React.CSSProperties {
@@ -37,16 +36,12 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * A cutting mat in teal leather, seen from overhead, with the things left on it as on a desk in use. All of
  * it is one photograph of one set, rendered in the studio under one light, so every object shades the others
  * and throws its own shadow. The page lays the plate over its own leather, as large as lets all of it show.
- * The room is dimly lit, and on the desk lies a lamp, a donut of orange opal glass lit from inside. A prop
- * the plate's camera does not show, seen from a low camera of its own (PORTRAITS), lies over the plate as its
- * picture: the cat lamp was shown so, and is off the desk. Each state of the lamp is its own plate of the same
- * set: the objects in that light, and the light on the mat, which the leather, its rules and its rulers are
- * multiplied by: a map of the lamp's light with it on, the room's even dimness with it off. Where the lamp
- * lights the leather brighter than it was photographed, a second map adds the rest. Clicking the lamp
- * switches it.
+ * The desk is lit by one soft yellow lamp over it, on the side of the one at it. The plate is the objects in that
+ * light, and with it comes the light on the mat, a map the leather, its rules and its rulers are multiplied by.
+ * Where the lamp lights the leather brighter than it was photographed, a second map adds the rest. A prop the
+ * plate's camera does not show, seen from a camera of its own (PORTRAITS), lies over the plate as its picture.
  */
 export function Mat({ children, className }: MatProps) {
-  const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
@@ -66,7 +61,7 @@ export function Mat({ children, className }: MatProps) {
       let x = 0
       if (id === 'wide') {
         board.style.minHeight = ''
-        // The wide plate keeps to the top of the mat, so the lamp over it hangs from the top of the frame.
+        // The wide plate keeps to the top of the mat.
         em = Math.min(width / w, board.clientHeight / h, LARGEST)
         x = (width - w * em) / 2
       } else {
@@ -101,8 +96,8 @@ export function Mat({ children, className }: MatProps) {
     return () => watching.disconnect()
   }, [])
 
-  // The folder tab the page hangs from is cut from this leather (SiteShell's Tab), so it takes the same light:
-  // the lamp, and the lamp's map laid where it lies over the mat.
+  // The folder tab the page hangs from is cut from this leather (SiteShell's Tab), so it takes the same light: the
+  // map of it, laid where it lies over the mat.
   useLayoutEffect(() => {
     const frame = root.current
     const board = sheet.current
@@ -117,10 +112,7 @@ export function Mat({ children, className }: MatProps) {
       const at = tab.getBoundingClientRect()
       tab.style.setProperty('--light-at', `${mat.left - at.left + geometry.x - bx * em}px ${mat.top - at.top + geometry.y - by * em}px`)
     }
-    tab.style.setProperty('--lit', lit ? '1' : '0')
     tab.style.setProperty('--light-rim', plate.rim)
-    tab.style.setProperty('--light-dark', plate.dark)
-    tab.style.setProperty('--dark-image', `url(/objects/mat/desk-${geometry.id}-dark.avif)`)
     tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
     tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
     place()
@@ -133,19 +125,18 @@ export function Mat({ children, className }: MatProps) {
     return () => {
       moving.disconnect()
       window.removeEventListener('scroll', place, true)
-      for (const name of ['--lit', '--light-rim', '--light-dark', '--dark-image', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
+      for (const name of ['--light-rim', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
     }
-  }, [geometry, lit])
+  }, [geometry])
 
   const plate = geometry && PLATES[geometry.id]
 
   return (
     <div
       ref={root}
-      data-lit={lit}
       data-plate={geometry?.id}
       className={cn(
-        'group/mat mat @container relative isolate flex flex-col [--lamp:var(--lit)] [--lit:0] [--s:1] data-[lit=true]:[--lit:1]',
+        'group/mat mat @container relative isolate flex flex-col [--s:1]',
         className,
       )}
     >
@@ -167,28 +158,10 @@ export function Mat({ children, className }: MatProps) {
 
         {geometry && plate && (
           <>
-            {/* The lamp off: the window's dim light on the mat, shadows and all, then the objects in it. */}
+            {/* The lamp's light on the mat, shadows and all, then the objects in it. */}
             <div
               aria-hidden
-              className={`${FADE} inset-0 bg-no-repeat opacity-[calc(1-var(--lamp))] mix-blend-multiply`}
-              style={{
-                backgroundColor: plate.dark,
-                backgroundImage: `url(/objects/mat/desk-${geometry.id}-dark.avif)`,
-                backgroundSize: `${(plate.size[0] + 2 * plate.bleed[0]) * geometry.em}px ${(plate.size[1] + 2 * plate.bleed[1]) * geometry.em}px`,
-                backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
-              }}
-            />
-            <img
-              src={`/objects/mat/desk-${geometry.id}.avif`}
-              alt=""
-              draggable={false}
-              className={`${FADE} opacity-[calc(1-var(--lamp))]`}
-              style={over(geometry, 0, 0, ...plate.size)}
-            />
-            {/* By the lamp: its light on the mat, shadows and all, then the objects in it. */}
-            <div
-              aria-hidden
-              className={`${FADE} inset-0 bg-no-repeat opacity-[var(--lamp)] mix-blend-multiply`}
+              className={`${LAID} inset-0 bg-no-repeat mix-blend-multiply`}
               style={{
                 backgroundColor: plate.rim,
                 backgroundImage: `url(/objects/mat/desk-${geometry.id}-light.avif)`,
@@ -196,42 +169,28 @@ export function Mat({ children, className }: MatProps) {
                 backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
               }}
             />
-            {/* Close to the lamp the leather is lit brighter than it was photographed, which multiplying cannot
-                show: the rest of its light is added over it. */}
+            {/* Where the lamp lights the leather brighter than it was photographed, which multiplying cannot show,
+                the rest of its light is added over it. */}
             <div
               aria-hidden
-              className={`${FADE} inset-0 bg-no-repeat opacity-[var(--lamp)] mix-blend-plus-lighter`}
+              className={`${LAID} inset-0 bg-no-repeat mix-blend-plus-lighter`}
               style={{
                 backgroundImage: `url(/objects/mat/desk-${geometry.id}-light-past.avif)`,
                 backgroundSize: `${(plate.size[0] + 2 * plate.bleed[0]) * geometry.em}px ${(plate.size[1] + 2 * plate.bleed[1]) * geometry.em}px`,
                 backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
               }}
             />
-            <img
-              src={`/objects/mat/desk-${geometry.id}-lamp.avif`}
-              alt=""
-              draggable={false}
-              className={`${FADE} opacity-[var(--lamp)]`}
-              style={over(geometry, 0, 0, ...plate.size)}
-            />
-            {/* The props seen from a low camera of their own, standing over the plate where they stand on it. */}
+            <img src={`/objects/mat/desk-${geometry.id}.avif`} alt="" draggable={false} className={LAID} style={over(geometry, 0, 0, ...plate.size)} />
+            {/* The props seen from a camera of their own, over the plate where they stand on it. */}
             {Object.entries(PORTRAITS[geometry.id] ?? {}).map(([prop, seen]) => (
-              <Fragment key={prop}>
-                <img
-                  src={`/objects/mat/desk-${geometry.id}-${prop}.avif`}
-                  alt=""
-                  draggable={false}
-                  className={`${FADE} opacity-[calc(1-var(--lamp))]`}
-                  style={over(geometry, ...seen.picture)}
-                />
-                <img
-                  src={`/objects/mat/desk-${geometry.id}-${prop}-lamp.avif`}
-                  alt=""
-                  draggable={false}
-                  className={`${FADE} opacity-[var(--lamp)]`}
-                  style={over(geometry, ...seen.picture)}
-                />
-              </Fragment>
+              <img
+                key={prop}
+                src={`/objects/mat/desk-${geometry.id}-${prop}.avif`}
+                alt=""
+                draggable={false}
+                className={LAID}
+                style={over(geometry, ...seen.picture)}
+              />
             ))}
           </>
         )}

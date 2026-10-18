@@ -12,7 +12,7 @@ type RecorderProps = {
 
 /**
  * The industrial design like: a Teenage Engineering TP-7, rendered from a model of its front. The title is
- * the readout on its display, in the plate. Over the plate lie three layers, by day and by the lamp: the line
+ * the readout on its display, in the plate. Over the plate lie three layers: the line
  * across the reel, the raised hub, and the marks on the hub. The line and the marks turn; the hub, which shows
  * its side and throws its shadow, stays put between them. Nothing moves
  * under the pointer. Pressing it plays a few bars off tape, and the reel turns for as long as they last,
@@ -24,13 +24,12 @@ type Lean = { wide: number[]; tall: number[] }
 
 type LayerProps = {
   lean: Lean
-  day: string
-  lamp: string
+  render: string
   turning?: React.Ref<HTMLSpanElement>
 }
 
 // Each layer stands off the mat, so the lens shows it a little out from where it lies and a little larger.
-function Layer({ lean, day, lamp, turning }: LayerProps) {
+function Layer({ lean, render, turning }: LayerProps) {
   return (
     <span
       aria-hidden
@@ -48,8 +47,7 @@ function Layer({ lean, day, lamp, turning }: LayerProps) {
         ref={turning}
         className={turning ? 'absolute inset-0 animate-reel revving [--rate:0] group-data-[playing=true]/recorder:[--rate:3]' : 'absolute inset-0'}
       >
-        <i className={`${RENDER} absolute inset-0 opacity-[calc(1-var(--lamp))] ${day}`} />
-        <i className={`${RENDER} absolute inset-0 opacity-[var(--lamp)] ${lamp}`} />
+        <i className={`${RENDER} absolute inset-0 ${render}`} />
       </span>
     </span>
   )
@@ -79,19 +77,16 @@ export function Recorder({ like }: RecorderProps) {
       <Layer
         lean={{ wide: lean.wide.reel, tall: lean.tall.reel }}
         turning={reel}
-        day="bg-[url(/objects/mat/desk-wide-reel.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel.avif)]"
-        lamp="bg-[url(/objects/mat/desk-wide-reel-lamp.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel-lamp.avif)]"
+        render="bg-[url(/objects/mat/desk-wide-reel.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-reel.avif)]"
       />
       <Layer
         lean={{ wide: lean.wide.hub, tall: lean.tall.hub }}
-        day="bg-[url(/objects/mat/desk-wide-hub.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-hub.avif)]"
-        lamp="bg-[url(/objects/mat/desk-wide-hub-lamp.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-hub-lamp.avif)]"
+        render="bg-[url(/objects/mat/desk-wide-hub.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-hub.avif)]"
       />
       <Layer
         lean={{ wide: lean.wide.marks, tall: lean.tall.marks }}
         turning={marks}
-        day="bg-[url(/objects/mat/desk-wide-marks.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-marks.avif)]"
-        lamp="bg-[url(/objects/mat/desk-wide-marks-lamp.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-marks-lamp.avif)]"
+        render="bg-[url(/objects/mat/desk-wide-marks.avif)] group-data-[plate=tall]/mat:bg-[url(/objects/mat/desk-tall-marks.avif)]"
       />
       <h2 className="sr-only">
         {like.subject}: {like.title}

@@ -99,6 +99,7 @@ export type PropId =
   | 'flutelamp'
   | 'lustrelamp'
   | 'mushroomlamp'
+  | 'watch'
 
 /** One rendered picture of the desk: wide for a mat in a window, tall for a phone. */
 export type PlateId = 'wide' | 'tall'
@@ -114,8 +115,8 @@ export type Plate = {
   size: [number, number]
   bleed: [number, number]
   rim: string
-  dark: string
   eye: [number, number, number]
+  lamp: [number, number, number]
   at: Partial<Record<PropId, [number, number, number]>>
 }
 
