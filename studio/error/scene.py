@@ -3,9 +3,8 @@
     blender -b --factory-startup -P studio/error/scene.py -- WORK
 
 WORK holds layout.json and each page's maps. The wide plate is the book lying open on a dark cloth: boards covered in
-indigo silk, and on them the two halves of the text block, each page rising out of the gutter and easing down at its
-fore-edge, the edges of the leaves under it showing. The tall plate is one loose page of it on the same cloth. A
-cherry petal or two has fallen on the pages. The light is a big window to the top left, a soft box high over the camera for
+black silk, and on them the two halves of the text block, each page rising out of the gutter and easing down at its
+fore-edge, the edges of the leaves under it showing. The tall plate is one loose page of it on the same cloth. The light is a big window to the top left, a soft box high over the camera for
 the gold to catch, and the room.
 
 The camera is a long lens straight overhead. Writes render.npy (linear RGBA, top row first) and boxes.json: where each
@@ -326,17 +325,17 @@ if plate == "wide":
     lift_base = BOARD + 0.6
     surfaces["right"] = Surface(w, h, 0.0, h / 2, "left", lift_base)
     surfaces["left"] = Surface(w, h, -w, h / 2, "right", lift_base)
-    board = silk("board", (0.018, 0.03, 0.075), rough=0.4, weave=1400, sheen=0.5)
+    board = silk("board", (0.012, 0.011, 0.010), rough=0.45, weave=1400, sheen=0.4)
     box("boards", -w - OVERHANG, -h / 2 - OVERHANG, w + OVERHANG, h / 2 + OVERHANG, 0, BOARD, board)
     for name, surface in surfaces.items():
         surface.build(name, paper(name, pages[name]))
         surface.walls(name, edges, BOARD)
-    petals = [((176, -100), 2.1, 15.5, 0.9, "right"), ((-176, -60), -0.6, 14.0, 1.1, "left")]
+    petals = []
 else:
     w, h = pages["loose"]["size"]
     surfaces["loose"] = Surface(w, h, -w / 2, h / 2, None, 0.0)
     surfaces["loose"].build("loose", paper("loose", pages["loose"]))
-    petals = [((58, 6), 2.0, 12.0, 1.0, "loose")]
+    petals = []
 
 cloth(frame)
 petal_mat = petal_material()

@@ -2,15 +2,14 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow>=11.3", "scipy"]
 # ///
-"""The error page: a book of poems lying open on a dark cloth, after the decorated anthologies of the Heian court,
+"""The error page: a book of poems lying open on a dark cloth, painted after the gold screens of the Momoyama court,
 photographed from above in soft window light.
 
     uv run studio/error/book.py [--plates wide tall] [--scale 0.5] [--samples 256] [--proof DIR]
 
-Each page is washi, kozo fibres and all, with sheets of dyed paper joined on along torn edges, patterns printed in
-mica, cut gold leaf sprinkled over it, bands of gold dust and gold-leaf mist laid across it, and painted in mineral
-colours, sumi and gold: cranes in flight, a weeping cherry in flower, a moon in silver, Mount Fuji in mist, pampas
-grass, plovers over water and a river carrying maple leaves. Ki no Tomonori's poem (Kokinshū 84)
+Each page is heavy washi, kozo fibres and all, painted the way the Momoyama screens were: grounds of gold leaf cut
+into clouds, an old black pine in heavy sumi with its needles in malachite, rocks cut in hard strokes, the sun in
+vermilion, and a great wave in Prussian blue curling over toward Mount Fuji out of a sea of indigo-dyed paper. Ki no Tomonori's poem (Kokinshū 84)
 is brushed down the right-hand page in sumi, his name under it and a seal in cinnabar under that; the left-hand page
 is printed with a reading of the poem, what happened and the two things to do about it. Every word is in the
 photograph: the page lays clear live text over the same places, from src/components/error.json.
@@ -63,8 +62,9 @@ def encode(c):
     return np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055)
 
 
-WASHI = linear("#f1ede2")  # unbleached kozo, a little warm
+WASHI = linear("#ebe4d4")  # heavy unbleached kozo
 INDIGO = linear("#c4d7d9")  # paper dyed pale with indigo
+AI = linear("#33445b")  # paper dyed deep in indigo vats
 WISTERIA = linear("#d9cee0")  # paper dyed with wisteria
 SUMI = linear("#151311")
 GOLD = np.array([1.0, 0.74, 0.33])  # gold leaf, as metal
@@ -80,6 +80,10 @@ MOMIJI = [linear("#c2412b"), linear("#d8692f"), linear("#b8322f"), linear("#cf8a
 ROKUSHO = linear("#5f8a64")  # malachite green
 BARK = linear("#2b231d")  # sumi with a little brown in it
 FUJI = linear("#8193ad")  # an indigo wash, as a filter over the paper
+BERO = linear("#1d3352")  # Prussian blue, as Hokusai had it
+BERO_PALE = linear("#6c8bb0")
+PINE = linear("#2c4433")  # malachite ground dark for pine needles
+VERMILION = linear("#c23a21")  # the sun
 
 
 def catmull(points, step=0.12):
@@ -631,6 +635,151 @@ class Page:
         self.albedo = self.albedo * (1 + 0.07 * m[..., None])
         self.rough -= 0.25 * m
 
+    # ---------------------------------------------------------------- the Momoyama hand
+
+    def kinji(self, base, lobes, seed, above=True):
+        """A ground of gold leaf over the page above (or below) base mm, its edge cut into rounded clouds: lobes
+        are x, the y it reaches and radius mm, each a cloud bulging past the edge. Laid in squares, its seams
+        showing."""
+        field = (self.y < base) if above else (self.y > base)
+        field = field.astype(np.float32)
+        for x, reach, r in lobes:
+            cy = reach - r if above else reach + r
+            field = np.maximum(field, np.clip((r - np.hypot(self.x - x, self.y - cy)) * PX + 0.5, 0, 1))
+        field = ndimage.gaussian_filter(field, 0.6)
+        seams = ((np.abs((self.x + 11) % 36 - 18) > 17.85) | (np.abs((self.y + 5) % 36 - 18) > 17.85)).astype(np.float32)
+        crinkle = self.cached("crinkle", lambda: self.noise(0.3, 2.5))
+        # Leaf laid by hand: each square a shade off the next.
+        rng = np.random.default_rng(seed)
+        tone = rng.uniform(0.9, 1.04, (int(self.h / 36) + 3, int(self.w / 36) + 3))
+        squares = tone[((self.y + 5) // 36).astype(int), ((self.x + 11) // 36).astype(int)]
+        colour = GOLD * (squares * (1 - 0.14 * seams))[..., None]
+        self.lay_metal(field, colour, 0.28, crinkle)
+        self.rough += 0.1 * seams * field
+        self.height += 0.012 * seams * field
+        return field
+
+    def sun(self, cx, cy, r):
+        """The sun, a disc of vermilion laid on thick."""
+        m = np.clip((r - np.hypot(self.x - cx, self.y - cy)) * PX + 0.5, 0, 1)
+        self.pigment(m, VERMILION, body=0.035, vary=0.07)
+
+    def pine(self, limbs, clumps, seed):
+        """An old black pine, as the Kanō painted them on gold: limbs in heavy sumi, the bark cracked into plates,
+        and the needles in flat dark masses of malachite, each needle a stroke. limbs are points with a starting and
+        ending width; clumps are x, y, width and height mm."""
+        rng = np.random.default_rng(seed)
+        img, draw = self.canvas()
+        for points, w0, w1 in limbs:
+            self.stroke(draw, points, w0, w1, taper=(0.0, 0.15))
+        a = self.warp(self.mask(img, 0.7), 0.25, 1.5)
+        plates = np.clip(1 - np.abs(self.noise(1.2, 5)) * 5, 0, 1)
+        pool = np.clip(a - ndimage.gaussian_filter(a, 0.6 * PX), 0, 1)
+        dry = np.clip(self.noise(0.2, 1.5, aspect=0.3) - 0.6, 0, 1)
+        self.ink(np.clip(a * (0.93 + 0.07 * plates - 0.12 * dry) + 0.3 * pool, 0, 1), BARK)
+        mass, m_draw = self.canvas()
+        needles, n_draw = self.canvas()
+        for cx, cy, w, h in clumps:
+            # A clump is a row of bursts, each a wheel of needles fanning up and out from where they spring.
+            bursts = max(2, int(w / 8))
+            for i in range(bursts):
+                bx = cx - w / 2 + w * (i + 0.5) / bursts + rng.normal(0, 1)
+                by = cy + rng.normal(0, h * 0.08)
+                R = h * rng.uniform(0.6, 0.8)
+                m_draw.pieslice([(bx - R * 0.8) * PX, (by - R * 0.8) * PX, (bx + R * 0.8) * PX, (by + R * 0.8) * PX], 180, 360, fill=255)
+                m_draw.ellipse([(bx - R * 0.8) * PX, (by - R * 0.25) * PX, (bx + R * 0.8) * PX, (by + R * 0.25) * PX], fill=255)
+                for a_ in np.linspace(-1.75, 1.75, 34) + rng.normal(0, 0.03, 34):
+                    L = R * rng.uniform(0.88, 1.02)
+                    self.stroke(n_draw, [(bx, by), (bx + L * math.sin(a_), by - L * math.cos(a_))], 0.34, 0.14, taper=(0, 0.25))
+        clump = np.clip(self.mask(mass, 1.5) * 0.85, 0, 1)
+        self.pigment(clump, PINE * 0.45, body=0.03)
+        n = self.mask(needles, 0.4)
+        self.pigment(n * 0.9, PINE * 1.25, body=0.015)
+        self.ink(np.clip(n * 0.5 * (1 - clump * 0.3), 0, 1))
+
+    def rocks(self, shapes, seed):
+        """Rocks cut out in sumi: a wash over each, its outline dragged hard and dark, and axe-cut strokes (fupi cun)
+        down its faces. Each is a list of points mm."""
+        rng = np.random.default_rng(seed)
+        body, b_draw = self.canvas()
+        lines, l_draw = self.canvas()
+        for pts in shapes:
+            self.polygon(b_draw, pts)
+            ring = list(pts) + [pts[0]]
+            for i in range(len(ring) - 1):
+                self.stroke(l_draw, [ring[i], ring[i + 1]], rng.uniform(0.9, 1.8), rng.uniform(0.5, 1.2), taper=(0.1, 0.2))
+            xs, ys = np.array(pts).T
+            for _ in range(int((xs.max() - xs.min()) * 0.5)):
+                x = rng.uniform(xs.min() + 3, xs.max() - 3)
+                y = rng.uniform(ys.min() + 3, ys.max() - 2)
+                L = rng.uniform(4, 10)
+                self.stroke(l_draw, [(x, y), (x - L * 0.25, y + L * 0.5), (x - L * 0.35, y + L)], rng.uniform(1.2, 2.4), 0.2, taper=(0, 0.6))
+        b = self.mask(body, 0.8)
+        top = min(min(y for _, y in pts) for pts in shapes)
+        shade = np.clip(0.6 + 0.35 * (self.y - top) / 30, 0, 0.96)
+        self.ink(b * shade, linear("#45413c"), rough=0.8)
+        self.ink(self.brush(self.mask(lines), 0.95))
+
+    def sea(self, region, seed):
+        """A band of open sea in Prussian blue, its top rolling in swells, with lines of gold running across it.
+        region is x0, y0 (the swells' mean), x1, y1 mm."""
+        rng = np.random.default_rng(seed)
+        x0, y0, x1, y1 = region
+        top = y0 + 1.6 * np.sin(self.x / 9 + rng.uniform(0, 6)) + 0.8 * np.sin(self.x / 3.7 + rng.uniform(0, 6))
+        m = np.clip((self.y - top) * PX + 0.5, 0, 1) * np.clip((y1 - self.y) * PX + 0.5, 0, 1)
+        m *= np.clip((self.x - x0) / 6, 0, 1) * np.clip((x1 - self.x) / 6, 0, 1)
+        self.pigment(m, BERO * 1.3, body=0.025, vary=0.06)
+        self.outline(m, 0.6, 0.3)
+        img, draw = self.canvas()
+        for i in range(2):
+            y = y0 + (y1 - y0) * (0.45 + 0.35 * i)
+            xs = np.linspace(x0 + 4, x1 - 4, 20)
+            self.stroke(draw, list(zip(xs, y + 0.7 * np.sin(xs / 7 + i))), 0.45, 0.3, taper=(0.1, 0.1))
+        self.gilt(self.mask(img) * m)
+
+    def great_wave(self, x, y, size, seed, flip=False):
+        """A great wave in Prussian blue rising and curling over, after Hokusai: its lip breaking into claws of foam,
+        lines of paler blue and white running along it, and spray flung off its crest. x, y is its foot at the left
+        and size its width, mm."""
+        rng = np.random.default_rng(seed)
+        outer = [(0.0, 0.85), (0.12, 0.6), (0.25, 0.33), (0.4, 0.13), (0.55, 0.03), (0.7, 0.04), (0.82, 0.12), (0.88, 0.25), (0.86, 0.34), (0.79, 0.37)]
+        inner = [(0.74, 0.31), (0.68, 0.24), (0.61, 0.22), (0.55, 0.28), (0.52, 0.42), (0.56, 0.6), (0.66, 0.76), (0.8, 0.86)]
+        at = lambda pts: place(pts, 0, 0, size, 0, flip) + np.array([x, y])
+        body, b_draw = self.canvas()
+        self.polygon(b_draw, at(catmull(outer, 0.004).tolist() + catmull(inner, 0.004).tolist() + [(0.8, 0.9), (0.0, 0.9)]))
+        b = self.mask(body, 0.6)
+        self.pigment(b, BERO, body=0.03, vary=0.06)
+        path = at(catmull(outer, 0.002))
+        tangent = np.gradient(path, axis=0)
+        tangent /= np.linalg.norm(tangent, axis=1, keepdims=True) + 1e-9
+        normal = np.stack([tangent[:, 1], -tangent[:, 0]], -1) * (-1 if flip else 1)  # out of the water
+        stripes, s_draw = self.canvas()
+        foam, f_draw = self.canvas()
+        n = len(path)
+        for depth, width, start in ((0.035, 0.012, 0.2), (0.07, 0.008, 0.3), (0.105, 0.007, 0.4), (0.14, 0.006, 0.5)):
+            seg = slice(int(n * start), int(n * 0.93))
+            pts = path[seg] - normal[seg] * depth * size
+            self.stroke(s_draw, pts[:: max(1, len(pts) // 40)], width * size, width * size * 0.5, taper=(0.15, 0.15))
+        # Foam along the lip and its claws.
+        lip = slice(int(n * 0.35), int(n * 0.97))
+        pts = path[lip] - normal[lip] * 0.012 * size
+        self.stroke(f_draw, pts[:: max(1, len(pts) // 50)], 0.028 * size, 0.012 * size, taper=(0.2, 0.05))
+        for k in range(int(n * 0.42), int(n * 0.97), max(1, n // 70)):
+            p, t, nn = path[k], tangent[k], normal[k]
+            L = size * rng.uniform(0.035, 0.06)
+            hook = [p, p + nn * L * 0.5 + t * L * 0.15, p + nn * L * 0.85 + t * L * 0.5, p + nn * L * 0.75 + t * L * 0.85]
+            self.stroke(f_draw, hook, size * 0.014, size * 0.003, taper=(0, 0.5))
+        for _ in range(60):
+            k = rng.integers(int(n * 0.3), int(n * 0.8))
+            q = path[k] + normal[k] * size * rng.uniform(0.03, 0.12) + rng.normal(0, size * 0.01, 2)
+            r = size * rng.uniform(0.003, 0.008)
+            f_draw.ellipse([(q[0] - r) * PX, (q[1] - r) * PX, (q[0] + r) * PX, (q[1] + r) * PX], fill=255)
+        st = self.mask(stripes, 0.5) * b
+        self.pigment(st * 0.8, BERO_PALE, body=0.0)
+        f = self.mask(foam, 0.5)
+        self.pigment(f, GOFUN, body=0.04)
+        self.outline(np.clip(b + f, 0, 1), 0.7, 0.35)
+
     # ---------------------------------------------------------------- ink
 
     def glyphs(self, draw_fn):
@@ -685,7 +834,7 @@ class Page:
                     y += size * advance
                 self.anchors.append({"id": f"poem-{i}", "text": line, "box": [x - size / 2, top + starts[i] * em, x + size / 2, y], "vertical": True})
 
-        self.ink(self.brush(self.glyphs(draw)))
+        self.ink(self.brush(ndimage.grey_dilation(self.glyphs(draw), size=4)))
 
     def signature(self, x, bottom, em):
         font = ImageFont.truetype(BRUSH, int(em * PX))
@@ -777,32 +926,19 @@ PAGE = (205.0, 285.0)
 
 
 def right_page():
-    """The poem's page, its gutter at its left edge: a weeping cherry in flower hanging in from the top right and
-    dropping its petals down through the poem, a moon in silver behind a band of gold mist, and below, the indigo
-    sheet as a river carrying maple leaves."""
+    """The poem's page, its gutter at its left edge: gold leaf coming down from the top in clouds, the sun in
+    vermilion behind a band of gold mist, and at its foot a great wave curling over toward Mount Fuji, out of a sea
+    of paper dyed deep in indigo."""
     p = Page(*PAGE, seed=11)
     p.washi()
-    river = p.joined(INDIGO, [(0, 198), (60, 206), (125, 230), (205, 216)], below=True, seed=4)
-    p.shippo(river)
-    p.dust((60, 4, 230, 34), seed=8, density=14)
-    p.moon(31, 50, 19)
-    p.kasumi([(-10, 74, 64, 9), (8, 58, 74, 6)], seed=3)
-    p.dust((-20, 52, 90, 84), seed=10, density=10)
-    p.water((0, 228, 205, 283), 7, seed=15)
-    p.maples([(66, 247, 13, 0.4), (96, 266, 11, -0.6), (128, 243, 12, 1.2), (160, 270, 14, 2.4), (186, 246, 10, -1.8), (124, 280, 9, 0.9), (54, 276, 10, -2.6), (198, 278, 11, 0.2)], seed=16)
-    p.leaf([(120, 214, 16, 18), (192, 262, 10, 10), (30, 100, 9, 8)], seed=12)
-    branches = [
-        ([(214, 4), (196, 12), (180, 20), (166, 22), (150, 17), (134, 21), (120, 15)], 5.2, 1.0),
-        ([(180, 20), (184, 30), (186, 48), (190, 70), (191, 96), (189, 124)], 1.6, 0.4),
-        ([(196, 12), (199, 34), (201, 62), (200, 88)], 1.4, 0.4),
-        ([(166, 22), (170, 36), (174, 52), (176, 74)], 1.2, 0.35),
-        ([(150, 17), (146, 8), (140, 2)], 1.4, 0.5),
-        ([(134, 21), (128, 32), (118, 38)], 1.0, 0.35),
-    ]
-    blossoms = [(176, 13, 5.2, 0.2), (160, 27, 4.8, 1.1), (143, 12, 4.6, 0.6), (126, 26, 4.4, 2.0), (118, 39, 4.0, 0.3), (192, 22, 4.6, 1.6), (187, 40, 4.2, 0.9), (190, 60, 4.0, 2.2), (191, 82, 3.8, 0.5), (189, 104, 3.6, 1.4), (200, 44, 4.0, 2.6), (201, 72, 3.6, 0.1), (172, 44, 4.0, 1.9), (176, 66, 3.6, 0.7), (205, 22, 4.4, 1.2), (157, 9, 4.2, 2.4)]
-    buds = [(189, 122, 3.0, 0.2), (200, 90, 2.8, -0.2), (177, 77, 2.6, 0.1), (139, 2, 2.6, -0.5), (186, 92, 2.4, 0.3), (182, 52, 2.4, -0.4)]
-    p.cherry(branches, blossoms, buds, seed=17)
-    p.falling((60, 40, 200, 200), 14, seed=18)
+    p.joined(AI, [(0, 252), (80, 246), (150, 258), (205, 250)], below=True, seed=4)
+    p.kinji(14, [(92, 22, 10), (122, 28, 12), (152, 34, 14), (184, 30, 13), (205, 24, 10)], seed=2)
+    p.sun(32, 52, 21)
+    p.kasumi([(-10, 86, 76, 9), (6, 66, 88, 6)], seed=3)
+    p.water((0, 262, 205, 284), 4, seed=15)
+    p.fuji(152, 234, 258, 20)
+    p.great_wave(170, 244, 52, seed=27)
+    p.great_wave(42, 188, 102, seed=26)
     p.poem(right=150, top=50, pitch=24, em=16, starts=[0, 1.7, 0.6, 2.8, 1.2], sizes=[1, 0.94, 1, 0.9, 1])
     p.signature(x=29, bottom=214, em=8.2)
     p.seal(22.5, 222, 13.5)
@@ -810,22 +946,23 @@ def right_page():
 
 
 def left_page():
-    """The reading's page, its gutter at its right edge: cranes flying over the wisteria sheet, a band of gold mist
-    under them, pampas grass drawn in gold behind the writing, and at its foot Mount Fuji rising out of mist over
-    water, with plovers flying low over it."""
+    """The reading's page, its gutter at its right edge: a ground of gold leaf across its head, an old black pine
+    rising up its left side and reaching its limbs out over the gold, rocks cut in sumi at its foot and a band of gold
+    mist across them."""
     p = Page(*PAGE, seed=21)
     p.washi()
-    p.joined(WISTERIA, [(0, 74), (70, 64), (140, 81), (205, 68)], below=False, seed=6, mica=True)
-    p.dust((-30, 2, 140, 30), seed=23, density=10)
-    p.kasumi([(-10, 112, 88, 8), (30, 96, 99, 5)], seed=7)
-    p.susuki([(176, 120, 236, 10), (186, 104, 238, -6), (166, 140, 236, 14), (196, 128, 240, 4)], seed=24)
-    p.fuji(158, 226, 266, 52)
-    p.kasumi([(-10, 160, 254, 9), (96, 215, 262, 6)], seed=9)
-    p.dust((-30, 240, 140, 266), seed=13, density=12)
-    p.water((0, 266, 205, 284), 4, seed=25, silver=True)
-    p.plovers([(24, 242, 9, 0.1, False), (46, 233, 8, -0.15, False), (68, 245, 8.5, 0.05, False), (88, 236, 7, 0.2, False)])
-    p.leaf([(14, 170, 8, 6), (190, 160, 8, 6)], seed=22)
-    p.cranes([(46, 36, 52, -0.12, False), (112, 21, 42, 0.06, False), (164, 48, 34, -0.2, False)])
+    p.kinji(40, [(20, 58, 16), (60, 52, 14), (100, 62, 18), (140, 50, 13), (180, 60, 16), (205, 48, 12)], seed=8)
+    p.kasumi([(56, 196, 250, 8), (110, 215, 238, 6)], seed=9)
+    p.rocks([[(0, 286), (0, 262), (14, 250), (30, 246), (44, 256), (52, 272), (60, 286)], [(50, 286), (66, 266), (88, 258), (104, 264), (118, 286)], [(150, 286), (162, 270), (186, 262), (205, 266), (205, 286)]], seed=10)
+    limbs = [
+        ([(-6, 292), (10, 250), (22, 205), (14, 160), (22, 120), (34, 88), (52, 62), (80, 46)], 17, 8),
+        ([(80, 46), (115, 52), (150, 38), (185, 44), (212, 36)], 8, 2.5),
+        ([(16, 160), (4, 150), (-6, 148)], 5, 2.5),
+        ([(34, 88), (30, 60), (36, 30)], 5, 1.8),
+        ([(150, 38), (160, 20), (172, 12)], 3, 1.2),
+    ]
+    clumps = [(78, 36, 36, 15), (118, 42, 40, 16), (160, 28, 38, 14), (196, 36, 30, 13), (36, 22, 28, 12), (6, 140, 24, 11), (172, 8, 22, 10)]
+    p.pine(limbs, clumps, seed=12)
     x = 44
     p.text(READING, x, 112, 8.4, 12.8, prefix="reading")
     p.text([SOURCE], x, 164, 5.8, 0, density=0.6, prefix="source")
@@ -836,33 +973,20 @@ def left_page():
 
 
 def loose_page():
-    """One page of the book on its own, for a tall window: the cherry and the moon over the poem, Mount Fuji in mist
-    between the poem and the reading, pampas grass in gold beside the reading, and the river of maple leaves at its foot."""
+    """One page of the book on its own, for a tall window: gold leaf and a pine limb across its head, the sun over the
+    poem, a great wave with Mount Fuji between the poem and the reading, and the indigo sea at its foot."""
     p = Page(160.0, 335.0, seed=31)
     p.washi()
-    p.joined(WISTERIA, [(0, 17), (60, 24), (110, 15), (160, 21)], below=False, seed=7, mica=True)
-    river = p.joined(INDIGO, [(0, 312), (50, 304), (115, 316), (160, 307)], below=True, seed=5)
-    p.shippo(river)
-    p.moon(22, 50, 14)
-    p.kasumi([(-10, 52, 62, 7)], seed=3)
-    p.fuji(112, 160, 194, 46)
-    p.kasumi([(-10, 120, 186, 8), (60, 170, 192, 5)], seed=9)
-    p.dust((-30, 168, 120, 196), seed=19, density=9)
-    p.water((0, 312, 160, 334), 4, seed=15)
-    p.maples([(40, 322, 10, 0.4), (78, 327, 9, -0.6), (112, 320, 10, 1.2), (146, 326, 9, 2.4)], seed=16)
-    p.leaf([(98, 160, 8, 6), (14, 230, 8, 6)], seed=32)
-    branches = [
-        ([(166, 3), (152, 12), (138, 17), (122, 14), (108, 18), (94, 13)], 4.4, 0.9),
-        ([(152, 12), (150, 28), (151, 48), (150, 74), (148, 96)], 1.4, 0.35),
-        ([(138, 17), (141, 32), (142, 52)], 1.1, 0.35),
-        ([(122, 14), (118, 6), (112, 1)], 1.2, 0.45),
-    ]
-    blossoms = [(144, 8, 4.4, 0.2), (130, 22, 4.2, 1.1), (114, 8, 4.0, 0.6), (98, 22, 3.8, 2.0), (156, 20, 4.0, 1.6), (149, 38, 3.8, 0.9), (152, 60, 3.6, 2.2), (149, 82, 3.4, 0.5), (142, 42, 3.4, 1.9), (160, 34, 3.8, 1.2)]
-    buds = [(148, 98, 2.6, 0.1), (142, 55, 2.4, -0.2), (111, 1, 2.4, -0.5)]
-    p.cherry(branches, blossoms, buds, seed=17)
-    p.falling((40, 30, 156, 150), 8, seed=18, size=(2.2, 3.6))
-    p.susuki([(146, 214, 292, -8), (154, 230, 294, -4), (138, 238, 292, 6)], seed=34)
-    p.plovers([(130, 297, 7, 0.1, False), (146, 289, 6, -0.1, False)])
+    p.joined(AI, [(0, 314), (50, 306), (115, 318), (160, 309)], below=True, seed=5)
+    p.kinji(10, [(30, 22, 10), (70, 18, 9), (110, 24, 11), (150, 20, 10)], seed=2)
+    limbs = [([(172, 30), (150, 26), (120, 34), (90, 28), (60, 36)], 7, 2), ([(150, 26), (146, 10), (150, -4)], 3.5, 1.5)]
+    p.pine(limbs, [(130, 22, 30, 12), (95, 20, 28, 11), (62, 28, 22, 10), (156, 40, 18, 9)], seed=12)
+    p.sun(22, 54, 15)
+    p.kasumi([(-10, 52, 64, 7)], seed=3)
+    p.water((0, 316, 160, 334), 3, seed=15)
+    p.fuji(132, 170, 196, 18)
+    p.sea((26, 194, 160, 203), seed=28)
+    p.great_wave(46, 150, 58, seed=26)
     p.poem(right=126, top=36, pitch=20, em=14, starts=[0, 1.7, 0.6, 2.8, 1.2], sizes=[1, 0.94, 1, 0.9, 1])
     p.signature(x=24, bottom=150, em=7.2)
     p.seal(18, 157, 11.5)

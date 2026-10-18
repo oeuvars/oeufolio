@@ -88,9 +88,9 @@ function Plate({ name, className, again, home }: PlateProps) {
 }
 
 /**
- * The page for a page that broke: a photograph of a book of poems lying open on a dark cloth, after the decorated
- * anthologies of the Heian court, painted all over with cranes, a weeping cherry, the moon, Mount Fuji and a river of
- * maple leaves, with Ki no Tomonori's poem on blossoms that fall on a calm day for no reason anyone can give, what
+ * The page for a page that broke: a photograph of a book of poems lying open on a dark cloth, painted after the gold
+ * screens of the Momoyama court with an old black pine, rocks, the sun and a great wave breaking toward Mount Fuji,
+ * with Ki no Tomonori's poem on blossoms that fall on a calm day for no reason anyone can give, what
  * happened, and how to open the page again. A window at least 0.95 times as wide as it is tall shows the open book; a
  * narrower one, one loose page of it.
  */
