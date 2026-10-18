@@ -49,7 +49,7 @@ FLOOR = 0.012
 INK = np.array([0.93, 0.91, 0.87])
 SIGN = np.array([0.90, 0.91, 0.92])
 # The highlighter: a white paint marker, a little less than opaque, and the companies it is run over.
-MARKER = np.array([0.93, 0.93, 0.91])
+MARKER = np.array([0.93, 0.92, 0.89])
 MARKS = os.path.join(ROOT, "src", "components", "poster.json")
 
 
@@ -131,7 +131,10 @@ def highlighter(shape, marks, rng):
     """How much of the highlighter covers each pixel: one stroke a word, laid from a little before it to a little
     past it, over the letters' bodies and not quite up to their capitals. A stroke by hand: tilted a hair, its edges
     not quite straight, its chisel ends cut on a slant and ragged where the tip lifts, streaked along its length where
-    the felt laid more or less paint, and a little heavier along its edges, where the paint pools."""
+    the felt laid more or less paint, and a little heavier along its edges, where the paint pools. The paint lies on
+    the paper as paint does: it skips over the paper's tooth in specks, more as the tip runs dry towards the tail and
+    along the edges, and it lies thicker and thinner in blotches. Then the camera takes it as it took the windows,
+    its edges as soft as theirs and its blotches the size of their grain."""
     cover = np.zeros(shape, np.float32)
     for mark in marks:
         size = mark["size"] * SCALE
@@ -158,12 +161,20 @@ def highlighter(shape, marks, rng):
         tail = end + slant + 0.8 * SCALE * wander(rng, int(4 * size), 0.6 * SCALE)[rows]
         ends = np.clip((x - head) / edge, 0, 1) * np.clip((tail - x) / (1.5 * edge), 0, 1)
         # Its streaks, lines along it, and the paint pooled at its edges.
-        streak = 0.95 + 0.05 * wander(rng, int(4 * size), 0.5 * SCALE)[rows]
+        streak = 0.93 + 0.07 * wander(rng, int(4 * size), 0.5 * SCALE)[rows]
         pool = 1 + 0.04 * np.exp(-np.minimum(v + upper, lower - v).clip(0) / (0.8 * SCALE))
-        stroke = np.clip(0.97 * across * ends * streak * pool, 0, 1)
+        # The tooth: specks of bare paper, a few at the head, more towards the tail and the edges.
+        tooth = ndimage.gaussian_filter(rng.standard_normal(u.shape).astype(np.float32), 0.4 * SCALE)
+        tooth /= tooth.std()
+        dry = np.clip(u / (end - start), 0, 1) + 1.5 * np.exp(-np.minimum(v + upper, lower - v).clip(0) / (0.6 * SCALE))
+        bare = np.clip((tooth - (2.4 - 0.9 * dry)) / 0.5, 0, 1)
+        stroke = np.clip(0.97 * across * ends * streak * pool * (1 - 0.85 * bare), 0, 1)
         window = cover[top:bottom, left:right]
         cover[top:bottom, left:right] = 1 - (1 - window) * (1 - stroke)
-    return cover
+    # The blotches, then the lens.
+    blotch = ndimage.gaussian_filter(rng.standard_normal(shape).astype(np.float32), 1.2 * SCALE)
+    cover *= 1 + 0.05 * blotch / blotch.std()
+    return np.clip(ndimage.gaussian_filter(cover, 0.6 * SCALE), 0, 1)
 
 
 def screen_dots(shape, pitch):
