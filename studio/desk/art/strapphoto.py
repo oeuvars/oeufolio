@@ -9,7 +9,8 @@ Run from the repository root:
 
     uv run studio/desk/art/strapphoto.py
 
-It writes studio/desk/art/watch-strap-long.png and watch-strap-short.png: across, the strap's width; down, from the
+It writes studio/desk/art/watch-strap-long.png and watch-strap-short.png, and beside each its creases' relief
+(watch-strap-*-relief.png): across, the strap's width; down, from the
 end at the lugs to the tip, and to the fold round the buckle's bar; PX pixels to the photograph's pixel.
 
 Where the short half lies across the long one in the photograph, the long half is hidden: that stretch is filled from
@@ -39,6 +40,8 @@ SHOWN = (0.4, 357.0, 19.0)
 FILL = (78.0, 530.0, 308.0)
 FEATHER = 14.0
 SEAM = 40.0
+# The creases' relief keeps what is finer than this, in photograph pixels.
+RELIEF = 4.0
 
 
 def spline(points, step):
@@ -106,6 +109,11 @@ def main():
     long = long * (1 - weight) + fill * weight
     for name, image in (("long", long), ("short", short)):
         Image.fromarray(np.clip(image, 0, 255).astype(np.uint8)).save(os.path.join(HERE, f"watch-strap-{name}.png"))
+        # The creases' relief: the picture's fine light and dark, its broad light taken out, mid grey for none.
+        grey = image @ np.array([0.3, 0.59, 0.11], dtype=np.float32)
+        fine = grey - ndimage.gaussian_filter(grey, RELIEF * PX)
+        relief = 128 + 127 * np.clip(fine / (3 * fine.std()), -1, 1)
+        Image.fromarray(relief.astype(np.uint8)).save(os.path.join(HERE, f"watch-strap-{name}-relief.png"))
         print(name, image.shape[1], "x", image.shape[0])
 
 

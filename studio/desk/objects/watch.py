@@ -30,6 +30,7 @@ from mathutils import Matrix, Vector
 from objects.flutelamp import spline, turned
 from paint import linear
 from solids import worn
+from stage import ASSETS
 
 ART = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "art")
 DIAL_ART = os.path.join(ART, "watch-dial.png")
@@ -80,11 +81,22 @@ TEETH = 36
 STEEL = (0.8, 0.8, 0.82)
 CREAM_ROUGH = 0.5
 # The strap's top, from the photograph: each half's picture runs from its end at the lugs to its far end, the strap's
-# width across, dimmed this much (the pendant is brighter than the photograph's light). The leather's cut edges, sides
-# and underneath, burnished near black.
+# width across, dimmed this much (the pendant is brighter than the photograph's light); beside it, its creases' relief,
+# which stands this many mm proud at most. Under the picture, the leather's grain (a scan, repeating every this many
+# mm, its relief this strong), and its shine, this rough, duller in grain and handled patches. The leather's cut edges,
+# sides and underneath, burnished this dark brown and this glossy.
 STRAP_ART = os.path.join(ART, "watch-strap-{}.png")
+RELIEF_ART = os.path.join(ART, "watch-strap-{}-relief.png")
+TRIM = (0.02, 0.035)
 DIM = 0.85
-EDGE = "#170e09"
+CREASE = 0.1
+GRAIN = ("Leather030", 60.0, 1.4)
+SHINE = 0.5
+EDGE = "#2b170d"
+EDGE_SHINE = 0.3
+# A strap cut and worn by hand is never true: along it, over about this many mm, its width wanders this much either
+# side, its thickness this much, and it twists this many degrees either way.
+WANDER = (22.0, 0.14, 0.18, 1.6)
 # The strap, its sizes measured off the photograph at 7.05 of its pixels to the mm, the lugs' 20 mm across: this wide,
 # this thick at the lugs and this at its ends, its top crowned this much over its width, its edges rounded this much.
 # Its end is tucked this far in under the case, round the spring bar. The short half runs this long from the bar to
@@ -119,7 +131,7 @@ KEEPER = (40.1, 55.0, 1.2)
 # along the strap, over the fold, and lies on the frame's far side to this far along.
 BUCKLE_BAR = 62.4
 BUCKLE = (24.0, 20.0, 59.3, 79.1, 72.6, 3.0, 3.0)
-BLASTED = ((0.62, 0.62, 0.63), 0.36)
+BLASTED = ((0.6, 0.6, 0.61), 0.52)
 TONGUE = (3.8, 2.0, 59.6, 76.5)
 
 # What the polished steel throws back: the pendant over the top right of the desk (desk.json's "lamp"), the bright
@@ -193,50 +205,82 @@ def sapphire(name):
 
 
 def leather(name, art):
-    """The strap's leather: on top the photograph of it (art, laid on by the mesh's UV), its creases standing up from it
-    as the light caught them; its cut edges, sides and underneath burnished near black (the mesh's "edge"); and
-    oiled, so its gloss is soft."""
+    """The strap's leather: on top the photograph of it (art, laid on by the mesh's UV) over the scanned grain of
+    leather, so the pendant's light breaks into glints on it as it does on the wallet, its creases standing up from it;
+    oiled, its shine soft and duller where handled; its cut edges, sides and underneath burnished dark and glossy (the
+    mesh's "edge")."""
     material = bpy.data.materials.new(name)
     material.use_nodes = True
     nodes, links = material.node_tree.nodes, material.node_tree.links
     shader = nodes["Principled BSDF"]
-    shader.inputs["Specular IOR Level"].default_value = 0.35
-    shader.inputs["Sheen Weight"].default_value = 0.1
-    shader.inputs["Sheen Roughness"].default_value = 0.4
-    picture = nodes.new("ShaderNodeTexImage")
-    picture.image = bpy.data.images.load(STRAP_ART.format(art))
-    picture.interpolation = "Cubic"
-    picture.extension = "EXTEND"
+    shader.inputs["Specular IOR Level"].default_value = 0.5
+    shader.inputs["Sheen Weight"].default_value = 0.2
+    shader.inputs["Sheen Roughness"].default_value = 0.5
+    shader.inputs["Sheen Tint"].default_value = (1.0, 0.82, 0.66, 1)
+
+    def image(path, colour=True):
+        node = nodes.new("ShaderNodeTexImage")
+        node.image = bpy.data.images.load(path)
+        if not colour:
+            node.image.colorspace_settings.name = "Non-Color"
+        node.interpolation = "Cubic"
+        node.extension = "EXTEND"
+        return node
+
+    def mix(factor, a, b, blend="MIX"):
+        node = nodes.new("ShaderNodeMix")
+        node.data_type = "RGBA"
+        node.blend_type = blend
+        for socket, value in ((node.inputs["Factor"], factor), (node.inputs["A"], a), (node.inputs["B"], b)):
+            if isinstance(value, (int, float)):
+                socket.default_value = value
+            elif isinstance(value, tuple):
+                socket.default_value = value
+            else:
+                links.new(value, socket)
+        return node.outputs["Result"]
+
+    picture = image(STRAP_ART.format(art))
+    relief = image(RELIEF_ART.format(art), colour=False)
     edge = nodes.new("ShaderNodeAttribute")
     edge.attribute_name = "edge"
-    colour = nodes.new("ShaderNodeMix")
-    colour.data_type = "RGBA"
-    links.new(edge.outputs["Fac"], colour.inputs["Factor"])
     # The photograph's light was dimmer than the pendant's: its leather as dark here as there.
-    dimmed = nodes.new("ShaderNodeMix")
-    dimmed.data_type = "RGBA"
-    dimmed.blend_type = "MULTIPLY"
-    dimmed.inputs["Factor"].default_value = 1.0
-    links.new(picture.outputs["Color"], dimmed.inputs["A"])
-    dimmed.inputs["B"].default_value = (DIM, DIM, DIM, 1)
-    links.new(dimmed.outputs["Result"], colour.inputs["A"])
-    colour.inputs["B"].default_value = (*linear(EDGE), 1)
-    links.new(colour.outputs["Result"], shader.inputs["Base Color"])
-    # The creases: the photograph's light ones stand up, its dark ones are the folds between.
-    grey = nodes.new("ShaderNodeRGBToBW")
-    links.new(picture.outputs["Color"], grey.inputs["Color"])
-    bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.35
-    bump.inputs["Distance"].default_value = 0.08
-    links.new(grey.outputs["Val"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], shader.inputs["Normal"])
-    # Drier, so rougher, where the leather is pale.
-    rough = nodes.new("ShaderNodeMapRange")
-    rough.inputs["From Max"].default_value = 0.5
-    rough.inputs["To Min"].default_value = 0.5
-    rough.inputs["To Max"].default_value = 0.72
-    links.new(grey.outputs["Val"], rough.inputs["Value"])
-    links.new(rough.outputs[0], shader.inputs["Roughness"])
+    dimmed = mix(1.0, picture.outputs["Color"], (DIM, DIM, DIM, 1), "MULTIPLY")
+    links.new(mix(edge.outputs["Fac"], dimmed, (*linear(EDGE), 1)), shader.inputs["Base Color"])
+    # The grain, from the scan, under the creases from the photograph.
+    asset, size, strength = GRAIN
+    coord = nodes.new("ShaderNodeTexCoord")
+    place = nodes.new("ShaderNodeMapping")
+    place.inputs["Scale"].default_value = (1 / size, 1 / size, 1 / size)
+    links.new(coord.outputs["Object"], place.inputs["Vector"])
+    scans = {}
+    for kind in ("NormalGL", "Roughness"):
+        scan = image(os.path.join(ASSETS, asset, f"{asset}_1K-JPG_{kind}.jpg"), colour=False)
+        scan.extension = "REPEAT"
+        links.new(place.outputs["Vector"], scan.inputs["Vector"])
+        scans[kind] = scan
+    grain = nodes.new("ShaderNodeNormalMap")
+    grain.inputs["Strength"].default_value = strength
+    links.new(scans["NormalGL"].outputs["Color"], grain.inputs["Color"])
+    creases = nodes.new("ShaderNodeBump")
+    creases.inputs["Strength"].default_value = 0.6
+    creases.inputs["Distance"].default_value = CREASE
+    links.new(relief.outputs["Color"], creases.inputs["Height"])
+    links.new(grain.outputs["Normal"], creases.inputs["Normal"])
+    links.new(creases.outputs["Normal"], shader.inputs["Normal"])
+    # The shine: the scan's own unevenness about SHINE; the burnished edge glossier.
+    shine = nodes.new("ShaderNodeMapRange")
+    shine.inputs["To Min"].default_value = SHINE - 0.12
+    shine.inputs["To Max"].default_value = SHINE + 0.12
+    links.new(scans["Roughness"].outputs["Color"], shine.inputs["Value"])
+    rough = nodes.new("ShaderNodeMix")
+    rough.data_type = "FLOAT"
+    links.new(edge.outputs["Fac"], rough.inputs["Factor"])
+    links.new(shine.outputs[0], rough.inputs["A"])
+    rough.inputs["B"].default_value = EDGE_SHINE
+    links.new(rough.outputs["Result"], shader.inputs["Roughness"])
+    worn(material, "SurfaceImperfections003", 40.0, 0.15)
+    worn(material, "Scratches003", 50.0, 0.08)
     return material
 
 
@@ -453,9 +497,10 @@ def sweep(name, frame, half, thick, crown, edge_r, rolled=0.0):
 
 
 def mapped(mesh, along, over, length, wide):
-    """A UV layer laying the half's picture on: across it edge to edge over wide (the half width), down it from its
-    end at the lugs (at the picture's top) to length."""
-    u = np.clip(over / (2 * wide) + 0.5, 0, 1)
+    """A UV layer laying the half's picture on: across it edge to edge over wide (the half width), the picture's own
+    margins (TRIM, its share at either side, where the photograph's edge highlight falls just inside) left over the
+    rounded edges; down it from its end at the lugs (at the picture's top) to length."""
+    u = np.clip(TRIM[0] + (1 - TRIM[0] - TRIM[1]) * (over / (2 * wide) + 0.5), 0, 1)
     v = np.clip(1 - along / length, 0, 1)
     layer = mesh.uv_layers.new(name="UVMap")
     corners = np.empty(len(mesh.loops), dtype=np.int64)
@@ -463,58 +508,130 @@ def mapped(mesh, along, over, length, wide):
     layer.data.foreach_set("uv", np.column_stack((u[corners], v[corners])).astype(np.float32).ravel())
 
 
-def strap(stage, name, length, side, drift, lift, material, long=False):
-    """A strap half: leather along its centre line, crowned and rounded at the edges, as wide as the lugs all down;
-    the long half drawn to its point and punched with its holes, the short one rolled round the buckle's bar. Its top
-    carries the photograph (by UV), its sides the burnished edge colour ("edge")."""
-    centres, s, ahead, across, up = strap_path(length, side, drift, lift)
-    half = np.full_like(s, STRAP_W / 2)
-    if long:
-        back, wide = np.array(POINT).T
-        half = np.minimum(half, np.maximum(np.interp(length - s, back, wide), 0.3))
-    thick = thickness(s, length)
-    mesh, over, top, count = sweep(name, (centres, ahead, across, up), half, thick, CROWN, EDGE_R, 0.0 if long else thick[-1] / 2)
-    along = np.concatenate((np.repeat(s, count), [s[0], s[-1]]))
-    wide = np.concatenate((np.repeat(half, count), [half[0], half[-1]]))
-    # The picture runs onto the rounded edges; past them, the sides and underneath are burnished near black.
-    edge = np.clip((np.abs(over) - (wide - 0.25)) / 0.25, 0, 1) + (~top)
-    hole = np.zeros_like(along)
-    if long:
-        middles, off, radius = HOLES
-        for middle in middles:
-            d = np.hypot(along - middle, over - off)
-            hole = np.maximum(hole, np.clip((radius - d) / 0.12, 0, 1))
-    hole *= top
-    attribute = mesh.attributes.new("edge", "FLOAT", "POINT")
-    attribute.data.foreach_set("value", np.clip(edge, 0, 1).astype(np.float32))
-    # The holes are punched through, their middles sunk to the desk.
+def wander(seed, s, scale, amount):
+    """A smooth, uneven wander along a strap, s in mm: a few sines of random phase, the widest scale longest."""
+    rng = np.random.default_rng(seed)
+    out = np.zeros_like(s)
+    for k in range(4):
+        out += np.sin(2 * math.pi * s / (scale / 1.7**k) + rng.uniform(0, 2 * math.pi)) / 1.7**k
+    return amount * out / 2.2
+
+
+def twisted(frame, seed, s):
+    """A strap's frame twisted a little about its centre line, by a wander of up to WANDER's degrees."""
+    centres, ahead, across, up = frame
+    scale, _, _, degrees = WANDER
+    turn = np.radians(wander(seed, s, scale * 1.6, degrees))[:, None]
+    return centres, ahead, across * np.cos(turn) + up * np.sin(turn), up * np.cos(turn) - across * np.sin(turn)
+
+
+def sample(path, u, v):
+    """A grey image's values at u, v (0 to 1, v up), between its pixels."""
+    picture = bpy.data.images.load(path, check_existing=True)
+    cols, rows = picture.size
+    pixels = np.empty(cols * rows * 4, dtype=np.float32)
+    picture.pixels.foreach_get(pixels)
+    grey = pixels.reshape(rows, cols, 4)[..., 0]
+    x, y = np.clip(u, 0, 1) * (cols - 1), np.clip(v, 0, 1) * (rows - 1)
+    x0, y0 = np.floor(x).astype(int), np.floor(y).astype(int)
+    x1, y1 = np.minimum(x0 + 1, cols - 1), np.minimum(y0 + 1, rows - 1)
+    fx, fy = x - x0, y - y0
+    return (grey[y0, x0] * (1 - fx) + grey[y0, x1] * fx) * (1 - fy) + (grey[y1, x0] * (1 - fx) + grey[y1, x1] * fx) * fy
+
+
+def creased(mesh, frame, count, along, over, top, half, wide, length, art):
+    """Its top pushed up and down by the photograph's creases (art's relief), less toward the edges (half, its half
+    width at each ring), and its attributes and UV (the picture wide either side of the middle): "edge" for the
+    burnished edges, sides and underneath."""
+    centres, ahead, across, up = frame
+    u = np.clip(TRIM[0] + (1 - TRIM[0] - TRIM[1]) * (over / (2 * wide) + 0.5), 0, 1)
+    v = np.clip(1 - along / length, 0, 1)
+    rise = (sample(RELIEF_ART.format(art), u, v) - 0.5) * 2 * CREASE
+    half = np.concatenate((np.repeat(half, count), [half[0], half[-1]]))
+    inward = np.clip((half - np.abs(over)) / 1.5, 0, 1)
     co = np.empty(len(mesh.vertices) * 3)
     mesh.vertices.foreach_get("co", co)
     co = co.reshape(-1, 3)
     normal_up = np.concatenate((np.repeat(up, count, axis=0), [up[0], up[-1]]))
-    t = np.concatenate((np.repeat(thick, count), [thick[0], thick[-1]]))
-    co -= normal_up * (hole * t * 0.95)[:, None]
+    co += normal_up * (rise * inward * top)[:, None]
     mesh.vertices.foreach_set("co", co.ravel())
-    mapped(mesh, along, over, length, STRAP_W / 2)
+    edge = np.clip((np.abs(over) - (half - 0.3)) / 0.3, 0, 1) + (~top)
+    attribute = mesh.attributes.new("edge", "FLOAT", "POINT")
+    attribute.data.foreach_set("value", np.clip(edge, 0, 1).astype(np.float32))
+    mapped(mesh, along, over, length, wide)
+
+
+def punched(stage, obj, frame, s, thick, material):
+    """The long half's holes, punched clean through it, their walls burnished like its edges."""
+    centres, ahead, across, up = frame
+    middles, off, radius = HOLES
+    verts, faces = [], []
+    around = 40
+    for middle in middles:
+        k = int(np.searchsorted(s, middle))
+        base = len(verts)
+        for z in (-thick[k], thick[k]):
+            for a in np.linspace(0, 2 * math.pi, around, endpoint=False):
+                verts.append(tuple(centres[k] + off * across[k] + radius * (math.cos(a) * across[k] + math.sin(a) * ahead[k]) + z * up[k]))
+        faces += [(base + i, base + (i + 1) % around, base + around + (i + 1) % around, base + around + i) for i in range(around)]
+        faces += [tuple(base + i for i in range(around))[::-1], tuple(base + around + i for i in range(around))]
+    mesh = bpy.data.meshes.new(f"{obj.name}-punch")
+    mesh.from_pydata(verts, [], faces)
+    mesh.attributes.new("edge", "FLOAT", "POINT").data.foreach_set("value", np.ones(len(verts), dtype=np.float32))
+    mesh.uv_layers.new(name="UVMap")
     mesh.materials.append(material)
-    return stage.add(name, mesh), (centres, s, ahead, across, up), half, thick
+    punch = stage.add(mesh.name, mesh)
+    cut = obj.modifiers.new("punch", "BOOLEAN")
+    cut.operation = "DIFFERENCE"
+    cut.solver = "EXACT"
+    cut.object = punch
+    bpy.context.view_layer.update()
+    graph = bpy.context.evaluated_depsgraph_get()
+    done = bpy.data.meshes.new_from_object(obj.evaluated_get(graph), preserve_all_data_layers=True, depsgraph=graph)
+    obj.modifiers.remove(cut)
+    obj.data = done
+    bpy.data.objects.remove(punch)
+
+
+def strap(stage, name, length, side, drift, lift, material, art, long=False):
+    """A strap half: leather along its centre line, crowned and rounded at the edges, as wide as the lugs all down
+    but wandering a little in width, thickness and twist as a hand-cut, worn strap does; its top carries the photograph
+    (by UV) and is pushed up by its creases; the long half is drawn to its point and its holes punched through, the
+    short one rolled round the buckle's bar."""
+    centres, s, ahead, across, up = strap_path(length, side, drift, lift)
+    scale, width, depth, _ = WANDER
+    seed = 7 if long else 3
+    half = STRAP_W / 2 + wander(seed, s, scale, width)
+    if long:
+        back, wide = np.array(POINT).T
+        half = np.minimum(half, np.maximum(np.interp(length - s, back, wide), 0.3))
+    thick = thickness(s, length) + wander(seed + 1, s, scale, depth)
+    frame = twisted((centres, ahead, across, up), seed + 2, s)
+    mesh, over, top, count = sweep(name, frame, half, thick, CROWN, EDGE_R, 0.0 if long else thick[-1] / 2)
+    along = np.concatenate((np.repeat(s, count), [s[0], s[-1]]))
+    creased(mesh, frame, count, along, over, top, half, STRAP_W / 2, length, art)
+    mesh.materials.append(material)
+    obj = stage.add(name, mesh)
+    if long:
+        punched(stage, obj, frame, s, thick, material)
+    return obj, (centres, s, ahead, across, up), half, thick
 
 
 def keeper(stage, path, half, thick, material):
-    """The keeper, a wide leather loop round the short half, standing proud of it all round; its top is the keeper in
-    the photograph, its bottom hidden under the strap, on the desk."""
+    """The keeper, a wide leather loop round the short half, standing proud of it all round and softly rounded, as
+    leather folded round on itself is; its top is the keeper in the photograph, its bottom hidden under the strap, on
+    the desk."""
     centres, s, ahead, across, up = path
     start, end, proud = KEEPER
     pick = (s >= start) & (s <= end)
     lifted = centres[pick] + up[pick] * proud * 0.5
-    frame = (lifted, ahead[pick], across[pick], up[pick])
-    mesh, over, top, count = sweep("watch-keeper", frame, half[pick] + proud, thick[pick] + proud, 0.3, 1.3)
+    frame = twisted((lifted, ahead[pick], across[pick], up[pick]), 11, s[pick])
+    # Swelling a little in the middle, where the strap inside pushes it out.
+    swell = 0.25 * np.sin(np.clip((s[pick] - start) / (end - start), 0, 1) * math.pi)
+    wide = half[pick] + proud + swell * 0.4
+    mesh, over, top, count = sweep("watch-keeper", frame, wide, thick[pick] + proud + swell, 0.45, 1.9)
     along = np.concatenate((np.repeat(s[pick], count), [start, end]))
-    wide = STRAP_W / 2 + proud
-    edge = np.clip((np.abs(over) - (wide - 0.25)) / 0.25, 0, 1) + (~top)
-    attribute = mesh.attributes.new("edge", "FLOAT", "POINT")
-    attribute.data.foreach_set("value", np.clip(edge, 0, 1).astype(np.float32))
-    mapped(mesh, along, over, SHORT, wide)
+    creased(mesh, frame, count, along, over, top, wide, STRAP_W / 2 + proud, SHORT, "short")
     mesh.materials.append(material)
     return stage.add(mesh.name, mesh)
 
@@ -630,9 +747,9 @@ def parts(stage):
     for part in made:
         part.location.z += RAISE
     short_hide = leather("watch-leather-short", "short")
-    short, path, half, thick = strap(stage, "watch-strap-short", SHORT, 1, DRIFT[0], LIFT[0], short_hide)
+    short, path, half, thick = strap(stage, "watch-strap-short", SHORT, 1, DRIFT[0], LIFT[0], short_hide, "short")
     made += [short, keeper(stage, path, half, thick, short_hide), *buckle(stage, path, blasted("watch-buckle-steel"))]
-    long, *_ = strap(stage, "watch-strap-long", LONG, -1, DRIFT[1], LIFT[1], leather("watch-leather-long", "long"), long=True)
+    long, *_ = strap(stage, "watch-strap-long", LONG, -1, DRIFT[1], LIFT[1], leather("watch-leather-long", "long"), "long", long=True)
     made.append(long)
     return made + room(stage)
 
