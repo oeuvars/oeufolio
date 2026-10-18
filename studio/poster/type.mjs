@@ -3,7 +3,9 @@
 //
 //   node studio/poster/type.mjs
 //
-// Writes studio/poster/art/title.png and studio/poster/art/body.png, with the headless Chromium in studio/browser.mjs.
+// Writes studio/poster/art/title.png and studio/poster/art/body.png, with the headless Chromium in studio/browser.mjs,
+// and src/components/poster.json, where the companies named in the passages fall, for poster.py to run a highlighter
+// over and for the page to lay their links on.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -23,6 +25,9 @@ await sleep(1500);
 const layout = readFileSync(join(HERE, "type.json"), "utf8");
 const over = await run(`window.lay(${layout})`);
 if (over.length) console.warn(`Lines longer than their measure:\n  ${over.join("\n  ")}`);
+
+const marks = await run("window.marks()");
+writeFileSync(join(HERE, "..", "..", "src", "components", "poster.json"), `${JSON.stringify({ size: [WIDTH, HEIGHT], marks }, null, 2)}\n`);
 
 mkdirSync(join(HERE, "art"), { recursive: true });
 for (const plate of ["title", "body"]) {

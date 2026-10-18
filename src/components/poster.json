@@ -1,0 +1,32 @@
+{
+  "size": [
+    736,
+    981
+  ],
+  "marks": [
+    {
+      "label": "Ekarth",
+      "href": "https://nahar.om/",
+      "left": 566,
+      "right": 591.95,
+      "baseline": 383.5,
+      "size": 9.4
+    },
+    {
+      "label": "Cybership",
+      "href": "https://cybership.io/",
+      "left": 151.75,
+      "right": 187.88,
+      "baseline": 493.59,
+      "size": 9.4
+    },
+    {
+      "label": "ProperSKU",
+      "href": "https://propersku.com/",
+      "left": 429.81,
+      "right": 472.52,
+      "baseline": 632.69,
+      "size": 9.4
+    }
+  ]
+}

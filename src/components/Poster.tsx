@@ -1,11 +1,17 @@
 import { type AnimationPlaybackControls, animate, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef } from 'react'
 
+import type { PosterMarks } from '../types'
 import { POSTER, POSTER_COLUMN, moveFrom, posterFold, slide } from './house'
+import posterMarks from './poster.json'
+
+/** The companies the passages name, each under a stroke of highlighter: studio/poster/type.mjs measures them. */
+const { size: REFERENCE, marks: MARKS } = posterMarks as PosterMarks
 
 /**
  * The work page: a poster of lit windows in a block of flats at night (studio/poster), with "human
- * experience" glowing across them and passages set between them. Its type is in the picture, not over it. It
+ * experience" glowing across them and passages set between them. Its type is in the picture, not over it: only the
+ * links lie over it, one on each company the passages name, where its highlighter stroke is. It
  * is printed on the page's own paper: the strip, its tab and the wall round the windows are all one material, the
  * poster's bare wall as a tile (SiteShell), and the picture is only the light on it, laid over the paper as a screen,
  * so where it is dark the paper shows. It covers the strip out to its torn edge; the strip opens only as wide as the
@@ -76,6 +82,23 @@ export function Poster() {
           draggable={false}
           className="absolute inset-0 size-full select-none opacity-0"
         />
+        {MARKS.map(({ label, href, left, right, baseline, size }) => (
+          <a
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            draggable={false}
+            aria-label={label}
+            className="absolute rounded-[0.15em] outline-offset-2 focus-visible:outline-2 focus-visible:outline-white"
+            style={{
+              left: `${(100 * left) / REFERENCE[0]}%`,
+              width: `${(100 * (right - left + 0.3 * size)) / REFERENCE[0]}%`,
+              top: `${(100 * (baseline - 0.87 * size)) / REFERENCE[1]}%`,
+              height: `${(100 * 1.1 * size) / REFERENCE[1]}%`,
+            }}
+          />
+        ))}
       </div>
     </div>
   )

@@ -12,8 +12,10 @@ printed at three times its size.
 The windows, the dark wall and its light leaks are the reference's own, scaled up. The type is set again from the
 plates type.mjs photographs (art/title.png, art/body.png), in the same place, so it is sharp at the new size: the old
 passages are lifted off the wall first, and the title is laid over the old one as the reference has it, a photograph
-of a lit sign, its letters soft, glowing, and broken into the dots of the screen it was shown on. New grain goes over
-the whole, at the new size, so the scaled-up picture reads as film again.
+of a lit sign, its letters soft, glowing, and broken into the dots of the screen it was shown on. Each company named in
+the passages has a stroke of white highlighter run over it where type.mjs found it (src/components/poster.json), under
+the print, so its letters come out dark on the stroke. New grain goes over the whole, at the new size, so the
+scaled-up picture reads as film again.
 
 The page is one material: the poster's bare wall, as a tile of paper. Writes public/objects/poster-paper.avif, that
 tile; public/objects/poster.avif, the light printed on it (the windows, the sign and the passages, black where the
@@ -23,6 +25,7 @@ the passages, which come with the page when the strip opens.
 """
 
 import argparse
+import json
 import os
 
 import numpy as np
@@ -45,6 +48,9 @@ FLOOR = 0.012
 # The type's colour: the passages are printed a warm white, the sign is a cold one.
 INK = np.array([0.93, 0.91, 0.87])
 SIGN = np.array([0.90, 0.91, 0.92])
+# The highlighter: a white paint marker, a little less than opaque, and the companies it is run over.
+MARKER = np.array([0.93, 0.93, 0.91])
+MARKS = os.path.join(ROOT, "src", "components", "poster.json")
 
 
 def load(name):
@@ -114,6 +120,52 @@ def paper(image):
     return tile - slow + tile.mean((0, 1))
 
 
+def wander(rng, count, smooth):
+    """A slow random line, count samples long, about -1 to 1."""
+    line = ndimage.gaussian_filter(rng.standard_normal(count + 8 * int(smooth)), smooth, mode="wrap")
+    line = line[4 * int(smooth) : 4 * int(smooth) + count]
+    return line / (np.abs(line).max() + 1e-6)
+
+
+def highlighter(shape, marks, rng):
+    """How much of the highlighter covers each pixel: one stroke a word, laid from a little before it to a little
+    past it, over the letters' bodies and not quite up to their capitals. A stroke by hand: tilted a hair, its edges
+    not quite straight, its chisel ends cut on a slant and ragged where the tip lifts, streaked along its length where
+    the felt laid more or less paint, and a little heavier along its edges, where the paint pools."""
+    cover = np.zeros(shape, np.float32)
+    for mark in marks:
+        size = mark["size"] * SCALE
+        start = (mark["left"] - 0.06 * mark["size"]) * SCALE
+        end = (mark["right"] + 0.26 * mark["size"]) * SCALE
+        middle = (mark["baseline"] - 0.32 * mark["size"]) * SCALE
+        half = 0.55 * size
+        top, bottom = int(middle - 2 * size), int(middle + 2 * size)
+        left, right = int(start - size), int(end + size)
+        y, x = np.mgrid[top:bottom, left:right].astype(np.float32)
+        tilt = np.radians(rng.uniform(-0.9, 0.4))
+        u = x - start
+        v = (y - middle) - np.tan(tilt) * u
+        # Its edges, wavering a little along its length.
+        along = np.clip(u, 0, end - start).astype(int)
+        upper = half * (1 + 0.04 * wander(rng, int(end - start) + 1, 6 * SCALE))[along]
+        lower = half * (1 + 0.04 * wander(rng, int(end - start) + 1, 6 * SCALE))[along]
+        edge = 0.35 * SCALE
+        across = np.clip((v + upper) / edge, 0, 1) * np.clip((lower - v) / edge, 0, 1)
+        # Its ends, cut on the chisel's slant and ragged across the stroke where the tip lifts.
+        rows = np.clip(((v + 2 * size) / (4 * size)) * 4 * size, 0, 4 * size - 1).astype(int)
+        slant = 0.18 * v
+        head = start + slant + 0.5 * SCALE * wander(rng, int(4 * size), 0.8 * SCALE)[rows]
+        tail = end + slant + 0.8 * SCALE * wander(rng, int(4 * size), 0.6 * SCALE)[rows]
+        ends = np.clip((x - head) / edge, 0, 1) * np.clip((tail - x) / (1.5 * edge), 0, 1)
+        # Its streaks, lines along it, and the paint pooled at its edges.
+        streak = 0.95 + 0.05 * wander(rng, int(4 * size), 0.5 * SCALE)[rows]
+        pool = 1 + 0.04 * np.exp(-np.minimum(v + upper, lower - v).clip(0) / (0.8 * SCALE))
+        stroke = np.clip(0.97 * across * ends * streak * pool, 0, 1)
+        window = cover[top:bottom, left:right]
+        cover[top:bottom, left:right] = 1 - (1 - window) * (1 - stroke)
+    return cover
+
+
 def screen_dots(shape, pitch):
     """The sign's screen, a grid of lit dots turned 45 degrees, 1 on a dot and 0 between."""
     y, x = np.mgrid[0 : shape[0], 0 : shape[1]].astype(np.float32)
@@ -146,6 +198,12 @@ def main():
     picture = 1 - (1 - picture) * (1 - glow)
 
     strip = picture
+
+    # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
+    with open(MARKS) as file:
+        marks = json.load(file)["marks"]
+    stroke = highlighter(shape, marks, np.random.default_rng(11))[..., None]
+    picture = picture * (1 - stroke) + MARKER * stroke
 
     # The new passages go on in the old ones' place, a touch soft, as print on a print is. They are printed as the
     # reference prints them, as a difference: white on the dark wall, dark where they run into the sign's glow, and

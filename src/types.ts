@@ -36,6 +36,25 @@ export type Role = {
   org: string
 }
 
+/**
+ * A company named in the work poster's passages, where studio/poster/type.mjs found it, in the reference poster's
+ * pixels: the word's ends, its baseline and its type size. The poster runs a highlighter over it; the page links it.
+ */
+export type PosterMark = {
+  label: string
+  href: string
+  left: number
+  right: number
+  baseline: number
+  size: number
+}
+
+/** studio/poster/type.mjs's measure of the poster's passages: the reference's size and the companies in them. */
+export type PosterMarks = {
+  size: [number, number]
+  marks: PosterMark[]
+}
+
 export type Credit = {
   label: string
   value: string

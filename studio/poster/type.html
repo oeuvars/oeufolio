@@ -2,7 +2,9 @@
 <!--
   The poster's type, set where the reference poster sets it, in its 736 x 981 pixels: type.mjs photographs it at
   three times that for poster.py to print. Two plates, shown one at a time by the class on <body>: the glowing
-  title ("title") and the four italic passages ("body"), white on black. Each company is named once, in <b>.
+  title ("title") and the four italic passages ("body"), white on black. Each company is named once, in the run of
+  its passage, as a link (a.mark): type.mjs measures where each one falls, for poster.py to run a highlighter over it
+  and for the page to lay the link there.
 -->
 <html>
   <head>
@@ -59,8 +61,9 @@
       .passage > div.wrap {
         margin-left: var(--wrap);
       }
-      .passage b {
-        font-weight: 700;
+      .passage a.mark {
+        color: inherit;
+        text-decoration: none;
       }
       .passage > div {
         height: var(--lead);
@@ -94,7 +97,7 @@
         <div>a single one of them.</div>
       </div>
       <div class="passage" id="ekarth">
-        <div>at <b>Ekarth</b> i learned to stand up</div>
+        <div>i learned at <a class="mark" href="https://nahar.om">Ekarth</a> to stand up</div>
         <div>and answer for what i had built.</div>
         <div>since then i have only built what</div>
         <div>i am willing to put my name on,</div>
@@ -102,7 +105,7 @@
         <div>have walked away from them.</div>
       </div>
       <div class="passage" id="shift">
-        <div>at <b>Cybership</b> my days are parcels, printers and the</div>
+        <div>my days at <a class="mark" href="https://cybership.io">Cybership</a> are parcels, printers and the</div>
         <div>long quiet of warehouses at night. when one of them</div>
         <div>stops i go to it, whatever the hour, and i stay until</div>
         <div>it runs again. by morning the trucks are out as if</div>
@@ -110,7 +113,7 @@
         <div>work passes like this.</div>
       </div>
       <div class="passage" id="first">
-        <div class="wrap"><b>ProperSKU</b> was where it started, learning the</div>
+        <div class="wrap">it started for me at <a class="mark" href="https://propersku.com">ProperSKU</a>, learning the</div>
         <div>whole of it by hand. i still learn that way, by breaking things</div>
         <div>and sitting with them until they make sense, and somewhere</div>
         <div>along the way the work stopped being a job and became the</div>
@@ -142,6 +145,20 @@
         }
         return over;
       };
+
+      // Where each company falls, in the reference's pixels: the word's ends, its baseline and its type size.
+      window.marks = () =>
+        [...document.querySelectorAll("a.mark")].map((mark) => {
+          const box = mark.getBoundingClientRect();
+          const probe = document.createElement("span");
+          probe.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
+          mark.prepend(probe);
+          const baseline = probe.getBoundingClientRect().top;
+          probe.remove();
+          const size = parseFloat(getComputedStyle(mark).fontSize);
+          const round = (value) => Math.round(value * 100) / 100;
+          return { label: mark.textContent, href: mark.href, left: round(box.left), right: round(box.right), baseline: round(baseline), size };
+        });
     </script>
   </body>
 </html>
