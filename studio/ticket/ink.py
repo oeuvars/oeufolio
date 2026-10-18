@@ -8,10 +8,10 @@ follows: a pen drawing with the weight of a woodcut.
     uv run studio/ticket/ink.py [--proof DIR]
 
 The sky is ruled in loose wavy lines, and clouds stand in it as scalloped shapes drawn round with a line, ruled
-closer inside and black along their undersides. The steel of the bridge, the boat and the figure under the
-umbrella are solid black, with a white line cut along the edges that face the light. The far bank is a band of
-blocks hatched upright. The river is drawn in wavy lines that run close and thin far off and open and heavy near,
-thickening where the bridge and the boat are mirrored in it. Rain falls across all of it, black on the white and
+closer inside and black along their undersides. The steel of the bridge and the piers it stands on, the boat and the
+figure under the umbrella are solid black, with a white line cut along the edges that face the light. The banks are a
+band of blocks hatched upright. The river is drawn in wavy lines that run close and thin far off and open and heavy
+near, thickening where the bridge and the boat are mirrored in it. Rain falls across all of it, black on the white and
 white through the black. Nothing is quite straight, as nothing drawn by hand is.
 
 Writes one plate per ink to studio/ticket/art: river-k.png, river-red.png, river-teal.png and river-yellow.png,
@@ -136,10 +136,10 @@ def main():
     disc = smooth(sr + 0.6 * s, sr - 0.6 * s, d_sun)
 
     # The sky: teal at the top, yellow lower down going to orange at the horizon, ruled across in teal lines that go
-    # green where they cross the yellow.
+    # green where they cross the yellow, each line running on unbroken until a cloud, the sun or the bridge stops it.
     pitch = 7.5 * s
     wave = 1.6 * s * np.sin(2 * np.pi * Xh / (90 * s) + field((R, C), 5, 80 * s) * 1.2)
-    rule = lines((Yh + wave) / pitch, 0.16, 1 / pitch) * smooth(-1.1, -0.5, field((R, C), 6, 22 * s))
+    rule = lines((Yh + wave) / pitch, 0.16, 1 / pitch)
     TEAL = np.where(sky, np.maximum(smooth(0.6 * hy, 0.0, Y) * 0.7, rule), TEAL)
     YEL = np.where(sky, np.clip(smooth(0.2 * hy, 0.95 * hy, Y) * 0.9 + 0.6 * np.exp(-((d_sun / (0.28 * C)) ** 2)), 0, 1), YEL)
     RED = np.where(sky, np.clip(smooth(0.62 * hy, hy, Y) * 0.5 + 0.45 * np.exp(-((d_sun / (0.13 * C)) ** 2)), 0, 1), RED)
@@ -169,7 +169,6 @@ def main():
     solid = ndimage.binary_dilation(solid, iterations=max(1, round(0.6 * s)))
     K = np.where(solid, 1.0, K)
     pier = kind == KIND["pier"]
-    K = np.where(pier, 1 - lines(Yh / (2.2 * s), 0.3, 1 / (2.2 * s)), K)
     # The boat's hood of matting is vermilion, its ribs black; the umbrella is vermilion too.
     lit = (nx * -0.55 + nz * 0.5 + ny * -0.65) > 0.45
     hood = boat & (nz > 0.25) & lit
@@ -187,20 +186,27 @@ def main():
     soft = 15.0 / below
     dark = 1 - tone
     cover = np.clip(0.1 + 0.75 * smooth(0.25, 0.8, dark) + 0.18 * smooth(0, 0.6, below / R), 0, 0.78)
+    # The road is the sun caught on the crests between the dark lines. Each ripple's glint runs out at its own length
+    # and sits a little to one side of the last, so the road has no straight edge. In it the dark lines thin to half
+    # their period, and they thin gradually toward its middle, as the colours grade toward it, the stencil grading
+    # each tint in dots: teal into yellow, yellow into orange, orange into vermilion.
+    spread = sr * (0.7 + 2.2 * np.clip((Y - hy) / (R - hy), 0, 1))
+    ripple = np.clip(np.floor(phase).astype(int) + 64, 0, 255)
+    glints = np.random.default_rng(10)
+    reach = glints.uniform(0.75, 1.35, 256)[ripple]
+    shift = glints.normal(0, 0.12, 256)[ripple]
+    across = np.abs((Xh + 0.6 * field((R, C), 9, 6 * s) * s - sx) / spread - shift) / reach
+    glow = smooth(1.2, 0.55, across) * water
+    cover = cover - (cover - np.minimum(cover, 0.5)) * glow
     river = lines(phase, cover, soft)
     far = smooth(14 * s, 3 * s, below)
     dashes = smooth(-0.1, 0.3, field((R, C), 8, 3 * s)) * smooth(0.2, 0.6, dark + 0.25)
     river = river * (1 - far) + dashes * far * 0.6
     K = np.where(water, river, K)
-    TEAL = np.where(water, 0.8, TEAL)
-    spread = sr * (0.7 + 2.2 * np.clip((Y - hy) / (R - hy), 0, 1))
-    across = np.abs(Xh + 0.6 * field((R, C), 9, 6 * s) * s - sx) / spread
-    crest = lines(phase + 0.5, 0.5, soft) * (1 - far)
-    road = water & (across < 1) & (crest > 0.5)
-    YEL = np.where(road, 1.0, YEL)
-    RED = np.where(road & (across < 0.45), 1.0, RED)
-    TEAL = np.where(water & (across < 1), TEAL * smooth(0.6, 1.0, across), TEAL)
-    K = np.where(road, 0.0, K)
+    crest = lines(phase + 0.5, 0.5, soft) * (1 - far) * water
+    YEL = np.where(water, np.maximum(YEL, glow * crest), YEL)
+    RED = np.where(water, np.maximum(RED, smooth(0.75, 0.3, across) * crest), RED)
+    TEAL = np.where(water, 0.8 * (1 - smooth(1.1, 0.5, across)), TEAL)
 
     # Rain: short strokes leaning a little left, cut white through every plate.
     rng = np.random.default_rng(21)
@@ -216,9 +222,9 @@ def main():
     streak = np.clip(ndimage.gaussian_filter(streak.astype(np.float64), 0.6 * UP), 0, 1)
     cut = streak * (Y < hy + 0.02 * R)  # the river takes the rain as rings, not as streaks
 
-    # The boat sits on the water with a line of white between it and its own reflection, and the figure and its
-    # umbrella are kept apart from the boat behind them by a hairline of white.
-    hull = ndimage.binary_dilation(boat, iterations=max(1, round(0.6 * s)))
+    # The boat and the bridge's piers sit on the water with a line of white between them and their reflections, and the
+    # figure and its umbrella are kept apart from the boat behind them by a hairline of white.
+    hull = ndimage.binary_dilation(boat | pier, iterations=max(1, round(0.6 * s)))
     waterline = ndimage.binary_dilation(hull, iterations=max(1, round(1.4 * s))) & ~hull & water
     walker = ndimage.binary_dilation(figure, iterations=max(1, round(0.6 * s)))
     halo = ndimage.binary_dilation(walker, iterations=max(1, round(1.3 * s))) & ~walker

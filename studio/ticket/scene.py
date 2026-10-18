@@ -45,6 +45,9 @@ OUT = os.path.join(ROOT, "public", "objects")
 PLACES = os.path.join(ROOT, "src", "components", "ticket", "contact.json")
 PANEL = leather.DYE
 EXPOSURE = -2.0  # what the white card needs under the room and the key lamp
+# The studio's light, a little over a quarter brighter than the stand's own: the set was lit, and the card's white
+# judged, under the oeusume stand, which lit flat card that much more than studio/desk's copy does.
+ROOM = 1.27
 
 # The open page, in the spread's em. The stamps' column is the stamps' width and an em; the ticket's frame follows it,
 # the card a bleed in from the frame.
@@ -111,7 +114,7 @@ def main():
         bpy.context.scene.cycles.use_auto_tile = True
         bpy.context.scene.cycles.tile_size = 1024
         # The hide is in the photograph, so the stand's mat, which only reflections and shadows see, is taken away.
-        STAGE.shoot(f"contact-{plate}", frame, exposure=EXPOSURE, lens=False, mat=False, sharp=1.5)
+        STAGE.shoot(f"contact-{plate}", frame, exposure=EXPOSURE, room=ROOM, lens=False, mat=False, sharp=1.5)
         places[plate] = [round(v, 4) for v in frame]
         with open(PLACES, "w") as out:
             json.dump(places, out)

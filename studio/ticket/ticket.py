@@ -275,6 +275,9 @@ def build(sheet, name, warp, at=(0.0, 0.0)):
         fibre_scale=42,
         sheen=0.0,
         specular=0.04,
+        # Cut by its alpha, not by a solid's walls: the solid's mesh is too coarse for the stamps' perforations
+        # and the ticket's bites, and draws them ragged.
+        solid=False,
     )
 
 

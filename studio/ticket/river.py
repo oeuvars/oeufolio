@@ -12,7 +12,8 @@ the boat close to, and the suspended span from far down the river.
 
 Metres. x runs along the bridge, y across the river away from the camera, z up. The bridge is a balanced cantilever,
 as the real one is: two towers 82 m above the piers, anchor arms back to the banks, cantilever arms reaching out
-over the river, and a suspended span hung between their ends. Its trusses are 23 m apart.
+over the river, and a suspended span hung between their ends. Its trusses are 23 m apart. Each anchor arm comes down
+on an anchor pier at the water's edge, and the road runs on onto the bank, between godowns and houses.
 """
 
 import argparse
@@ -38,6 +39,7 @@ SPAN = 457.0  # tower to tower
 ANCHOR = 99.0  # tower to the end of each anchor arm
 HUNG = 172.0  # the suspended span in the middle
 ARM_END = 24.0  # how high the top chord comes down to at the end of an arm
+ROAD = 1500.0  # how far the roadway runs on onto each bank past the anchor arm
 
 
 class Parts:
@@ -207,17 +209,43 @@ def bridge(steel, piers, deck, x_left):
     truss(steel, x_left, x_left + arm, top, DECK + ARM_END, 10)
     truss(steel, x_right - arm, x_right, DECK + ARM_END, top, 10)
     truss(steel, x_right, x_right + ANCHOR, top, DECK + ARM_END, 7)
-    # The suspended span: a lower truss, its top chord bowed a little.
+    # The suspended span: a lower truss hung from the ends of the cantilever arms, its top chord starting at the
+    # height the arms come down to, so the chords meet at the hinge, and bowed a little between.
     panels = 12
     for i in range(panels):
         xa = x_left + arm + HUNG * i / panels
         xb = x_left + arm + HUNG * (i + 1) / panels
-        ha = DECK + 18 + 8 * math.sin(math.pi * i / panels)
-        hb = DECK + 18 + 8 * math.sin(math.pi * (i + 1) / panels)
+        ha = DECK + ARM_END + 8 * math.sin(math.pi * i / panels)
+        hb = DECK + ARM_END + 8 * math.sin(math.pi * (i + 1) / panels)
         truss(steel, xa, xb, ha, hb, 1)
-    # The roadway, and the footpaths cantilevered out either side.
-    deck.box(x_left - ANCHOR, x_right + ANCHOR, -TRUSS - 3.5, TRUSS + 3.5, DECK - 1.6, DECK - 0.3)
-    deck.box(x_left - ANCHOR, x_right + ANCHOR, -TRUSS - 3.6, -TRUSS - 3.3, DECK - 0.3, DECK + 1.1)
+    # The roadway, and the footpaths cantilevered out either side, running on past the anchor arms onto the banks.
+    deck.box(x_left - ANCHOR - ROAD, x_right + ANCHOR + ROAD, -TRUSS - 3.5, TRUSS + 3.5, DECK - 1.6, DECK - 0.3)
+    deck.box(x_left - ANCHOR - ROAD, x_right + ANCHOR + ROAD, -TRUSS - 3.6, -TRUSS - 3.3, DECK - 0.3, DECK + 1.1)
+
+
+def banks(piers, land, x_left):
+    """The banks the anchor arms come down onto: the end of each arm sits on an anchor pier at the water's edge, the
+    roadway runs on onto the bank, and a row of godowns and houses stands along the bank either side of the road.
+    Downstream of the bridge the banks fall away from the river a little past the road, so the water the boat and
+    the lens are on stays open."""
+    import random
+
+    rng = random.Random(5)
+    front = TRUSS + 30  # how far downstream of the bridge each bank runs
+    for end, out in ((x_left - ANCHOR, -1), (x_left + SPAN + ANCHOR, 1)):
+        piers.box(end - 8, end + 8, -TRUSS - 4, TRUSS + 4, -3, DECK - 1.5)
+        shore = end + out * 4
+        land.box(min(shore, shore + out * ROAD), max(shore, shore + out * ROAD), -front, 2000, -1, DECK - 1.6)
+        for side, reach in ((-1, front), (1, 700)):
+            y = side * (TRUSS + 8)
+            while abs(y) < reach:
+                w = rng.uniform(10, 28)
+                h = rng.choice((8, 10, 12, 14, 18)) * rng.uniform(0.85, 1.2)
+                x0 = shore + out * rng.uniform(4, 10)
+                depth = rng.uniform(12, 24)
+                y1 = y + side * min(w, reach - abs(y))
+                land.box(min(x0, x0 + out * depth), max(x0, x0 + out * depth), min(y, y1), max(y, y1), DECK - 1.6, DECK - 1.6 + h)
+                y = y1 + side * rng.uniform(0, 2)
 
 
 def city(parts):
@@ -237,6 +265,14 @@ def city(parts):
         if rng.random() < 0.08:
             parts.box(x + w * 0.4, x + w * 0.4 + 2, y + 6, y + 8, h, h + 22)
         x += w + rng.uniform(0, 6)
+    # Godowns end to end along the quay in front of them, up to the right bank, so the far bank shows under the bridge
+    # as one unbroken line and not as houses with the sky between them.
+    quay = random.Random(9)
+    x = -700.0
+    while x < 500:
+        w = quay.uniform(14, 40)
+        parts.box(x, min(x + w, 500), 404, 418, 0, quay.uniform(14, 20))
+        x += w
     # A temple spire, rising out of the roofs on the left.
     parts.lathe([(9, 0), (8, 14), (6, 24), (3.5, 34), (1.2, 42), (0.2, 46)], (-180, 470, 10), sides=12)
     # A clock tower behind the far end of the bridge.
@@ -366,6 +402,7 @@ def main():
     }
     parts = {name: Parts() for name in mats}
     bridge(parts["steel"], parts["pier"], parts["deck"], -60.0)
+    banks(parts["pier"], parts["city"], -60.0)
     city(parts["city"])
     # From a boat on the water, low, downstream and off to the left, so the bridge stands three quarters on: the near
     # tower large on the left, the suspended span in the middle, the far tower small on the right.
