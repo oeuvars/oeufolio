@@ -167,6 +167,23 @@ export type Cv = {
   education: CvSchool[]
 }
 
+/** Where a word on the error page's photograph lies (studio/error/book.py): its text, its box as fractions of the
+ * plate (left, top, width, height), and whether it runs down the page. */
+export type ErrorPlace = {
+  text: string
+  box: number[]
+  vertical: boolean
+}
+
+/** One photograph of the error page's book: its size in pixels, the part of it the pages cover (left, top, right,
+ * bottom, as fractions), the colour its edges fall to, and where each of its words lies. */
+export type ErrorPlate = {
+  size: number[]
+  pages: number[]
+  edge: string
+  boxes: Record<string, ErrorPlace>
+}
+
 /** Where the site lives and who it is, for the tags that describe every page to search engines and link previews. */
 export type Site = {
   url: string

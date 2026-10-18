@@ -1,0 +1,312 @@
+{
+ "wide": {
+  "size": [
+   3050,
+   1800
+  ],
+  "pages": [
+   0.2358,
+   0.1888,
+   0.7641,
+   0.8112
+  ],
+  "edge": "#dad3c9",
+  "boxes": {
+   "reading-0": {
+    "text": "The light of far heaven",
+    "box": [
+     0.2845,
+     0.4102,
+     0.09492,
+     0.01877
+    ],
+    "vertical": false
+   },
+   "reading-1": {
+    "text": "lies calm on this spring day.",
+    "box": [
+     0.28449,
+     0.4382,
+     0.11418,
+     0.01876
+    ],
+    "vertical": false
+   },
+   "reading-2": {
+    "text": "Why, then, do the blossoms",
+    "box": [
+     0.28448,
+     0.4662,
+     0.11613,
+     0.01875
+    ],
+    "vertical": false
+   },
+   "reading-3": {
+    "text": "fall with such unsettled hearts?",
+    "box": [
+     0.28447,
+     0.4942,
+     0.12867,
+     0.01874
+    ],
+    "vertical": false
+   },
+   "source-0": {
+    "text": "Ki no Tomonori, Kokinshū 84",
+    "box": [
+     0.28447,
+     0.52838,
+     0.08864,
+     0.01295
+    ],
+    "vertical": false
+   },
+   "message-0": {
+    "text": "This page hit an error while it was opening.",
+    "box": [
+     0.28448,
+     0.60318,
+     0.14972,
+     0.01522
+    ],
+    "vertical": false
+   },
+   "again-0": {
+    "text": "Open it again",
+    "box": [
+     0.2845,
+     0.64474,
+     0.04693,
+     0.0152
+    ],
+    "vertical": false
+   },
+   "home-0": {
+    "text": "Go to the first page",
+    "box": [
+     0.34691,
+     0.64476,
+     0.06675,
+     0.0152
+    ],
+    "vertical": false
+   },
+   "poem-0": {
+    "text": "ひさかたの",
+    "box": [
+     0.70391,
+     0.29772,
+     0.02064,
+     0.19244
+    ],
+    "vertical": true
+   },
+   "poem-1": {
+    "text": "光のどけき",
+    "box": [
+     0.67358,
+     0.35717,
+     0.01943,
+     0.18093
+    ],
+    "vertical": true
+   },
+   "poem-2": {
+    "text": "春の日に",
+    "box": [
+     0.64199,
+     0.31868,
+     0.02068,
+     0.15398
+    ],
+    "vertical": true
+   },
+   "poem-3": {
+    "text": "しづ心なく",
+    "box": [
+     0.61204,
+     0.39566,
+     0.01861,
+     0.17324
+    ],
+    "vertical": true
+   },
+   "poem-4": {
+    "text": "花の散るらむ",
+    "box": [
+     0.58001,
+     0.3397,
+     0.02068,
+     0.23095
+    ],
+    "vertical": true
+   },
+   "poet": {
+    "text": "紀友則",
+    "box": [
+     0.55146,
+     0.58906,
+     0.0106,
+     0.06723
+    ],
+    "vertical": true
+   }
+  }
+ },
+ "tall": {
+  "size": [
+   2100,
+   2550
+  ],
+  "pages": [
+   0.2599,
+   0.086,
+   0.7401,
+   0.914
+  ],
+  "edge": "#dad3c8",
+  "boxes": {
+   "poem-0": {
+    "text": "ひさかたの",
+    "box": [
+     0.62894,
+     0.17528,
+     0.04198,
+     0.19014
+    ],
+    "vertical": true
+   },
+   "poem-1": {
+    "text": "光のどけき",
+    "box": [
+     0.56723,
+     0.23405,
+     0.03946,
+     0.17873
+    ],
+    "vertical": true
+   },
+   "poem-2": {
+    "text": "春の日に",
+    "box": [
+     0.503,
+     0.19602,
+     0.04198,
+     0.15211
+    ],
+    "vertical": true
+   },
+   "poem-3": {
+    "text": "しづ心なく",
+    "box": [
+     0.44213,
+     0.27208,
+     0.03778,
+     0.17113
+    ],
+    "vertical": true
+   },
+   "poem-4": {
+    "text": "花の散るらむ",
+    "box": [
+     0.37706,
+     0.21676,
+     0.04198,
+     0.22817
+    ],
+    "vertical": true
+   },
+   "poet": {
+    "text": "紀友則",
+    "box": [
+     0.33028,
+     0.39505,
+     0.02159,
+     0.06667
+    ],
+    "vertical": true
+   },
+   "reading-0": {
+    "text": "The light of far heaven",
+    "box": [
+     0.32609,
+     0.5812,
+     0.18801,
+     0.01814
+    ],
+    "vertical": false
+   },
+   "reading-1": {
+    "text": "lies calm on this spring day.",
+    "box": [
+     0.32609,
+     0.60837,
+     0.22699,
+     0.01814
+    ],
+    "vertical": false
+   },
+   "reading-2": {
+    "text": "Why, then, do the blossoms",
+    "box": [
+     0.32609,
+     0.63553,
+     0.22969,
+     0.01814
+    ],
+    "vertical": false
+   },
+   "reading-3": {
+    "text": "fall with such unsettled hearts?",
+    "box": [
+     0.32609,
+     0.66269,
+     0.25517,
+     0.01814
+    ],
+    "vertical": false
+   },
+   "source-0": {
+    "text": "Ki no Tomonori, Kokinshū 84",
+    "box": [
+     0.32609,
+     0.69656,
+     0.17811,
+     0.01259
+    ],
+    "vertical": false
+   },
+   "message-0": {
+    "text": "This page hit an error while it was opening.",
+    "box": [
+     0.32609,
+     0.76112,
+     0.31245,
+     0.01536
+    ],
+    "vertical": false
+   },
+   "again-0": {
+    "text": "Open it again",
+    "box": [
+     0.32609,
+     0.8105,
+     0.09715,
+     0.01536
+    ],
+    "vertical": false
+   },
+   "home-0": {
+    "text": "Go to the first page",
+    "box": [
+     0.45022,
+     0.8105,
+     0.13973,
+     0.01536
+    ],
+    "vertical": false
+   }
+  }
+ }
+}
