@@ -1,56 +1,31 @@
 import type { CSSProperties } from 'react'
 
-// The résumé page's two themes as variables, so one set of classes serves both. --l0 to --l4 are the five shades of
-// the GitHub activity grid, from no contributions to the most.
-export const LIGHT = {
-  '--page': '#ffffff',
-  '--ink': '#18181b',
-  '--body': '#52525b',
-  '--muted': '#71717a',
-  '--faint': '#a1a1aa',
-  '--rule': '#a1a1aa',
-  '--line': '#e4e4e7',
-  '--chip': '#fafafa',
-  '--chip-line': 'rgb(0 0 0 / 0.3)',
-  '--hover': '#f4f4f5',
-  '--button': '#18181b',
-  '--button-ink': '#fafafa',
-  '--l0': '#f4f4f5',
-  '--l1': '#d4d4d8',
-  '--l2': '#a1a1aa',
-  '--l3': '#52525b',
-  '--l4': '#18181b',
-} as CSSProperties
+// Class sets taken from parascodes.is-a.dev, which the résumé page copies: its zinc palette, its black/30 rules masked
+// into one-pixel dots every six pixels, black/5 rings and its radii and shadows, in light and dark.
 
-export const DARK = {
-  '--page': '#000000',
-  '--ink': '#f4f4f5',
-  '--body': '#d4d4d8',
-  '--muted': '#a1a1aa',
-  '--faint': '#52525b',
-  '--rule': '#52525b',
-  '--line': '#27272a',
-  '--chip': '#0a0a0a',
-  '--chip-line': 'rgb(255 255 255 / 0.25)',
-  '--hover': '#121214',
-  '--button': '#fafafa',
-  '--button-ink': '#18181b',
-  '--l0': '#18181b',
-  '--l1': '#3f3f46',
-  '--l2': '#71717a',
-  '--l3': '#d4d4d8',
-  '--l4': '#fafafa',
-} as CSSProperties
-
-export const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ink)'
 export const MONO = "font-['Geist_Mono_Variable',ui-monospace,monospace]"
-export const LABEL = `${MONO} text-[10px] font-medium tracking-wider text-(--faint) uppercase`
-export const CHIP = `flex items-center gap-1.5 rounded-[4px] border border-(--line) bg-(--chip) px-3 py-1.5 text-[12px] font-medium text-(--body) transition-colors hover:bg-(--hover) hover:text-(--ink) ${FOCUS}`
-export const STAMP = `flex items-center gap-1.5 rounded-[4px] border border-(--line) bg-(--chip) px-3 py-1.5 ${MONO} text-[10px] tracking-[0.12em] text-(--muted) uppercase transition-colors hover:bg-(--hover) hover:text-(--ink) ${FOCUS}`
-export const PILL = 'flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-(--line) bg-(--page) px-2 py-0.5 text-[11px] font-medium text-(--muted)'
-export const CARD = 'rounded-lg border border-(--line) bg-(--chip)'
 
-// Dotted rules as the reference draws them: a one-pixel dot every four pixels, sparser than CSS's own dotted border.
-export const DOTS_X = 'bg-[linear-gradient(to_right,var(--rule)_1px,transparent_1px)] bg-[length:4px_1px] bg-repeat-x'
-export const DOTS_Y = 'bg-[linear-gradient(to_bottom,var(--rule)_1px,transparent_1px)] bg-[length:1px_4px] bg-repeat-y'
-export const DOT = 'relative before:absolute before:top-[0.75em] before:-left-3 before:size-[3px] before:rounded-full before:bg-current'
+/** A rule's dash: one pixel drawn in every six. */
+export const DASH_X: CSSProperties = {
+  maskImage: 'repeating-linear-gradient(to right, black 0, black 1px, transparent 1px, transparent 6px)',
+  WebkitMaskImage: 'repeating-linear-gradient(to right, black 0, black 1px, transparent 1px, transparent 6px)',
+}
+export const DASH_Y: CSSProperties = {
+  maskImage: 'repeating-linear-gradient(to bottom, black 0, black 1px, transparent 1px, transparent 6px)',
+  WebkitMaskImage: 'repeating-linear-gradient(to bottom, black 0, black 1px, transparent 1px, transparent 6px)',
+}
+
+export const RULE = 'pointer-events-none absolute h-0 border-black/30 dark:border-white/[0.15]'
+export const KNOT = 'pointer-events-none absolute z-20 size-[2px] bg-black/50 dark:bg-white/[0.25]'
+
+/** The outline drawn five pixels outside a card or button, darkening on hover. */
+export const RING =
+  'pointer-events-none absolute -inset-[5px] rounded-[11px] border border-black/5 transition-colors duration-300 group-hover:border-black/10 dark:border-white/5 dark:group-hover:border-white/10'
+export const CARD =
+  'relative flex flex-col overflow-hidden rounded-[6px] border border-black/5 bg-zinc-50 shadow-sm shadow-black/5 dark:border-white/5 dark:bg-[#09090b] dark:shadow-lg dark:shadow-black/80'
+
+export const CHIP =
+  'rounded-[6px] border border-black/30 bg-zinc-100 px-2.5 py-1 text-[12px] font-medium text-zinc-600 dark:border-white/[0.15] dark:bg-[#0a0a0a] dark:text-zinc-400'
+export const LABEL = `${MONO} text-[10px] font-medium tracking-wider text-zinc-400 uppercase dark:text-zinc-600`
+export const STAMP = `group inline-flex items-center gap-2 rounded-[6px] border border-black/5 bg-zinc-50 px-3 py-1.5 ${MONO} text-[10px] tracking-[0.16em] text-zinc-400 uppercase transition-colors hover:text-zinc-700 dark:border-white/5 dark:bg-[#09090b] dark:text-zinc-600 dark:hover:text-zinc-300`
+export const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400'
