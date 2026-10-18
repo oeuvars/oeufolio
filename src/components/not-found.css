@@ -1,0 +1,631 @@
+@import '@fontsource/special-elite/400.css';
+@import '@fontsource/permanent-marker/400.css';
+@import '@fontsource/dotgothic16/400.css';
+
+/*
+ * The 404: a paste-up on a wall at night. Every piece is a layer laid over the last with a blend, as a
+ * photomontage is built: the stained wall, a halftone wash and two gels of light, the number printed three times
+ * out of register, two runs of tape across it, a typed note taped on, and over all of it the screen's own lines
+ * and grain. The filters are in NotFound.tsx.
+ */
+.nf {
+  --nf-void: #09090a;
+  --nf-bone: #ebe6da;
+  --nf-acid: #d4ff1f;
+  --nf-hot: #ff2d55;
+  --nf-cyan: #19e6ff;
+  --nf-paper: #e7e1d1;
+  --nf-pixel: 'DotGothic16', 'JetBrains Mono Variable', ui-monospace, monospace;
+  --nf-type: 'Special Elite', 'Courier New', monospace;
+  --nf-marker: 'Permanent Marker', 'Marker Felt', cursive;
+  --nf-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --nf-stain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.011' numOctaves='5' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.58 0 0 0 0 0.55 1.6 0 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  --nf-scuff: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.02 0.4' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.4 1.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)'/%3E%3C/svg%3E");
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(120% 90% at 50% 40%, #17171a 0%, #0d0d0f 55%, var(--nf-void) 100%);
+  color: var(--nf-bone);
+  font-family: var(--nf-pixel);
+}
+
+.nf * {
+  box-sizing: border-box;
+}
+
+.nf ::selection {
+  background: var(--nf-acid);
+  color: var(--nf-void);
+}
+
+/* ------------------------------------------------------------------ the wall */
+
+.nf-wall,
+.nf-halftone,
+.nf-grid,
+.nf-scanlines,
+.nf-grain,
+.nf-vignette {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.nf-wall {
+  background-image: var(--nf-stain), var(--nf-stain);
+  background-size: 900px 900px, 1400px 1400px;
+  background-position: 0 0, 310px 170px;
+  mix-blend-mode: overlay;
+  opacity: 0.7;
+}
+
+/* A halftone wash, falling off from the top left like a light leak, and a second, finer one in the opposite corner. */
+.nf-halftone {
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.55) 0 1.15px, transparent 1.7px) 0 0 / 7px 7px,
+    radial-gradient(circle, rgb(255 45 85 / 0.8) 0 1.4px, transparent 2px) 0 0 / 9px 9px;
+  mask-image:
+    radial-gradient(60% 55% at 12% 8%, #000 0%, transparent 70%),
+    radial-gradient(45% 50% at 92% 96%, #000 0%, transparent 75%);
+  mask-composite: add;
+  mix-blend-mode: soft-light;
+  opacity: 0.9;
+}
+
+.nf-grid {
+  background:
+    linear-gradient(rgb(235 230 218 / 0.045) 1px, transparent 1px) 0 0 / 100% 64px,
+    linear-gradient(90deg, rgb(235 230 218 / 0.045) 1px, transparent 1px) 0 0 / 64px 100%;
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 70%, transparent);
+}
+
+.nf-spray {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 50%;
+  filter: url(#nf-spray) blur(1.5px);
+  mix-blend-mode: screen;
+}
+
+.nf-spray-hot {
+  left: 4vw;
+  top: 14vh;
+  width: 46vw;
+  height: 46vw;
+  background: radial-gradient(circle, rgb(255 45 85 / 0.8) 0%, rgb(255 45 85 / 0.38) 36%, transparent 64%);
+}
+
+.nf-spray-cold {
+  right: -8vw;
+  top: -6vh;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, rgb(25 230 255 / 0.32) 0%, rgb(25 230 255 / 0.1) 40%, transparent 66%);
+}
+
+/* --------------------------------------------------------------- print marks */
+
+.nf-crop {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-color: rgb(235 230 218 / 0.55);
+  border-style: solid;
+  border-width: 0;
+}
+
+.nf-crop-tl { top: 14px; left: 14px; border-top-width: 1px; border-left-width: 1px; }
+.nf-crop-tr { top: 14px; right: 14px; border-top-width: 1px; border-right-width: 1px; }
+.nf-crop-bl { bottom: 14px; left: 14px; border-bottom-width: 1px; border-left-width: 1px; }
+.nf-crop-br { bottom: 14px; right: 14px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* A registration target: a ring with a cross through it, in all four inks at once. */
+.nf-target {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  border: 1px solid rgb(235 230 218 / 0.6);
+  border-radius: 50%;
+  background:
+    linear-gradient(rgb(235 230 218 / 0.6), rgb(235 230 218 / 0.6)) center / 1px 34px no-repeat,
+    linear-gradient(rgb(235 230 218 / 0.6), rgb(235 230 218 / 0.6)) center / 34px 1px no-repeat;
+  box-shadow: 1px 0 0 rgb(255 45 85 / 0.5), -1px 0 0 rgb(25 230 255 / 0.5);
+}
+
+.nf-target-l { left: 22px; }
+.nf-target-r { right: 22px; }
+
+/* ----------------------------------------------------------------------- hud */
+
+.nf-hud {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(235 230 218 / 0.72);
+}
+
+.nf-hud > span {
+  white-space: nowrap;
+}
+
+.nf-hud-top { top: 18px; }
+.nf-hud-bottom { bottom: 18px; }
+
+.nf-hud-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: none;
+  color: var(--nf-acid);
+}
+
+.nf-barcode {
+  flex: 0 1 220px;
+  height: 16px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--nf-bone) 0 2px,
+    transparent 2px 3px,
+    var(--nf-bone) 3px 4px,
+    transparent 4px 7px,
+    var(--nf-bone) 7px 10px,
+    transparent 10px 11px,
+    var(--nf-bone) 11px 12px,
+    transparent 12px 15px
+  );
+  opacity: 0.6;
+  mask-image: var(--nf-scuff);
+}
+
+/* --------------------------------------------------------------- the number */
+
+.nf-code {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 2;
+  margin: 0;
+  translate: -52% -50%;
+  font-family: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  font-size: min(37vw, 60vh);
+  font-stretch: 125%;
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.045em;
+  white-space: nowrap;
+}
+
+/* The first layer holds the box open; the rest lie over it. */
+.nf-layer {
+  display: block;
+}
+
+.nf-layer + .nf-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* A stroke laid off the number, in acid, as a layer style dragged out of place. */
+.nf-stroke {
+  color: transparent;
+  -webkit-text-stroke: 3px var(--nf-acid);
+  translate: 0.035em 0.045em;
+  opacity: 0.85;
+  filter: url(#nf-bleed);
+}
+
+/* Two plates printed out of register, showing past the face as fringes of red and cyan. */
+.nf-red,
+.nf-cyan {
+  mix-blend-mode: screen;
+  filter: url(#nf-distress);
+}
+
+.nf-red { color: var(--nf-hot); translate: -0.022em 0.004em; }
+.nf-cyan { color: var(--nf-cyan); translate: 0.022em -0.006em; }
+
+/* The face: a photocopy of bone paper, scuffed through and flecked. */
+.nf-face {
+  color: transparent;
+  background-image:
+    repeating-linear-gradient(to bottom, rgb(40 36 30 / 0.07) 0 1px, transparent 1px 5px),
+    var(--nf-grain),
+    linear-gradient(172deg, #f7f3ea 0%, #e4dfd2 50%, #c3bdb0 100%);
+  background-size: 100% 100%, 240px 240px, 100% 100%;
+  background-blend-mode: normal, soft-light, normal;
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: url(#nf-distress) drop-shadow(0 0.02em 0 rgb(0 0 0 / 0.5));
+}
+
+/* Bands of the face torn loose and slid sideways, as a bad signal does. */
+.nf-slice {
+  filter: url(#nf-distress);
+  animation: nf-glitch-a 3.8s steps(1, end) infinite;
+}
+
+.nf-slice-b {
+  animation-name: nf-glitch-b;
+  animation-duration: 5.3s;
+  background-image: linear-gradient(var(--nf-acid), var(--nf-acid));
+}
+
+@keyframes nf-glitch-a {
+  0%, 86%, 100% { clip-path: inset(0 0 100% 0); translate: 0 0; }
+  87% { clip-path: inset(22% 0 61% 0); translate: -0.06em 0; }
+  89% { clip-path: inset(48% 0 37% 0); translate: 0.045em 0; }
+  91% { clip-path: inset(70% 0 18% 0); translate: -0.03em 0; }
+  93% { clip-path: inset(9% 0 83% 0); translate: 0.07em 0; }
+}
+
+@keyframes nf-glitch-b {
+  0%, 92%, 100% { clip-path: inset(0 0 100% 0); translate: 0 0; }
+  93% { clip-path: inset(56% 0 39% 0); translate: 0.09em 0; }
+  95% { clip-path: inset(31% 0 66% 0); translate: -0.05em 0; }
+  97% { clip-path: inset(80% 0 15% 0); translate: 0.03em 0; }
+}
+
+/* ------------------------------------------------------------------- scrawl */
+
+.nf-scrawl {
+  position: absolute;
+  right: 9vw;
+  top: 13vh;
+  z-index: 4;
+  margin: 0;
+  rotate: -9deg;
+  font-family: var(--nf-marker);
+  font-size: clamp(2rem, 4.6vw, 4.6rem);
+  line-height: 1;
+  color: var(--nf-hot);
+  text-shadow: 0 0 18px rgb(255 45 85 / 0.45);
+  filter: url(#nf-bleed);
+}
+
+/* The marker's underline, dragged twice. */
+.nf-scrawl::after {
+  content: '';
+  position: absolute;
+  left: -4%;
+  right: -8%;
+  bottom: -0.2em;
+  height: 0.22em;
+  border-top: 0.07em solid currentColor;
+  border-bottom: 0.05em solid currentColor;
+  border-radius: 60% 40% 70% 30% / 100% 100% 60% 60%;
+  rotate: 2deg;
+  opacity: 0.9;
+}
+
+.nf-vertical {
+  position: absolute;
+  right: 3.2vw;
+  top: 12vh;
+  z-index: 0;
+  margin: 0;
+  writing-mode: vertical-rl;
+  font-size: clamp(13px, 1.25vw, 18px);
+  letter-spacing: 0.4em;
+  color: var(--nf-hot);
+  text-shadow: 1px 0 0 rgb(25 230 255 / 0.7);
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------- tape */
+
+.nf-tape {
+  position: absolute;
+  left: -15vw;
+  width: 130vw;
+  overflow: hidden;
+  font-family: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  font-stretch: 112%;
+  font-weight: 850;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 1.4rem 2.4rem rgb(0 0 0 / 0.55), 0 0.2rem 0.4rem rgb(0 0 0 / 0.5);
+}
+
+/* Grime on the tape, and a sheen along it where the light catches the plastic. */
+.nf-tape::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image: var(--nf-stain), var(--nf-grain), linear-gradient(to bottom, rgb(255 255 255 / 0.28), transparent 30%, transparent 70%, rgb(0 0 0 / 0.25));
+  background-size: 700px 700px, 240px 240px, 100% 100%;
+  background-blend-mode: normal;
+  mix-blend-mode: multiply;
+  opacity: 0.8;
+}
+
+.nf-tape-hazard {
+  top: 62vh;
+  z-index: 3;
+  rotate: -6deg;
+  padding: 12px 0;
+  background:
+    repeating-linear-gradient(-45deg, #111 0 12px, var(--nf-acid) 12px 24px) top / 100% 9px no-repeat,
+    repeating-linear-gradient(-45deg, #111 0 12px, var(--nf-acid) 12px 24px) bottom / 100% 9px no-repeat,
+    var(--nf-acid);
+  color: #0b0b0b;
+  font-size: clamp(16px, 1.7vw, 26px);
+}
+
+.nf-tape-breach {
+  top: 30vh;
+  z-index: 1;
+  rotate: 4deg;
+  padding: 6px 0;
+  background: #111;
+  color: var(--nf-hot);
+  font-size: clamp(12px, 1.1vw, 17px);
+  border-block: 1px solid rgb(255 45 85 / 0.6);
+  opacity: 0.92;
+}
+
+.nf-track {
+  display: flex;
+  width: max-content;
+  animation: nf-run 38s linear infinite;
+}
+
+.nf-tape-breach .nf-track {
+  animation-duration: 52s;
+  animation-direction: reverse;
+}
+
+.nf-track-word::after {
+  content: '//';
+  margin: 0 1.1em;
+  opacity: 0.55;
+}
+
+@keyframes nf-run {
+  to { translate: -50% 0; }
+}
+
+/* --------------------------------------------------------------------- note */
+
+/* A clip cuts away a box-shadow, so the note casts its shadow from the wrapper, round the torn shape. */
+.nf-note-shadow {
+  position: absolute;
+  right: 7vw;
+  bottom: 11vh;
+  z-index: 5;
+  width: min(25rem, 86vw);
+  rotate: 2.4deg;
+  filter: drop-shadow(0 18px 22px rgb(0 0 0 / 0.6)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.5));
+}
+
+.nf-note {
+  position: relative;
+  padding: 2.1rem 1.9rem 2.6rem;
+  background-color: var(--nf-paper);
+  background-image:
+    var(--nf-grain),
+    linear-gradient(97deg, transparent 0 61%, rgb(0 0 0 / 0.08) 61.3%, rgb(255 255 255 / 0.25) 61.8%, transparent 63%),
+    radial-gradient(120% 80% at 30% 10%, transparent 40%, rgb(120 96 60 / 0.22) 100%);
+  background-size: 240px 240px, 100% 100%, 100% 100%;
+  background-blend-mode: multiply, normal, normal;
+  color: #1b1a17;
+  font-family: var(--nf-type);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.nf-note-ref {
+  margin: 0 0 0.9rem;
+  font-family: var(--nf-pixel);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b675c;
+}
+
+.nf-note-ref span {
+  display: block;
+  margin-top: 0.15rem;
+  overflow-wrap: anywhere;
+  text-transform: none;
+  letter-spacing: 0.04em;
+  color: #1b1a17;
+}
+
+.nf-note-body {
+  margin: 0 0 1.1rem;
+  filter: url(#nf-bleed);
+}
+
+.nf-note-exits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nf-note-exits a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.nf-note-exits a::before {
+  content: '> ';
+  color: var(--nf-hot);
+}
+
+.nf-note-exits a:hover,
+.nf-note-exits a:focus-visible {
+  background: #1b1a17;
+  color: var(--nf-acid);
+  outline: none;
+  text-decoration: none;
+}
+
+/* A rubber stamp, inked unevenly and pressed at a slant. */
+.nf-stamp {
+  position: absolute;
+  right: 1.1rem;
+  top: 1.2rem;
+  padding: 0.2em 0.5em;
+  border: 3px double rgb(214 31 59 / 0.85);
+  rotate: -11deg;
+  font-family: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  font-stretch: 70%;
+  font-weight: 900;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(214 31 59 / 0.85);
+  mix-blend-mode: multiply;
+  filter: url(#nf-distress);
+}
+
+/* Two pieces of masking tape holding the note up, torn off the roll at both ends. */
+.nf-stick {
+  position: absolute;
+  top: -14px;
+  width: 104px;
+  height: 30px;
+  background-color: rgb(226 220 196 / 0.62);
+  background-image: var(--nf-grain), linear-gradient(to bottom, rgb(255 255 255 / 0.3), transparent 60%);
+  background-size: 240px 240px, 100% 100%;
+  background-blend-mode: multiply, normal;
+  backdrop-filter: blur(0.6px);
+}
+
+.nf-stick-0 { left: -26px; rotate: -38deg; }
+.nf-stick-1 { right: -24px; rotate: 33deg; }
+
+/* --------------------------------------------------------------------- home */
+
+.nf-home {
+  position: absolute;
+  left: 6vw;
+  bottom: 13vh;
+  z-index: 5;
+  rotate: -2deg;
+  text-decoration: none;
+  /* The plate's clip would cut away a shadow of its own, so the link casts it, round the cut corners. */
+  filter: drop-shadow(7px 7px 0 var(--nf-hot));
+  transition: translate 160ms var(--ease-spring, ease), filter 160ms ease;
+}
+
+.nf-home-plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.85em 1.3em 0.8em;
+  background-color: var(--nf-acid);
+  background-image: var(--nf-grain);
+  background-size: 240px 240px;
+  background-blend-mode: multiply;
+  color: #0b0b0b;
+  font-family: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  font-size: clamp(14px, 1.15vw, 18px);
+  font-stretch: 125%;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.nf-home:hover,
+.nf-home:focus-visible {
+  translate: -3px -3px;
+  outline: none;
+  filter: drop-shadow(10px 10px 0 var(--nf-hot)) drop-shadow(-2px 0 0 var(--nf-cyan));
+}
+
+.nf-home:focus-visible .nf-home-plate {
+  background-color: var(--nf-bone);
+}
+
+.nf-home-arrow {
+  font-family: var(--nf-pixel);
+  font-weight: 400;
+}
+
+/* ------------------------------------------------------------------ screen */
+
+.nf-scanlines {
+  z-index: 7;
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply;
+}
+
+.nf-grain {
+  z-index: 8;
+  inset: -50%;
+  background-image: var(--nf-grain);
+  background-size: 240px 240px;
+  mix-blend-mode: overlay;
+  opacity: 0.32;
+  animation: nf-grain 0.9s steps(6) infinite;
+}
+
+@keyframes nf-grain {
+  0% { translate: 0 0; }
+  20% { translate: -7% 4%; }
+  40% { translate: 5% -9%; }
+  60% { translate: -11% -3%; }
+  80% { translate: 8% 10%; }
+  100% { translate: 0 0; }
+}
+
+.nf-vignette {
+  z-index: 9;
+  background: radial-gradient(130% 100% at 50% 45%, transparent 52%, rgb(0 0 0 / 0.72) 100%);
+}
+
+/* ------------------------------------------------------------------ phone */
+
+/* A short window: the note and the button shrink and move out of the number's way. */
+@media (min-width: 761px) and (max-height: 760px) {
+  .nf-note-shadow { width: 21rem; right: 4.5vw; bottom: 9vh; }
+  .nf-note { padding: 1.6rem 1.5rem 2rem; font-size: 13.5px; }
+  .nf-stamp { font-size: 1.1rem; }
+  .nf-home { bottom: 9vh; }
+  .nf-tape-hazard { top: 60vh; }
+}
+
+@media (max-width: 760px) {
+  .nf-hud { left: 22px; right: 22px; font-size: 10px; gap: 1rem; }
+  .nf-barcode { display: none; }
+  .nf-target { display: none; }
+  .nf-hud-bottom > :last-child { display: none; }
+  .nf-code { top: 28%; font-size: 45vw; font-stretch: 100%; translate: -50% -50%; }
+  .nf-scrawl { top: 6.5vh; right: 8vw; font-size: 2.1rem; }
+  .nf-tape-breach { top: 17vh; }
+  .nf-tape-hazard { top: 39vh; font-size: 14px; padding: 10px 0; }
+  .nf-vertical { display: none; }
+  .nf-note-shadow { right: 50%; translate: 50% 0; bottom: 19vh; rotate: 1.5deg; }
+  .nf-note { padding: 1.7rem 1.4rem 2.2rem; font-size: 14px; }
+  .nf-home { left: 50%; translate: -50% 0; bottom: 9vh; rotate: -1.5deg; }
+  .nf-home:hover, .nf-home:focus-visible { translate: calc(-50% - 3px) -3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nf-slice,
+  .nf-track,
+  .nf-grain {
+    animation: none;
+  }
+}

@@ -1,5 +1,6 @@
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
 
+import { NotFound } from '../components/NotFound'
 import { SiteShell } from '../components/SiteShell'
 
 import appCss from '../styles.css?url'
@@ -44,9 +45,14 @@ export const Route = createRootRoute({
   }),
   shellComponent: RootDocument,
   component: RootLayout,
+  notFoundComponent: NotFound,
 })
 
 function RootLayout() {
+  // A path that is not a page has no strip to open, so it is shown on its own, outside the stack.
+  const lost = useRouterState({ select: (state) => state.matches.some((match) => match._notFound) })
+  if (lost) return <Outlet />
+
   return (
     <SiteShell>
       <Outlet />

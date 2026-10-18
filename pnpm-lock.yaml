@@ -20,13 +20,22 @@ importers:
       '@fontsource/domine':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource/dotgothic16':
+        specifier: ^5.3.1
+        version: 5.3.1
       '@fontsource/martel':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/permanent-marker':
         specifier: ^5.3.0
         version: 5.3.0
       '@fontsource/playfair-display':
         specifier: ^5.3.0
         version: 5.3.0
       '@fontsource/red-hat-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/special-elite':
         specifier: ^5.3.0
         version: 5.3.0
       '@tailwindcss/vite':
@@ -160,14 +169,23 @@ packages:
   '@fontsource/domine@5.3.0':
     resolution: {integrity: sha512-rzEcXp1qmmChcoah9FamFoFshGsxkCEHOQ4FQTzUpIWstRz5k/34Jdc6+z/NTzM5izm5UfD8TOd1Cqfgz4w3BA==}
 
+  '@fontsource/dotgothic16@5.3.1':
+    resolution: {integrity: sha512-alvxJchrFDFohce0s8YfHsFiRm2zUM+FrwEeWtLyc14WIl3heSG1/8BPD7Sm001YuVPL1bU14UmM5P2KO5/gnQ==}
+
   '@fontsource/martel@5.3.0':
     resolution: {integrity: sha512-E/L2GnnmYkcjgt6IMN9ISgr2ldDzSeO1J+aTMwWsOy+Ti4EEC8B9RHiU32kUMGiyI9Ot8JLzQ4FA39HH1tFfbQ==}
+
+  '@fontsource/permanent-marker@5.3.0':
+    resolution: {integrity: sha512-ZO/NtYW4SCc/iY8N3dmjWyDITcXJ/vhWZFgnwRcvzwCKKnScMrM/a2/6VHlsjCVuIgmPzNrCFbedEYhv+/jJBg==}
 
   '@fontsource/playfair-display@5.3.0':
     resolution: {integrity: sha512-uJSABalvdWc10fEPppQjQocamT21LEyRfzzWfRfqbkPz+sRv+kKpYDKyluBUskvJREkJTos9epj1WjQROGu99Q==}
 
   '@fontsource/red-hat-mono@5.3.0':
     resolution: {integrity: sha512-rXSQpg6TLRd+WLhcN9qGIarP9/HVouhmdKJcCv1R3+c2mznJ2GUUaTpkKhFN6LO2Sg7lRvb8CIaXYQqvqY6aPw==}
+
+  '@fontsource/special-elite@5.3.0':
+    resolution: {integrity: sha512-fOQ9XU8m4KnqzcLibAXCxTsKzbxePNDjPqVss5GSMcPVCY1TuCv+Wq8gm1ebqIR6XS1rhMbQ7ECP9ocKVEEpTA==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1251,11 +1269,17 @@ snapshots:
 
   '@fontsource/domine@5.3.0': {}
 
+  '@fontsource/dotgothic16@5.3.1': {}
+
   '@fontsource/martel@5.3.0': {}
+
+  '@fontsource/permanent-marker@5.3.0': {}
 
   '@fontsource/playfair-display@5.3.0': {}
 
   '@fontsource/red-hat-mono@5.3.0': {}
+
+  '@fontsource/special-elite@5.3.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
