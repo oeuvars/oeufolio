@@ -1,4 +1,4 @@
-import type { Profile } from './types'
+import type { Cv, PageId, PageMeta, Profile, Site } from './types'
 
 export const profile: Profile = {
   handle: 'oeuvars',
@@ -52,4 +52,110 @@ export const profile: Profile = {
     { label: 'Instagram', href: 'https://instagram.com/oeuvars' },
   ],
   email: 'sudo@anurag.gg',
+}
+
+export const site: Site = {
+  url: 'https://www.anurag.gg',
+  name: 'Anurag Das',
+  x: '@oeuvars',
+  locale: 'en_US',
+}
+
+export const pages: Record<PageId, PageMeta> = {
+  basics: {
+    path: '/',
+    title: 'Anurag Das, product engineer',
+    description: "I'm Anurag Das, a product engineer in Kolkata. At Cybership I build the servers and the interfaces behind a 3PL fulfillment platform.",
+    preview: { src: '/og/basics.jpg', alt: 'The site as a stack of file folders, open on an ID badge for Anurag Das.' },
+  },
+  likes: {
+    path: '/likes',
+    title: 'Likes | Anurag Das',
+    description: 'A letter to my younger self about what I ended up loving: an electric guitar, shaving the slow way, Arsenal, and a cat called Dilly.',
+    preview: { src: '/og/likes.jpg', alt: 'A handwritten letter to my younger self, with drawings between the lines.' },
+  },
+  work: {
+    path: '/work',
+    title: 'Work | Anurag Das',
+    description: "Where I've worked, made into a film poster: Cybership since March 2025, and Ekarth Ventures and ProperSKU before that.",
+    preview: { src: '/og/work.jpg', alt: 'A film poster called Human Experience, laid over the lit windows of an apartment block at night.' },
+  },
+  extras: {
+    path: '/extras',
+    title: 'Extras | Anurag Das',
+    description: 'My desk and what I keep on it: my playlist Two x 3 on a record, a tape recorder, car keys, an Arsenal ticket, and a razor with its Proraso.',
+    preview: { src: '/og/extras.jpg', alt: 'A green cutting mat under a lamp, with a record, a tape recorder, keys, an Arsenal ticket and a razor on it.' },
+  },
+  contact: {
+    path: '/contact',
+    title: 'Contact | Anurag Das',
+    description: "A ticket with my email on it. Click the address to copy it. I'm oeuvars on GitHub, X and Instagram.",
+    preview: { src: '/og/contact.jpg', alt: 'A ticket printed with the Howrah Bridge and my email address, lying on red leather beside a camera and stamps.' },
+  },
+  resume: {
+    path: '/resume',
+    title: 'Résumé | Anurag Das',
+    description: 'My résumé on a plain page you can read and copy: product engineer at Cybership since March 2025, before that Ekarth Ventures and DataVerse India.',
+    preview: { src: '/og/resume.jpg', alt: 'The top of my résumé, with Anurag Das set wide across it.' },
+  },
+}
+
+export const cv: Cv = {
+  name: 'Anurag Das',
+  headline: 'Product engineer at Cybership',
+  roles: [
+    {
+      company: 'Cybership.io',
+      about: 'A 3PL fulfillment platform',
+      href: 'https://cybership.io',
+      place: 'Remote',
+      title: 'Full Stack Developer',
+      period: 'March 2025 to now',
+      points: [
+        'Single-handedly architected and implemented the complete Automation Rules engine from scratch (similar to Shopify Flow), enabling merchants to create complex conditional workflows with 50 trigger types, 16 condition operators with conditional and array operations, and 7 action types. Built a type-safe rule evaluation system using Zod validation that processes 50,000+ rule executions daily across order processing, inventory allocation and shipping automation.',
+        'Built Cybership Desktop, a packing-station app that replaces the third-party PrintNode agent. It prints through the OS spooler, raw TCP, USB and HID, reads scales over serial, HID, USB, Bluetooth and TCP with 64 protocol decoders, and ships as signed, auto-updating macOS and Windows builds. Printing is idempotent across server and device through UUID keys, PostgreSQL row-lock claims, an audited job state machine and an fsynced on-device ledger that will not reprint a job interrupted by a crash.',
+        'Owned production incidents that blocked customer warehouses from shipping, taking each from first report through root cause to a permanent fix, often the same day. Repaired live data alongside their teams while keeping them informed throughout, and fed what they ran into back into the product so the failure could not recur.',
+        'Built the entire Shipping Labels system end-to-end, integrating with 5 external APIs including EasyPost, USPS (OAuth2), BukuShip, ShipStation for multi-carrier support (FedEx, UPS, USPS, DHL, Canada Post), and Mapbox for geocoding and route visualization. Implemented PDF generation with pdf-lib, Redis-based caching for rate shopping, webhook management with retry logic, and batch processing capabilities handling 10,000+ label generations daily with sub-2-second average response times and 99.9% uptime.',
+      ],
+    },
+    {
+      company: 'Ekarth Ventures',
+      about: 'Nahar OM',
+      href: 'https://nahar.om',
+      place: 'Chennai, India',
+      title: 'Full Stack Engineer',
+      period: 'July 2024 to March 2025',
+      points: [
+        'Led frontend development and managed the team delivering Altern8, a real estate lending platform, designing its Next.js and Django architecture for cost efficiency and performance.',
+        'Drove CI/CD pipelines on Digital Ocean that cut deployment turnaround by an average of 10 seconds and Docker build size 10-fold (2.2 GB to 178 MB), and managed development and deployment of several third-party B2B APIs for integration with ETHYX Club and the Altern8 platform for data and system interconnectivity.',
+        'Pitched and demonstrated the platform to investors across the US, Turkey, Netherlands and India.',
+      ],
+    },
+    {
+      company: 'DataVerse India',
+      href: 'https://dataverseindia.com',
+      place: 'Kolkata, India',
+      title: 'Full Stack Developer (Intern)',
+      period: 'August 2023 to July 2024',
+      points: [
+        'My first role as an engineer, where I created websites and web applications for various clients and talked to them as a technical spokesperson, learning the fundamentals of full-stack development and getting hands-on experience with cloud hosting platforms like AWS and Hostinger.',
+      ],
+    },
+  ],
+  skills: [
+    { label: 'Languages', value: 'TypeScript, Swift, Python, Golang' },
+    { label: 'Tools I use', value: 'PopSQL, VS Code, Obsidian, Postman, Xcode, Figma, Spline, OrbStack' },
+    { label: 'Frameworks', value: 'Next.js, Django, Express.js, Hono.js, Gin, SvelteKit, SolidStart' },
+    { label: 'Cloud and databases', value: 'PostgreSQL, MySQL, RDS, S3, EC2, Lambda, Lightsail, Digital Ocean Droplet, VPS servers' },
+    {
+      label: 'Relevant coursework',
+      value: 'Data Structures and Algorithms, Operating Systems, Object Oriented Programming, Network Security, Computer Networks, Database Management Systems, Big Data and Web',
+    },
+    { label: 'Areas of interest', value: 'Web design, serverless architectures, cryptography, typography, low-latency back ends' },
+    { label: 'Soft skills', value: 'Product demos, public speaking, self-learning, adaptability' },
+  ],
+  education: [
+    { course: 'Bachelor of Technology in Electronics and Communication', school: 'Heritage Institute of Technology, Kolkata', grade: 'CGPA 8.21' },
+    { course: 'High School', school: 'Ramkrishna Mission Rahara, Kolkata', grade: '91%' },
+  ],
 }

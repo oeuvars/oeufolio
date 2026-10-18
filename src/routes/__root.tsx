@@ -1,7 +1,9 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
 
+import { ErrorPage, InStack } from '../components/ErrorPage'
 import { NotFound } from '../components/NotFound'
 import { SiteShell } from '../components/SiteShell'
+import { pages, site } from '../content'
 
 import appCss from '../styles.css?url'
 
@@ -15,13 +17,19 @@ export const Route = createRootRoute({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
+      // What a page without a head of its own (the 404) is called. Every page sets its own.
       {
-        title: 'oeuvars | Portfolio',
+        title: site.name,
       },
       {
         name: 'description',
-        content: 'Portfolio of oeuvars, laid out as a stack of file folders.',
+        content: pages.basics.description,
       },
+      { name: 'author', content: site.name },
+      { property: 'og:site_name', content: site.name },
+      { property: 'og:locale', content: site.locale },
+      { name: 'twitter:site', content: site.x },
+      { name: 'twitter:creator', content: site.x },
     ],
     links: [
       {
@@ -46,17 +54,23 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
   component: RootLayout,
   notFoundComponent: NotFound,
+  errorComponent: ErrorPage,
 })
 
 function RootLayout() {
-  // A path that is not a page has no strip to open, so it is shown on its own, outside the stack.
-  const lost = useRouterState({ select: (state) => state.matches.some((match) => match._notFound) })
-  if (lost) return <Outlet />
+  // A path that is not a page, a page that broke, and a page that is not one of the folders (the résumé) have no
+  // strip to open, so each is shown on its own, outside the stack.
+  const bare = useRouterState({
+    select: (state) => state.matches.some((match) => match._notFound || match.status === 'error' || match.staticData.bare),
+  })
+  if (bare) return <Outlet />
 
   return (
-    <SiteShell>
-      <Outlet />
-    </SiteShell>
+    <InStack.Provider value>
+      <SiteShell>
+        <Outlet />
+      </SiteShell>
+    </InStack.Provider>
   )
 }
 

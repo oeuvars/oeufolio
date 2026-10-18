@@ -140,6 +140,58 @@ export type Profile = {
   email: string
 }
 
+/** A job on the résumé, as resume.pdf has it. */
+export type CvRole = {
+  company: string
+  /** What the company is, as the PDF puts it after the name. */
+  about?: string
+  href: string
+  place: string
+  title: string
+  period: string
+  points: string[]
+}
+
+export type CvSchool = {
+  course: string
+  school: string
+  grade: string
+}
+
+/** The résumé as a page of text (src/routes/resume.tsx), word for word what resume.pdf says. */
+export type Cv = {
+  name: string
+  headline: string
+  roles: CvRole[]
+  skills: Credit[]
+  education: CvSchool[]
+}
+
+/** Where the site lives and who it is, for the tags that describe every page to search engines and link previews. */
+export type Site = {
+  url: string
+  name: string
+  /** The X handle, with its @. */
+  x: string
+  locale: string
+}
+
+/** The picture a link to a page unfurls into: a 1200 by 630 capture of the page (public/og). */
+export type Preview = {
+  src: string
+  alt: string
+}
+
+/** How a page describes itself: its address, its title and summary, and its link preview. */
+export type PageMeta = {
+  path: string
+  title: string
+  description: string
+  preview: Preview
+}
+
+export type PageId = 'basics' | 'likes' | 'work' | 'extras' | 'contact' | 'resume'
+
 export type StackMetrics = {
   width: number
   height: number

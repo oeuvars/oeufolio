@@ -2,9 +2,10 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Letter } from '../components/Letter'
 import { Reveal } from '../components/Reveal'
-import { profile } from '../content'
+import { pages, profile } from '../content'
+import { seo } from '../lib/seo'
 
-export const Route = createFileRoute('/likes')({ component: Likes })
+export const Route = createFileRoute('/likes')({ head: () => seo(pages.likes), component: Likes })
 
 /** The things I like, as a letter about them to a younger me. */
 function Likes() {

@@ -1,0 +1,546 @@
+/* Yuji Syuku and Shippori Mincho (public/fonts/error, OFL), cut down to the subsets that hold the poem, the
+   poet's name, the seal and Latin. */
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-94-400-normal.woff2') format('woff2');
+  unicode-range: U+2015,U+2190,U+4e43,U+5019,U+5247,U+52e7,U+5438,U+54b2,U+55ab,U+57f7,U+5bd2,U+5e8a,U+5ef6,U+6016,U+60b2,U+6162,U+6319,U+6551,U+6607,U+66b4,U+675f,U+67d4,U+6b20,U+6b53,U+6ce3,U+719f,U+75b2,U+770b,U+7720,U+77ac,U+79d2,U+7af9,U+7d05,U+7dca,U+8056,U+80f8,U+81f3,U+8352,U+885d,U+8a70,U+8aa4,U+8cbc,U+900f,U+9084,U+91e3,U+9451,U+96c4,U+99c6,U+9ad4,U+ff70;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-98-400-normal.woff2') format('woff2');
+  unicode-range: U+25cb,U+4e71,U+4f59,U+50d5,U+520a,U+5217,U+5230,U+523a-523b,U+541b,U+5439,U+5747,U+59c9,U+5bdf,U+5c31,U+5de8,U+5e7c,U+5f69,U+6050,U+60d1,U+63cf,U+663c,U+67c4,U+6885,U+6c38,U+6d6e,U+6db2,U+6df7,U+6e2c,U+6f5f,U+7532,U+76e3-76e4,U+7701,U+793c,U+79f0,U+7a93,U+7d00,U+7de0,U+7e54,U+8328,U+8840,U+969c,U+96e8,U+9811,U+9aea,U+9b5a,U+ff24,U+ff2e,U+ff57;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-100-400-normal.woff2') format('woff2');
+  unicode-range: U+4e08,U+4f9d,U+5012,U+514d,U+51b7,U+5275,U+53ca,U+53f8,U+5584,U+57fc,U+5b9d,U+5bfa,U+5c3e,U+5f01,U+5fb4,U+5fd7,U+606f,U+62e1,U+6563,U+6674,U+6cb3,U+6d3e,U+6d74,U+6e1b,U+6e2f,U+718a,U+7247,U+79d8,U+7d14,U+7d66,U+7d71,U+7df4,U+7e41,U+80cc,U+8155,U+83d3,U+8a95,U+8ab2,U+8ad6,U+8ca1,U+9000,U+9006,U+9678,U+97d3,U+9808,U+98ef,U+9a5a,U+9b45,U+ff23,U+ff30;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-109-400-normal.woff2') format('woff2');
+  unicode-range: U+266a,U+4f11,U+533a,U+5343,U+534a,U+53cd,U+5404,U+56f3,U+5b57-5b58,U+5bae,U+5c4a,U+5e0c,U+5e2f,U+5eab,U+5f35,U+5f79,U+614b,U+6226,U+629e,U+65c5,U+6625,U+6751,U+6821,U+6b69,U+6b8b,U+6bce,U+6c42,U+706b,U+7c21,U+7cfb,U+805e,U+80b2,U+82b8,U+843d,U+8853,U+88c5,U+8a3c,U+8a66,U+8d8a,U+8fba,U+9069,U+91cf,U+9752,U+975e,U+9999,U+ff0f-ff10,U+ff14-ff15;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-110-400-normal.woff2') format('woff2');
+  unicode-range: U+40,U+4e86,U+4e95,U+4f01,U+4f1d,U+4fbf,U+5099,U+5171,U+5177,U+53cb,U+53ce,U+53f0,U+5668,U+5712,U+5ba4,U+5ca1,U+5f85,U+60f3,U+653e,U+65ad,U+65e9,U+6620,U+6750,U+6761,U+6b62,U+6b74,U+6e08,U+6e80,U+7248,U+7531,U+7533,U+753a,U+77f3,U+798f,U+7f6e,U+8449,U+88fd,U+89b3,U+8a55,U+8ac7,U+8b77,U+8db3,U+8efd,U+8fd4,U+9031-9032,U+9580,U+9589,U+96d1,U+985e;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-111-400-normal.woff2') format('woff2');
+  unicode-range: U+2b,U+d7,U+300e-300f,U+4e07,U+4e8c,U+512a,U+5149,U+518d,U+5236,U+52b9,U+52d9,U+5468,U+578b,U+57fa,U+5b8c,U+5ba2,U+5c02,U+5de5,U+5f37,U+5f62,U+623b,U+63d0,U+652f,U+672a,U+6848,U+6d41,U+7136,U+7537,U+754c,U+76f4,U+79c1,U+7ba1,U+7d44,U+7d4c,U+7dcf,U+7dda,U+7de8,U+82b1,U+897f,U+8ca9,U+8cfc,U+904e,U+9664,U+982d,U+9858,U+98a8,U+9a13,U+ff13,U+ff5c;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-114-400-normal.woff2') format('woff2');
+  unicode-range: U+3e,U+3005,U+4e0d,U+4e88,U+4ecb,U+4ee3,U+4ef6,U+4fdd,U+4fe1,U+500b,U+50cf,U+5186,U+5316,U+53d7,U+540c,U+544a,U+54e1,U+5728,U+58f2,U+5973,U+5b89,U+5c71,U+5e02,U+5e97,U+5f15,U+5fc3,U+5fdc,U+601d,U+611b,U+611f,U+671f,U+6728,U+6765,U+683c,U+6b21,U+6ce8,U+6d3b,U+6d77,U+7530,U+7740,U+7acb,U+7d50,U+826f,U+8f09,U+8fbc,U+9001,U+9053,U+91ce,U+9762,U+98df;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-115-400-normal.woff2') format('woff2');
+  unicode-range: U+7c,U+3080,U+4ee5,U+5148,U+516c,U+521d,U+5225,U+529b,U+52a0,U+53ef,U+56de,U+56fd,U+5909,U+591a,U+5b66,U+5b9f,U+5bb6,U+5bfe,U+5e73,U+5e83,U+5ea6,U+5f53,U+6027,U+610f,U+6210,U+6240,U+660e,U+66f4,U+66f8,U+6709,U+6771,U+697d,U+69d8,U+6a5f,U+6c34,U+6cbb,U+73fe,U+756a,U+7684,U+771f,U+793a,U+7f8e,U+898f,U+8a2d,U+8a71,U+8fd1,U+9078,U+9577,U+96fb,U+ff5e;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-118-400-normal.woff2') format('woff2');
+  unicode-range: U+21-22,U+27-2a,U+2c-3b,U+3f,U+41-4d,U+4f-5d,U+61-7b,U+7d,U+ab,U+ae,U+b2-b3,U+b7,U+bb,U+c9,U+cd,U+d6,U+d8,U+dc,U+e0-e5,U+e7-ed,U+ef,U+f1-f4,U+f6,U+f8,U+fa,U+fc-fd,U+103,U+14d,U+1b0,U+300-301,U+1ebf,U+1ec7,U+2013-2014,U+201c-201d,U+2039-203a,U+203c,U+2048-2049,U+2113,U+2122,U+65e5,U+6708,U+70b9;
+}
+
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/yuji-syuku-119-400-normal.woff2') format('woff2');
+  unicode-range: U+20,U+2027,U+3001-3002,U+3041-307f,U+3081-308f,U+3091-3093,U+3099-309a,U+309d-309e,U+30a1-30e1,U+30e3-30ed,U+30ef-30f0,U+30f2-30f4,U+30fb-30fe,U+ff0c,U+ff0e;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/shippori-mincho-100-400-normal.woff2') format('woff2');
+  unicode-range: U+4e08,U+4f9d,U+5012,U+514d,U+51b7,U+5275,U+53ca,U+53f8,U+5584,U+57fc,U+5b9d,U+5bfa,U+5c3e,U+5f01,U+5fb4,U+5fd7,U+606f,U+62e1,U+6563,U+6674,U+6cb3,U+6d3e,U+6d74,U+6e1b,U+6e2f,U+718a,U+7247,U+79d8,U+7d14,U+7d66,U+7d71,U+7df4,U+7e41,U+80cc,U+8155,U+83d3,U+8a95,U+8ab2,U+8ad6,U+8ca1,U+9000,U+9006,U+9678,U+97d3,U+9808,U+98ef,U+9a5a,U+9b45,U+ff23,U+ff30;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/shippori-mincho-111-400-normal.woff2') format('woff2');
+  unicode-range: U+2b,U+d7,U+300e-300f,U+4e07,U+4e8c,U+512a,U+5149,U+518d,U+5236,U+52b9,U+52d9,U+5468,U+578b,U+57fa,U+5b8c,U+5ba2,U+5c02,U+5de5,U+5f37,U+5f62,U+623b,U+63d0,U+652f,U+672a,U+6848,U+6d41,U+7136,U+7537,U+754c,U+76f4,U+79c1,U+7ba1,U+7d44,U+7d4c,U+7dcf,U+7dda,U+7de8,U+82b1,U+897f,U+8ca9,U+8cfc,U+904e,U+9664,U+982d,U+9858,U+98a8,U+9a13,U+ff13,U+ff5c;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/shippori-mincho-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/error/shippori-mincho-100-500-normal.woff2') format('woff2');
+  unicode-range: U+4e08,U+4f9d,U+5012,U+514d,U+51b7,U+5275,U+53ca,U+53f8,U+5584,U+57fc,U+5b9d,U+5bfa,U+5c3e,U+5f01,U+5fb4,U+5fd7,U+606f,U+62e1,U+6563,U+6674,U+6cb3,U+6d3e,U+6d74,U+6e1b,U+6e2f,U+718a,U+7247,U+79d8,U+7d14,U+7d66,U+7d71,U+7df4,U+7e41,U+80cc,U+8155,U+83d3,U+8a95,U+8ab2,U+8ad6,U+8ca1,U+9000,U+9006,U+9678,U+97d3,U+9808,U+98ef,U+9a5a,U+9b45,U+ff23,U+ff30;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/error/shippori-mincho-111-500-normal.woff2') format('woff2');
+  unicode-range: U+2b,U+d7,U+300e-300f,U+4e07,U+4e8c,U+512a,U+5149,U+518d,U+5236,U+52b9,U+52d9,U+5468,U+578b,U+57fa,U+5b8c,U+5ba2,U+5c02,U+5de5,U+5f37,U+5f62,U+623b,U+63d0,U+652f,U+672a,U+6848,U+6d41,U+7136,U+7537,U+754c,U+76f4,U+79c1,U+7ba1,U+7d44,U+7d4c,U+7dcf,U+7dda,U+7de8,U+82b1,U+897f,U+8ca9,U+8cfc,U+904e,U+9664,U+982d,U+9858,U+98a8,U+9a13,U+ff13,U+ff5c;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/error/shippori-mincho-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/error/shippori-mincho-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Shippori Mincho';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/error/shippori-mincho-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/*
+ * The error page: an open book of poems, after the decorated anthologies of the Heian court. Its papers are dyed
+ * and joined along torn edges, printed with mica, sprinkled with cut gold leaf and crossed by bands of gold mist,
+ * and the poem is brushed in sumi down the right-hand page. The filters are in ErrorPage.tsx.
+ */
+.ep {
+  --ep-shell: #f3efe4;
+  --ep-sky: #eef0ea;
+  --ep-indigo: #c8dadb;
+  --ep-wisteria: #dcd2e2;
+  --ep-sumi: #24211d;
+  --ep-faded: #6f675a;
+  --ep-gold: #c9a24f;
+  --ep-shu: #b8362a;
+  --ep-brush: 'Yuji Syuku', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  --ep-mincho: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', Georgia, serif;
+  --ep-fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.01 0.05' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -14 1.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  --ep-tooth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.4 0 0 0 0 0.32 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #d9d2c2;
+  color: var(--ep-sumi);
+  font-family: var(--ep-mincho);
+}
+
+.ep * {
+  box-sizing: border-box;
+}
+
+.ep ::selection {
+  background: rgb(201 162 79 / 0.35);
+}
+
+/* -------------------------------------------------------------------- the spread */
+
+.ep-book {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  direction: rtl;
+}
+
+.ep-page {
+  position: relative;
+  direction: ltr;
+  overflow: hidden;
+  background-color: var(--ep-shell);
+  background-image:
+    var(--ep-fibre),
+    var(--ep-tooth),
+    radial-gradient(90% 70% at 50% 18%, rgb(255 253 246 / 0.9), transparent 70%);
+  background-size: 600px 600px, 260px 260px, 100% 100%;
+  background-blend-mode: soft-light, multiply, normal;
+}
+
+.ep-page-poem {
+  background-color: var(--ep-sky);
+}
+
+.ep-joined {
+  position: absolute;
+  inset: 0;
+  filter: url(#ep-fray);
+}
+
+.ep-sheet {
+  position: absolute;
+  inset: 0;
+  background-image: var(--ep-fibre), var(--ep-tooth);
+  background-size: 600px 600px, 260px 260px;
+  background-blend-mode: soft-light, multiply;
+}
+
+.ep-sheet-indigo {
+  background-color: var(--ep-indigo);
+}
+
+/* Wisteria paper printed with waves in mica, which only shows where the light catches it. */
+.ep-sheet-wisteria {
+  background-color: var(--ep-wisteria);
+  background-image:
+    radial-gradient(circle at 100% 150%, transparent 24%, rgb(255 255 255 / 0.34) 24%, rgb(255 255 255 / 0.34) 28%, transparent 28%, transparent 36%, rgb(255 255 255 / 0.34) 36%, rgb(255 255 255 / 0.34) 40%, transparent 40%),
+    radial-gradient(circle at 0 150%, transparent 24%, rgb(255 255 255 / 0.34) 24%, rgb(255 255 255 / 0.34) 28%, transparent 28%, transparent 36%, rgb(255 255 255 / 0.34) 36%, rgb(255 255 255 / 0.34) 40%, transparent 40%),
+    var(--ep-fibre),
+    var(--ep-tooth);
+  background-size: 56px 28px, 56px 28px, 600px 600px, 260px 260px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  background-blend-mode: soft-light, soft-light, soft-light, multiply;
+}
+
+/* Bands of gold mist, laid long and flat across the paper: gold dust sown thick, thinning out at the band's edges. */
+.ep-mist {
+  pointer-events: none;
+  position: absolute;
+  height: 11%;
+  background:
+    radial-gradient(circle, rgb(190 148 62 / 0.95) 0 0.9px, transparent 1.4px) 0 0 / 4px 4px,
+    radial-gradient(circle, rgb(236 206 132 / 0.9) 0 0.7px, transparent 1.2px) 2px 2px / 4px 4px,
+    linear-gradient(rgb(226 192 112 / 0.3), rgb(226 192 112 / 0.3));
+  mask-image: radial-gradient(closest-side, #000 45%, rgb(0 0 0 / 0.6) 72%, transparent 100%);
+  filter: url(#ep-fray);
+  opacity: 0.8;
+}
+
+.ep-mist-high { top: 5%; left: 38%; width: 86%; }
+.ep-mist-high-2 { top: 11.5%; left: 18%; width: 62%; height: 7%; }
+.ep-mist-low { bottom: 11%; left: -18%; width: 78%; }
+.ep-mist-low-2 { bottom: 5%; left: 10%; width: 64%; height: 7%; }
+
+/* ------------------------------------------------------------------- the poem */
+
+.ep-poem {
+  position: absolute;
+  inset: 11% 13% 15% 18%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: clamp(1rem, 3vw, 3rem);
+}
+
+.ep-verse {
+  margin: 0;
+  writing-mode: vertical-rl;
+  font-family: var(--ep-brush);
+  font-size: clamp(26px, 5vh, 54px);
+  line-height: 1.45;
+  letter-spacing: 0.14em;
+  filter: url(#ep-ink);
+}
+
+/* Written scattered, each line set down from a different height, as a poem was laid on a decorated sheet. In
+   vertical writing a line runs down the page, so the lines follow one another leftwards. */
+.ep-line {
+  display: block;
+}
+
+.ep-line + .ep-line { margin-block-start: 0.5em; }
+.ep-line:nth-child(2) { padding-inline-start: 1.7em; font-size: 0.94em; }
+.ep-line:nth-child(3) { padding-inline-start: 0.6em; }
+.ep-line:nth-child(4) { padding-inline-start: 2.8em; font-size: 0.9em; }
+.ep-line:nth-child(5) { padding-inline-start: 1.2em; }
+
+.ep-poet {
+  align-self: flex-end;
+  margin: 0;
+  writing-mode: vertical-rl;
+  font-family: var(--ep-brush);
+  font-size: clamp(15px, 2.2vh, 22px);
+  letter-spacing: 0.35em;
+  color: #3b352d;
+  filter: url(#ep-ink);
+}
+
+/* A seal in vermilion, pressed below the poet's name: 散花, scattered blossoms. */
+.ep-seal {
+  position: absolute;
+  left: 13%;
+  bottom: 9%;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  place-items: center;
+  width: clamp(40px, 5.6vh, 60px);
+  height: clamp(40px, 5.6vh, 60px);
+  padding: 3px;
+  border-radius: 3px;
+  background: var(--ep-shu);
+  color: var(--ep-shell);
+  font-family: var(--ep-mincho);
+  font-weight: 500;
+  font-size: clamp(15px, 2.15vh, 23px);
+  line-height: 1;
+  rotate: -2deg;
+  mix-blend-mode: multiply;
+  filter: url(#ep-seal);
+  opacity: 0.9;
+}
+
+/* ------------------------------------------------------------ the reading page */
+
+.ep-reading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10vh 14% 12vh 16%;
+}
+
+.ep-translation {
+  margin: 0;
+  font-size: clamp(17px, 1.45vw, 23px);
+  line-height: 1.75;
+  color: var(--ep-sumi);
+}
+
+.ep-translation p {
+  margin: 0;
+}
+
+.ep-translation footer {
+  margin-top: 1.1em;
+  font-size: 0.72em;
+  letter-spacing: 0.04em;
+  color: var(--ep-faded);
+}
+
+/* What happened, below a short rule of gold, in the same face as the reading, only smaller. */
+.ep-message {
+  margin: 3.2rem 0 0;
+  padding-top: 1.4rem;
+  max-width: 26rem;
+  background: linear-gradient(90deg, var(--ep-gold), rgb(201 162 79 / 0)) top left / 4.5rem 1px no-repeat;
+  font-size: clamp(15px, 1.05vw, 17px);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.ep-detail {
+  margin: 0.5rem 0 0;
+  max-width: 26rem;
+  font-size: 13px;
+  color: var(--ep-faded);
+  overflow-wrap: anywhere;
+}
+
+.ep-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.6rem;
+  margin: 0.9rem 0 0;
+  font-size: clamp(15px, 1.05vw, 17px);
+}
+
+.ep-actions button,
+.ep-actions a {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ep-sumi);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgb(201 162 79 / 0.9);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  transition: text-decoration-color 200ms ease, color 200ms ease;
+}
+
+.ep-actions button:hover,
+.ep-actions a:hover {
+  color: #000;
+  text-decoration-color: var(--ep-shu);
+}
+
+.ep-actions button:focus-visible,
+.ep-actions a:focus-visible {
+  outline: 1.5px solid var(--ep-shu);
+  outline-offset: 4px;
+  border-radius: 1px;
+}
+
+/* ------------------------------------------------------------------ gold leaf */
+
+.ep-gold {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* The writing lies over the leaf. */
+.ep-poem,
+.ep-seal,
+.ep-reading {
+  z-index: 2;
+}
+
+.ep-flake {
+  position: absolute;
+  background: linear-gradient(135deg, #f3dc9a 0%, #c99a3e 45%, #e9c977 70%, #a87b2c 100%);
+  box-shadow: 0 0 1px rgb(120 84 20 / 0.4);
+  opacity: 0.88;
+}
+
+.ep-tone-1 { filter: brightness(1.12) saturate(0.85); }
+.ep-tone-2 { filter: brightness(0.92) sepia(0.2); }
+
+/* Leaf cut square, cut on a slant, torn, and cut into needles. */
+.ep-cut-0 { clip-path: polygon(0 8%, 96% 0, 100% 92%, 6% 100%); }
+.ep-cut-1 { clip-path: polygon(0 0, 100% 22%, 78% 100%); }
+.ep-cut-2 { clip-path: polygon(10% 0, 64% 12%, 100% 48%, 82% 100%, 20% 86%, 0 40%); }
+.ep-cut-3 { clip-path: none; }
+
+/* The fold between the pages, and the pages curving down into it. */
+.ep-gutter {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 43%, rgb(90 70 40 / 0.07) 47.5%, rgb(60 44 24 / 0.22) 49.8%, rgb(255 250 235 / 0.35) 50%, rgb(60 44 24 / 0.2) 50.2%, rgb(90 70 40 / 0.07) 52.5%, transparent 57%),
+    linear-gradient(90deg, rgb(70 55 35 / 0.18), transparent 7%, transparent 93%, rgb(70 55 35 / 0.18)),
+    linear-gradient(to bottom, rgb(255 252 240 / 0.25), transparent 30%, transparent 80%, rgb(70 55 35 / 0.1));
+}
+
+/* ------------------------------------------------------------------- petals */
+
+.ep-petals {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.ep-petal {
+  position: absolute;
+  top: -40px;
+  opacity: 0;
+  filter: drop-shadow(0 2px 2px rgb(110 60 70 / 0.18));
+  animation-name: ep-fall, ep-sway;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: normal, alternate;
+}
+
+@keyframes ep-fall {
+  0% { opacity: 0; translate: 0 0; rotate: 0deg; }
+  8% { opacity: 0.95; }
+  85% { opacity: 0.85; }
+  100% { opacity: 0; translate: -9vw 110vh; rotate: 520deg; }
+}
+
+@keyframes ep-sway {
+  from { transform: translateX(-2.2vw) rotateY(0deg); }
+  to { transform: translateX(2.2vw) rotateY(65deg); }
+}
+
+/* ------------------------------------------------------------------- phone */
+
+@media (max-width: 760px) {
+  .ep {
+    overflow-y: auto;
+  }
+
+  .ep-book {
+    position: relative;
+    inset: auto;
+    min-height: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: 62vh auto;
+    direction: ltr;
+  }
+
+  .ep-poem { inset: 8% 7% 15% 6%; gap: 0.9rem; }
+  .ep-verse { font-size: clamp(22px, 3.6vh, 30px); }
+  .ep-poet { font-size: 15px; }
+  .ep-seal { left: 6%; bottom: 4%; }
+
+  .ep-reading {
+    position: relative;
+    padding: 3rem 9% 4rem;
+  }
+
+  .ep-translation { font-size: 17px; }
+  .ep-message { margin-top: 2.4rem; }
+
+  /* The book is turned on its side: the fold runs across, between the poem and the reading. */
+  .ep-gutter {
+    background:
+      linear-gradient(to bottom, transparent calc(62vh - 3rem), rgb(60 44 24 / 0.2) 62vh, rgb(255 250 235 / 0.35) calc(62vh + 1px), transparent calc(62vh + 3rem)),
+      linear-gradient(90deg, rgb(70 55 35 / 0.14), transparent 8%, transparent 92%, rgb(70 55 35 / 0.14));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ep-petal {
+    animation: none;
+    opacity: 0;
+  }
+}

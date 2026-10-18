@@ -4,12 +4,14 @@ import { Dollhouse } from '../components/Dollhouse'
 import { Masthead } from '../components/Masthead'
 import { Poster } from '../components/Poster'
 import { Reveal } from '../components/Reveal'
-import { profile } from '../content'
+import { pages, profile } from '../content'
+import { seo } from '../lib/seo'
 import type { VersionSearch } from '../types'
 
 /** Two versions of the page: the poster (the default), and the building it replaced at /work?v=1. */
 export const Route = createFileRoute('/work')({
   validateSearch: (search: Record<string, unknown>): VersionSearch => (Number(search.v) === 1 ? { v: 1 } : {}),
+  head: () => seo(pages.work),
   component: Work,
 })
 
