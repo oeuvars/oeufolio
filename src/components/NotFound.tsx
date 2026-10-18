@@ -1,6 +1,3 @@
-import { useRouterState } from '@tanstack/react-router'
-
-import { profile } from '../content'
 
 import notFoundCss from './not-found.css?url'
 
@@ -27,11 +24,9 @@ function Track({ words }: { words: string[] }) {
 
 /** The page for a path that is not one: a 404 pasted up on a wall at night, out of photocopies, tape and spray paint. */
 export function NotFound() {
-  const path = useRouterState({ select: (state) => state.location.pathname })
-
   return (
     <main className="nf">
-      {/* Its type takes the Japanese face's many subsets, so only this page loads it. React lifts it into the head. */}
+      {/* Only this page loads its styles and faces. React lifts the link into the head. */}
       <link rel="stylesheet" href={notFoundCss} precedence="default" />
       <svg aria-hidden width="0" height="0" className="absolute">
         <defs>
@@ -73,11 +68,7 @@ export function NotFound() {
       <span aria-hidden className="nf-target nf-target-l" />
       <span aria-hidden className="nf-target nf-target-r" />
 
-      <header className="nf-hud nf-hud-top">
-        <span>{profile.handle}.sys // route trace</span>
-        <span aria-hidden className="nf-barcode" />
-        <span>err 0x194</span>
-      </header>
+      <span aria-hidden className="nf-barcode" />
 
       <h1 className="nf-code" aria-label="404, page not found">
         <span aria-hidden className="nf-layer nf-stroke">
@@ -110,16 +101,6 @@ export function NotFound() {
       <div aria-hidden className="nf-tape nf-tape-hazard">
         <Track words={HAZARD} />
       </div>
-
-      <p aria-hidden className="nf-vertical">
-        ページが見つかりません
-      </p>
-
-      <footer className="nf-hud nf-hud-bottom">
-        <span>status 404</span>
-        <span className="nf-hud-path">{path}</span>
-        <span>no signal</span>
-      </footer>
 
       {/* Over everything: the screen's lines, its grain and its dark corners. */}
       <div aria-hidden className="nf-scanlines" />

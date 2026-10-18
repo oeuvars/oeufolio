@@ -1,5 +1,4 @@
 @import '@fontsource/permanent-marker/400.css';
-@import '@fontsource/dotgothic16/400.css';
 
 /*
  * The 404: a paste-up on a wall at night. Every piece is a layer laid over the last with a blend, as a
@@ -13,7 +12,6 @@
   --nf-acid: #d4ff1f;
   --nf-hot: #ff2d55;
   --nf-cyan: #19e6ff;
-  --nf-pixel: 'DotGothic16', 'JetBrains Mono Variable', ui-monospace, monospace;
   --nf-marker: 'Permanent Marker', 'Marker Felt', cursive;
   --nf-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --nf-stain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.011' numOctaves='5' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.58 0 0 0 0 0.55 1.6 0 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
@@ -25,7 +23,6 @@
   isolation: isolate;
   background: radial-gradient(120% 90% at 50% 40%, #17171a 0%, #0d0d0f 55%, var(--nf-void) 100%);
   color: var(--nf-bone);
-  font-family: var(--nf-pixel);
 }
 
 .nf * {
@@ -136,42 +133,16 @@
 .nf-target-l { left: 22px; }
 .nf-target-r { right: 22px; }
 
-/* ----------------------------------------------------------------------- hud */
-
-.nf-hud {
-  position: absolute;
-  left: 56px;
-  right: 56px;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgb(235 230 218 / 0.72);
-}
-
-.nf-hud > span {
-  white-space: nowrap;
-}
-
-.nf-hud-top { top: 18px; }
-.nf-hud-bottom { bottom: 18px; }
-
-.nf-hud-path {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-transform: none;
-  color: var(--nf-acid);
-}
+/* ------------------------------------------------------------------- barcode */
 
 .nf-barcode {
-  flex: 0 1 220px;
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  z-index: 6;
+  width: 220px;
   height: 16px;
+  translate: -50% 0;
   background: repeating-linear-gradient(
     90deg,
     var(--nf-bone) 0 2px,
@@ -307,20 +278,6 @@
   opacity: 0.9;
 }
 
-.nf-vertical {
-  position: absolute;
-  right: 3.2vw;
-  top: 12vh;
-  z-index: 0;
-  margin: 0;
-  writing-mode: vertical-rl;
-  font-size: clamp(13px, 1.25vw, 18px);
-  letter-spacing: 0.4em;
-  color: var(--nf-hot);
-  text-shadow: 1px 0 0 rgb(25 230 255 / 0.7);
-  opacity: 0.85;
-}
-
 /* --------------------------------------------------------------------- tape */
 
 .nf-tape {
@@ -430,15 +387,12 @@
 /* ------------------------------------------------------------------ phone */
 
 @media (max-width: 760px) {
-  .nf-hud { left: 22px; right: 22px; font-size: 10px; gap: 1rem; }
   .nf-barcode { display: none; }
   .nf-target { display: none; }
-  .nf-hud-bottom > :last-child { display: none; }
   .nf-code { top: 47%; font-size: 45vw; font-stretch: 100%; translate: -50% -50%; }
   .nf-scrawl { top: 28vh; right: 8vw; font-size: 2.1rem; }
   .nf-tape-breach { top: 37vh; }
   .nf-tape-hazard { top: 57vh; font-size: 14px; padding: 10px 0; }
-  .nf-vertical { display: none; }
   .nf-spray-hot { top: 32vh; left: -12vw; width: 95vw; height: 95vw; }
 }
 
