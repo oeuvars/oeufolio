@@ -5,27 +5,27 @@
   ],
   "marks": [
     {
-      "label": "Ekarth",
+      "label": "Nahar OM",
       "href": "https://nahar.om/",
-      "left": 566,
-      "right": 591.95,
-      "baseline": 383.5,
+      "left": 548.59,
+      "right": 592.77,
+      "baseline": 403.78,
       "size": 9.4
     },
     {
       "label": "Cybership",
       "href": "https://cybership.io/",
-      "left": 151.75,
-      "right": 187.88,
-      "baseline": 493.59,
+      "left": 144.03,
+      "right": 180.16,
+      "baseline": 524.06,
       "size": 9.4
     },
     {
       "label": "ProperSKU",
       "href": "https://propersku.com/",
-      "left": 429.81,
-      "right": 472.52,
-      "baseline": 632.69,
+      "left": 354.64,
+      "right": 397.34,
+      "baseline": 663.25,
       "size": 9.4
     }
   ]
