@@ -5,11 +5,12 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 
 import { cv, profile } from '../content'
+import Noise from './bits/Noise'
 import Waves from './bits/Waves'
 import { Activity, useActivity } from './resume/Activity'
 import { CommandPalette, PaletteKey } from './resume/CommandPalette'
 import { TechIcon } from './resume/TechIcon'
-import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, RING, RULE, STAMP } from './resume/styles'
+import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
 
 const LOGOS: Record<string, string> = {
   'Cybership.io': '/objects/resume/cybership.png',
@@ -60,6 +61,26 @@ const GRADIENT_EDGE: CSSProperties = {
   WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
   WebkitMaskComposite: 'xor',
   maskComposite: 'exclude',
+}
+
+// What makes the page this site's own rather than the reference's: Archivo at its widest for the name and the
+// headings, as the badge sets its type; the work page's highlighter over the figures; and the employer colours from the
+// site's own surfaces (the steel plate, the green cutting mat, the maroon folder) on the career ruler.
+const DISPLAY = "font-['Archivo_Variable',sans-serif] [font-stretch:125%]"
+const MARK =
+  '-mx-[0.12em] bg-[linear-gradient(101deg,transparent_0.28em,rgb(247_234_72/0.95)_0.28em,rgb(243_228_68/0.8)_calc(100%-0.3em),transparent_calc(100%-0.3em))] bg-[length:100%_72%] bg-[position:0_58%] bg-no-repeat px-[0.22em] font-semibold text-zinc-900 [box-decoration-break:clone] print:[print-color-adjust:exact]'
+const COLOURS: Record<string, string> = {
+  'Cybership.io': '#4b6d69',
+  'Ekarth Ventures': '#2f5e45',
+  'DataVerse India': '#6a2420',
+}
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+/** "March 2025" as a count of months, or this month for "now". */
+const month = (text: string) => {
+  if (text === 'now') return new Date().getFullYear() * 12 + new Date().getMonth()
+  const [name, year] = text.split(' ')
+  return Number(year) * 12 + MONTHS.indexOf(name)
 }
 
 /** "March 2025 to now" as "Mar 2025 - Present". */
@@ -156,7 +177,7 @@ function Section({ id, title, aside, after, children, className = '' }: { id: st
       <Crossing edge="top" />
       <div className="relative py-2">
         <div className="flex items-center justify-between gap-3">
-          <h2 id={`${id}-title`} className="text-[18px] font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <h2 id={`${id}-title`} className={`${DISPLAY} text-[17px] font-[760] tracking-[-0.015em] text-zinc-900 dark:text-zinc-100`}>
             {title}
           </h2>
           {aside}
@@ -265,6 +286,56 @@ function ViewAll({ to, overlap = false }: { to: string; overlap?: boolean }) {
   )
 }
 
+/**
+ * The career to scale, this site's own: one tick a month from the first job to this month, a taller one at each new
+ * year, and each job's months filled in its employer's colour. A job ending the month the next one starts gives that
+ * month to the next one.
+ */
+function Ruler() {
+  const months = cv.roles.map((role) => {
+    const [from, to] = role.period.split(' to ').map(month)
+    return { role, from, to }
+  })
+  const spans = months
+    .map(({ role, from, to }) => ({ role, from, to: months.some((other) => other.from === to) ? to - 1 : to }))
+    .sort((a, b) => a.from - b.from)
+  const start = spans[0].from
+  const total = Math.max(...spans.map((span) => span.to)) + 1 - start
+  const at = (m: number) => `${((m - start) / total) * 100}%`
+
+  return (
+    <figure className="relative pt-5 pb-4 print:[print-color-adjust:exact]">
+      <figcaption className="sr-only">{spans.map(({ role }) => `${role.company}, ${role.period}`).join('; ')}</figcaption>
+      <div aria-hidden="true" className="relative h-2 overflow-hidden rounded-[2px]">
+        {spans.map(({ role, from, to }) => (
+          <span
+            key={role.company}
+            className="absolute inset-y-0 border-r-2 border-white dark:border-black"
+            style={{ left: at(from), width: `calc(${at(to + 1)} - ${at(from)})`, backgroundColor: COLOURS[role.company] }}
+          />
+        ))}
+      </div>
+      <div aria-hidden="true" className="relative mt-1.5 h-5">
+        {Array.from({ length: total + 1 }, (_, i) => start + i).map((m) => (
+          <span key={m} className="absolute top-0" style={{ left: at(m) }}>
+            <span className={`block w-px bg-zinc-400 dark:bg-zinc-600 ${m % 12 === 0 ? 'h-2.5' : 'h-1 opacity-60'}`} />
+            {m % 12 === 0 && <span className={`${MONO} absolute top-2.5 left-1 text-[10px] text-zinc-400 dark:text-zinc-600`}>{m / 12}</span>}
+          </span>
+        ))}
+      </div>
+      <ul aria-hidden="true" className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+        {spans.map(({ role }) => (
+          <li key={role.company} className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <span className="size-2 rounded-[2px]" style={{ backgroundColor: COLOURS[role.company] }} />
+            {role.company}
+          </li>
+        ))}
+      </ul>
+      <div aria-hidden="true" className={`${RULE} right-[-16px] bottom-0 left-[-16px] border-b`} style={DASH_X} />
+    </figure>
+  )
+}
+
 /** One job: its logo, employer, title, dates and place, opening on its points. */
 function Role({ role }: { role: (typeof cv.roles)[number] }) {
   const [open, setOpen] = useState(false)
@@ -282,7 +353,10 @@ function Role({ role }: { role: (typeof cv.roles)[number] }) {
         className={`relative z-20 -mx-4 flex w-[calc(100%+2rem)] cursor-pointer flex-col items-start gap-2.5 rounded-lg px-4 py-3.5 text-left transition-colors hover:bg-zinc-50 sm:gap-3 sm:py-4 2xl:flex-row 2xl:items-center 2xl:justify-between dark:hover:bg-zinc-900/20 ${FOCUS}`}
       >
         <span className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
-          <span className="size-10 shrink-0 rounded-[10px] border border-black/10 bg-zinc-50 p-[2px] shadow-sm shadow-black/15 dark:border-zinc-800 dark:bg-[#111111] dark:shadow-md dark:shadow-black/50">
+          <span
+            className="size-10 shrink-0 rounded-[10px] border border-black/10 bg-zinc-50 p-[2px] shadow-sm shadow-black/15 dark:border-zinc-800 dark:bg-[#111111] dark:shadow-md dark:shadow-black/50"
+            style={{ boxShadow: `0 1px 2px 0 rgb(0 0 0 / 0.15), 0 2px 0 0 ${COLOURS[role.company]}` }}
+          >
             <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-[7px] border border-black/5 bg-white dark:border-black/20">
               <img src={LOGOS[role.company]} alt={role.company} className="h-full w-full object-cover" />
             </span>
@@ -446,6 +520,11 @@ function Field({ dark }: { dark: boolean }) {
       <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
         <Waves lineColor={dark ? '#52525b' : '#a1a1aa'} spacing={9} amplitude={26} speed={0.6} fade={0.3} opacity={dark ? 0.7 : 0.8} clickRipple={false} />
       </div>
+      <img
+        src="/objects/resume-cat-donut.avif"
+        alt="A white cat with a ginger ear, curled up asleep on the waves"
+        className="pointer-events-none absolute top-14 right-12 z-10 w-[92px] select-none sm:right-16"
+      />
     </div>
   )
 }
@@ -508,6 +587,7 @@ export function ResumePage() {
       className={`relative min-h-screen w-full overflow-x-hidden bg-white font-['Geist_Variable',system-ui,sans-serif] text-[16px] leading-normal text-black antialiased transition-colors duration-300 dark:bg-black dark:text-zinc-50 ${dark ? 'dark [color-scheme:dark]' : ''}`}
     >
       <Index />
+      <Noise fixed fps={0} contrast={0.3} opacity={dark ? 0.025 : 0.035} blendMode={dark ? 'screen' : 'multiply'} zIndex={45} />
 
       <div aria-hidden="true" className="pointer-events-none absolute top-0 bottom-0 left-[30%] hidden w-0 border-r border-black/30 md:block dark:border-white/[0.15] print:hidden" style={DASH_Y} />
       <div aria-hidden="true" className="pointer-events-none absolute top-0 right-[30%] bottom-0 hidden w-0 border-r border-black/30 md:block dark:border-white/[0.15] print:hidden" style={DASH_Y} />
@@ -544,8 +624,11 @@ export function ResumePage() {
               </div>
             </div>
             <div className="flex flex-col justify-center pt-8">
-              <h1 className="mb-0.5 text-[20px] leading-none font-bold tracking-tight text-zinc-800 [text-shadow:-1.5px_0_0_rgba(0,200,255,0.3),1.5px_0_0_rgba(255,80,0,0.3)] sm:text-[24px] dark:text-zinc-100 dark:[text-shadow:-1.5px_0_0_rgba(0,200,255,0.6),1.5px_0_0_rgba(255,80,0,0.6)]">
+              <h1 className={`${DISPLAY} mb-1 flex flex-wrap items-baseline gap-x-2.5 text-[19px] leading-none font-[860] tracking-[-0.03em] text-zinc-900 sm:text-[23px] dark:text-zinc-100`}>
                 {cv.name}
+                <span lang="hi" className="font-sans text-[13px] font-medium tracking-normal text-zinc-400 [font-stretch:100%] sm:text-[14px] dark:text-zinc-500">
+                  अनुराग दास
+                </span>
               </h1>
               <p className="text-[13px] text-zinc-500 sm:text-[14px] dark:text-zinc-400">{home}</p>
             </div>
@@ -572,11 +655,11 @@ export function ResumePage() {
         <ul className="mt-4 pl-4 text-[14px] leading-relaxed text-zinc-600 sm:text-[15px] dark:text-zinc-300">
           {[
             <>
-              Built Cybership's Automation Rules engine from scratch. It runs <span className="font-semibold text-zinc-900 dark:text-white">50,000+ rule executions</span> a day.
+              Built Cybership's Automation Rules engine from scratch. It runs <mark className={MARK}>50,000+ rule executions</mark> a day.
             </>,
             <>
-              Built its Shipping Labels system across 5 carrier APIs, printing <span className="font-semibold text-zinc-900 dark:text-white">10,000+ labels</span> a day at{' '}
-              <span className="font-semibold text-zinc-900 dark:text-white">99.9% uptime</span>.
+              Built its Shipping Labels system across 5 carrier APIs, printing <mark className={MARK}>10,000+ labels</mark> a day at{' '}
+              <mark className={MARK}>99.9% uptime</mark>.
             </>,
             <>
               Currently a <span className="font-semibold text-zinc-900 dark:text-white">Full Stack Developer at Cybership</span>, working remotely from {home.split(',')[0]}.
@@ -626,6 +709,7 @@ export function ResumePage() {
         </div>
 
         <Section id="experience" title="Experiences">
+          <Ruler />
           <div className="mt-0 block">
             {cv.roles.map((role) => (
               <Role key={role.company} role={role} />
