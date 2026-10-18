@@ -7,7 +7,6 @@ import { useEffect, useId, useState, type CSSProperties, type ReactNode } from '
 import { cv, profile } from '../content'
 import Noise from './bits/Noise'
 import Waves from './bits/Waves'
-import { Activity, useActivity } from './resume/Activity'
 import { CommandPalette, PaletteKey } from './resume/CommandPalette'
 import { TechIcon } from './resume/TechIcon'
 import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
@@ -51,7 +50,6 @@ const PROJECTS = [
 ]
 
 const home = profile.extras.particulars.find((particular) => particular.label === 'Based in')?.value ?? ''
-const user = profile.socials.find((social) => social.label === 'GitHub')?.href.split('/').pop() ?? ''
 
 const GRADIENT_TOP: CSSProperties = { background: 'linear-gradient(rgb(255, 255, 255) 0%, rgba(255, 255, 255, 0) 100%)' }
 const GRADIENT_FOOT: CSSProperties = { background: 'radial-gradient(65.62% 65.62% at 50% 100%, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%)' }
@@ -133,7 +131,6 @@ const PATHS: Record<string, ReactNode> = {
   back: <path d="m12 19-7-7 7-7M19 12H5" />,
   briefcase: <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" />,
   code: <path d="m16 18 6-6-6-6M8 6l-6 6 6 6" />,
-  activity: <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />,
   book: <path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />,
   cap: <path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0zM22 10v6M6 12.5V16a6 3 0 0 0 12 0v-3.5" />,
   sun: <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />,
@@ -153,7 +150,6 @@ const glyph = (name: string, className?: string) =>
 const SECTIONS = [
   { id: 'experience', label: 'Experience', icon: 'briefcase', key: 'E' },
   { id: 'projects', label: 'Projects', icon: 'code', key: 'P' },
-  { id: 'activity', label: 'GitHub Activity', icon: 'activity', key: 'A' },
   { id: 'skills', label: 'Skills', icon: 'book', key: 'S' },
   { id: 'education', label: 'Education', icon: 'cap', key: 'G' },
 ]
@@ -534,14 +530,13 @@ type Theme = 'light' | 'dark' | 'system'
 /**
  * The résumé, copied from parascodes.is-a.dev down to its classes: one column between dotted rails, a banner over a
  * band holding the portrait and name, a few lines on the work, then each job as a row that opens on its points, the
- * systems it built as cards, a year of GitHub activity, the skills and the schooling. ⌘K opens a menu of all of it.
+ * systems it built as cards, the skills and the schooling. ⌘K opens a menu of all of it.
  * Every job's points are word for word what resume.pdf says.
  */
 export function ResumePage() {
   const navigate = useNavigate()
   const [theme, setTheme] = useState<Theme>('system')
   const [system, setSystem] = useState(false)
-  const year = useActivity(user)
   const dark = theme === 'dark' || (theme === 'system' && system)
 
   useEffect(() => {
@@ -741,19 +736,6 @@ export function ResumePage() {
               ))}
             </div>
           </div>
-        </Section>
-
-        <Section
-          id="activity"
-          title="GitHub Activity"
-          className="print:hidden"
-          aside={
-            <p className="text-right text-[11px] text-zinc-500 dark:text-zinc-400">
-              {year === null ? 'Loading GitHub contribution activity' : year === 'failed' ? '' : `${year.total} GitHub activities in the last year`}
-            </p>
-          }
-        >
-          <Activity year={year} user={user} />
         </Section>
 
         <Section id="skills" title="Skills & Technologies">
