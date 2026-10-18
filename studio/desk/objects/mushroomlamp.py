@@ -3,12 +3,14 @@
 It is the lamp in the user's photograph, seen on the desk from straight over it. The stem stands on a
 rounded foot, swells a little above it and tapers up to a rounded shoulder, where a short neck carries the
 shade. The shade is a squashed dome with straight sides and a rounded rim that curls in under it. Both are
-lacquered so deep and glossy that they show the room more than their own red: a window off to the left lies
-across the shade and runs in long streaks down the stem.
+lacquered deep red under a frosted coat, which gives a soft sheen where the moon through the window over its top left
+lights it. Lit or not, the lamp looks the same from over it: its light is under the
+shade.
 
 Under the shade, an opal ring gives a soft yellow light down onto the shoulder of the stem and the
 desk round the lamp. The shade, opaque, keeps it off the ceiling: from over it, the lamp is its red dome in a ring
-of its own light on the desk.
+of its own light on the desk. A braided cord the red of the lacquer leaves the foot at the back and lies across the
+desk to the right, off its edge.
 
 The lamp stands upright on the desk. Built in its own coordinates, in em: standing on z = 0, its axis through the
 middle of its box. Its ring is marked "bulb", at no power until desk.py turns it up, its "share" of the lamp's
@@ -19,7 +21,8 @@ import math
 import bpy
 import numpy as np
 
-from objects.flutelamp import glowing, node, spline, turned, weigh
+from objects.flutelamp import glowing, node, spline, tube, turned, weigh
+from paint import linear
 
 # The stem's outline, radius and height in em, from the middle of its foot round the rounded edge, up the swell and
 # the taper to its shoulder, measured off the photograph (595 pixels to 13.5 em). The neck stands up into the shade.
@@ -77,43 +80,45 @@ SHADE = [
     (4.62, 8.85),
     (4.4, 8.83),
 ]
-RING = (2.1, 4.3)
+# The shade is drawn this much larger than the photograph's, about the bottom of its rim, so it holds its own on the
+# desk seen from over it.
+HEAD = 1.15
+RIM = SHADE[-1][1]
+SHADE = [(r * HEAD, RIM + (z - RIM) * HEAD) for r, z in SHADE]
+RING = (2.1, 4.3 * HEAD)
 RING_Z = 8.845
 UNDER = 8.86
 TOP = SHADE[0][1]
-# The lacquer: the red under it, how rough the paint is under the clear coat, and the coat's own gloss.
+# The finish: the red under it, how rough the paint is, and over it a clear coat etched to a frost, which spreads
+# what it throws back into a soft sheen instead of a picture of the room.
 LACQUER = (0.09, 0.003, 0.005)
-PAINT_ROUGH = 0.35
-COAT_ROUGH = 0.02
-# Lacquer flows out nearly flat, but not quite: the faint orange peel a sprayed coat keeps, this deep, this fine,
-# and this faint.
-PEEL = (0.004, 60.0, 0.04)
+PAINT_ROUGH = 0.5
+COAT_ROUGH = 0.4
+# An etched frost is not perfectly even: its roughness wanders by this much either way, in patches about this many
+# to the em.
+FROST = (0.05, 6.0)
 # The ring gives soft yellow light, this share of the lamp's power in desk.py. Seen edge on under the shade it is a
 # thin line, which a camera exposing for the desk it lights would draw as a smear of glare across the shade: it is
 # drawn at this share of its brightness, as the photograph shows it, a bright line and no more.
 BULB = (1.0, 0.8, 0.42)
-SHARE = 0.35
+SHARE = 1.0
 SEEN = 0.15
 OPAL = "#f6efe2"
 # The box the lamp stands in, in em.
 D = 2 * max(r for r, _ in SHADE)
 W = H = D + 2.0
 
-# The photograph's studio, which the lacquer throws back: a tall window, off over the top left of the desk as the
-# desk's own window is (desk.py WINDOW_FROM), its reflection lying on the upper left of the dome, and a warm plaster
-# wall round the lamp. The page shows the lamp lit as it was photographed, so its picture, lit, is taken in this
-# studio (desk.py puts the parts marked "studio" in the lamp's lit portrait alone).
-WINDOW_AT = (-30.0, 27.0, 26.0)
-WINDOW_SIZE = (26.0, 46.0)
-WINDOW_PANES = (3, 4)
-WINDOW_BAR = 0.05
-WINDOW_LIGHT = (4.5, 4.4, 4.2)
-WALL_R = 45.0
-WALL_H = 120.0
-WALL_LIGHT = (0.75, 0.64, 0.54)
-# The wall is lit from the window: brighter on the left, falling off round to the right, where the shade's dark side
-# looks.
-WALL_FALL = 0.85
+# The cord: braided textile dyed the lacquer's red, this thick (a 6 mm lamp cord on a lamp about 30 cm tall), its
+# braid two sets of strands, this many each way round it, crossing one over one under every this many em along it,
+# each strand a few yarns side by side. It leaves the foot low at its back, through a notch, and lies through these
+# points on the desk, x along to the right and y across, out past the desk's edge.
+CORD_R = 0.2
+STRANDS = 8
+LAY = 0.2
+YARNS = 3
+BRAID = 0.03
+CORD_RED = "#2c0709"
+CORD_LIES = [(1.5, 0.0), (3.0, 0.0), (5.5, 0.35), (8.5, 1.1), (11.5, 1.2), (15.0, 0.4), (19.0, -0.6), (24.0, -1.0), (30.0, -0.4), (38.0, 0.3), (46.0, 0.5)]
 
 # The page shows the lamp from a camera of its own (desk.py PORTRAITS), straight over it as far off as the plate's
 # camera: the plate's camera, off to one side of it, would draw it leaning away. Its middle, and the point on the
@@ -136,7 +141,7 @@ def smooth(points):
 
 
 def lacquer(name):
-    """Deep red paint under a thick clear coat, as glossy as glass, with the faint orange peel of a sprayed finish."""
+    """Deep red paint under a clear coat etched to a frost: a soft sheen, a little uneven, and no sharp reflection."""
     material = bpy.data.materials.new(name)
     material.use_nodes = True
     nodes, links = material.node_tree.nodes, material.node_tree.links
@@ -146,14 +151,15 @@ def lacquer(name):
     # The paint shines only through the coat over it.
     shader.inputs["Specular IOR Level"].default_value = 0.0
     shader.inputs["Coat Weight"].default_value = 1.0
-    shader.inputs["Coat Roughness"].default_value = COAT_ROUGH
     shader.inputs["Coat IOR"].default_value = 1.5
     coord = nodes.new("ShaderNodeTexCoord")
-    peel = node(nodes, "ShaderNodeTexNoise", Scale=PEEL[1], Detail=2.0, Roughness=0.5)
-    links.new(coord.outputs["Object"], peel.inputs["Vector"])
-    bump = node(nodes, "ShaderNodeBump", Strength=PEEL[2], Distance=PEEL[0])
-    links.new(peel.outputs["Fac"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], shader.inputs["Coat Normal"])
+    patches = node(nodes, "ShaderNodeTexNoise", Scale=FROST[1], Detail=3.0, Roughness=0.5)
+    links.new(coord.outputs["Object"], patches.inputs["Vector"])
+    rough = nodes.new("ShaderNodeMapRange")
+    rough.inputs["To Min"].default_value = COAT_ROUGH - FROST[0]
+    rough.inputs["To Max"].default_value = COAT_ROUGH + FROST[0]
+    links.new(patches.outputs["Fac"], rough.inputs["Value"])
+    links.new(rough.outputs[0], shader.inputs["Coat Roughness"])
     return material
 
 
@@ -199,81 +205,63 @@ def ring(stage):
     return obj
 
 
-def studio(stage):
-    """The photograph's window and wall round the lamp, which light the lacquer and show in it."""
-    made = []
-    centre = np.array(WINDOW_AT)
-    facing = -centre / np.linalg.norm(centre)
-    across = np.cross(facing, (0.0, 0.0, 1.0))
-    across /= np.linalg.norm(across)
-    up = np.cross(across, facing)
-    window = bpy.data.meshes.new("mushroom-window")
-    w, h = WINDOW_SIZE
-    window.from_pydata([tuple(centre + i * w / 2 * across + j * h / 2 * up) for i, j in ((-1, -1), (1, -1), (1, 1), (-1, 1))], [], [(0, 1, 2, 3)])
-    window.uv_layers.new(name="UVMap")
-    for loop, uv in zip(window.uv_layers[0].data, ((0, 0), (1, 0), (1, 1), (0, 1))):
-        loop.uv = uv
-    around = np.linspace(0, 2 * math.pi, 128, endpoint=False)
-    wall = bpy.data.meshes.new("mushroom-wall")
-    wall.from_pydata([(WALL_R * math.cos(a), WALL_R * math.sin(a), z) for a in around for z in (-1.0, WALL_H)], [], [(2 * k, 2 * ((k + 1) % 128), 2 * ((k + 1) % 128) + 1, 2 * k + 1) for k in range(128)])
-    lit = wall.attributes.new("lit", "FLOAT", "POINT")
-    # Facing the window across the room, the wall is lit full; turned away from it, less.
-    towards = np.array([math.cos(a) * -centre[0] + math.sin(a) * -centre[1] for a in around]) / np.hypot(centre[0], centre[1])
-    # and up it the light falls off into the dark of the room, so the dome, which throws back the wall round its
-    # shoulder and the room's ceiling over its top, shades from one to the other.
-    lit.data.foreach_set("value", (np.repeat(1 - WALL_FALL * (1 - towards) / 2, 2) * np.tile((1.0, 0.0), len(around))).astype(np.float32))
-    for mesh, light in ((window, WINDOW_LIGHT), (wall, WALL_LIGHT)):
-        material = bpy.data.materials.new(mesh.name)
-        material.use_nodes = True
-        nodes, links = material.node_tree.nodes, material.node_tree.links
-        nodes.remove(nodes["Principled BSDF"])
-        emit = node(nodes, "ShaderNodeEmission", Color=(*light, 1), Strength=1.0)
-        if mesh is window:
-            # The glazing bars: a grid of thin dark lines across the light.
-            uv = nodes.new("ShaderNodeUVMap")
-            grid = nodes.new("ShaderNodeSeparateXYZ")
-            links.new(uv.outputs["UV"], grid.inputs[0])
-            bars = []
-            for axis, panes in zip(("X", "Y"), WINDOW_PANES):
-                scaled = nodes.new("ShaderNodeMath")
-                scaled.operation = "MULTIPLY"
-                scaled.inputs[1].default_value = panes
-                links.new(grid.outputs[axis], scaled.inputs[0])
-                frac = nodes.new("ShaderNodeMath")
-                frac.operation = "PINGPONG"
-                frac.inputs[1].default_value = 0.5
-                links.new(scaled.outputs[0], frac.inputs[0])
-                edge = nodes.new("ShaderNodeMath")
-                edge.operation = "GREATER_THAN"
-                edge.inputs[1].default_value = WINDOW_BAR * panes / 2
-                links.new(frac.outputs[0], edge.inputs[0])
-                bars.append(edge)
-            both = nodes.new("ShaderNodeMath")
-            both.operation = "MULTIPLY"
-            links.new(bars[0].outputs[0], both.inputs[0])
-            links.new(bars[1].outputs[0], both.inputs[1])
-            links.new(both.outputs[0], emit.inputs["Strength"])
-        else:
-            weight = nodes.new("ShaderNodeAttribute")
-            weight.attribute_name = "lit"
-            links.new(weight.outputs["Fac"], emit.inputs["Strength"])
-        links.new(emit.outputs[0], nodes["Material Output"].inputs["Surface"])
-        mesh.materials.append(material)
-        obj = stage.add(mesh.name, mesh)
-        # The lacquer's red is the paint lit by the photograph's room: the window and the wall light it, as well as
-        # showing in it. Nothing else sees them: they are in the lamp's lit portrait alone.
-        for flag in ("visible_camera", "visible_shadow", "visible_volume_scatter", "visible_transmission"):
-            setattr(obj, flag, False)
-        obj["unseen"] = True
-        obj["studio"] = True
-        made.append(obj)
-    return made
+def braid(s, angle):
+    """The braid's relief: two sets of strands round the cord, one each way, each passing over one of the other
+    and under the next; each strand a few yarns, each a round ridge. Height over the cord's radius, in em."""
+    turn = STRANDS * angle / (2 * math.pi)
+    a, b = turn + s / LAY, turn - s / LAY
+    ua, ub = np.mod(a, 1.0), np.mod(b, 1.0)
+    over = (np.floor(a) + np.floor(b)) % 2 == 0
+    lift_a = np.sin(math.pi * ub) ** 0.6
+    lift_b = np.sin(math.pi * ua) ** 0.6
+    top_a = lift_a * (0.75 + 0.25 * np.abs(np.sin(math.pi * YARNS * ua)) ** 0.5)
+    top_b = lift_b * (0.75 + 0.25 * np.abs(np.sin(math.pi * YARNS * ub)) ** 0.5)
+    return BRAID * (np.where(over, np.maximum(top_a, 0.55 * top_b), np.maximum(top_b, 0.55 * top_a)) - 0.5)
+
+
+def textile():
+    """Dyed braided cotton: matte, with the soft sheen of fibres along the strands, darker in the hollows the braid's
+    relief leaves (the mesh's "hollow")."""
+    material = bpy.data.materials.new("mushroom-cord")
+    material.use_nodes = True
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    shader = nodes["Principled BSDF"]
+    shader.inputs["Roughness"].default_value = 0.65
+    shader.inputs["Specular IOR Level"].default_value = 0.2
+    shader.inputs["Sheen Weight"].default_value = 0.25
+    shader.inputs["Sheen Roughness"].default_value = 0.4
+    shader.inputs["Sheen Tint"].default_value = (0.6, 0.35, 0.33, 1)
+    hollow = nodes.new("ShaderNodeAttribute")
+    hollow.attribute_name = "hollow"
+    shade_ = nodes.new("ShaderNodeMix")
+    shade_.data_type = "RGBA"
+    shade_.inputs["A"].default_value = (*linear(CORD_RED), 1)
+    shade_.inputs["B"].default_value = (*[0.35 * c for c in linear(CORD_RED)], 1)
+    links.new(hollow.outputs["Fac"], shade_.inputs["Factor"])
+    links.new(shade_.outputs["Result"], shader.inputs["Base Color"])
+    return material
+
+
+def cord(stage):
+    """The cord, out of the foot and across the desk. It lies on the desk and is drawn in the plate, not in the lamp's
+    own picture ("plated"): its picture covers where it leaves the foot, under the shade."""
+    path = spline([(x, y, CORD_R + BRAID / 2) for x, y in CORD_LIES], 0.012)
+    mesh = tube("mushroom-cord", path, CORD_R, 96, braid)
+    angle = np.linspace(0, 2 * math.pi, 96, endpoint=False)
+    relief = braid(path[1][:, None], angle[None, :]).ravel() / BRAID + 0.5
+    hollow = np.concatenate((np.clip(0.9 - relief, 0, 1) ** 1.5, [0, 0]))
+    attribute = mesh.attributes.new("hollow", "FLOAT", "POINT")
+    attribute.data.foreach_set("value", hollow.astype(np.float32))
+    mesh.materials.append(textile())
+    wire = stage.add("mushroom-cord", mesh)
+    wire["plated"] = True
+    return wire
 
 
 def parts(stage):
     """Every part of the lamp, standing on z = 0 about its axis."""
     paint = lacquer("mushroom-lacquer")
-    return [stem(stage, paint), shade(stage, paint), ring(stage), *studio(stage)]
+    return [stem(stage, paint), shade(stage, paint), ring(stage), cord(stage)]
 
 
 def build(stage):

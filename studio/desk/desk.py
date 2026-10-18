@@ -113,8 +113,9 @@ WINDOW = 0.16
 WINDOW_FROM = (-0.55, 0.6, 0.58)
 MOON = 0.55
 # How much of the moon's light is left beside the lamp's, as the camera exposes for the lamp. The mushroom lamp throws
-# its light down from under its shade onto the desk round it, and the camera, metering the lit desk, stops down.
-LAMP_MOON = 0.6
+# its light down from under its shade, and the camera keeps its exposure: the lamp adds its light to the moon's, and
+# what the moon lights, the lamp's own lacquer among it, looks the same lit or not.
+LAMP_MOON = 1.0
 GLOW = 45000.0
 # A lens spreads a little of a light too bright for it round it: this share, over this many em.
 BLOOM = (0.05, 1.2)
