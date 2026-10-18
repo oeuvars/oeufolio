@@ -1,41 +1,13 @@
 import '@fontsource-variable/geist'
 import '@fontsource-variable/geist-mono'
 
-import { Link } from '@tanstack/react-router'
-import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 
-import { cv, profile } from '../content'
-
-// The page's two themes as variables, so one set of classes serves both.
-const LIGHT = {
-  '--page': '#ffffff',
-  '--ink': '#18181b',
-  '--body': '#52525b',
-  '--muted': '#71717a',
-  '--faint': '#a1a1aa',
-  '--rule': '#a1a1aa',
-  '--line': '#e4e4e7',
-  '--chip': '#fafafa',
-  '--chip-line': 'rgb(0 0 0 / 0.3)',
-  '--hover': '#f4f4f5',
-  '--button': '#18181b',
-  '--button-ink': '#fafafa',
-} as CSSProperties
-
-const DARK = {
-  '--page': '#000000',
-  '--ink': '#f4f4f5',
-  '--body': '#d4d4d8',
-  '--muted': '#a1a1aa',
-  '--faint': '#52525b',
-  '--rule': '#52525b',
-  '--line': '#27272a',
-  '--chip': '#0a0a0a',
-  '--chip-line': 'rgb(255 255 255 / 0.25)',
-  '--hover': '#121214',
-  '--button': '#fafafa',
-  '--button-ink': '#18181b',
-} as CSSProperties
+import { cv, pages, profile } from '../content'
+import { Activity, useActivity } from './resume/Activity'
+import { CommandPalette, PaletteKey } from './resume/CommandPalette'
+import { CARD, CHIP, DARK, DOT, DOTS_X, DOTS_Y, FOCUS, LABEL, LIGHT, MONO, PILL, STAMP } from './resume/styles'
 
 const LOGOS: Record<string, string> = {
   'Cybership.io': '/objects/resume/cybership.png',
@@ -45,21 +17,52 @@ const LOGOS: Record<string, string> = {
 
 const SECTIONS = [
   { id: 'experience', label: 'Experience' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'activity', label: 'Activity' },
   { id: 'skills', label: 'Skills' },
   { id: 'education', label: 'Education' },
+  { id: 'likes', label: 'Likes and music' },
+  { id: 'highlights', label: 'Highlights' },
 ]
 
-const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ink)'
-const MONO = "font-['Geist_Mono_Variable',ui-monospace,monospace]"
-const LABEL = `${MONO} text-[10px] font-medium tracking-wider text-(--faint) uppercase`
-const CHIP = `flex items-center gap-1.5 rounded-[4px] border border-(--line) bg-(--chip) px-3 py-1.5 text-[12px] font-medium text-(--body) transition-colors hover:bg-(--hover) hover:text-(--ink) ${FOCUS}`
-const STAMP = `rounded-[4px] border border-(--line) bg-(--chip) px-3 py-1.5 ${MONO} text-[10px] tracking-[0.12em] text-(--muted) uppercase transition-colors hover:bg-(--hover) hover:text-(--ink) ${FOCUS}`
-// Dotted rules as the reference draws them: a one-pixel dot every four pixels, sparser than CSS's own dotted border.
-const DOTS_X = 'bg-[linear-gradient(to_right,var(--rule)_1px,transparent_1px)] bg-[length:4px_1px] bg-repeat-x'
-const DOTS_Y = 'bg-[linear-gradient(to_bottom,var(--rule)_1px,transparent_1px)] bg-[length:1px_4px] bg-repeat-y'
-const DOT = 'relative before:absolute before:top-[0.75em] before:-left-3 before:size-[3px] before:rounded-full before:bg-current'
+/** The systems the résumé's points describe, each as a card. Every figure is one resume.pdf gives. */
+const PROJECTS = [
+  {
+    name: 'Automation Rules',
+    company: 'Cybership.io',
+    live: true,
+    about: 'A rules engine like Shopify Flow, with 50 triggers, 16 condition operators and 7 actions. Its Zod-checked evaluator runs 50,000+ rules a day across orders, inventory and shipping.',
+    stack: ['TypeScript', 'Zod'],
+  },
+  {
+    name: 'Cybership Desktop',
+    company: 'Cybership.io',
+    live: true,
+    about: 'The packing-station app that replaced PrintNode. It prints over the OS spooler, raw TCP, USB and HID, reads scales through 64 protocol decoders, and never reprints a job a crash cut short.',
+    stack: ['macOS', 'Windows', 'PostgreSQL'],
+  },
+  {
+    name: 'Shipping Labels',
+    company: 'Cybership.io',
+    live: true,
+    about: 'Labels from FedEx, UPS, USPS, DHL and Canada Post through 5 carrier APIs, with Redis-cached rate shopping. It prints 10,000+ labels a day in under 2 seconds each.',
+    stack: ['EasyPost', 'Redis', 'pdf-lib'],
+  },
+  {
+    name: 'Altern8',
+    company: 'Ekarth Ventures',
+    live: false,
+    about: 'A real estate lending platform on Next.js and Django. I led its frontend and the team building it, and pitched it to investors in the US, Turkey, the Netherlands and India.',
+    stack: ['Next.js', 'Django', 'Docker'],
+  },
+]
+
+/** The site's other pages, each shown by its own link preview. */
+const HIGHLIGHTS = (['basics', 'likes', 'work', 'extras', 'contact'] as const).map((id) => ({ id, ...pages[id] }))
 
 const home = profile.extras.particulars.find((particular) => particular.label === 'Based in')?.value ?? ''
+const github = profile.socials.find((social) => social.label === 'GitHub')
+const user = github?.href.split('/').pop() ?? ''
 
 /** "March 2025 to now" as "Mar 2025 - Present". */
 const period = (text: string) =>
@@ -68,12 +71,12 @@ const period = (text: string) =>
     .map((part) => (part === 'now' ? 'Present' : `${part.slice(0, 3)} ${part.split(' ')[1]}`))
     .join(' - ')
 
-function Icon({ children, fill = false }: { children: ReactNode; fill?: boolean }) {
+function Icon({ children, fill = false, size = 'size-3.5' }: { children: ReactNode; fill?: boolean; size?: string }) {
   return (
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      className="size-3.5 shrink-0"
+      className={`${size} shrink-0`}
       fill={fill ? 'currentColor' : 'none'}
       stroke={fill ? 'none' : 'currentColor'}
       strokeWidth="2"
@@ -121,19 +124,32 @@ const ICONS: Record<string, ReactNode> = {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
     </Icon>
   ),
+  out: (
+    <Icon size="size-3">
+      <path d="M7 17 17 7M7 7h10v10" />
+    </Icon>
+  ),
+  back: (
+    <Icon size="size-3">
+      <path d="m12 19-7-7 7-7M19 12H5" />
+    </Icon>
+  ),
 }
 
 /** A rule run the whole width of the window, through the column's rails. */
 const Rule = () => <div aria-hidden="true" className={`relative left-1/2 h-px w-screen -translate-x-1/2 ${DOTS_X} print:hidden`} />
 
-/** A section's name, set between two rules. */
-function Heading({ id, children }: { id: string; children: ReactNode }) {
+/** A section's name, set between two rules, with an aside on the right if it has one. */
+function Heading({ id, aside, children }: { id: string; aside?: ReactNode; children: ReactNode }) {
   return (
     <>
       <Rule />
-      <h2 id={id} className="scroll-mt-6 px-4 py-2 text-[18px] leading-[27px] font-bold tracking-tight text-(--ink)">
-        {children}
-      </h2>
+      <div className="flex items-baseline justify-between gap-3 px-4 py-2">
+        <h2 id={id} className="scroll-mt-6 text-[18px] leading-[27px] font-bold tracking-tight whitespace-nowrap text-(--ink)">
+          {children}
+        </h2>
+        {aside && <p className="text-right text-[12px] text-(--muted)">{aside}</p>}
+      </div>
       <Rule />
     </>
   )
@@ -222,7 +238,15 @@ function Index() {
       const section = document.getElementById(`${id}-section`)
       if (section) observer.observe(section)
     })
-    return () => observer.disconnect()
+    // The last sections never reach the line the observer watches, so the end of the page marks the last one.
+    const onScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) setActive(SECTIONS[SECTIONS.length - 1].id)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('scroll', onScroll)
+    }
   }, [])
 
   return (
@@ -244,12 +268,15 @@ function Index() {
 }
 
 /**
- * The résumé as one narrow column of text between dotted rails, after parascodes.is-a.dev: a banner, a small grey
- * portrait beside the name, a few lines on the work, then each job as a row that opens on its points, the skills as
- * chips, and the schooling as cards. Every job's points are word for word what resume.pdf says.
+ * The résumé as one narrow column between dotted rails, after parascodes.is-a.dev: a banner, a small grey portrait
+ * beside the name, a few lines on the work, then each job as a row that opens on its points, the systems it built as
+ * cards, a year of GitHub activity, the skills as chips, the schooling as cards, the likes from the desk, and the
+ * site's other pages. ⌘K opens a menu of all of it. Every job's points are word for word what resume.pdf says.
  */
 export function ResumePage() {
+  const navigate = useNavigate()
   const [dark, setDark] = useState(false)
+  const year = useActivity(user)
 
   useEffect(() => {
     const saved = localStorage.getItem('resume-theme')
@@ -265,6 +292,20 @@ export function ResumePage() {
   const coursework = cv.skills.find((skill) => skill.label === 'Relevant coursework')
   const skills = cv.skills.filter((skill) => skill !== coursework)
   const [college, school] = cv.education
+  const { likes, playlist } = profile.extras
+
+  const commands = [
+    ...SECTIONS.map(({ id, label }) => ({
+      group: 'Sections',
+      label,
+      run: () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    })),
+    { group: 'Links', label: 'Download the PDF', hint: 'resume.pdf', run: () => window.open(profile.resume.href, '_blank') },
+    { group: 'Links', label: 'Send an email', hint: profile.email, run: () => (window.location.href = `mailto:${profile.email}`) },
+    ...profile.socials.map((social) => ({ group: 'Links', label: social.label, hint: social.href.replace('https://', ''), run: () => window.open(social.href, '_blank') })),
+    { group: 'Links', label: 'Back to the site', run: () => navigate({ to: '/' }) },
+    { group: 'Settings', label: dark ? 'Use the light theme' : 'Use the dark theme', run: toggle },
+  ]
 
   return (
     <div
@@ -276,6 +317,7 @@ export function ResumePage() {
       <div className="relative mx-auto max-w-[576px] print:max-w-none">
         <span aria-hidden="true" className={`absolute inset-y-0 -left-px w-px ${DOTS_Y} max-sm:hidden print:hidden`} />
         <span aria-hidden="true" className={`absolute inset-y-0 -right-px w-px ${DOTS_Y} max-sm:hidden print:hidden`} />
+
         <div
           aria-hidden="true"
           className="h-[160px] bg-[url(/objects/resume/banner.avif)] bg-cover bg-center [mask-composite:intersect] [mask-image:linear-gradient(to_bottom,black_55%,transparent),linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] sm:h-[198px] print:hidden"
@@ -290,23 +332,26 @@ export function ResumePage() {
             <h1 className="text-[22px] leading-tight font-bold tracking-tight text-(--ink) sm:text-[24px]">{cv.name}</h1>
             <p className="text-[13px] text-(--muted) sm:text-[14px]">{home}</p>
           </div>
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={dark ? 'Use the light theme' : 'Use the dark theme'}
-            className={`absolute top-3 right-4 grid size-8 place-items-center rounded-md text-(--muted) transition-colors hover:bg-(--hover) hover:text-(--ink) ${FOCUS} print:hidden`}
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {dark ? (
-                <>
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-                </>
-              ) : (
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-              )}
-            </svg>
-          </button>
+          <div className="absolute top-3 right-4 flex items-center gap-2 print:hidden">
+            <CommandPalette commands={commands} trigger={(open) => <PaletteKey onOpen={open} />} />
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label={dark ? 'Use the light theme' : 'Use the dark theme'}
+              className={`grid size-8 place-items-center rounded-md text-(--muted) transition-colors hover:bg-(--hover) hover:text-(--ink) ${FOCUS}`}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {dark ? (
+                  <>
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  </>
+                ) : (
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                )}
+              </svg>
+            </button>
+          </div>
         </header>
         <Rule />
 
@@ -363,6 +408,48 @@ export function ResumePage() {
           ))}
         </section>
 
+        <section id="projects-section" aria-labelledby="projects">
+          <Heading id="projects">Projects</Heading>
+          <div className="grid gap-x-10 gap-y-8 px-8 pt-6 pb-8 sm:grid-cols-2 print:px-0">
+            {PROJECTS.map((project) => {
+              const role = cv.roles.find((r) => r.company === project.company)
+              return (
+                <article key={project.name} className="flex flex-col">
+                  <div className="grid aspect-[3/1] place-items-center sm:aspect-[236/168] rounded-xl border border-(--line) bg-[linear-gradient(to_bottom,var(--chip),var(--hover))] shadow-[0_1px_2px_rgb(0_0_0/0.05)] print:hidden">
+                    <span className="grid size-14 place-items-center rounded-xl border border-(--line) bg-white shadow-[0_2px_6px_rgb(0_0_0/0.08)]">
+                      <img src={LOGOS[project.company]} alt="" className="size-11 rounded-lg object-contain" />
+                    </span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between gap-2 px-0.5">
+                    <h3 className="text-[15px] leading-tight font-bold text-(--ink)">{project.name}</h3>
+                    <span className={PILL}>
+                      <span className={`size-1.5 rounded-full ${project.live ? 'bg-emerald-500' : 'bg-(--faint)'}`} />
+                      {project.live ? 'Live' : project.company}
+                    </span>
+                  </div>
+                  <p className="mt-2 px-0.5 text-[13px] leading-[1.6] text-(--muted)">{project.about}</p>
+                  <div className="mt-auto flex items-center justify-between gap-3 px-0.5 pt-3">
+                    <span className={`${MONO} min-w-0 truncate text-[10px] tracking-wide text-(--faint) uppercase`}>{project.stack.join(' · ')}</span>
+                    {role && (
+                      <a href={role.href} className={`flex shrink-0 items-center gap-1 text-[12px] font-medium text-(--body) hover:text-(--ink) ${FOCUS}`}>
+                        {project.live ? 'Cybership' : 'Ekarth'}
+                        {ICONS.out}
+                      </a>
+                    )}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+
+        <section id="activity-section" aria-labelledby="activity" className="print:hidden">
+          <Heading id="activity" aside={year && year !== 'failed' ? `${year.total} contributions in the last year` : undefined}>
+            GitHub Activity
+          </Heading>
+          <Activity year={year} user={user} />
+        </section>
+
         <section id="skills-section" aria-labelledby="skills">
           <Heading id="skills">Skills and interests</Heading>
           <div className="flex flex-col gap-5 px-4 pt-6 pb-8">
@@ -383,8 +470,8 @@ export function ResumePage() {
 
         <section id="education-section" aria-labelledby="education">
           <Heading id="education">Education</Heading>
-          <div className="grid gap-4 px-4 pt-6 pb-10 sm:grid-cols-2">
-            <div className="rounded-lg border border-(--line) bg-(--chip)">
+          <div className="grid gap-4 px-4 pt-6 pb-8 sm:grid-cols-2">
+            <div className={CARD}>
               <div className="p-4">
                 <h3 className="text-[14px] font-semibold text-(--ink)">{college.school.split(', ')[0]}</h3>
                 <p className="mt-1 text-[13px] text-(--body)">{college.course}</p>
@@ -405,7 +492,7 @@ export function ResumePage() {
                 </div>
               )}
             </div>
-            <div className="self-start rounded-lg border border-(--line) bg-(--chip) p-4">
+            <div className={`${CARD} self-start p-4`}>
               <h3 className="text-[14px] font-semibold text-(--ink)">{school.school.split(', ')[0]}</h3>
               <p className="mt-1 text-[13px] text-(--body)">{school.course}</p>
               <p className="mt-1 text-[12px] text-(--muted)">
@@ -415,14 +502,87 @@ export function ResumePage() {
           </div>
         </section>
 
+        <section id="likes-section" aria-labelledby="likes" className="print:hidden">
+          <Heading id="likes">Likes and music</Heading>
+          <div className="px-4 pt-6 pb-8">
+            <div className={CARD}>
+              <div className="flex items-baseline justify-between gap-3 px-4 py-3">
+                <h3 className="text-[14px] font-bold text-(--ink)">
+                  Likes <span className="ml-1 text-[12px] font-normal text-(--muted)">what the desk holds</span>
+                </h3>
+                <span className={`${MONO} text-[10px] text-(--faint)`}>{Object.keys(likes).length} things</span>
+              </div>
+              <ul className={`${DOTS_X} grid grid-cols-2 gap-3 bg-top p-4 sm:grid-cols-4`}>
+                {Object.values(likes).map((like) => (
+                  <li key={like.subject} className="flex flex-col rounded-md border border-(--line) bg-(--page) p-3">
+                    <span className="text-[12px] font-semibold text-(--ink)">{like.subject}</span>
+                    <span className={`${MONO} mt-1 text-[10px] text-(--faint)`}>{like.title}</span>
+                    <span className="mt-2 text-[12px] leading-snug text-(--muted)">{like.note}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className={`${DOTS_X} bg-top px-4 py-4`}>
+                <h3 className="text-[14px] font-bold text-(--ink)">
+                  Music <span className="ml-1 text-[12px] font-normal text-(--muted)">one playlist, on the record on my desk</span>
+                </h3>
+                <a href={playlist.href} className={`${CHIP} mt-3 w-fit`}>
+                  {playlist.title}
+                  {ICONS.out}
+                </a>
+              </div>
+              <p className={`${DOTS_X} ${MONO} bg-top px-4 py-4 text-[10px] tracking-wider text-(--faint) uppercase`}>
+                On repeat <span className="ml-1 text-(--muted)">{playlist.title}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="highlights-section" aria-labelledby="highlights" className="print:hidden">
+          <Heading id="highlights">Highlights</Heading>
+          <ul className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pt-6 pb-8 [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)] [scrollbar-width:none]">
+            {HIGHLIGHTS.map((page) => (
+              <li key={page.id} className="w-[300px] shrink-0 snap-center">
+                <Link to={page.path} className={`group block overflow-hidden rounded-lg border border-(--line) bg-(--chip) ${FOCUS}`}>
+                  <img src={page.preview.src} alt="" loading="lazy" className="aspect-[1200/630] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none" />
+                  <span className="block p-3">
+                    <span className="flex items-center justify-between">
+                      <span className={`${MONO} rounded-[4px] bg-(--hover) px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-(--muted) uppercase`}>{page.path === '/' ? 'Basics' : page.path.slice(1)}</span>
+                      <span className="text-(--faint) group-hover:text-(--ink)">{ICONS.out}</span>
+                    </span>
+                    <span className="mt-2 line-clamp-2 block text-[13px] leading-snug font-semibold text-(--ink)">{page.preview.alt}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <Rule />
-        <footer className="flex flex-wrap justify-center gap-2 px-4 py-10 print:hidden">
-          <Link to="/" className={STAMP}>
-            Back to the site
-          </Link>
-          <a href={`mailto:${profile.email}`} className={STAMP}>
-            {profile.email}
-          </a>
+        <footer className="px-4 pt-12 pb-10 text-center print:hidden">
+          <figure>
+            <blockquote className="text-[16px] leading-relaxed text-(--muted) italic">
+              <p>
+                "A ship in harbor is safe,
+                <br />
+                but that is not what ships are built for."
+              </p>
+            </blockquote>
+            <figcaption className={`${MONO} mt-5 flex items-center justify-center gap-3 text-[10px] tracking-[0.2em] text-(--faint) uppercase`}>
+              <span aria-hidden="true" className="h-px w-4 bg-(--line)" />
+              John A. Shedd
+              <span aria-hidden="true" className="h-px w-4 bg-(--line)" />
+            </figcaption>
+          </figure>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Link to="/" className={STAMP}>
+              {ICONS.back}
+              Back to the site
+            </Link>
+            <a href={`mailto:${profile.email}`} className={STAMP}>
+              {ICONS.mail}
+              {profile.email}
+            </a>
+          </div>
         </footer>
         <Rule />
         <div aria-hidden="true" className="h-48 bg-[radial-gradient(var(--line)_1px,transparent_1px)] [background-size:16px_16px] print:hidden" />
