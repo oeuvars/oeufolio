@@ -4,9 +4,11 @@ and art/chrono-hand-photo.jpg, in the hand), lying face up on the desk with its 
 A steel case, satin all over: round, about 38.6 mm across, drawn out at 12 and at 6 into broad flat shoulders as wide
 as the bracelet, its edge rounded over all round. A slim raised bezel round a flat crystal, a polished step inside
 it. Two pushers on the right, at 2 and at 4, and one on the left at 10, each a guard collar and a hexagonal head;
-the crown at 8, knurled. Under the crystal, the dial is the photograph itself, laid out square on
-(art/chrono-dial.png, by art/chronophoto.py): its tachymeter scale, its three subdials, SEIKO and its hands are the
-real ones, in the photograph's own light.
+the crown at 8, knurled. Under the crystal, sunk below the bezel, the dial is the photograph itself, laid out square
+on with the photograph's light taken out of it (art/chrono-dial.png, by art/chronophoto.py): its tachymeter scale,
+its three subdials and SEIKO are the real ones. Its hands stand over it where the photograph has them: black hour
+and minute hands striped with lume, the thin dark red seconds hand with its counterweight and pip, the small dials'
+black hands on their hubs, and a polished cap over the middle; each throws its shadow on the dial.
 
 The bracelet runs on out of the shoulders, as wide as them, narrowing to the clasp: broad flat links, their top
 edges chamfered bright, each between two narrow round bars, a fine dark gap between every one. Taken off and put
@@ -17,6 +19,7 @@ under the case, the folding clasp, a long plain plate, lying face down there.
 Built in millimetres, 12 o'clock up the page, the middle of the dial over the origin, and drawn MM em to the
 millimetre, as the Alpinist (objects/watch.py) was, in the same box on the desk."""
 
+import json
 import math
 import os
 
@@ -44,13 +47,28 @@ BACK = (16.0, 0.9)
 TOP = 7.4
 ROUNDED = 1.4
 FALL = (0.5, 16.0)
-# The dial, out to the black ring round its scale, and the crystal over it, flat, this thick, its top this high.
+# The dial, out to the black ring round its scale, and the crystal over it, flat, this thick, its top this high; the
+# crystal and the bezel round it stand this much higher than the dial, which sits down in the case under them, its
+# edge in the shadow of the wall round it.
 DIAL_R = 17.3
-CRYSTAL = (0.35, 8.3)
+RISE = 1.0
+CRYSTAL = (0.35, 8.3 + RISE)
 # The bezel's sections, radius and height in mm, each a closed ring: a polished step up from the dial's edge, then
 # the satin bezel, up over its crest and down into the case's top.
-STEP = [(17.15, TOP), (17.15, 8.05), (17.3, 8.12), (17.7, 8.15), (17.75, 8.0), (17.75, TOP), (17.15, TOP)]
-BEZEL = [(17.65, 7.9), (17.7, 8.15), (17.85, 8.32), (18.05, 8.4), (18.3, 8.36), (18.5, 8.15), (18.65, 7.7), (18.75, TOP - 0.5), (17.65, TOP - 0.5), (17.65, 7.9)]
+STEP = [(17.15, TOP), (17.15, 8.05 + RISE), (17.3, 8.12 + RISE), (17.7, 8.15 + RISE), (17.75, 8.0 + RISE), (17.75, TOP), (17.15, TOP)]
+BEZEL = [(17.65, 7.9 + RISE), (17.7, 8.15 + RISE), (17.85, 8.32 + RISE), (18.05, 8.4 + RISE), (18.3, 8.36 + RISE), (18.5, 8.15 + RISE), (18.65, 7.7 + RISE), (18.75, TOP - 0.5), (17.65, TOP - 0.5), (17.65, 7.9 + RISE)]
+# The hands, stood over the dial where the photograph has them (art/chrono-hands.json, by art/chronophoto.py): each
+# this high over the dial and this thick, the small dials' first, then the hour, minute and seconds hands, the cap
+# over them all. The hour and minute hands are black, a white strip of lume down them this wide, from this far out
+# to this far, its point this much further; their bosses round the pivot this round. The seconds hand is the dark red
+# of the photograph. The hands' paint: black this rough, the lume this white and this rough, the red this.
+HANDS_ART = os.path.join(ART, "chrono-hands.json")
+HEIGHTS = {"small": (0.15, 0.1), "hour": (0.35, 0.1), "minute": (0.55, 0.1), "chrono": (0.75, 0.08), "cap": (0.3, 0.65)}
+LUME = {"hour": (0.32, 2.6, 6.9, 0.4), "minute": (0.32, 3.0, 10.2, 0.4)}
+BOSS = {"hour": 0.65, "minute": 0.7}
+BLACK = ((0.012, 0.012, 0.012), 0.25)
+WHITE_LUME = ((0.8, 0.8, 0.76), 0.55)
+RED = (0.045, 0.007, 0.006)
 # The pushers and the crown, round the flank: at this angle from 3 o'clock, anticlockwise; at this height. Each pusher
 # a guard collar this round and this long, a stem, and a hexagonal head this round and this long, standing out this
 # far in all. The crown, this round, this long, its knurl this many teeth.
@@ -287,11 +305,86 @@ def dial(stage, paper):
     disc.materials.append(paper)
     thick, top = CRYSTAL
     glass = turned("chrono-crystal", [(0.0, top), (17.2, top), (17.25, top - 0.05), (17.25, top - thick), (0.0, top - thick)], around=256)
+    # The crystal stands RISE over the dial: its rim sits on the step's wall.
     glass.materials.append(mineral("chrono-glass"))
     # Flat faces shaded flat, not bent toward their rims.
     for mesh in (disc, glass):
         mesh.set_sharp_from_angle(angle=math.radians(30))
     return [stage.add("chrono-dial", disc), stage.add("chrono-crystal", glass)]
+
+
+def painted(name, colour, rough):
+    """Paint on a hand: lacquer, glossy as such paint is."""
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+    shader = material.node_tree.nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (*colour, 1)
+    shader.inputs["Roughness"].default_value = rough
+    return material
+
+
+def tapered(back, forward, wide, narrow, point=0.0):
+    """A hand's outline, pointing up its y from its pivot: from back behind the pivot to forward, narrowing from wide
+    to narrow, then drawn to a point over point more."""
+    outline = [(-wide / 2, -back), (wide / 2, -back), (narrow / 2, forward)]
+    if point:
+        outline.append((0.0, forward + point))
+    outline.append((-narrow / 2, forward))
+    return outline
+
+
+def hands(stage, polish):
+    """The hands over the dial, where the photograph has them, each throwing its shadow on the dial."""
+    with open(HANDS_ART) as file:
+        spec = json.load(file)
+    black = painted("chrono-hand-black", *BLACK)
+    lume = painted("chrono-hand-lume", *WHITE_LUME)
+    red = painted("chrono-hand-red", RED, BLACK[1])
+    dial = TOP + 0.1
+    made = []
+
+    def put(name, outline, height, thick, material, at, angle, bevel=0.03):
+        mesh = polygon_prism(name, outline, dial + height, dial + height + thick, material, bevel=bevel)
+        mesh.polygons.foreach_set("use_smooth", [False] * len(mesh.polygons))
+        obj = stage.add(name, mesh)
+        obj.matrix_world = Matrix.Translation((at[0], at[1], 0.0)) @ Matrix.Rotation(-math.radians(angle), 4, "Z")
+        made.append(obj)
+
+    def disc(radius, n=40):
+        return [(radius * math.cos(a), radius * math.sin(a)) for a in np.linspace(0, 2 * math.pi, n, endpoint=False)]
+
+    pivot = spec["pivot"]
+    small = spec["small"]
+    height, thick = HEIGHTS["small"]
+    for k, (x, y, angle) in enumerate(small["at"]):
+        put(f"chrono-small-{k}", tapered(0.8, small["length"], small["width"], small["width"] * 0.55, 0.1), height, thick, black, (x, y), angle)
+        put(f"chrono-small-hub-{k}", disc(small["hub"]), 0.0, height + thick, black, (x, y), 0.0)
+        put(f"chrono-small-pin-{k}", disc(0.18, 24), 0.0, height + thick + 0.08, polish, (x, y), 0.0)
+    for name in ("hour", "minute"):
+        hand = spec[name]
+        height, thick = HEIGHTS[name]
+        wide, narrow = hand["width"]
+        put(f"chrono-{name}", tapered(0.0, hand["length"] - narrow, wide, narrow, narrow), height, thick, black, pivot, hand["angle"])
+        put(f"chrono-{name}-boss", disc(BOSS[name]), height, thick, black, pivot, 0.0)
+        width, start, end, point = LUME[name]
+        strip = [(x, y + start) for x, y in tapered(0.0, end - start, width, width, point)]
+        put(f"chrono-{name}-lume", strip, height + thick, 0.03, lume, pivot, hand["angle"], bevel=0.01)
+    chrono = spec["chrono"]
+    height, thick = HEIGHTS["chrono"]
+    put("chrono-seconds", tapered(0.0, chrono["length"], chrono["width"], chrono["width"] * 0.4), height, thick, red, pivot, chrono["angle"], bevel=0.02)
+    weight = chrono["counterweight"]
+    put("chrono-counterweight", tapered(chrono["tail"], 0.3, weight * 0.7, weight), height, thick, red, pivot, chrono["angle"])
+    out, long, wide = chrono["pip"]
+    put("chrono-pip", [(0.0, out - long / 2), (wide / 2, out), (0.0, out + long / 2), (-wide / 2, out)], height, thick, red, pivot, chrono["angle"], bevel=0.02)
+    put("chrono-pip-lume", [(0.0, out - long / 4), (wide / 4, out), (0.0, out + long / 4), (-wide / 4, out)], height + thick, 0.02, lume, pivot, chrono["angle"], bevel=0.005)
+    # The cap over the pivot, polished, domed a little.
+    height, thick = HEIGHTS["cap"]
+    cap = turned("chrono-cap", [(0.0, dial + height + thick), (spec["cap"] * 0.7, dial + height + thick - 0.05), (spec["cap"], dial + height + thick - 0.25), (spec["cap"], dial + height), (0.0, dial + height)], around=64)
+    cap.materials.append(polish)
+    obj = stage.add("chrono-cap", cap)
+    obj.location = (pivot[0], pivot[1], 0.0)
+    made.append(obj)
+    return made
 
 
 def piece(bm, middle, ahead, up, wide, long, thick, crown, edge, tip=0.0):
@@ -400,7 +493,7 @@ def bracelet(stage, matte):
 def parts(stage):
     matte = satin("chrono-steel")
     polish = steel("chrono-polish", POLISHED)
-    made = case(stage, matte, polish) + dial(stage, printed("chrono-paper"))
+    made = case(stage, matte, polish) + dial(stage, printed("chrono-paper")) + hands(stage, polish)
     # Shut, the bracelet holds the case up off the desk.
     for part in made:
         part.location.z += RAISE

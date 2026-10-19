@@ -82,7 +82,7 @@ PROPS = {
     "lustrelamp": {"box": (lustrelamp.W, lustrelamp.H), "shots": {"lustrelamp": (0, 0, 0)}},
     "mushroomlamp": {"box": (mushroomlamp.W, mushroomlamp.H), "k": 0.9, "shots": {"mushroomlamp": (0, 0, 0)}},
     "watch": {"box": (watch.W, watch.H), "shots": {"watch": (0, 0, 0)}},
-    "chrono": {"box": (chrono.W, chrono.H), "shots": {"chrono": (0, 0, 0)}},
+    "chrono": {"box": (chrono.W, chrono.H), "k": 1.07, "shots": {"chrono": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
