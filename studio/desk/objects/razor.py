@@ -2,11 +2,10 @@
 (104 mm long, the head 43 by 25 mm) at 6 mm to the em. Bright chrome on brass and die-cast zinc: the curved
 cap, a blade under it, the base plate with a straight scalloped guard bar down each side, the flared neck,
 a long grip cut with a diamond knurl, the band rolled with MERKUR and SOLINGEN and a knurled end knob broken
-by two turned grooves. It lies rolled 45 degrees about its own axis, on one corner of its head and on the knob,
-so the handle slopes. The head is plated all over, inside and out, as the maker's photographs show it: the base
-plate one casting, its ends shaped as they are. It has been used: fine scratches, a few water spots, and dried
-soap in the knurl and the scallops. Its chrome throws back the room round the desk, its walls and ceiling lit by
-the pendant."""
+by two turned grooves. It lies as a razor does, on one edge of its head and on the knob, so the handle slopes.
+The head is plated all over, inside and out, as the maker's photographs show it: the base plate one casting, its
+ends shaped as they are. It has been used: fine scratches, a few water spots, and dried soap in the knurl and the
+scallops. Its chrome throws back the room round the desk, its walls and ceiling lit by the pendant."""
 
 import math
 import os
@@ -44,8 +43,6 @@ PATCHES = (0.35, 1.6, 2.2)
 # how far out the roll begins, the angle the roll ends at and the half depth of the cap.
 CROWN, ROLL, LIP, CAP_EDGE = 19.0, 8.5, math.radians(60), 11.3
 BAR = (10.5, 12.5, 5.9, 8.4)
-# How far the razor is rolled about its own axis from lying square on one guard bar: clockwise, seen from the knob.
-ROLL_TURN = -45.0
 SCALLOPS, SCALLOP_PITCH = 13, 2.75
 NECK = ((8.4, 4.3), (9.6, 4.25), (11.0, 4.1), (13.0, 3.95), (15.0, 4.0), (17.0, 4.2), (19.0, 4.6), (20.6, 5.1), (21.2, 5.25), (21.45, 5.25), (21.6, 4.9))
 GRIP = (27.0, 84.2, 4.65)
@@ -418,23 +415,14 @@ def razor(stage):
     rolled = chrome("rolled", rough=0.05, band=True)
     steel = worn(principled("blade", (0.62, 0.63, 0.65), rough=0.22, metal=1.0), "Scratches003", 1.5, 0.15)
 
-    root = stage.add("razor", None)
-    heads = head(stage, plate, steel)
-    for part in (*heads, *handle(stage, plate, turned, rolled)):
-        part.parent = root
-    # Rolled ROLL_TURN about its own axis, it rests on whatever corner of the head that brings lowest and on the
-    # knob, which is narrower, so the handle runs downhill.
-    roll = math.radians(ROLL_TURN)
-    low, foot = 0.0, 0.0
-    for part in heads:
-        for v in part.data.vertices:
-            x, y, z = part.matrix_local @ v.co
-            down = -(y * math.sin(roll) + z * math.cos(roll)) / MM
-            if down > low:
-                low, foot = down, x / MM
+    # It rests on the lower guard bar and on the knob, which is narrower, so the handle runs downhill.
+    low, foot = BAR[1], BAR[3]
     slope = math.atan2(low - KNOB[2], KNOB[1] - 0.4 - foot)
-    root.rotation_euler = (roll, slope, 0)
+    root = stage.add("razor", None)
+    root.rotation_euler = (0, slope, 0)
     root.location = (0.05, -H / 2, (low * math.cos(slope) + foot * math.sin(slope)) * MM)
+    for part in (*head(stage, plate, steel), *handle(stage, plate, turned, rolled)):
+        part.parent = root
     room(stage)
 
     strip_light(stage, "strip", (W / 2, -H / 2 + 5.0, 30.0), 70.0, 9.0, 3.0)
