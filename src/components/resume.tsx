@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+
 import type { Resume as ResumeData } from '../types'
 import frame from './resume.json'
 
@@ -40,7 +42,7 @@ const spread = (room: number) => {
 /**
  * The strip of desk to the right of the folders, photographed (studio/resume): walnut under a satin lacquer, from
  * the top of the window down, with the resume lying on it, printed, rolled up and tied to a stamped tag. The roll and
- * the tag open the PDF. The photograph runs a bleed past the strip on every side, out under the last folder, which
+ * the tag open the résumé page (/resume). The photograph runs a bleed past the strip on every side, out under the last folder, which
  * lies over the strip's first rem, and past the window's edge. Turkish Vans cut out of photographs taken from above lie
  * about the desk, each with the shadow the desk's lamp gives it (studio/resume/cats.py), so they can be spread over
  * whatever desk the window shows.
@@ -74,10 +76,8 @@ export const Resume = ({ resume, room }: ResumeProps) => {
           }}
         />
       ))}
-      <a
-        href={resume.href}
-        target="_blank"
-        rel="noopener"
+      <Link
+        to="/resume"
         aria-label={resume.alt}
         className="absolute block rounded-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#efe6cb]"
         style={{ left: `${left}rem`, top: `${top}rem`, width: `${linkWidth}rem`, height: `${linkHeight}rem` }}

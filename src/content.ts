@@ -21,7 +21,7 @@ export const profile: Profile = {
   resume: {
     href: '/resume.pdf',
     src: '/objects/resume.avif',
-    alt: 'Résumé (PDF)',
+    alt: 'Résumé',
   },
   experience: [
     { period: 'Mar 2025 to now', org: 'Cybership' },
