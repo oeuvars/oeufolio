@@ -149,6 +149,7 @@ export function Mat({ children, className }: MatProps) {
         ref={sheet}
         className="relative flex-1 overflow-hidden select-none before:pointer-events-none before:absolute before:inset-0 before:bg-mat-grain before:bg-size-[220px_220px] before:opacity-20 before:mix-blend-multiply"
       >
+        <div aria-hidden className="mat-rules pointer-events-none absolute inset-[22px]" />
         <Rulers />
         <svg
           aria-hidden

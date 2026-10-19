@@ -496,10 +496,6 @@
   --line: color-mix(in srgb, var(--ink) 9%, transparent);
   --line-bold: color-mix(in srgb, var(--ink) 18%, transparent);
   background:
-    linear-gradient(var(--line-bold) 1px, transparent 1px) 0 22px / 120px 120px,
-    linear-gradient(90deg, var(--line-bold) 1px, transparent 1px) 22px 0 / 120px 120px,
-    linear-gradient(var(--line) 1px, transparent 1px) 0 22px / 24px 24px,
-    linear-gradient(90deg, var(--line) 1px, transparent 1px) 22px 0 / 24px 24px,
     radial-gradient(120% 90% at 50% 40%, transparent 55%, color-mix(in srgb, var(--ink) 16%, transparent)),
     url('/objects/mat/leather.avif') 0 0 / 160px 160px,
     var(--color-mat);
@@ -512,6 +508,15 @@
     outline: 2px solid var(--ink);
     outline-offset: 3px;
   }
+}
+
+/* The mat's grid, bold every fifth line. It is ruled between the rulers, so no line runs under one. */
+@utility mat-rules {
+  background:
+    linear-gradient(var(--line-bold) 1px, transparent 1px) 0 0 / 120px 120px,
+    linear-gradient(90deg, var(--line-bold) 1px, transparent 1px) 0 0 / 120px 120px,
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 24px 24px;
 }
 
 /* An object sits where Mat puts it: --x and --y are its centre in pixels, --r its turn in degrees. */
