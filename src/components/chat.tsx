@@ -1,21 +1,14 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 
-import { chat, profile } from '../content'
-import { isEmail } from '../lib/utils'
-import { sendNote } from '../server/send-note'
+import { chat } from '../content'
 import type { ChatMessage } from '../types'
 import { Bubble } from './chat/bubble'
 import { Composer } from './chat/composer'
 import { Typing } from './chat/typing'
 
-/** A message the reader or I added after the page opened, and for the reader's, whether it reached my inbox. */
-type Live = ChatMessage & { id: number; receipt?: 'sending' | 'delivered' | 'failed' }
-
-/** Where the composer is: waiting for a note, waiting for the reader's email to go with it, or able to send. */
-type Stage = 'message' | 'email' | 'ready'
-
-const RECEIPT = { sending: 'Sending…', delivered: 'Delivered', failed: 'Not Delivered' }
+/** A message the reader or I added after the page opened. */
+type Live = ChatMessage & { id: number }
 
 /** How long I seem to type a reply: longer for a longer one, never long enough to wait on. */
 const typingTime = (text: string) => Math.min(600 + text.length * 14, 1500)
@@ -32,21 +25,18 @@ const useOpenedAt = () => {
 
 /**
  * The résumé as an iMessage thread with me. The reader's side asks what a résumé answers and mine replies, with a
- * photograph, link previews and the PDF as an attachment. Below it the reader can text me: I ask for an email to
- * write back to, and the note goes to my inbox through the server (src/server/send-note.ts).
+ * photograph, link previews and the PDF as an attachment. Below it the reader can text me: sending opens the message
+ * as a Gmail draft to me, and the thread keeps a copy with my reply.
  */
 export const Conversation = () => {
   const [live, setLive] = useState<Live[]>([])
-  const [stage, setStage] = useState<Stage>('message')
   const [typing, setTyping] = useState(false)
-  const [sending, setSending] = useState(false)
-  const pending = useRef('')
-  const email = useRef('')
   const nextId = useRef(0)
   const opened = useOpenedAt()
 
   const thread: ChatMessage[] = [...chat.thread, ...live]
-  const lastYours = thread.map((message) => message.side).lastIndexOf('you')
+  // Messages says Read under the reader's last message. Theirs from the composer went to Gmail, so it says nothing.
+  const read = chat.thread.map((message) => message.side).lastIndexOf('you')
 
   // Each new message, and my typing, scrolls the thread to its foot.
   useEffect(() => {
@@ -54,48 +44,15 @@ export const Conversation = () => {
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
   }, [live.length, typing])
 
-  const add = (side: ChatMessage['side'], text: string, receipt?: Live['receipt']) => {
-    const id = nextId.current++
-    setLive((all) => [...all, { id, side, kind: 'text', text, receipt }])
-    return id
-  }
+  const add = (side: ChatMessage['side'], text: string) => setLive((all) => [...all, { id: nextId.current++, side, kind: 'text', text }])
 
-  const mark = (id: number, receipt: Live['receipt']) => setLive((all) => all.map((message) => (message.id === id ? { ...message, receipt } : message)))
-
-  const reply = (text: string) => {
+  const send = (text: string) => {
+    add('you', text)
     setTyping(true)
     window.setTimeout(() => {
       setTyping(false)
-      add('me', text)
-    }, typingTime(text))
-  }
-
-  const deliver = async (id: number, message: string, website: string) => {
-    setSending(true)
-    const receipt = await sendNote({ data: { message, email: email.current, website } }).catch(() => ({ ok: false as const }))
-    setSending(false)
-    mark(id, receipt.ok ? 'delivered' : 'failed')
-    setStage('ready')
-    if (!receipt.ok) return reply(chat.replies.failed.replace('{address}', profile.email))
-    reply(stage === 'ready' ? chat.replies.more : chat.replies.sent.replace('{email}', email.current))
-  }
-
-  const send = (text: string, website: string) => {
-    if (stage === 'message') {
-      add('you', text)
-      pending.current = text
-      setStage('email')
-      return reply(chat.replies.askEmail)
-    }
-    if (stage === 'email') {
-      if (!isEmail(text)) {
-        add('you', text)
-        return reply(chat.replies.badEmail)
-      }
-      email.current = text
-      return deliver(add('you', text, 'sending'), pending.current, website)
-    }
-    deliver(add('you', text, 'sending'), text, website)
+      add('me', chat.reply)
+    }, typingTime(chat.reply))
   }
 
   return (
@@ -134,14 +91,12 @@ export const Conversation = () => {
 
         <div role="log" aria-label="Conversation with Anurag" aria-live="polite">
           {thread.map((message, i) => {
-            const receipt = i === lastYours ? ((message as Live).receipt ?? 'read') : undefined
+            const receipt = i === read && live.length === 0
             return (
               <div key={'id' in message ? `live-${message.id}` : i} className={i > 0 && thread[i - 1].side !== message.side ? 'mt-3.5' : 'mt-0.5'}>
                 <Bubble message={message} tail={ends(thread, i)} order={i < chat.thread.length ? Math.min(i, 14) : 0}>
                   {receipt && (
-                    <p className={`mt-0.5 mr-2 text-[11px] leading-[14px] ${receipt === 'failed' ? 'text-[#ff3b30]' : 'text-[var(--chat-quiet)]'}`}>
-                      {receipt === 'read' ? <span className="font-semibold">Read</span> : RECEIPT[receipt]}
-                    </p>
+                    <p className="mt-0.5 mr-2 text-[11px] leading-[14px] font-semibold text-[var(--chat-quiet)]">Read</p>
                   )}
                 </Bubble>
               </div>
@@ -151,7 +106,7 @@ export const Conversation = () => {
         </div>
       </main>
 
-      <Composer placeholder={stage === 'email' ? chat.placeholder.email : chat.placeholder.message} email={stage === 'email'} busy={sending} onSend={send} />
+      <Composer placeholder={chat.placeholder} subject={chat.subject} onSend={send} />
     </div>
   )
 }

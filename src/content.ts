@@ -95,7 +95,7 @@ export const pages: Record<PageId, PageMeta> = {
   resume: {
     path: '/resume',
     title: 'Résumé | Anurag Das',
-    description: 'My résumé as a text thread: product engineer at Cybership since March 2025, before that Ekarth Ventures and DataVerse India. Text me from it and it lands in my inbox.',
+    description: 'My résumé as a text thread: product engineer at Cybership since March 2025, before that Ekarth Ventures and DataVerse India. Text me from it and it opens in Gmail, addressed to me.',
     preview: { src: '/og/resume.jpg', alt: 'The top of my résumé, with Anurag Das set wide across it.' },
   },
 }
@@ -186,14 +186,9 @@ export const chat: Chat = {
     { side: 'me', kind: 'text', text: 'B.Tech in Electronics and Communication at Heritage Institute of Technology, Kolkata. CGPA 8.21' },
     { side: 'you', kind: 'text', text: 'Can I get the PDF?' },
     { side: 'me', kind: 'file', href: '/resume.pdf', name: 'Anurag Das, résumé.pdf', detail: 'PDF Document · 33 KB' },
-    { side: 'me', kind: 'text', text: 'Anything else, text me here. It goes straight to my inbox' },
+    { side: 'me', kind: 'text', text: 'Anything else, text me here. It opens in Gmail, addressed to me' },
   ],
-  replies: {
-    askEmail: "Got it. What's your email, so I can write back?",
-    badEmail: "That doesn't look like an email. Try again?",
-    sent: "Sent to my inbox. I'll reply to {email}",
-    more: 'Sent that one too',
-    failed: "That didn't go through. Email me at {address} instead?",
-  },
-  placeholder: { message: 'iMessage', email: 'Your email' },
+  subject: 'Hi Anurag',
+  reply: 'Opened that in Gmail for you. Hit send there and it reaches me',
+  placeholder: 'iMessage',
 }

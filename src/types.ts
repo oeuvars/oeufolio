@@ -238,29 +238,14 @@ export type ChatMessage =
   | { side: ChatSide; kind: 'link'; href: string; title: string; icon: string }
   | { side: ChatSide; kind: 'file'; href: string; name: string; detail: string }
 
-/** What I say back once the reader starts typing, at each step of handing their note to my inbox. */
-export type ChatReplies = {
-  askEmail: string
-  badEmail: string
-  sent: string
-  more: string
-  failed: string
-}
-
-/** The résumé as a conversation: the scripted thread, what I say back, and the composer's placeholders. */
+/**
+ * The résumé as a conversation: the scripted thread, and for what the reader types, the subject of the Gmail draft
+ * it opens, what I say back, and the composer's placeholder.
+ */
 export type Chat = {
   contact: { name: string; avatar: string }
   thread: ChatMessage[]
-  replies: ChatReplies
-  placeholder: { message: string; email: string }
+  subject: string
+  reply: string
+  placeholder: string
 }
-
-/** A reader's note from the résumé's composer, on its way to my inbox. website is a field only bots fill in. */
-export type ChatNote = {
-  message: string
-  email: string
-  website: string
-}
-
-/** Whether a note reached my inbox, and if not, why. */
-export type ChatReceipt = { ok: true } | { ok: false; reason: 'invalid' | 'unconfigured' | 'busy' | 'failed' }
