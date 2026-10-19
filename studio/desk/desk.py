@@ -28,7 +28,7 @@ import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
-from objects import card, catlamp, donutlamp, flutelamp, ilolamp, lustrelamp, mat, mushroomlamp, name, pick, proraso, razor, record, recorder, ticket, wallet, watch  # noqa: E402
+from objects import card, catlamp, chrono, donutlamp, flutelamp, ilolamp, lustrelamp, mat, mushroomlamp, name, pick, proraso, razor, record, recorder, ticket, wallet, watch  # noqa: E402
 from paint import linear  # noqa: E402
 from stage import GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
 
@@ -58,6 +58,7 @@ BUILDERS = {
     **lustrelamp.SHOTS,
     **mushroomlamp.SHOTS,
     **watch.SHOTS,
+    **chrono.SHOTS,
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
@@ -81,6 +82,7 @@ PROPS = {
     "lustrelamp": {"box": (lustrelamp.W, lustrelamp.H), "shots": {"lustrelamp": (0, 0, 0)}},
     "mushroomlamp": {"box": (mushroomlamp.W, mushroomlamp.H), "k": 0.9, "shots": {"mushroomlamp": (0, 0, 0)}},
     "watch": {"box": (watch.W, watch.H), "shots": {"watch": (0, 0, 0)}},
+    "chrono": {"box": (chrono.W, chrono.H), "shots": {"chrono": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
@@ -476,11 +478,13 @@ def main():
     parser.add_argument("--proofs")
     parser.add_argument("--layers", nargs="*", help="render only these layers the page lays over the plate, or all of them, and keep the plates")
     parser.add_argument("--shot", help="photograph this one shot on a stand of its own, as a proof, and nothing else")
+    parser.add_argument("--layout", help="lay the desk out as this file has it, in desk.json's form, instead: a proof only")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
-    if args.scale != 1:
-        # A proof at another scale never takes the place of the page's plates, or the page would show a plate of
-        # one render with a layer of another.
-        global OUT, LEAN, PORTRAIT
+    if args.scale != 1 or args.layout:
+        # A proof at another scale, or of another layout, never takes the place of the page's plates, or the page
+        # would show a plate of one render with a layer of another.
+        global OUT, LEAN, PORTRAIT, LAYOUT
+        LAYOUT = args.layout or LAYOUT
         OUT = args.proofs or tempfile.mkdtemp(prefix="desk-")
         LEAN = os.path.join(OUT, "lean.json")
         PORTRAIT = os.path.join(OUT, "portrait.json")
