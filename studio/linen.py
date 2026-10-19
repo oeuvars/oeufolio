@@ -340,12 +340,109 @@ def lay(stage, proof=None):
     return float(Z.mean())
 
 
+EDGE = (16, 1600)  # the cut edge's mask, in CSS px: TEAR_WIDTH and TEAR_LENGTH in SiteShell, down which it repeats
+EDGE_DENSITY = 2  # pixels of the mask to the CSS px
+EDGE_PITCH = 2.6  # how far apart the weft yarns are where the page shows the cloth, in CSS px
+
+
+def edge():
+    """The strip's edge as scissors leave linen, as a mask: solid to the left, clear to the right, repeating down
+    the strip without a seam. The blades cut in snips, each a little off the last, so the line runs in short straight
+    lengths that turn where one snip met the next. Past the line the weft yarns the blades cut stick out, some
+    hardly at all and some a good way, frayed thin at their ends and bent a little; a stray fibre or two curls off
+    them; and here and there the last warp yarn has come loose and lies just past the line, held by the wefts."""
+    over = 4  # drawn finer, then averaged down, for its edges
+    density = EDGE_DENSITY * over
+    width, length = EDGE
+    cols, rows = width * density, length * density
+    X = (np.arange(cols)[None, :] + 0.5) / density
+    Y = (np.arange(rows)[:, None] + 0.5) / density
+    rng = np.random.default_rng(71)
+
+    # The snips: corners every 40 to 90 px, wandering in and out, and the last back where the first began.
+    ys = np.concatenate(([0.0], np.cumsum(rng.uniform(40, 90, round(length / 65)))))
+    ys = ys * length / ys[-1]
+    xs = rng.normal(0, 0.7, len(ys)) + np.cumsum(rng.normal(0, 0.5, len(ys)))
+    xs = xs - np.linspace(0, xs[-1] - xs[0], len(ys))
+    line = width - 9.0 + np.clip(xs - xs.mean(), -2.2, 2.2)
+    cut = np.interp(Y[:, 0], ys, line)
+    mask = (X < cut[:, None]).astype(np.float32)
+
+    # The weft ends past the line.
+    count = round(length / EDGE_PITCH)
+    pitch = length / count
+    for j in range(count):
+        y0 = (j + 0.5) * pitch + rng.normal(0, 0.15 * pitch)
+        x0 = np.interp(y0 % length, ys, line) - 0.5
+        reach = min(rng.exponential(1.6) + (rng.uniform(1.5, 4) if rng.random() < 0.1 else 0), width - x0 - 0.3)
+        if reach < 0.4:
+            continue
+        lean, bend = rng.normal(0, 0.12), rng.normal(0, 0.25)
+        thick = rng.uniform(0.75, 1.0) * pitch * 0.42
+        for dy in (-length, 0, length):
+            near = np.abs(Y[:, 0] - y0 - dy) < thick + reach * 0.6 + 2
+            if not near.any():
+                continue
+            t = np.clip((X - x0) / reach, 0, 1)
+            along = Y[near] - (y0 + dy) - (lean * t + bend * t * t) * reach
+            # Cut blunt, but fraying a little thinner toward its end.
+            half = thick * (1 - 0.4 * t**2)
+            yarn = np.clip(0.5 + (half - np.abs(along)) * density, 0, 1) * ((X >= x0) & (X <= x0 + reach))
+            mask[near] = np.maximum(mask[near], yarn)
+
+    # Stray fibres curling off the yarn ends.
+    for _ in range(round(length / 22)):
+        y0 = rng.uniform(0, length)
+        x0 = np.interp(y0, ys, line) + rng.uniform(0, 1)
+        reach, heading, curl = rng.uniform(2, 5), rng.normal(0, 0.5), rng.normal(0, 0.6)
+        steps = np.linspace(0, 1, 24)
+        angle = heading + curl * steps
+        px = x0 + np.cumsum(np.cos(angle)) * reach / 24
+        py = y0 + np.cumsum(np.sin(angle)) * reach / 24
+        for qx, qy in zip(px, py):
+            if qx >= width - 0.2:
+                break
+            for dy in (-length, 0, length):
+                r0, r1 = max(int((qy + dy - 1) * density), 0), min(int((qy + dy + 1) * density) + 1, rows)
+                if r1 <= r0:
+                    continue
+                d = np.hypot(X - qx, Y[r0:r1] - qy - dy)
+                mask[r0:r1] = np.maximum(mask[r0:r1], 0.6 * np.clip(0.5 + (0.2 - d) * density, 0, 1))
+
+    # Loose warp yarns, lying just past the line for a length.
+    for _ in range(rng.poisson(length / 500)):
+        y0, span = rng.uniform(0, length), rng.uniform(30, 160)
+        off, thick = rng.uniform(0.6, 2.4), rng.uniform(0.8, 1.1)
+        for dy in (-length, 0, length):
+            near = (Y[:, 0] > y0 + dy) & (Y[:, 0] < y0 + dy + span)
+            if not near.any():
+                continue
+            s = (Y[near] - y0 - dy) / span
+            centre = np.interp(Y[near][:, 0] % length, ys, line)[:, None] + off * np.sin(math.pi * s) ** 0.5 + 0.4 * np.sin(s * rng.uniform(8, 14))
+            mask[near] = np.maximum(mask[near], np.clip(0.5 + (thick - np.abs(X - centre)) * density, 0, 1))
+
+    mask = mask.reshape(length * EDGE_DENSITY, over, width * EDGE_DENSITY, over).mean(axis=(1, 3))
+    rows, cols = mask.shape
+    img = bpy.data.images.new("linen-edge", cols, rows, alpha=True)
+    img.colorspace_settings.name = "Non-Color"
+    pixels = np.zeros((rows, cols, 4), dtype=np.float32)
+    pixels[..., 3] = mask
+    img.pixels.foreach_set(pixels[::-1].ravel())
+    img.filepath_raw = os.path.join(OUT, "linen-edge.png")
+    img.file_format = "PNG"
+    img.save()
+    print(f"EDGE {cols}x{rows}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scale", type=float, default=1.0)
     parser.add_argument("--samples", type=int, default=128)
     parser.add_argument("--proof")
+    parser.add_argument("--edge", action="store_true", help="only write the mask of the cloth's cut edge")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
+    if args.edge:
+        return edge()
     if args.proof:
         os.makedirs(args.proof, exist_ok=True)
     stage = Stage(OUT, args.proof, scale=args.scale, samples=args.samples)

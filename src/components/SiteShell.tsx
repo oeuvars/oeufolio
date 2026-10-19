@@ -39,6 +39,9 @@ type Tone = {
   surface?: string
   /** The strip is a plain page, cut straight down its edge, not torn. */
   cut?: boolean
+  /** The strip is cloth, cut down its edge with scissors: this mask of the cut, its weft ends frayed past it
+   * (studio/linen.py --edge), in place of a straight cut. Cloth lies flat on what is under it, so it casts no shadow. */
+  frayed?: string
   /** What the page is made of, as a tile that repeats, size CSS pixels square: the poster's wall (studio/poster) or
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
    * from it, so they are the page's own paper and not a flat colour. */
@@ -57,6 +60,9 @@ const spineTone: Omit<Tone, 'tab'> = { band: '#eeede8', bandInk: '#1d1d1b', pane
 // A torn edge's mask: how wide it is and how long one length of it runs before it repeats, in px.
 const TEAR_WIDTH = 16
 const TEAR_LENGTH = 1600
+// How far in from its right the cut runs down a cloth's frayed edge mask (studio/linen.py edge): the mask lies that
+// far out past the strip, so the cut is the strip's edge, meeting its tab's straight foot, and the weft ends lie over the next strip.
+const FRAY_PAST = 9
 
 type Grain = Array<{ every: number; amount: number }>
 
@@ -153,7 +159,7 @@ const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills ||
 
 const pageTones: Tone[] = [
   // The plate is cut, not torn, and its colours are the linen's middle tone, under the plate before it loads.
-  { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
+  { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.png', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
@@ -420,7 +426,7 @@ export function SiteShell({ children }: SiteShellProps) {
     const h = shape.height + 2 * reach
     const outline = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-reach} ${w} ${h}" preserveAspectRatio="none"><path d="${path}"/></svg>`
     // How far past the strip's edge its tear reaches, over the strip after it.
-    const out = reachesOver(i) ? TEAR_WIDTH : 0
+    const out = reachesOver(i) ? TEAR_WIDTH : tones[i].frayed ? FRAY_PAST : 0
     return {
       right: -shape.protrude,
       // The plate is 36 by 24 em (studio/linen.py), 3 by 2.
@@ -440,6 +446,8 @@ export function SiteShell({ children }: SiteShellProps) {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
+    const { frayed } = tones[i]
+    if (frayed) return { '--torn-core': `url(${frayed})`, filter: 'none' } as CSSProperties
     return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(tones[i]), reachesOver(i))
   })
   const fixed = mobile ? 0 : spine + end
