@@ -43,7 +43,7 @@ type Tone = {
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
    * from it, so they are the page's own paper and not a flat colour. */
   paper?: Paper
-  /** What the page is made of when it is one photographed plate, not a tile: the badge's woven palm under tissue paper (studio/weave.py --tissue). It
+  /** What the page is made of when it is one photographed plate, not a tile: light yellow linen (studio/linen.py). It
    * is laid from the strip's top left at least as big as the window, so opening the strip uncovers more of the same
    * plate, and it is not paper, so it has none of the paper's grain over it. */
   plate?: string
@@ -152,8 +152,8 @@ const sheets = (tone: Tone) => !tone.fills && !tone.roll
 const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills || tone.roll || tone.paper)
 
 const pageTones: Tone[] = [
-  // The plate is cut, not torn, and its colours are the weave's middle tone, under the plate before it loads.
-  { band: '#ae9c88', bandInk: '#2e2418', panel: '#ae9c88', panelInk: '#2e2418', hangs: true, cut: true, plate: '/objects/weave-tissue.avif', tab: '/objects/tab-lacoste.avif' },
+  // The plate is cut, not torn, and its colours are the linen's middle tone, under the plate before it loads.
+  { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
@@ -423,7 +423,7 @@ export function SiteShell({ children }: SiteShellProps) {
     const out = reachesOver(i) ? TEAR_WIDTH : 0
     return {
       right: -shape.protrude,
-      // The plate is 36 by 24 em (studio/weave.py), 3 by 2.
+      // The plate is 36 by 24 em (studio/linen.py), 3 by 2.
       ...(plate ? { backgroundImage: `url(${plate})`, backgroundSize: 'max(100vw, 150vh) auto', backgroundPosition: '0 0' } : grained(paper)),
       maskImage: `linear-gradient(#000, #000), var(--torn-core, linear-gradient(#000, #000)), url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       // The page runs a pixel into its edge's strip, so no hairline opens where they meet.
