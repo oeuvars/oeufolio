@@ -4,7 +4,7 @@ export const profile: Profile = {
   handle: 'oeuvars',
   nav: [
     { to: '/', label: 'Basics' },
-    { to: '/likes', label: 'Likes' },
+    { to: '/letter', label: 'Likes' },
     { to: '/work', label: 'Work' },
     { to: '/desk', label: 'Extras' },
     { to: '/contact', label: 'Contact' },
@@ -68,11 +68,11 @@ export const pages: Record<PageId, PageMeta> = {
     description: "I'm Anurag Das, a product engineer in Kolkata. At Cybership I build the servers and the interfaces behind a 3PL fulfillment platform.",
     preview: { src: '/og/basics.jpg', alt: 'The site as a stack of file folders, open on an ID badge for Anurag Das.' },
   },
-  likes: {
-    path: '/likes',
+  letter: {
+    path: '/letter',
     title: 'Likes | Anurag Das',
     description: 'A letter to my younger self about what I ended up loving: an electric guitar, shaving the slow way, Arsenal, and a cat called Dilly.',
-    preview: { src: '/og/likes.jpg', alt: 'A handwritten letter to my younger self, with drawings between the lines.' },
+    preview: { src: '/og/letter.jpg', alt: 'A handwritten letter to my younger self, with drawings between the lines.' },
   },
   work: {
     path: '/work',

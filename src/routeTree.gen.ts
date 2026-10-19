@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DeskRouteImport } from './routes/desk'
-import { Route as LikesRouteImport } from './routes/likes'
+import { Route as LetterRouteImport } from './routes/letter'
 import { Route as ResumeRouteImport } from './routes/resume'
 import { Route as WorkRouteImport } from './routes/work'
 
@@ -31,9 +31,9 @@ const DeskRoute = DeskRouteImport.update({
   path: '/desk',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LikesRoute = LikesRouteImport.update({
-  id: '/likes',
-  path: '/likes',
+const LetterRoute = LetterRouteImport.update({
+  id: '/letter',
+  path: '/letter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResumeRoute = ResumeRouteImport.update({
@@ -51,7 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/desk': typeof DeskRoute
-  '/likes': typeof LikesRoute
+  '/letter': typeof LetterRoute
   '/resume': typeof ResumeRoute
   '/work': typeof WorkRoute
 }
@@ -59,7 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/desk': typeof DeskRoute
-  '/likes': typeof LikesRoute
+  '/letter': typeof LetterRoute
   '/resume': typeof ResumeRoute
   '/work': typeof WorkRoute
 }
@@ -68,23 +68,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/desk': typeof DeskRoute
-  '/likes': typeof LikesRoute
+  '/letter': typeof LetterRoute
   '/resume': typeof ResumeRoute
   '/work': typeof WorkRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/contact' | '/desk' | '/likes' | '/resume' | '/work'
+  fullPaths: '/' | '/contact' | '/desk' | '/letter' | '/resume' | '/work'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/contact' | '/desk' | '/likes' | '/resume' | '/work'
-  id: '__root__' | '/' | '/contact' | '/desk' | '/likes' | '/resume' | '/work'
+  to: '/' | '/contact' | '/desk' | '/letter' | '/resume' | '/work'
+  id: '__root__' | '/' | '/contact' | '/desk' | '/letter' | '/resume' | '/work'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContactRoute: typeof ContactRoute
   DeskRoute: typeof DeskRoute
-  LikesRoute: typeof LikesRoute
+  LetterRoute: typeof LetterRoute
   ResumeRoute: typeof ResumeRoute
   WorkRoute: typeof WorkRoute
 }
@@ -112,11 +112,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeskRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/likes': {
-      id: '/likes'
-      path: '/likes'
-      fullPath: '/likes'
-      preLoaderRoute: typeof LikesRouteImport
+    '/letter': {
+      id: '/letter'
+      path: '/letter'
+      fullPath: '/letter'
+      preLoaderRoute: typeof LetterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resume': {
@@ -140,7 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContactRoute: ContactRoute,
   DeskRoute: DeskRoute,
-  LikesRoute: LikesRoute,
+  LetterRoute: LetterRoute,
   ResumeRoute: ResumeRoute,
   WorkRoute: WorkRoute,
 }

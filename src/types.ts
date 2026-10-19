@@ -1,5 +1,5 @@
 export type NavItem = {
-  to: '/' | '/likes' | '/work' | '/desk' | '/contact'
+  to: '/' | '/letter' | '/work' | '/desk' | '/contact'
   label: string
 }
 
@@ -209,7 +209,7 @@ export type PageMeta = {
   preview: Preview
 }
 
-export type PageId = 'basics' | 'likes' | 'work' | 'desk' | 'contact' | 'resume'
+export type PageId = 'basics' | 'letter' | 'work' | 'desk' | 'contact' | 'resume'
 
 export type StackMetrics = {
   width: number
