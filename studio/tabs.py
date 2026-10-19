@@ -5,7 +5,7 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               through its steel folding clasp with the shield engraved in the cover
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
-    lacoste   a cut off a burgundy piqué polo, hemmed: the embroidered crocodile, and the collar's rib knit with ecru and
+    lacoste   a cut off a burgundy knit polo, hemmed: the embroidered crocodile, and the collar's rib knit with ecru and
               gold tipping
     prs       a Blackstar Debut's tolex in a PRS Silver Sky's Sandglow Yellow, with four of the outline birds PRS
               inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
@@ -434,16 +434,14 @@ def steps(sheet):
     return max(1, round(sheet.ppe / 160))
 
 
-KNIT = 22.0  # rem to one tile of the knit's scan
-# The rib's knit scan: rem to its tile, and the stitch columns and rows in a tile (measured from its relief).
+# The knit's scan: rem to its tile, and the stitch columns and rows in a tile (measured from its relief).
 RIB_KNIT, RIB_WALES, RIB_COURSES = 8.3, 139, 153
 
 
 def lacoste(name, height):
-    """A cut off a burgundy Lacoste polo, hemmed and stitched to the tab: the knit is petit piqué, the scan of a real
-    knit (ambientCG Fabric036) at its own scale, its little cells half a millimetre across; the crocodile is the
-    embroidered badge sewn on at the chest, its thread raised and running across the body in satin stitch; and at
-    its foot is the collar's rib, knit stitch by stitch, tipped in ecru and gold."""
+    """A cut off a burgundy Lacoste polo, hemmed and stitched to the tab: the cloth is knit stitch by stitch, the same
+    stitches all over; the crocodile is the embroidered badge sewn on at the chest, its thread raised and running
+    across the body in satin stitch; and at its foot is the collar's rib, tipped in ecru and gold."""
     sheet = Sheet(WIDTH, height, BURGUNDY, rough=0.92, density=6)
     sheet.coat[:] = 0.0
     shape = outline(height)
@@ -458,18 +456,21 @@ def lacoste(name, height):
     sheet.press(blur(stitches.astype(float), 1.2), 0.006)
     sheet.paint(blur(stitches.astype(float), 0.8) * 0.5, "#3a1219")
 
-    # The collar's rib at the foot. Its stitches are a photograph's, a real knit's (Poly Haven's Knitted Fleece, CC0):
-    # its relief and the light and dark of its yarn, at a fine gauge, a stitch column about six tenths of a millimetre
-    # across, with every other column standing a little proud, as a 1x1 rib's do. The tipping is the same stitches in
-    # other yarn: its rows run along the knit, so where a stripe starts and stops the Vs of the two yarns interlock.
-    rib0, rib1 = height - 2.4, height - 0.62
-    rib = sheet.mask(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2)
+    # The knit, all over. Its stitches are a photograph's, a real knit's (Poly Haven's Knitted Fleece, CC0): its relief
+    # and the light and dark of its yarn, at a fine gauge, a stitch column about six tenths of a millimetre across.
     stitch = scanned(sheet, "KnittedFleece", RIB_KNIT, 1.0)
     stitch /= max(stitch.std(), 1e-6)
     yarn = np.clip(1 + 0.22 * scanned(sheet, "KnittedFleece", RIB_KNIT, 1.0, kind="Color") / 0.12, 0.55, 1.4)
+    sheet.height += 0.007 * np.clip(stitch, -2.5, 2.5)
+    sheet.rough += 0.04 * np.clip(stitch, -1, 1)
+
+    # The collar's rib at the foot: the same stitches, with every other column standing a little proud, as a 1x1 rib's
+    # do. The tipping is the same stitches in other yarn: its rows run along the knit, so where a stripe starts and
+    # stops the Vs of the two yarns interlock.
+    rib0, rib1 = height - 2.4, height - 0.62
+    rib = sheet.mask(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2)
     ribbing = np.cos(np.pi * X / (RIB_KNIT / RIB_WALES))
-    sheet.height += rib * (0.007 * np.clip(stitch, -2.5, 2.5) + 0.006 * ribbing - 0.008)
-    sheet.rough += rib * 0.04 * np.clip(stitch, -1, 1)
+    sheet.height += rib * (0.006 * ribbing - 0.008)
     seam = np.clip(1 - np.abs(np.abs(Y - (rib0 + rib1) / 2) - (rib1 - rib0) / 2) / 0.03, 0, 1)
     sheet.press(blur(seam, 1.0), 0.012)
     course = RIB_KNIT / RIB_COURSES
@@ -479,7 +480,7 @@ def lacoste(name, height):
         tipped = rib * ramp(y0 - 0.15 * course, y0 + 0.15 * course, Y + wobble) * ramp(-y1 - 0.15 * course, -y1 + 0.15 * course, -(Y - wobble))
         sheet.paint(tipped, colour)
     # Every yarn is lit and shaded by its own stitches.
-    sheet.rgb *= (1 + rib * (yarn - 1))[..., None]
+    sheet.rgb *= yarn[..., None]
 
     # The crocodile, embroidered on a badge of the same knit: raised thread, the satin stitch's lines running
     # across it at a slant, sheened where the thread catches the light.
@@ -500,14 +501,10 @@ def lacoste(name, height):
     sheet.height += 0.03 * np.clip(blur(cloud(sheet.height.shape, 41, falloff=2.6), 12.0), -2, 2)
     crease = np.exp(-(((Y - 0.42 * X - 4.6) / 0.35) ** 2))
     sheet.height += 0.06 * crease - 0.025 * np.exp(-(((Y - 0.42 * X - 4.25) / 0.2) ** 2))
-
-    # The knit itself, from the scan's relief at its own scale: the scan's tile holds about 240 cells across, and
-    # a piqué cell is about a millimetre, a tenth of a rem here. They stand a fifth of a millimetre proud.
-    sheet.height += scanned(sheet, "Fabric036", KNIT, 0.022) * (1 - 0.7 * thread)
     sheet.height -= rounded(edge, 0.05)
     relief = sheet.height.copy()
     sheet.height[:] = 0.0
-    cloth = skin(sheet, f"{name}-knit", scan="Fabric036", scan_size=KNIT, scan_normal=0.35, scan_rough=0.3, sheen=0.7, specular=0.3)
+    cloth = skin(sheet, f"{name}-knit", sheen=0.7, specular=0.3)
     sheet.height = relief
     return {"ceiling": False}, [displaced(name, sheet, edge, 0.1, cloth, step=steps(sheet))]
 
@@ -874,7 +871,7 @@ def tagheuer(name, height):
 # body shows it in the light.
 SANDGLOW = "#dab65c"
 # Lacoste's burgundy, and the ecru and muted gold its collar is tipped in.
-BURGUNDY = "#5c1f2b"
+BURGUNDY = "#6b1a26"
 ECRU = "#ece4d2"
 GOLD = "#c49a4a"
 # A Blackstar ID:Core in red: its tolex, a dusky wine.
