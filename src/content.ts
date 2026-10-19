@@ -185,7 +185,7 @@ export const chat: Chat = {
     { side: 'you', kind: 'text', text: 'Where did you study?' },
     { side: 'me', kind: 'text', text: 'Electronics and Communication at Heritage Institute of Technology. I finished with an 8.21' },
     { side: 'you', kind: 'text', text: 'And outside work?' },
-    { side: 'me', kind: 'text', text: 'Electric guitar, mostly. One more take, then another' },
+    { side: 'me', kind: 'text', text: 'Electric guitar, mostly' },
     { side: 'me', kind: 'text', text: "I shave slowly, the old way. It's the part of the morning that's mine" },
     { side: 'me', kind: 'text', text: 'I love football, Arsenal to be precise' },
     { side: 'me', kind: 'text', text: 'And Dilly, my cat, who likes to fall asleep on my keyboard' },
