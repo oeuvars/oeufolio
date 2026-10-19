@@ -1,4 +1,4 @@
-import type { Cv, PageId, PageMeta, Profile, Site } from './types'
+import type { Chat, Cv, PageId, PageMeta, Profile, Site } from './types'
 
 export const profile: Profile = {
   handle: 'oeuvars',
@@ -95,7 +95,7 @@ export const pages: Record<PageId, PageMeta> = {
   resume: {
     path: '/resume',
     title: 'Résumé | Anurag Das',
-    description: 'My résumé on a plain page you can read and copy: product engineer at Cybership since March 2025, before that Ekarth Ventures and DataVerse India.',
+    description: 'My résumé as a text thread: product engineer at Cybership since March 2025, before that Ekarth Ventures and DataVerse India. Text me from it and it lands in my inbox.',
     preview: { src: '/og/resume.jpg', alt: 'The top of my résumé, with Anurag Das set wide across it.' },
   },
 }
@@ -158,4 +158,42 @@ export const cv: Cv = {
     { course: 'Bachelor of Technology in Electronics and Communication', school: 'Heritage Institute of Technology, Kolkata', grade: 'CGPA 8.21' },
     { course: 'High School', school: 'Ramkrishna Mission Rahara, Kolkata', grade: '91%' },
   ],
+}
+
+/** The résumé as a text conversation, every figure in it one resume.pdf gives. The reader's side asks the questions. */
+export const chat: Chat = {
+  contact: { name: 'Anurag', avatar: '/objects/resume/avatar.avif' },
+  thread: [
+    { side: 'me', kind: 'text', text: "Hey, I'm Anurag" },
+    { side: 'me', kind: 'photo', src: '/photos/face.jpg', alt: 'Me, with curly hair and a maroon shirt, against a dark teal wall.', size: [1000, 1000] },
+    { side: 'me', kind: 'text', text: 'Product engineer at Cybership, based in Kolkata' },
+    { side: 'you', kind: 'text', text: 'What do you do there?' },
+    { side: 'me', kind: 'text', text: "Full stack, remote, since March 2025. It's a 3PL fulfillment platform" },
+    { side: 'me', kind: 'link', href: 'https://cybership.io', title: 'Cybership', icon: '/objects/resume/cybership.png' },
+    { side: 'me', kind: 'text', text: 'I built the Automation Rules engine from scratch, like Shopify Flow: 50 triggers, 16 condition operators, 7 actions. It runs 50,000+ rules a day' },
+    { side: 'me', kind: 'text', text: "Then Cybership Desktop, the packing-station app that replaced PrintNode. It prints over the OS spooler, raw TCP, USB and HID, reads scales through 64 protocol decoders, and won't reprint a job a crash cut short" },
+    { side: 'me', kind: 'text', text: 'And all of Shipping Labels: EasyPost, USPS, BukuShip and ShipStation behind one system, 10,000+ labels a day at under 2 seconds on average' },
+    { side: 'me', kind: 'text', text: "When a warehouse can't ship, the incident is mine, from first report to a permanent fix, often the same day" },
+    { side: 'you', kind: 'text', text: 'And before that?' },
+    { side: 'me', kind: 'text', text: 'Ekarth Ventures in Chennai, July 2024 to March 2025. I led the frontend team on Altern8, a real estate lending platform on Next.js and Django' },
+    { side: 'me', kind: 'link', href: 'https://nahar.om', title: 'Ekarth Ventures', icon: '/objects/resume/ekarth.png' },
+    { side: 'me', kind: 'text', text: 'Took the Docker build from 2.2 GB to 178 MB, and pitched the platform to investors in the US, Turkey, the Netherlands and India' },
+    { side: 'me', kind: 'text', text: 'My first job was an internship at DataVerse India, August 2023 to July 2024, making websites and web apps for clients' },
+    { side: 'you', kind: 'text', text: "What's your stack?" },
+    { side: 'me', kind: 'text', text: 'TypeScript, Swift, Python and Go' },
+    { side: 'me', kind: 'text', text: 'Next.js, Hono, Django, Gin and SvelteKit, on PostgreSQL and MySQL, hosted on AWS and Digital Ocean' },
+    { side: 'you', kind: 'text', text: 'Where did you study?' },
+    { side: 'me', kind: 'text', text: 'B.Tech in Electronics and Communication at Heritage Institute of Technology, Kolkata. CGPA 8.21' },
+    { side: 'you', kind: 'text', text: 'Can I get the PDF?' },
+    { side: 'me', kind: 'file', href: '/resume.pdf', name: 'Anurag Das, résumé.pdf', detail: 'PDF Document · 33 KB' },
+    { side: 'me', kind: 'text', text: 'Anything else, text me here. It goes straight to my inbox' },
+  ],
+  replies: {
+    askEmail: "Got it. What's your email, so I can write back?",
+    badEmail: "That doesn't look like an email. Try again?",
+    sent: "Sent to my inbox. I'll reply to {email}",
+    more: 'Sent that one too',
+    failed: "That didn't go through. Email me at {address} instead?",
+  },
+  placeholder: { message: 'iMessage', email: 'Your email' },
 }

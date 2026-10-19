@@ -1,12 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Vitrine } from '../components/vitrine'
+import { Conversation } from '../components/chat'
+import chatCss from '../components/chat.css?url'
 import { pages } from '../content'
 import { seo } from '../lib/seo'
 
-/** The résumé behind glass, outside the stack of folders. The badge opens it. */
+/** The résumé as a text thread with me, outside the stack of folders. */
 export const Route = createFileRoute('/resume')({
   staticData: { bare: true },
-  head: () => seo(pages.resume),
-  component: Vitrine,
+  head: () => {
+    const head = seo(pages.resume)
+    return { ...head, links: [...head.links, { rel: 'stylesheet', href: chatCss }] }
+  },
+  component: Conversation,
 })

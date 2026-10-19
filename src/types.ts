@@ -224,3 +224,43 @@ export type StackMetrics = {
   contact: number
   end: number
 }
+
+/** Who sent a message in the résumé's conversation: me, or the reader, whose side asks the questions. */
+export type ChatSide = 'me' | 'you'
+
+/**
+ * One message in the résumé's conversation (src/components/chat.tsx): a line of text, a photograph, a link with its
+ * preview card, or a file sent as an attachment.
+ */
+export type ChatMessage =
+  | { side: ChatSide; kind: 'text'; text: string }
+  | { side: ChatSide; kind: 'photo'; src: string; alt: string; size: [number, number] }
+  | { side: ChatSide; kind: 'link'; href: string; title: string; icon: string }
+  | { side: ChatSide; kind: 'file'; href: string; name: string; detail: string }
+
+/** What I say back once the reader starts typing, at each step of handing their note to my inbox. */
+export type ChatReplies = {
+  askEmail: string
+  badEmail: string
+  sent: string
+  more: string
+  failed: string
+}
+
+/** The résumé as a conversation: the scripted thread, what I say back, and the composer's placeholders. */
+export type Chat = {
+  contact: { name: string; avatar: string }
+  thread: ChatMessage[]
+  replies: ChatReplies
+  placeholder: { message: string; email: string }
+}
+
+/** A reader's note from the résumé's composer, on its way to my inbox. website is a field only bots fill in. */
+export type ChatNote = {
+  message: string
+  email: string
+  website: string
+}
+
+/** Whether a note reached my inbox, and if not, why. */
+export type ChatReceipt = { ok: true } | { ok: false; reason: 'invalid' | 'unconfigured' | 'busy' | 'failed' }

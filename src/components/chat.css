@@ -1,0 +1,152 @@
+/* The résumé as an iMessage thread, in Messages' own colours, light or dark with the system. */
+:root:has(.imessage) {
+  --chat-page: #ffffff;
+  --chat-ink: #000000;
+  --chat-quiet: #8e8e93;
+  --chat-in: #e9e9eb;
+  --chat-rule: rgb(60 60 67 / 0.18);
+  --chat-bar: rgb(249 249 249 / 0.8);
+  --chat-field: rgb(255 255 255 / 0.9);
+  --chat-blue: #0a7aff;
+  --chat-out: #0b80ff;
+  color-scheme: light;
+  background: var(--chat-page);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:has(.imessage) {
+    --chat-page: #000000;
+    --chat-ink: #ffffff;
+    --chat-quiet: #8d8d93;
+    --chat-in: #262629;
+    --chat-rule: rgb(84 84 88 / 0.5);
+    --chat-bar: rgb(22 22 24 / 0.78);
+    --chat-field: rgb(28 28 30 / 0.9);
+    --chat-blue: #0a84ff;
+    color-scheme: dark;
+  }
+}
+
+:root:has(.imessage) body {
+  background: var(--chat-page);
+}
+
+.imessage {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', sans-serif;
+  font-weight: 400;
+  color: var(--chat-ink);
+  background: var(--chat-page);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.imessage ::selection {
+  background: rgb(10 122 255 / 0.3);
+  color: inherit;
+}
+
+.chat-bubble {
+  position: relative;
+  border-radius: 18px;
+}
+
+.chat-in {
+  background: var(--chat-in);
+  color: var(--chat-ink);
+}
+
+.chat-out {
+  background: var(--chat-out);
+  color: #ffffff;
+}
+
+/* A group's last bubble grows a tail at its bottom corner, the side its sender sits on: a rounded nub of the
+   bubble, with the page's colour cut from it to curve its outer edge. */
+.chat-tail::before,
+.chat-tail::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  height: 20px;
+}
+
+.chat-in.chat-tail::before {
+  left: -7px;
+  width: 20px;
+  background: var(--chat-in);
+  border-bottom-right-radius: 16px;
+}
+
+.chat-in.chat-tail::after {
+  left: -10px;
+  width: 10px;
+  background: var(--chat-page);
+  border-bottom-right-radius: 10px;
+}
+
+.chat-out.chat-tail::before {
+  right: -7px;
+  width: 20px;
+  background: var(--chat-out);
+  border-bottom-left-radius: 16px;
+}
+
+.chat-out.chat-tail::after {
+  right: -10px;
+  width: 10px;
+  background: var(--chat-page);
+  border-bottom-left-radius: 10px;
+}
+
+/* A message pops in from its sender's side. The opening thread arrives one after another. */
+@keyframes chat-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+}
+
+.chat-arrive {
+  animation: chat-arrive 360ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  animation-delay: calc(var(--order, 0) * 70ms);
+}
+
+.chat-arrive[data-side='me'] {
+  transform-origin: bottom left;
+}
+
+.chat-arrive[data-side='you'] {
+  transform-origin: bottom right;
+}
+
+/* The three dots while I type, each dimming in turn. */
+@keyframes chat-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.chat-dot {
+  animation: chat-dot 1.2s ease-in-out infinite;
+}
+
+.chat-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chat-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-arrive,
+  .chat-dot {
+    animation: none;
+  }
+}
