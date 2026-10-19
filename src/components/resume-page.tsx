@@ -5,8 +5,8 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 
 import { cv, profile } from '../content'
-import Noise from './bits/noise'
-import Waves from './bits/waves'
+import { Noise } from './bits/noise'
+import { Waves } from './bits/waves'
 import { CommandPalette, PaletteKey } from './resume/command-palette'
 import { TechIcon } from './resume/tech-icon'
 import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
@@ -88,7 +88,7 @@ const period = (text: string) =>
     .map((part) => (part === 'now' ? 'Present' : `${part.slice(0, 3)} ${part.split(' ')[1]}`))
     .join(' - ')
 
-function Icon({ children, className = 'size-3.5', fill = false }: { children: ReactNode; className?: string; fill?: boolean }) {
+const Icon = ({ children, className = 'size-3.5', fill = false }: { children: ReactNode; className?: string; fill?: boolean }) => {
   return (
     <svg
       aria-hidden="true"
@@ -155,7 +155,7 @@ const SECTIONS = [
 ]
 
 /** A rule run the whole width of the window, with its two knots where it crosses the column's rails. */
-function Crossing({ edge }: { edge: 'top' | 'bottom' }) {
+const Crossing = ({ edge }: { edge: 'top' | 'bottom' }) => {
   const top = edge === 'top'
   return (
     <>
@@ -167,7 +167,7 @@ function Crossing({ edge }: { edge: 'top' | 'bottom' }) {
 }
 
 /** A section: rules above and below its name, its content, and a rule closing it. */
-function Section({ id, title, aside, after, children, className = '' }: { id: string; title: string; aside?: ReactNode; after?: ReactNode; children: ReactNode; className?: string }) {
+const Section = ({ id, title, aside, after, children, className = '' }: { id: string; title: string; aside?: ReactNode; after?: ReactNode; children: ReactNode; className?: string }) => {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={`relative z-10 mt-6 flex scroll-mt-24 flex-col ${className}`}>
       <Crossing edge="top" />
@@ -188,7 +188,7 @@ function Section({ id, title, aside, after, children, className = '' }: { id: st
 }
 
 /** A button's face as the reference draws one: a fill, a highlight, a shadow and a sheen stacked under the label. */
-function Face({ dark = false }: { dark?: boolean }) {
+const Face = ({ dark = false }: { dark?: boolean }) => {
   return dark ? (
     <span className="absolute inset-0 overflow-hidden rounded-[4px] border border-black/10 bg-[#18181b] transition-colors duration-200 group-hover:bg-[#27272a] group-active:duration-[50ms] dark:border-white/10 dark:bg-white dark:group-hover:bg-neutral-100">
       <span className="absolute inset-0 opacity-[0.12] transition duration-200 group-active:opacity-0 group-active:duration-[50ms]" style={GRADIENT_TOP} />
@@ -208,7 +208,7 @@ function Face({ dark = false }: { dark?: boolean }) {
 const FACE_TEXT = 'rounded-[4px] px-3 py-1.5 text-center text-[12px] font-medium tracking-tight [backdrop-filter:blur(6px)]'
 
 /** The reference's light button: a link on the light face, its label brightening on hover. */
-function Button({ href, children }: { href: string; children: ReactNode }) {
+const Button = ({ href, children }: { href: string; children: ReactNode }) => {
   return (
     <a
       href={href}
@@ -226,7 +226,7 @@ function Button({ href, children }: { href: string; children: ReactNode }) {
  * The reference's lid button: a dark face that flips up on its bottom edge when hovered or focused, showing the real
  * link under it. The flip itself is in styles.css (.resume-flip).
  */
-function FlipButton({ href, label, children, back }: { href: string; label: string; children: ReactNode; back: ReactNode }) {
+const FlipButton = ({ href, label, children, back }: { href: string; label: string; children: ReactNode; back: ReactNode }) => {
   const front = (
     <span className="relative">
       <span className="flex items-center gap-1.5 whitespace-nowrap">{children}</span>
@@ -265,7 +265,7 @@ function FlipButton({ href, label, children, back }: { href: string; label: stri
 }
 
 /** The reference's View All button, opening the site's page with more of a section. */
-function ViewAll({ to, overlap = false }: { to: string; overlap?: boolean }) {
+const ViewAll = ({ to, overlap = false }: { to: string; overlap?: boolean }) => {
   const link = (
     <Link to={to} className={`group relative block ${FOCUS}`}>
       <div className="pointer-events-none absolute -inset-[5px] rounded-[11px] border border-black/5 transition-colors duration-300 group-hover:border-black/10 dark:border-white/5 dark:group-hover:border-white/10" />
@@ -287,7 +287,7 @@ function ViewAll({ to, overlap = false }: { to: string; overlap?: boolean }) {
  * year, and each job's months filled in its employer's colour. A job ending the month the next one starts gives that
  * month to the next one.
  */
-function Ruler() {
+const Ruler = () => {
   const months = cv.roles.map((role) => {
     const [from, to] = role.period.split(' to ').map(month)
     return { role, from, to }
@@ -333,7 +333,7 @@ function Ruler() {
 }
 
 /** One job: its logo, employer, title, dates and place, opening on its points. */
-function Role({ role }: { role: (typeof cv.roles)[number] }) {
+const Role = ({ role }: { role: (typeof cv.roles)[number] }) => {
   const [open, setOpen] = useState(false)
   const panel = useId()
   const remote = role.place === 'Remote'
@@ -416,7 +416,7 @@ function Role({ role }: { role: (typeof cv.roles)[number] }) {
 
 /** One system the résumé describes, as the reference's project card: a framed panel, its name and status, a line on
  * what it does, and the tools it was built with. */
-function Project({ project }: { project: (typeof PROJECTS)[number] }) {
+const Project = ({ project }: { project: (typeof PROJECTS)[number] }) => {
   const role = cv.roles.find((r) => r.company === project.company)
   return (
     <a href={role?.href} className={`group flex cursor-pointer flex-col ${FOCUS}`}>
@@ -459,7 +459,7 @@ function Project({ project }: { project: (typeof PROJECTS)[number] }) {
 }
 
 /** The fixed index beside the column on a wide window, marking the section in view. */
-function Index() {
+const Index = () => {
   const [active, setActive] = useState(SECTIONS[0].id)
 
   useEffect(() => {
@@ -507,7 +507,7 @@ function Index() {
 
 /** The field closing the page: React Bits' Waves, fine zinc lines that sway and part around the pointer, fading out at
  * the edges. */
-function Field({ dark }: { dark: boolean }) {
+const Field = ({ dark }: { dark: boolean }) => {
   return (
     <div className="relative -mx-4 mt-4 h-[300px] w-[calc(100%+32px)] grow print:hidden">
       <div aria-hidden="true" className={`${RULE} top-0 right-[-100vw] left-[-100vw] z-10 border-t`} style={DASH_X} />
@@ -533,7 +533,7 @@ type Theme = 'light' | 'dark' | 'system'
  * systems it built as cards, the skills and the schooling. ⌘K opens a menu of all of it.
  * Every job's points are word for word what resume.pdf says.
  */
-export function ResumePage() {
+export const ResumePage = () => {
   const navigate = useNavigate()
   const [theme, setTheme] = useState<Theme>('system')
   const [system, setSystem] = useState(false)

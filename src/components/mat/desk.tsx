@@ -16,7 +16,7 @@ import { Wallet } from './wallet'
  * own: it is the car key on the bunch that carries the name. SiteShell keeps the desk in its strip, open or
  * folded, so it is laid once and the strip only uncovers and covers it.
  */
-export function Desk() {
+export const Desk = () => {
   const { name, likes, playlist } = profile.extras
 
   return (

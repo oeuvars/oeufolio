@@ -17,7 +17,7 @@ type StripPosterProps = {
  * When the strip folds, the column starts where the page's stood (Poster), with the whole poster over it fading
  * away, and moves to its own place as the strip narrows: the page's poster growing out of it, played backwards.
  */
-export function StripPoster({ open }: StripPosterProps) {
+export const StripPoster = ({ open }: StripPosterProps) => {
   const column = useRef<HTMLDivElement>(null)
   const light = useRef<HTMLImageElement>(null)
   const was = useRef(open)

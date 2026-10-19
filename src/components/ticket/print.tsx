@@ -17,7 +17,7 @@ const [AX, AY, AW, AH] = ticket.art
 const [TX, TY, TP] = ticket.typed
 
 /** A field's name as these tickets print it: heavy capitals, spaced out, and a colon. */
-function Label({ children, className = '', style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+const Label = ({ children, className = '', style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => {
   return (
     <p className={`font-['Red_Hat_Mono'] text-[0.6em] leading-none font-bold tracking-[0.13em] uppercase ${className}`} style={style}>
       {children} :
@@ -26,7 +26,7 @@ function Label({ children, className = '', style }: { children: React.ReactNode;
 }
 
 /** A rule of round dots across the ticket. */
-function Rule({ y }: { y: number }) {
+const Rule = ({ y }: { y: number }) => {
   const from = 0.62
   const pitch = 0.3
   const count = Math.floor((W - 2 * from) / pitch)
@@ -53,7 +53,7 @@ function Rule({ y }: { y: number }) {
  * ink: they show on the plate, and on the page the photograph has them. The ticket is printed in four inks, as the
  * picture is: what is marked data-ink is printed in that ink, the rest in black.
  */
-export function Print({ onCopy, copied }: PrintProps) {
+export const Print = ({ onCopy, copied }: PrintProps) => {
   const value = 'cursor-pointer decoration-[0.07em] underline-offset-[0.18em] hover:underline focus-visible:underline focus-visible:outline-none'
 
   return (

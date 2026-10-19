@@ -6,7 +6,7 @@ const BEAT = 0.38
 let deck: AudioContext | undefined
 
 /** Starts the playback and returns how long it runs, in seconds. */
-export function playTape() {
+export const playTape = () => {
   deck ??= new AudioContext()
   void deck.resume()
   const audio = deck

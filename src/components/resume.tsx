@@ -16,7 +16,7 @@ const APART = 0.6
  * Where the cats lie, as their tops in rem: the first above the last folder's tab, the rest under the tag, as many
  * as the window has room for, in order, with the desk left over shared out evenly between them.
  */
-function spread(room: number) {
+const spread = (room: number) => {
   const [first, ...rest] = frame.cats.laid
   const from = frame.link[1] + frame.link[3] + APART
   const space = room - APART - from
@@ -45,7 +45,7 @@ function spread(room: number) {
  * about the desk, each with the shadow the desk's lamp gives it (studio/resume/cats.py), so they can be spread over
  * whatever desk the window shows.
  */
-export function Resume({ resume, room }: ResumeProps) {
+export const Resume = ({ resume, room }: ResumeProps) => {
   const [width, height] = frame.size
   const [left, top, linkWidth, linkHeight] = frame.link
   const bleed = frame.bleed

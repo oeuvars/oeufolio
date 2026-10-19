@@ -145,7 +145,7 @@ export const TiltedCardLayer = ({ depth = 20, className = '', style, children }:
   </div>
 );
 
-const TiltedCard = ({
+export const TiltedCard = ({
   imageSrc,
   altText = 'Tilted card image',
   captionText = '',
@@ -690,5 +690,3 @@ const TiltedCard = ({
     </figure>
   );
 };
-
-export default TiltedCard;

@@ -9,7 +9,7 @@ const FIELD = 'block leading-none font-semibold [font-stretch:75%]'
 const RULE = 'border-t-[3px] border-black'
 
 /** The barcode of the email, drawn module by module, with the ten-module quiet zone either side Code 128 asks for. */
-function Barcode({ text }: { text: string }) {
+const Barcode = ({ text }: { text: string }) => {
   const { bars, width } = code128(text)
   const quiet = 10
   return (
@@ -33,7 +33,7 @@ function Barcode({ text }: { text: string }) {
  * thousand a day: who it is from, the address in capitals, the routing code of Kolkata's airport, the service with its
  * letter box, the email as a scannable barcode, and what the parcel holds. It prints on load, fed out a line at a time.
  */
-export function Label() {
+export const Label = () => {
   const [first, last] = cv.name.toUpperCase().split(' ')
   const city = profile.extras.particulars.find((particular) => particular.label === 'Based in')?.value ?? ''
 

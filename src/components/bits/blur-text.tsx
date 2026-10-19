@@ -213,7 +213,7 @@ const buildRanks = (count: number, staggerFrom: BlurTextStaggerFrom, seedText: s
 const startPhase = (trigger: BlurTextTrigger): Phase =>
   trigger === 'load' ? 'in' : trigger === 'hover' || trigger === 'click' ? 'rest' : 'from';
 
-const BlurText = ({
+export const BlurText = ({
   text = '',
   delay = 200,
   className = '',
@@ -436,5 +436,3 @@ const BlurText = ({
     </MotionConfig>
   );
 };
-
-export default BlurText;

@@ -150,7 +150,7 @@ const GENERIC: Record<string, string> = {
 }
 
 /** The icon the reference sets beside a tool or skill: its brand mark if it has one, otherwise a line icon. */
-export function TechIcon({ name, className = 'size-3.5 shrink-0 text-zinc-500 opacity-80' }: { name: string; className?: string }) {
+export const TechIcon = ({ name, className = 'size-3.5 shrink-0 text-zinc-500 opacity-80' }: { name: string; className?: string }) => {
   const brand = BRANDS[name]
   if (brand) {
     return (

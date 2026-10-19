@@ -18,7 +18,7 @@ const fallback: StackMetrics = {
   end: 51.2,
 }
 
-function measure(): StackMetrics {
+const measure = (): StackMetrics => {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const width = window.innerWidth
   const height = window.innerHeight
@@ -40,7 +40,7 @@ function measure(): StackMetrics {
 }
 
 /** Viewport-derived sheet geometry in pixels, so sheets can be positioned by spring animation. */
-export function useStackMetrics() {
+export const useStackMetrics = () => {
   const [metrics, setMetrics] = useState<StackMetrics>(fallback)
   const [ready, setReady] = useState(false)
 

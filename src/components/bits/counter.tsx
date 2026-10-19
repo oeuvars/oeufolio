@@ -205,7 +205,7 @@ const makeItem = (slot: Slot, position: number, shown: number): Item => ({
   blurred: false
 });
 
-function Counter({
+export const Counter = ({
   value = 0,
   locale = 'en-US',
   format,
@@ -229,7 +229,7 @@ function Counter({
   digitStyle,
   className = '',
   style
-}: CounterProps) {
+}: CounterProps) => {
   const rootRef = useRef<HTMLSpanElement>(null);
   const rowRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -622,6 +622,4 @@ function Counter({
       </span>
     </span>
   );
-}
-
-export default Counter;
+};

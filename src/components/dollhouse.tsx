@@ -25,7 +25,7 @@ const HEIGHT = 1578
  * opens, the picture starts at that size and in that place, over the small one, and grows to its own as
  * the strip widens: the house is the thing that opens.
  */
-export function Dollhouse({ roles }: DollhouseProps) {
+export const Dollhouse = ({ roles }: DollhouseProps) => {
   const picture = useRef<HTMLImageElement>(null)
   const still = useReducedMotion()
 

@@ -73,7 +73,7 @@ const strengthAt = (distance: number, radius: number, falloff: Falloff) => {
   }
 };
 
-const VariableProximity = forwardRef<HTMLSpanElement, VariableProximityProps>((props, ref) => {
+export const VariableProximity = forwardRef<HTMLSpanElement, VariableProximityProps>((props, ref) => {
   const {
     label = '',
     fromFontVariationSettings = "'wght' 400, 'opsz' 9",
@@ -396,4 +396,3 @@ const VariableProximity = forwardRef<HTMLSpanElement, VariableProximityProps>((p
 });
 
 VariableProximity.displayName = 'VariableProximity';
-export default VariableProximity;

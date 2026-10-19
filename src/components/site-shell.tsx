@@ -76,7 +76,7 @@ type Grain = Array<{ every: number; amount: number }>
  * something that starts right at its edge, so the tear never uncovers what is not there; the edge is then at
  * the mask's left, and the mask lies just past the strip.
  */
-function tear(seed: number, reach: number, grain: Grain, calm: Array<[number, number]> = [], outward = false) {
+const tear = (seed: number, reach: number, grain: Grain, calm: Array<[number, number]> = [], outward = false) => {
   let state = seed
   const random = () => {
     state = (state + 0x6d2b79f5) | 0
@@ -120,7 +120,7 @@ type Edge = 'torn' | 'worn' | 'cut'
  * the colour of whatever is on it. Leather is cut, and worn only a little: its edge wanders slowly, and past
  * its grain shows its own edge, burnished dark. A mat is cut clean and straight, so it has no style at all.
  */
-function torn(seed: number, calm: Array<[number, number]>, edge: Edge, outward = false): CSSProperties {
+const torn = (seed: number, calm: Array<[number, number]>, edge: Edge, outward = false): CSSProperties => {
   if (edge === 'cut') return {}
   if (edge === 'worn') {
     const grain = (fine: number) => [
@@ -197,7 +197,7 @@ const PAGE = '@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,
 const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 const instant = { duration: 0 } as const
 
-function stripStyle(tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties {
+const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties => {
   return {
     '--band': tone.band,
     '--band-ink': tone.bandInk,
@@ -252,7 +252,7 @@ type TabCut = {
  * straight down and slants back in, with every corner eased. Its foot is the length of band it grows out of, when
  * the band shows. Returns the path and how far its joins reach.
  */
-function tabOutline({ band, protrude, height }: TabShape, footless = false) {
+const tabOutline = ({ band, protrude, height }: TabShape, footless = false) => {
   const rise = protrude * 0.33
   const ease = protrude * 0.2
   const reach = ease * 2
@@ -277,7 +277,7 @@ function tabOutline({ band, protrude, height }: TabShape, footless = false) {
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-function Tab({ label, shape, to, search, current, src, footless, leather, surface, paper, cut: edge }: TabProps) {
+const Tab = ({ label, shape, to, search, current, src, footless, leather, surface, paper, cut: edge }: TabProps) => {
   const { reach, path } = tabOutline(shape, footless)
   const hide = useId()
   const cut = useId()
@@ -376,7 +376,7 @@ type SiteShellProps = {
   children: React.ReactNode
 }
 
-export function SiteShell({ children }: SiteShellProps) {
+export const SiteShell = ({ children }: SiteShellProps) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const poster = useRouterState({ select: (state) => state.location.pathname === '/work' && Number((state.location.search as { v?: unknown }).v) !== 1 })
   // The version of the work page last open: its strip shows that version folded, and opens to it again.

@@ -37,7 +37,7 @@ type TicketProps = {
 // How much nearer the folded strip sees the table than the open page does.
 const NEAR = 1.08
 
-export function Ticket({ open }: TicketProps) {
+export const Ticket = ({ open }: TicketProps) => {
   const [copied, setCopied] = useState(false)
   // A browser that refuses the clipboard leaves the ticket as it is. The address can still be selected.
   const copy = () =>

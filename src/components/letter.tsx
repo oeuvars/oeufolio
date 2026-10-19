@@ -14,7 +14,7 @@ const HEIGHT = 2223
  * or smaller if that is what it takes for the whole of it to show at once: the page's own margins above
  * and below are given over to it. On a narrow page it is small, so it opens on its own at full size.
  */
-export function Letter({ letter }: LetterProps) {
+export const Letter = ({ letter }: LetterProps) => {
   return (
     <a
       href={letter.src}

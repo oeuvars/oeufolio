@@ -7,7 +7,7 @@ type Command = { group: string; label: string; icon: ReactNode; key?: string; ru
 const editable = (target: EventTarget | null) =>
   target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
 
-function Glyph({ children, className = 'size-4' }: { children: ReactNode; className?: string }) {
+const Glyph = ({ children, className = 'size-4' }: { children: ReactNode; className?: string }) => {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className={`${className} shrink-0`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       {children}
@@ -20,7 +20,7 @@ function Glyph({ children, className = 'size-4' }: { children: ReactNode; classN
  * Enter. ⌘K or Ctrl+K opens it, Escape or a click outside closes it, the arrow keys move through what matches, and
  * Shift with a command's letter runs it from anywhere on the page.
  */
-export function CommandPalette({ commands, trigger }: { commands: Command[]; trigger: (open: () => void) => ReactNode }) {
+export const CommandPalette = ({ commands, trigger }: { commands: Command[]; trigger: (open: () => void) => ReactNode }) => {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
@@ -221,7 +221,7 @@ export function CommandPalette({ commands, trigger }: { commands: Command[]; tri
 }
 
 /** The ⌘K key in the header, opening the menu when pressed. */
-export function PaletteKey({ onOpen }: { onOpen: () => void }) {
+export const PaletteKey = ({ onOpen }: { onOpen: () => void }) => {
   return (
     <button type="button" onClick={onOpen} aria-label="Open the command menu" className="group relative cursor-pointer transition-all duration-300 active:scale-95">
       <div className="pointer-events-none absolute -inset-[4.5px] rounded-[9px] border border-black/5 transition-colors duration-300 group-hover:border-black/10 dark:border-white/5 dark:group-hover:border-white/10" />

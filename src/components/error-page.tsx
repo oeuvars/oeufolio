@@ -29,7 +29,7 @@ type PlateProps = {
  * carried on out to the window's edges. Every word is in the photograph; over each lies the same text, clear, where it lies, so it can be read aloud,
  * selected and copied, and the two things to do are links over their printed words.
  */
-function Plate({ name, className, again, home }: PlateProps) {
+const Plate = ({ name, className, again, home }: PlateProps) => {
   const plate = PLATES[name]
   const [w, h] = plate.size
   const ratio = w / h
@@ -94,7 +94,7 @@ function Plate({ name, className, again, home }: PlateProps) {
  * happened, and how to open the page again. A window at least 0.95 times as wide as it is tall shows the open book; a
  * narrower one, one loose page of it.
  */
-export function ErrorPage({ error, reset }: ErrorComponentProps) {
+export const ErrorPage = ({ error, reset }: ErrorComponentProps) => {
   const router = useRouter()
   const inStack = useContext(InStack)
   const again = () => {

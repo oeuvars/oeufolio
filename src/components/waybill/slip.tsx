@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { cv, profile } from '../../content'
 import type { CvRole } from '../../types'
-import Counter from '../bits/counter'
+import { Counter } from '../bits/counter'
 
 /** "March 2025 to now" as "Mar 2025 – now". */
 const period = (text: string) =>
@@ -21,7 +21,7 @@ const FIGURES: { text: string; value: number; decimals?: number; suffix: string;
 const MARK =
   'bg-[linear-gradient(transparent_12%,#f5e34a_12%,#f5e34a_88%,transparent_88%)] px-[0.15em] font-semibold text-black [box-decoration-break:clone] print:[print-color-adjust:exact]'
 
-function marked(point: string) {
+const marked = (point: string) => {
   const parts: ReactNode[] = []
   let rest = point
   for (;;) {
@@ -42,7 +42,7 @@ function marked(point: string) {
 }
 
 /** A section's head: white on a black bar, the reverse print a label uses for its service line. */
-function Bar({ id, children }: { id: string; children: ReactNode }) {
+const Bar = ({ id, children }: { id: string; children: ReactNode }) => {
   return (
     <div className="rounded-[2px] bg-black px-3 py-1.5 text-white print:[print-color-adjust:exact]">
       <h2 id={id} className="text-[14px] leading-none font-bold [font-stretch:112%]">
@@ -52,7 +52,7 @@ function Bar({ id, children }: { id: string; children: ReactNode }) {
   )
 }
 
-function Role({ role }: { role: CvRole }) {
+const Role = ({ role }: { role: CvRole }) => {
   const remote = role.place === 'Remote'
   return (
     <li className="border-t border-black/15 py-6 first:border-t-0">
@@ -84,7 +84,7 @@ function Role({ role }: { role: CvRole }) {
  * The packing slip that comes with the label: the résumé in full, word for word what resume.pdf says. Its sections
  * open on black bars, and its figures are highlighted.
  */
-export function Slip() {
+export const Slip = () => {
   const coursework = cv.skills.find((skill) => skill.label === 'Relevant coursework')
   const skills = cv.skills.filter((skill) => skill !== coursework)
   const button =

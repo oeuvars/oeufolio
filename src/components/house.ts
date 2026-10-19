@@ -28,7 +28,7 @@ export const posterFold: { column: DOMRect | null } = { column: null }
  * returns the keyframes from there back to where it lies. It is stood there at once, so the first frame painted
  * already has it there, before any animation of it has run.
  */
-export function moveFrom(place: DOMRect, element: HTMLElement, at: DOMRect) {
+export const moveFrom = (place: DOMRect, element: HTMLElement, at: DOMRect) => {
   const box = element.getBoundingClientRect()
   const scale = place.width / at.width
   const x = place.left - box.left - scale * (at.left - box.left)

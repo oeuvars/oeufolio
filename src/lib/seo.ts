@@ -6,7 +6,7 @@ import type { PageMeta } from '../types'
  * unfurls from, and its canonical address, which drops any query (the work page's building at /work?v=1 is
  * still /work).
  */
-export function seo({ path, title, description, preview }: PageMeta) {
+export const seo = ({ path, title, description, preview }: PageMeta) => {
   const url = new URL(path, site.url).href
   const image = new URL(preview.src, site.url).href
 
@@ -34,7 +34,7 @@ export function seo({ path, title, description, preview }: PageMeta) {
 }
 
 /** Who the site is about, as schema.org data a search engine can read: the home page's head carries it. */
-export function person() {
+export const person = () => {
   return {
     type: 'application/ld+json',
     children: JSON.stringify({

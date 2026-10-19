@@ -28,7 +28,7 @@ const CARD_OFF = (162 + 577) / 2 / 720 - 0.5
  * strip's tab stands on bare paper. Unfolding slides the sheet out. The badge's frame ends at the top of
  * the sheet, where its ring runs out of shot. Its vinyl is see-through, so the backdrop shows through.
  */
-export function Badge({ badge, page, margin, open, past }: BadgeProps) {
+export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
   return (
     <div
       className="absolute inset-y-0 right-0 flex justify-center bg-cover bg-center"

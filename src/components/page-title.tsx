@@ -4,7 +4,7 @@ type PageTitleProps = {
   after: string
 }
 
-export function PageTitle({ before, accent, after }: PageTitleProps) {
+export const PageTitle = ({ before, accent, after }: PageTitleProps) => {
   return (
     <h1 className="display text-[clamp(1.35rem,4.4vw,4.6rem)] text-balance">
       {before}

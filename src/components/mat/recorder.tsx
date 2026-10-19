@@ -29,7 +29,7 @@ type LayerProps = {
 }
 
 // Each layer stands off the mat, so the lens shows it a little out from where it lies and a little larger.
-function Layer({ lean, render, turning }: LayerProps) {
+const Layer = ({ lean, render, turning }: LayerProps) => {
   return (
     <span
       aria-hidden
@@ -53,7 +53,7 @@ function Layer({ lean, render, turning }: LayerProps) {
   )
 }
 
-export function Recorder({ like }: RecorderProps) {
+export const Recorder = ({ like }: RecorderProps) => {
   const [playing, setPlaying] = useState(false)
   const pressedAt = useRef({ x: 0, y: 0 })
   const reel = useRevving<HTMLSpanElement>()

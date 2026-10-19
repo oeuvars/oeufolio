@@ -5,7 +5,7 @@ const HAZARD = ['SIGNAL LOST', '信号なし', 'ERR 404', 'PAGE NOT FOUND', 'ペ
 const BREACH = ['NO SUCH ROUTE', '0x194', 'DEAD LINK', 'エラー']
 
 /** One line of tape's printing, set twice end to end so that it runs round without a seam. */
-function Track({ words }: { words: string[] }) {
+const Track = ({ words }: { words: string[] }) => {
   const line = Array.from({ length: 4 }, () => words).flat()
   return (
     <div className="nf-track">
@@ -23,7 +23,7 @@ function Track({ words }: { words: string[] }) {
 }
 
 /** The page for a path that is not one: a 404 pasted up on a wall at night, out of photocopies, tape and spray paint. */
-export function NotFound() {
+export const NotFound = () => {
   return (
     <main className="nf">
       {/* Only this page loads its styles and faces. React lifts the link into the head. */}

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
  * A turning part keeps its angle while its speed changes. CSS eases --rate when the part is set going and
  * when it is let go, and this hands each step of it to the part's turn animation. Returns the part's ref.
  */
-export function useRevving<T extends HTMLElement>() {
+export const useRevving = <T extends HTMLElement>() => {
   const part = useRef<T>(null)
 
   useEffect(() => {

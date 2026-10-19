@@ -2,7 +2,7 @@
  * The poster's title, set as these films set theirs: bold Futura capitals in flat yellow, clean and centred
  * over the picture, the first words small and spaced out, the last one large.
  */
-export function Masthead() {
+export const Masthead = () => {
   return (
     <header className="text-center font-futura font-bold text-[#f6cf43] uppercase">
       <h1>

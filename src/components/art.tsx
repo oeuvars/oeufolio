@@ -11,7 +11,7 @@ type ArtProps = {
 
 /** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. The desk's
  * and the ticket's strips show the desk and the ticket themselves (SiteShell). */
-export function Art({ index, open, poster }: ArtProps) {
+export const Art = ({ index, open, poster }: ArtProps) => {
   if (index === 1) {
     // The letter's own drawings, date and signature, down the edge of its sheet (studio/letter.py).
     return (

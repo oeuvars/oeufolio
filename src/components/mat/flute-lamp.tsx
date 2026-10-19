@@ -8,7 +8,7 @@ import { lamp } from './lamp'
  * (studio/desk/objects/flutelamp.py). Its picture, from a camera of its own straight over it, lies over the plate,
  * lit and unlit, and its light is in the plate. The button covers the glass. Clicking it switches it.
  */
-export function FluteLamp() {
+export const FluteLamp = () => {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
 
   return (

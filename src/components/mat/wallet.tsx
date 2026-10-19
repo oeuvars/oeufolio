@@ -21,7 +21,7 @@ const TURN_MS = 350
  * where it lay and the cover swings up above it, with a photograph behind the window. Its box is the closed
  * wallet's, so the open one reaches 18 em out of the top of it.
  */
-export function Wallet() {
+export const Wallet = () => {
   const [open, setOpen] = useState(false)
   // It stays above its neighbours, and its own closed render over the plate's, until it has finished closing.
   const [raised, setRaised] = useState(false)

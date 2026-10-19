@@ -8,7 +8,7 @@ const RULER =
   'pointer-events-none absolute z-1 flex overflow-hidden bg-black/16 font-mono text-[0.56rem]/none font-medium text-ink/80'
 
 /** The mat's rulers: one along each edge, with a plain square where two meet. */
-export function Rulers({ cut }: RulersProps) {
+export const Rulers = ({ cut }: RulersProps) => {
   const end = cut ? 'right-0' : 'right-[22px]'
   const corners = cut ? ['top-0 left-0', 'bottom-0 left-0'] : ['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'right-0 bottom-0']
 

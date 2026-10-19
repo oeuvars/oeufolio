@@ -279,7 +279,7 @@ const link = (gl: WebGL2RenderingContext, fragmentSource: string): Program | nul
   return { program, uniforms };
 };
 
-const Silk = ({
+export const Silk = ({
   speed = 5,
   scale = 1,
   color = '#7B7481',
@@ -653,5 +653,3 @@ const Silk = ({
     <div ref={containerRef} className={`relative w-full h-full overflow-hidden ${className}`} style={style} />
   );
 };
-
-export default Silk;

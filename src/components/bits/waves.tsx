@@ -290,7 +290,7 @@ const link = (gl: WebGL2RenderingContext): Program | null => {
   return { program, uniforms };
 };
 
-const Waves = ({
+export const Waves = ({
   lineColor = '#ffffff',
   accentColor,
   backgroundColor = 'transparent',
@@ -792,5 +792,3 @@ const Waves = ({
     </div>
   );
 };
-
-export default Waves;

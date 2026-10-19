@@ -6,8 +6,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 import { cv, profile } from '../content'
 import type { CvRole } from '../types'
-import GlassSurface from './bits/glass-surface'
-import Silk from './bits/silk'
+import { GlassSurface } from './bits/glass-surface'
+import { Silk } from './bits/silk'
 
 // Claret silk under clear glass, and the type in ivory on it.
 const CLARET = '#80263a'
@@ -22,7 +22,7 @@ const LINK = `underline decoration-[#f7f0ea]/30 underline-offset-[5px] transitio
 // a phone gets shallower, duller folds to come out the same.
 const FOLDS = { wide: { sheen: 1.1, depth: 0.85, glow: 0.55 }, narrow: { sheen: 0.35, depth: 0.3, glow: 0.2 } }
 
-function useNarrow() {
+const useNarrow = () => {
   const [narrow, setNarrow] = useState(false)
   useEffect(() => {
     const media = window.matchMedia('(max-width: 640px)')
@@ -42,7 +42,7 @@ const period = (text: string) =>
     .join(' – ')
 
 /** A section: its name in italics in the left column, a hairline down beside it and across above it. */
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+const Section = ({ id, title, children }: { id: string; title: string; children: ReactNode }) => {
   return (
     <section aria-labelledby={id} className="grid border-t border-[#f7f0ea]/15 md:grid-cols-[10.5rem_1fr]">
       <h2 id={id} className={`${SERIF} pt-7 text-[22px] leading-none text-[#f7f0ea]/90 italic md:border-r md:border-[#f7f0ea]/15 md:pr-6`}>
@@ -53,7 +53,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
   )
 }
 
-function Role({ role }: { role: CvRole }) {
+const Role = ({ role }: { role: CvRole }) => {
   return (
     <article className="border-t border-[#f7f0ea]/10 py-7 first:border-t-0">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
@@ -84,7 +84,7 @@ function Role({ role }: { role: CvRole }) {
  * Silk that unfurls when the page opens. The pane stays put and the résumé scrolls inside it, word for word what
  * resume.pdf says.
  */
-export function Vitrine() {
+export const Vitrine = () => {
   const city = profile.extras.particulars.find((particular) => particular.label === 'Based in')?.value ?? ''
   const coursework = cv.skills.find((skill) => skill.label === 'Relevant coursework')
   const skills = cv.skills.filter((skill) => skill !== coursework)

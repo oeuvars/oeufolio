@@ -22,7 +22,7 @@ const { size: REFERENCE, marks: MARKS } = posterMarks as PosterMarks
  * the poster starts with that column where the strip's stood, and moves to its place on the strip's spring as the rest
  * of the poster comes up over it. As it goes it leaves where its column was, for the folded strip to start from.
  */
-export function Poster() {
+export const Poster = () => {
   const sheet = useRef<HTMLDivElement>(null)
   const column = useRef<HTMLImageElement>(null)
   const light = useRef<HTMLImageElement>(null)

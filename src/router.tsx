@@ -2,7 +2,7 @@ import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { ErrorPage } from './components/error-page'
 import { routeTree } from './route-tree.gen'
 
-export function getRouter() {
+export const getRouter = () => {
   const router = createTanStackRouter({
     routeTree,
     scrollRestoration: true,

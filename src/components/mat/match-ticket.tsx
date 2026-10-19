@@ -25,7 +25,7 @@ const PRINT = [
  * The Arsenal like: the club's paper match ticket. The card, the bands, the crest, the lettering, the
  * sponsors' marks and the thermal print are in the plate, and the print is here for readers.
  */
-export function MatchTicket({ like }: MatchTicketProps) {
+export const MatchTicket = ({ like }: MatchTicketProps) => {
   return (
     <article data-prop="ticket" aria-label={`${like.subject}: ${like.title}. ${like.note}`} className={`${PROP} z-2 h-[9.375em] w-[20.625em]`}>
       <p className="sr-only">{PRINT.join('. ')}.</p>

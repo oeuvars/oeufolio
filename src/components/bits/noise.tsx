@@ -111,7 +111,7 @@ const drawHair = (ctx: CanvasRenderingContext2D, width: number, height: number) 
   ctx.stroke();
 };
 
-const Noise = ({
+export const Noise = ({
   opacity = 0.2,
   size = 1,
   fps = 24,
@@ -318,5 +318,3 @@ const Noise = ({
     </div>
   );
 };
-
-export default Noise;

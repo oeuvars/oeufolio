@@ -27,7 +27,7 @@ const LARGEST = 22
 const LAID = 'pointer-events-none absolute z-1 max-w-none'
 
 /** Where a rectangle of the plate, given in its em, lies on the mat. */
-function over(geometry: Geometry, x: number, y: number, w: number, h: number): React.CSSProperties {
+const over = (geometry: Geometry, x: number, y: number, w: number, h: number): React.CSSProperties => {
   const { em } = geometry
   return { left: geometry.x + x * em, top: geometry.y + y * em, width: w * em, height: h * em }
 }
@@ -41,7 +41,7 @@ function over(geometry: Geometry, x: number, y: number, w: number, h: number): R
  * Where the lamp lights the leather brighter than it was photographed, a second map adds the rest. A prop the
  * plate's camera does not show, seen from a camera of its own (PORTRAITS), lies over the plate as its picture.
  */
-export function Mat({ children, className }: MatProps) {
+export const Mat = ({ children, className }: MatProps) => {
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)

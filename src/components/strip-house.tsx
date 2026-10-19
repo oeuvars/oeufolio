@@ -14,7 +14,7 @@ type StripHouseProps = {
  * strip's edge. When the strip folds, this picture starts where the page's stood, at its size, and shrinks
  * to its own place as the strip narrows: the page's picture growing out of this one, played backwards.
  */
-export function StripHouse({ open }: StripHouseProps) {
+export const StripHouse = ({ open }: StripHouseProps) => {
   const picture = useRef<HTMLImageElement>(null)
   const was = useRef(open)
   const still = useReducedMotion()

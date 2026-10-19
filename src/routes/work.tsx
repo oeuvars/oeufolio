@@ -8,14 +8,7 @@ import { pages, profile } from '../content'
 import { seo } from '../lib/seo'
 import type { VersionSearch } from '../types'
 
-/** Two versions of the page: the poster (the default), and the building it replaced at /work?v=1. */
-export const Route = createFileRoute('/work')({
-  validateSearch: (search: Record<string, unknown>): VersionSearch => (Number(search.v) === 1 ? { v: 1 } : {}),
-  head: () => seo(pages.work),
-  component: Work,
-})
-
-function Work() {
+const Work = () => {
   const { v } = Route.useSearch()
 
   return v === 1 ? <Building /> : <Poster />
@@ -28,7 +21,7 @@ function Work() {
  * over to it: the ones undone here are SiteShell's padding round a page. The title
  * is sized off a sheet no wider than lets the whole building show at once.
  */
-function Building() {
+const Building = () => {
   const { experience } = profile
 
   return (
@@ -44,3 +37,10 @@ function Building() {
     </div>
   )
 }
+
+/** Two versions of the page: the poster (the default), and the building it replaced at /work?v=1. */
+export const Route = createFileRoute('/work')({
+  validateSearch: (search: Record<string, unknown>): VersionSearch => (Number(search.v) === 1 ? { v: 1 } : {}),
+  head: () => seo(pages.work),
+  component: Work,
+})

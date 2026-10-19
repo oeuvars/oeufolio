@@ -7,6 +7,38 @@ import { pages, site } from '../content'
 
 import appCss from '../styles.css?url'
 
+const RootLayout = () => {
+  // A path that is not a page, a page that broke, and a page that is not one of the folders (the résumé) have no
+  // strip to open, so each is shown on its own, outside the stack.
+  const bare = useRouterState({
+    select: (state) => state.matches.some((match) => match._notFound || match.status === 'error' || match.staticData.bare),
+  })
+  if (bare) return <Outlet />
+
+  return (
+    <InStack.Provider value>
+      <SiteShell>
+        <Outlet />
+      </SiteShell>
+    </InStack.Provider>
+  )
+}
+
+const RootDocument = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+
+        <Scripts />
+      </body>
+    </html>
+  )
+}
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -56,35 +88,3 @@ export const Route = createRootRoute({
   notFoundComponent: NotFound,
   errorComponent: ErrorPage,
 })
-
-function RootLayout() {
-  // A path that is not a page, a page that broke, and a page that is not one of the folders (the résumé) have no
-  // strip to open, so each is shown on its own, outside the stack.
-  const bare = useRouterState({
-    select: (state) => state.matches.some((match) => match._notFound || match.status === 'error' || match.staticData.bare),
-  })
-  if (bare) return <Outlet />
-
-  return (
-    <InStack.Provider value>
-      <SiteShell>
-        <Outlet />
-      </SiteShell>
-    </InStack.Provider>
-  )
-}
-
-function RootDocument({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-
-        <Scripts />
-      </body>
-    </html>
-  )
-}

@@ -12,7 +12,7 @@ const LINK = 'underline-offset-4 hover:underline focus-visible:outline-2 focus-v
  * The résumé as a parcel: a shipping label addressed to me, the kind of label my work at Cybership prints, and the
  * packing slip that carries the résumé in full. On a wide window the label stays in view beside the slip.
  */
-export function Waybill() {
+export const Waybill = () => {
   const links = [...profile.socials, { label: 'resume.pdf', href: profile.resume.href }]
 
   return (

@@ -9,7 +9,7 @@ import { lamp } from './lamp'
  * straight over it, lies over the plate, lit and unlit, and its light is in the plate. The button covers the shade.
  * Clicking it switches it.
  */
-export function MushroomLamp() {
+export const MushroomLamp = () => {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
 
   return (

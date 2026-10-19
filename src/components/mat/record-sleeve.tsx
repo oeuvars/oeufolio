@@ -11,7 +11,7 @@ type RecordSleeveProps = {
  * The electric guitars like: a seven-inch single in a gloss sleeve that carries the cover of the playlist
  * and opens it. The record shows at the mouth of the sleeve. The sleeve is the link.
  */
-export function RecordSleeve({ like, playlist }: RecordSleeveProps) {
+export const RecordSleeve = ({ like, playlist }: RecordSleeveProps) => {
   return (
     <article data-prop="record" className={`${PROP} z-2 h-[15.625em] w-[20em] [--k:1.5]`}>
       <a

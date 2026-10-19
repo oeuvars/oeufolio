@@ -404,7 +404,7 @@ const RIM =
 
 const RING = 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)';
 
-const GlassSurface = ({
+export const GlassSurface = ({
   children,
   width = 200,
   height = 80,
@@ -1023,5 +1023,3 @@ const GlassSurface = ({
     </div>
   );
 };
-
-export default GlassSurface;

@@ -11,7 +11,7 @@ const STOP = '2331112'
  * Printable ASCII as Code 128 set B: the bars as [start, width] in modules from the first bar, and the symbol's width
  * in modules, without its quiet zones.
  */
-export function code128(text: string) {
+export const code128 = (text: string) => {
   const values = [...text].map((char) => {
     const code = char.charCodeAt(0)
     if (code < 32 || code > 127) throw new Error(`Code 128 set B cannot encode ${JSON.stringify(char)}`)

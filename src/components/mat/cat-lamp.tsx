@@ -8,7 +8,7 @@ import { lamp } from './lamp'
  * socket (studio/desk/objects/catlamp.py). Her picture, from a low camera of its own, lies over the plate, lit and
  * unlit, and her light is in the plate. The button covers her picture. Clicking it switches her.
  */
-export function CatLamp() {
+export const CatLamp = () => {
   const lit = useSyncExternalStore(lamp.subscribe, lamp.isOn, lamp.isOn)
 
   return (

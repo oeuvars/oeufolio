@@ -6,7 +6,7 @@ type RevealProps = {
   className?: string
 }
 
-export function Reveal({ children, delay = 0, className }: RevealProps) {
+export const Reveal = ({ children, delay = 0, className }: RevealProps) => {
   return (
     <motion.div
       className={className}
