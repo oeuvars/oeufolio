@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 
 import type { Badge as BadgeData } from '../types'
@@ -35,16 +34,12 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
       // The page's own paper, grain and all, is the panel under it (SiteShell), so the sheet lays nothing of its own.
       style={{ width: page, right: past, backgroundImage: badge.backdrop.image && `url(${badge.backdrop.image})` }}
     >
-      {/* Open, the card is the way to the résumé as a page of text. It tips on its ring as the pointer comes to it. It
-          lies over the open page's frame, which SiteShell lays over the strip with nothing on it. */}
-      <Link
-        to="/resume"
-        aria-label="Résumé"
-        tabIndex={open ? undefined : -1}
-        aria-hidden={!open || undefined}
+      {/* Open, the card tips on its ring as the pointer comes to it. It lies over the open page's frame, which
+          SiteShell lays over the strip with nothing on it. */}
+      <div
         // The card, not the holder, is centred on the page.
         style={{ translate: `${-CARD_OFF * 100}% 0` }}
-        className={`relative z-1 block h-full origin-top rounded-sm focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[#3a281c] ${open ? '' : 'pointer-events-none'}`}
+        className={`relative z-1 block h-full origin-top ${open ? '' : 'pointer-events-none'}`}
       >
         <motion.img
           src={badge.src}
@@ -59,7 +54,7 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
           whileHover={open ? { rotate: -1.2, transition: { type: 'spring', stiffness: 90, damping: 10 } } : undefined}
           transition={{ type: 'spring', stiffness: 34, damping: 4.5, mass: 1.6, delay: 0.25 }}
         />
-      </Link>
+      </div>
     </div>
   )
 }
