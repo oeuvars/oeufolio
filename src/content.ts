@@ -6,7 +6,7 @@ export const profile: Profile = {
     { to: '/', label: 'Basics' },
     { to: '/likes', label: 'Likes' },
     { to: '/work', label: 'Work' },
-    { to: '/extras', label: 'Extras' },
+    { to: '/desk', label: 'Extras' },
     { to: '/contact', label: 'Contact' },
   ],
   badge: {
@@ -80,11 +80,11 @@ export const pages: Record<PageId, PageMeta> = {
     description: "Where I've worked, made into a film poster: Cybership since March 2025, and Ekarth Ventures and ProperSKU before that.",
     preview: { src: '/og/work.jpg', alt: 'A film poster called Human Experience, laid over the lit windows of an apartment block at night.' },
   },
-  extras: {
-    path: '/extras',
+  desk: {
+    path: '/desk',
     title: 'Extras | Anurag Das',
     description: 'My desk and what I keep on it: my playlist Two x 3 on a record, a tape recorder, car keys, an Arsenal ticket, and a razor with its Proraso.',
-    preview: { src: '/og/extras.jpg', alt: 'A green cutting mat under a lamp, with a record, a tape recorder, keys, an Arsenal ticket and a razor on it.' },
+    preview: { src: '/og/desk.jpg', alt: 'A green cutting mat under a lamp, with a record, a tape recorder, keys, an Arsenal ticket and a razor on it.' },
   },
   contact: {
     path: '/contact',
