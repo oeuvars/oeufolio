@@ -40,8 +40,11 @@ type Tone = {
   /** The strip is a plain page, cut straight down its edge, not torn. */
   cut?: boolean
   /** The strip is cloth, cut down its edge with scissors: this mask of the cut, its weft ends frayed past it
-   * (studio/linen.py --edge), in place of a straight cut. Cloth lies flat on what is under it, so it casts no shadow. */
+   * (studio/linen.py --edge), in place of a straight cut. Cloth casts no drop shadow: it leaves its own (cast). */
   frayed?: string
+  /** The shadow the cloth leaves on the page beyond its cut, rendered from the same mask (studio/linen.py --shadow):
+   * a tile down the edge, CAST_WIDTH px wide from the mask's left, laid under the cloth and out over the next strip. */
+  cast?: string
   /** The strip is handmade paper, its edge the deckle the pulp stopped at, thinning to loose fibres: this mask of
    * it (studio/paper/edge.py), in place of a straight cut. Paper casts its shadow, as the strip's own does. */
   deckled?: string
@@ -66,6 +69,8 @@ const TEAR_LENGTH = 1600
 // How far in from its right the cut runs down a cloth's frayed edge mask (studio/linen.py edge): the mask lies that
 // far out past the strip, so the cut is the strip's edge, meeting its tab's straight foot, and the weft ends lie over the next strip.
 const FRAY_PAST = 9
+// How wide the cloth's shadow tile is, from the frayed mask's left (studio/linen.py SHADOW_FRAME).
+const CAST_WIDTH = 40
 // The same for a handmade sheet's deckle mask (studio/paper/edge.py, DECKLE_PAST).
 const DECKLE_PAST = 9
 
@@ -164,7 +169,7 @@ const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills ||
 
 const pageTones: Tone[] = [
   // The plate is cut, not torn, and its colours are the linen's middle tone, under the plate before it loads.
-  { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.png', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
+  { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.png', cast: '/objects/linen-shadow.png', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: '/objects/likes-edge.png', paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
@@ -560,6 +565,19 @@ export const SiteShell = ({ children }: SiteShellProps) => {
             >
               {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
+              {tones[i].cast && (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0"
+                  style={{
+                    left: `calc(100% + ${FRAY_PAST - TEAR_WIDTH}px)`,
+                    width: CAST_WIDTH,
+                    backgroundImage: `url(${tones[i].cast})`,
+                    backgroundSize: `${CAST_WIDTH}px ${TEAR_LENGTH}px`,
+                    backgroundRepeat: 'repeat-y',
+                  }}
+                />
+              )}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
                 style={sheets(tones[i]) ? sheet(i, tones[i]) : undefined}

@@ -2,6 +2,8 @@
 from the repository root:
 
     blender -b --factory-startup -P studio/linen.py -- [--scale 0.5] [--samples 64] [--proof DIR]
+    blender -b --factory-startup -P studio/linen.py -- --edge
+    blender -b --factory-startup -P studio/linen.py -- --shadow [--samples 1024] [--proof DIR]
 
 The cloth is a plain weave, one over and one under, of wet-spun flax yarn, dyed a pale butter yellow.
 
@@ -15,13 +17,15 @@ The cloth is a plain weave, one over and one under, of wet-spun flax yarn, dyed 
 
 All of it is painted here and given to Cycles as the cloth's colour and relief. Nothing repeats.
 
-Writes public/objects/linen.avif, the whole plate.
+Writes public/objects/linen.avif, the whole plate; with --edge, linen-edge.png, the mask the page cuts the strip
+with; with --shadow, linen-shadow.png, the shadow the cut cloth leaves on the page beyond it.
 """
 
 import argparse
 import math
 import os
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -30,8 +34,9 @@ sys.path.insert(0, os.path.join(HERE, "desk"))
 import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 
+from mathutils import Quaternion  # noqa: E402
 from paint import blur, cloud, linear, ramp, streaks  # noqa: E402
-from stage import Stage  # noqa: E402
+from stage import ASSETS, BOX_IN_ROOM, BOX_ON_STAND, ROOM, ROOM_ROLL, Stage  # noqa: E402
 
 OUT = os.path.join(ROOT, "public", "objects")
 WIDTH, HEIGHT = 36.0, 24.0  # the plate the page shows, in em
@@ -345,7 +350,7 @@ EDGE_DENSITY = 2  # pixels of the mask to the CSS px
 EDGE_PITCH = 2.6  # how far apart the weft yarns are where the page shows the cloth, in CSS px
 
 
-def edge():
+def cut():
     """The strip's edge as scissors leave linen, as a mask: solid to the left, clear to the right, repeating down
     the strip without a seam. The blades cut in snips, each a little off the last, so the line runs in short straight
     lengths that turn where one snip met the next. Past the line the weft yarns the blades cut stick out, some
@@ -421,7 +426,12 @@ def edge():
             centre = np.interp(Y[near][:, 0] % length, ys, line)[:, None] + off * np.sin(math.pi * s) ** 0.5 + 0.4 * np.sin(s * rng.uniform(8, 14))
             mask[near] = np.maximum(mask[near], np.clip(0.5 + (thick - np.abs(X - centre)) * density, 0, 1))
 
-    mask = mask.reshape(length * EDGE_DENSITY, over, width * EDGE_DENSITY, over).mean(axis=(1, 3))
+    return mask.reshape(length * EDGE_DENSITY, over, width * EDGE_DENSITY, over).mean(axis=(1, 3))
+
+
+def edge():
+    """Writes the cut's mask, for the page to cut the strip with."""
+    mask = cut()
     rows, cols = mask.shape
     img = bpy.data.images.new("linen-edge", cols, rows, alpha=True)
     img.colorspace_settings.name = "Non-Color"
@@ -434,15 +444,197 @@ def edge():
     print(f"EDGE {cols}x{rows}")
 
 
+SHADOW_FRAME = (-24.0, 40.0)  # the shadow's render across the edge's mask, in CSS px from its left: under the cloth, and out over the page
+SHADOW_PAST = 120.0  # how far the render runs on past either end of the mask's length, for the shadows cast across its ends
+SHADOW_DENSITY = 3  # pixels of the shadow to the CSS px
+THICK = 1.6  # how thick the cloth is, in CSS px: 0.35 mm, at EDGE_PITCH to a weft yarn of 0.5 mm
+LAYERS = 6  # sheets of the cut stacked through the cloth's thickness, so the cut stands as tall as the cloth
+PEEL = 26.0  # how far in from the cut the cloth starts to lift off the page, in CSS px
+DROOP = 7.0  # how far past the cut the weft ends take to come down onto the page, in CSS px
+
+
+def peel(Y, length, rng):
+    """How far the cloth stands off the page at its cut, Y px down the mask: a cut edge of washed linen lies down
+    in most places and curls up off the page in others, a little or as far as a couple of times its thickness.
+    It wraps round the mask's length, as the mask does."""
+    lift = np.full_like(Y, 0.25)
+    for _ in range(14):
+        at, spread, rise = rng.uniform(0, length), rng.uniform(15, 70), rng.gamma(1.6, 1.1)
+        away = (Y - at + length / 2) % length - length / 2
+        lift += rise * np.exp(-((away / spread) ** 2))
+    return lift
+
+
+def shadow(samples, proof=None):
+    """The shadow the cut cloth leaves on the page it lies over, as black over a clear ground, for the page to lay
+    under the strip's linen and out over the strip beyond. The cloth is THICK thick, cut by the very mask the page
+    cuts it with (cut), weft ends and fibres and all, and lifts off the page toward the cut where it curls. All of it
+    is white, under the copy stand's studio light (stage.py's room and octabox, as studio/tabcut uses), rendered
+    with the cloth and without it, and the one divided by the other is only the shadow. Writes
+    public/objects/linen-shadow.png, SHADOW_FRAME's right part from the mask's left, the mask's length long."""
+    mask = cut()
+    width, length = EDGE
+    rows, cols = mask.shape
+    rng = np.random.default_rng(73)
+    scene = Stage(OUT, samples=samples).clear()
+    scene.render.film_transparent = False
+    scene.cycles.transparent_max_bounces = 4 * LAYERS
+    scene.cycles.use_adaptive_sampling = False
+
+    # The room, turned so its octabox hangs where the copy stand wants it.
+    nodes, links = scene.world.node_tree.nodes, scene.world.node_tree.links
+    coord = nodes.new("ShaderNodeTexCoord")
+    turn = nodes.new("ShaderNodeMapping")
+    aim = BOX_ON_STAND.rotation_difference(BOX_IN_ROOM) @ Quaternion(BOX_ON_STAND, ROOM_ROLL)
+    turn.inputs["Rotation"].default_value = aim.to_euler()
+    room = nodes.new("ShaderNodeTexEnvironment")
+    room.image = bpy.data.images.load(os.path.join(ASSETS, ROOM))
+    links.new(coord.outputs["Generated"], turn.inputs["Vector"])
+    links.new(turn.outputs["Vector"], room.inputs["Vector"])
+    links.new(room.outputs["Color"], nodes["Background"].inputs["Color"])
+
+    def white(name):
+        material = bpy.data.materials.new(name)
+        material.use_nodes = True
+        shader = material.node_tree.nodes["Principled BSDF"]
+        shader.inputs["Base Color"].default_value = (0.8, 0.8, 0.8, 1)
+        shader.inputs["Roughness"].default_value = 0.9
+        shader.inputs["Specular IOR Level"].default_value = 0.2
+        return material
+
+    page = bpy.data.meshes.new("page")
+    page.from_pydata([(-200, 200, 0), (200, 200, 0), (200, -length - 400, 0), (-200, -length - 400, 0)], [], [(0, 1, 2, 3)])
+    page.materials.append(white("page"))
+    scene.collection.objects.link(bpy.data.objects.new("page", page))
+
+    # The cloth: the mask on each sheet, solid to its left, its length repeating down the strip.
+    img = bpy.data.images.new("linen-cut", cols, rows, alpha=True)
+    img.colorspace_settings.name = "Non-Color"
+    img.alpha_mode = "CHANNEL_PACKED"
+    pixels = np.ones((rows, cols, 4), dtype=np.float32)
+    pixels[..., 3] = mask
+    img.pixels.foreach_set(pixels[::-1].ravel())
+    img.pack()
+    cloth = white("cloth")
+    nodes, links = cloth.node_tree.nodes, cloth.node_tree.links
+    where = nodes.new("ShaderNodeTexCoord")
+    split = nodes.new("ShaderNodeSeparateXYZ")
+    across = nodes.new("ShaderNodeMath")
+    across.operation = "DIVIDE"
+    across.inputs[1].default_value = width
+    held = nodes.new("ShaderNodeClamp")
+    # Held off the mask's outer columns, where the length's repeat would wrap the solid left onto the clear right.
+    held.inputs["Min"].default_value = 1.5 / cols
+    held.inputs["Max"].default_value = 1 - 1.5 / cols
+    down = nodes.new("ShaderNodeMath")
+    down.operation = "DIVIDE"
+    down.inputs[1].default_value = length
+    uv = nodes.new("ShaderNodeCombineXYZ")
+    texture = nodes.new("ShaderNodeTexImage")
+    texture.image = img
+    texture.interpolation = "Linear"
+    texture.extension = "REPEAT"
+    clear = nodes.new("ShaderNodeBsdfTransparent")
+    mix = nodes.new("ShaderNodeMixShader")
+    links.new(where.outputs["Object"], split.inputs["Vector"])
+    links.new(split.outputs["X"], across.inputs[0])
+    links.new(across.outputs[0], held.inputs["Value"])
+    links.new(held.outputs["Result"], uv.inputs["X"])
+    links.new(split.outputs["Y"], down.inputs[0])
+    links.new(down.outputs[0], uv.inputs["Y"])
+    links.new(uv.outputs["Vector"], texture.inputs["Vector"])
+    links.new(texture.outputs["Alpha"], mix.inputs["Fac"])
+    links.new(clear.outputs["BSDF"], mix.inputs[1])
+    links.new(nodes["Principled BSDF"].outputs["BSDF"], mix.inputs[2])
+    links.new(mix.outputs["Shader"], nodes["Material Output"].inputs["Surface"])
+
+    # Where the cloth stands: flat on the page well in from the cut, peeling up toward it, and past it the weft ends
+    # coming back down onto the page.
+    gx = np.arange(SHADOW_FRAME[0] - 40, width + 0.5, 0.5)
+    gy = np.arange(-SHADOW_PAST - 40, length + SHADOW_PAST + 40, 2.0)
+    X, Y = np.meshgrid(gx, gy)
+    line = width - 9.0
+    inward = np.clip((X - (line - PEEL)) / PEEL, 0, 1)
+    past = np.clip(1 - (X - line) / DROOP, 0, 1)
+    bottom = peel(Y, length, rng) * inward * inward * (3 - 2 * inward) * past * past
+    rows_g, cols_g = X.shape
+    index = np.arange(rows_g * cols_g).reshape(rows_g, cols_g)
+    faces = np.column_stack((index[:-1, :-1].ravel(), index[:-1, 1:].ravel(), index[1:, 1:].ravel(), index[1:, :-1].ravel()))
+    for layer in range(LAYERS):
+        verts = np.column_stack((X.ravel(), -Y.ravel(), (bottom + THICK * (layer + 0.5) / LAYERS).ravel()))
+        mesh = bpy.data.meshes.new(f"cloth-{layer}")
+        mesh.vertices.add(len(verts))
+        mesh.vertices.foreach_set("co", verts.astype(np.float32).ravel())
+        mesh.loops.add(faces.size)
+        mesh.loops.foreach_set("vertex_index", faces.astype(np.int32).ravel())
+        mesh.polygons.add(len(faces))
+        mesh.polygons.foreach_set("loop_start", np.arange(0, faces.size, 4, dtype=np.int32))
+        mesh.update()
+        mesh.materials.append(cloth)
+        obj = bpy.data.objects.new(f"cloth-{layer}", mesh)
+        obj.visible_camera = False
+        scene.collection.objects.link(obj)
+
+    x0, x1 = SHADOW_FRAME
+    y0, y1 = -SHADOW_PAST, length + SHADOW_PAST
+    optics = bpy.data.cameras.new("overhead")
+    optics.type = "ORTHO"
+    optics.ortho_scale = max(x1 - x0, y1 - y0)
+    camera = bpy.data.objects.new("overhead", optics)
+    camera.location = ((x0 + x1) / 2, -(y0 + y1) / 2, 300)
+    optics.clip_end = 1000
+    scene.collection.objects.link(camera)
+    scene.camera = camera
+    scene.render.resolution_x = round((x1 - x0) * SHADOW_DENSITY)
+    scene.render.resolution_y = round((y1 - y0) * SHADOW_DENSITY)
+    scene.render.resolution_percentage = 100
+
+    luma = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    raw = os.path.join(tempfile.gettempdir(), "linen-shadow.exr")
+    shots = {}
+    for name, with_cloth in (("bare", False), ("cloth", True)):
+        for layer in range(LAYERS):
+            bpy.data.objects[f"cloth-{layer}"].hide_render = not with_cloth
+        scene.render.filepath = raw
+        bpy.ops.render.render(write_still=True)
+        image = bpy.data.images.load(raw)
+        out = np.empty(image.size[0] * image.size[1] * 4, dtype=np.float32)
+        image.pixels.foreach_get(out)
+        shots[name] = out.reshape(image.size[1], image.size[0], 4)[::-1, :, :3] @ luma
+        bpy.data.images.remove(image)
+        os.remove(raw)
+
+    dark = np.clip(1 - shots["cloth"] / np.maximum(shots["bare"], 1e-4), 0, 1)
+    # The mask's length, from its left out: the page lays it from there, under the strip's linen.
+    top, left = round(SHADOW_PAST * SHADOW_DENSITY), round(-x0 * SHADOW_DENSITY)
+    dark = dark[top : top + length * SHADOW_DENSITY, left:]
+    dark = dark + (rng.random(dark.shape, dtype=np.float32) - 0.5) / 255
+    tile = np.zeros(dark.shape + (4,), dtype=np.float32)
+    tile[..., 3] = np.clip(dark, 0, 1)
+    rows, cols = dark.shape
+    img = bpy.data.images.new("linen-shadow", cols, rows, alpha=True)
+    img.colorspace_settings.name = "Non-Color"
+    img.pixels.foreach_set(tile[::-1].ravel())
+    img.filepath_raw = os.path.join(proof or OUT, "linen-shadow.png")
+    img.file_format = "PNG"
+    img.save()
+    print(f"SHADOW {cols}x{rows} darkest {float(dark.max()):.3f}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scale", type=float, default=1.0)
     parser.add_argument("--samples", type=int, default=128)
     parser.add_argument("--proof")
     parser.add_argument("--edge", action="store_true", help="only write the mask of the cloth's cut edge")
+    parser.add_argument("--shadow", action="store_true", help="only write the shadow the cut cloth leaves on the page")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
     if args.edge:
         return edge()
+    if args.shadow:
+        if args.proof:
+            os.makedirs(args.proof, exist_ok=True)
+        return shadow(args.samples, args.proof)
     if args.proof:
         os.makedirs(args.proof, exist_ok=True)
     stage = Stage(OUT, args.proof, scale=args.scale, samples=args.samples)
