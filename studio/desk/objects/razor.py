@@ -3,7 +3,9 @@
 cap, a blade under it, the base plate with a straight scalloped guard bar down each side, the flared neck,
 a long grip cut with a diamond knurl, the band rolled with MERKUR and SOLINGEN and a knurled end knob broken
 by two turned grooves. It lies as a razor does, on one edge of its head and on the knob, so the handle slopes.
-It has been used: fine scratches, water spots, and dried soap in the knurl, the scallops and under the cap."""
+The head is plated all over, inside and out, as the maker's photographs show it: the base plate one casting, its
+ends shaped as they are. It has been used: fine scratches, a few water spots, and dried soap in the knurl and the
+scallops. Its chrome throws back the room round the desk, its walls and ceiling lit by the pendant."""
 
 import math
 import os
@@ -13,7 +15,7 @@ import bpy
 import numpy as np
 
 from paint import cloud, linear
-from solids import finish, grain, principled, strip_light, worn
+from solids import finish, principled, strip_light, worn
 
 ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "art")
 
@@ -22,9 +24,24 @@ ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "art")
 MM = 1 / 6
 W, H = 17.5, 7.3
 
+# The base plate, along the razor: the floor of the channels inside the bars, its back, the notch inside each bar
+# block, and the back of the blocks.
+BASE = (7.0, 7.9, 7.4, 8.4)
+# The window through each end of the base plate: this far either side of the middle across the head, from this far
+# along the razor to this far, and this deep into the end.
+WINDOW = (7.5, 4.9, 7.0, 5.0)
+# What the chrome throws back besides the lamp: the room round the desk, its walls this far off and as high as the
+# ceiling, which closes them; as bright as the pendant's light thrown back off the desk leaves them, and this warm,
+# the walls dark at the floor and brighter up toward the ceiling, which is brightest.
+WALLS = (300.0, 400.0, (0.13, 0.108, 0.083))
+CEILING = (0.2, 0.165, 0.13)
+# A room is never even: its walls and ceiling lighter and darker in broad patches (shelves, a door, the shade's
+# shadow), between these shares of their brightness, this many patches round.
+PATCHES = (0.35, 1.6, 2.2)
+
 # The cap is nearly flat across its crown and rolls over tightly to its two edges: the radius of the crown,
 # how far out the roll begins, the angle the roll ends at and the half depth of the cap.
-CROWN, ROLL, LIP, CAP_EDGE = 26.0, 7.8, math.radians(72), 11.3
+CROWN, ROLL, LIP, CAP_EDGE = 19.0, 8.5, math.radians(60), 11.3
 BAR = (10.5, 12.5, 5.9, 8.4)
 SCALLOPS, SCALLOP_PITCH = 13, 2.75
 NECK = ((8.4, 4.3), (9.6, 4.25), (11.0, 4.1), (13.0, 3.95), (15.0, 4.0), (17.0, 4.2), (19.0, 4.6), (20.6, 5.1), (21.2, 5.25), (21.45, 5.25), (21.6, 4.9))
@@ -229,7 +246,7 @@ def bar(stage, name, side, material):
     return finish(stage, name, bm, material)
 
 
-def head(stage, plate, cast, steel, soap):
+def head(stage, plate, steel):
     """The three pieces of the head with a blade between them."""
     turn = math.asin(ROLL / CROWN)
     tight = (CAP_EDGE - ROLL) / (math.sin(LIP) - math.sin(turn))
@@ -253,24 +270,38 @@ def head(stage, plate, cast, steel, soap):
     parts = [extruded(stage, "cap", cap, -21.5, 21.5, plate, bevel=0.45, soft=math.radians(14))]
     blade = [(w, bed(w, -0.12)) for w in across * 11.95] + [(w, bed(w)) for w in across[::-1] * 11.95]
     parts.append(extruded(stage, "blade", blade, -21.4, 21.4, steel, bevel=0.0))
-    base = [(w, bed(w, 0.02)) for w in across * 9.6] + [(9.6, 7.9), (-9.6, 7.9)]
-    parts.append(extruded(stage, "base", base, -20.8, 20.8, cast, bevel=0.25))
+    # The base plate is one casting, plated all over: seen from its end (the maker's photographs), a block under
+    # each guard bar, a notch inside it and a straight back between, where the neck is screwed on; a channel runs
+    # between the blade's seat and each bar, its floor the plate, for the lather to leave by.
+    floor, back, notch, block = BASE
+    seat = [(w, bed(w, 0.02)) for w in across * 9.6]
+    outline = seat + [(9.6, floor), (12.5, floor), (12.5, block), (10.4, block + 0.2), (9.3, notch), (8.0, back)]
+    outline += [(-w, a) for w, a in outline[len(seat) :][::-1]]
+    base = extruded(stage, "base", outline, -20.8, 20.8, plate, bevel=0.3)
+    # Through each end, a tall window between the blade's seat and the back.
+    w, a0, a1, deep = WINDOW
+    for end in (1, -1):
+        cutter = bmesh.new()
+        bmesh.ops.create_cube(cutter, size=1.0)
+        bmesh.ops.scale(cutter, vec=((a1 - a0) * MM, (2 * deep) * MM, 2 * w * MM), verts=cutter.verts)
+        bmesh.ops.translate(cutter, vec=((a0 + a1) / 2 * MM, end * 20.8 * MM, 0.0), verts=cutter.verts)
+        box = bpy.data.meshes.new("window")
+        cutter.to_mesh(box)
+        cutter.free()
+        punch = stage.add("window", box)
+        cut = base.modifiers.new("window", "BOOLEAN")
+        cut.operation = "DIFFERENCE"
+        cut.solver = "EXACT"
+        cut.object = punch
+        bpy.context.view_layer.update()
+        graph = bpy.context.evaluated_depsgraph_get()
+        done = bpy.data.meshes.new_from_object(base.evaluated_get(graph), depsgraph=graph)
+        base.modifiers.remove(cut)
+        base.data = done
+        bpy.data.objects.remove(punch)
+    parts.append(base)
     for side in (1, -1):
         parts.append(bar(stage, f"bar-{side}", side, plate))
-        for end in (1, -1):
-            # The bars join the plate at its ends, and a small foot stands under each end.
-            lug = [(-12.2, 5.0), (12.2, 5.0), (12.2, 8.3), (-12.2, 8.3)]
-            parts.append(extruded(stage, f"lug-{end}", lug, end * 18.9, end * 20.8, plate, bevel=0.25))
-            parts.append(extruded(stage, f"foot-{end}", [(-6, 8.2), (6, 8.2), (6, 9.3), (-6, 9.3)], end * 19.2, end * 20.8, plate, bevel=0.3))
-    # Soap has dried in the gap under the cap, along the upper edge of the blade, in a broken line.
-    along = np.linspace(-19.5, 19.5, 261)
-    thick = 0.3 * np.clip(cloud((261, 8), 21, falloff=1.25)[:, 0] * 0.8 - 0.35, 0.02, 1.2)
-    crust = bmesh.new()
-    loops = [[crust.verts.new(((5.45 + r * 0.8 * math.sin(t)) * MM, u * MM, (11.55 + r * math.cos(t)) * MM)) for t in np.linspace(0, 2 * math.pi, 10, endpoint=False)] for u, r in zip(along, thick)]
-    for lower, upper in zip(loops, loops[1:]):
-        for k in range(10):
-            crust.faces.new((lower[k], lower[(k + 1) % 10], upper[(k + 1) % 10], upper[k]))
-    parts.append(finish(stage, "crust", crust, soap))
     # The cap's two pegs come through the plate and show as domes under it.
     for end in (1, -1):
         dome = lathed(stage, f"peg-{end}", [(8.3 + 1.9 * math.sin(t), 1.65 * math.cos(t)) for t in np.linspace(0, math.pi / 2 - 0.02, 14)], plate, steps=40, ends=(True, True))
@@ -318,6 +349,55 @@ def handle(stage, plate, turned, rolled):
     return parts
 
 
+def room(stage):
+    """The room's walls and ceiling round the desk, seen only in the chrome: without them it throws back only the
+    dark, and reads as black glass. A ring and a disc, the same whichever way the razor is turned."""
+    radius, high, warm = WALLS
+    around = np.linspace(0, 2 * math.pi, 96, endpoint=False)
+    walls = bpy.data.meshes.new("razor-walls")
+    walls.from_pydata([(radius * math.cos(a), radius * math.sin(a), z) for a in around for z in (0.0, high)], [], [(2 * k, 2 * ((k + 1) % 96), 2 * ((k + 1) % 96) + 1, 2 * k + 1) for k in range(96)])
+    ceiling = bpy.data.meshes.new("razor-ceiling")
+    ceiling.from_pydata([(radius * math.cos(a), radius * math.sin(a), high) for a in around], [], [list(range(96))[::-1]])
+    for mesh, light, rising in ((walls, warm, True), (ceiling, CEILING, False)):
+        material = bpy.data.materials.new(mesh.name)
+        material.use_nodes = True
+        nodes, links = material.node_tree.nodes, material.node_tree.links
+        nodes.remove(nodes["Principled BSDF"])
+        emit = nodes.new("ShaderNodeEmission")
+        low, high_, count = PATCHES
+        where = nodes.new("ShaderNodeTexCoord")
+        patches = nodes.new("ShaderNodeTexNoise")
+        patches.inputs["Scale"].default_value = count
+        patches.inputs["Detail"].default_value = 1.0
+        links.new(where.outputs["Generated"], patches.inputs["Vector"])
+        spread = nodes.new("ShaderNodeMapRange")
+        spread.inputs["From Min"].default_value, spread.inputs["From Max"].default_value = 0.35, 0.65
+        spread.inputs["To Min"].default_value, spread.inputs["To Max"].default_value = low, high_
+        links.new(patches.outputs["Fac"], spread.inputs["Value"])
+        tint = nodes.new("ShaderNodeMix")
+        tint.data_type = "RGBA"
+        tint.blend_type = "MULTIPLY"
+        tint.inputs["Factor"].default_value = 1.0
+        tint.inputs["A"].default_value = (*light, 1)
+        links.new(spread.outputs[0], tint.inputs["B"])
+        links.new(tint.outputs["Result"], emit.inputs["Color"])
+        if rising:
+            height = nodes.new("ShaderNodeSeparateXYZ")
+            links.new(where.outputs["Generated"], height.inputs[0])
+            ramp = nodes.new("ShaderNodeMapRange")
+            ramp.inputs["To Min"].default_value = 0.15
+            links.new(height.outputs["Z"], ramp.inputs["Value"])
+            links.new(ramp.outputs[0], emit.inputs["Strength"])
+        links.new(emit.outputs[0], nodes["Material Output"].inputs["Surface"])
+        mesh.materials.append(material)
+        obj = stage.add(mesh.name, mesh)
+        obj.location = (W / 2, -H / 2, 0)
+        for flag in ("visible_camera", "visible_diffuse", "visible_shadow", "visible_transmission", "visible_volume_scatter"):
+            setattr(obj, flag, False)
+        # desk.py keeps it, as it keeps no other shot's studio cards.
+        obj["kept"] = True
+
+
 def smooth(points, step=0.2):
     """A turned profile drawn through a few measured points."""
     along, radius = zip(*points)
@@ -330,9 +410,7 @@ def smooth(points, step=0.2):
 
 
 def razor(stage):
-    plate = chrome("chrome", rough=0.045, spots=0.3)
-    # Inside the head the casting was never polished: it is grey and pitted under its plate.
-    cast = grain(principled("cast", (0.42, 0.42, 0.43), rough=0.62, metal=1.0), 70, 0.006)
+    plate = chrome("chrome", rough=0.085, spots=0.12)
     turned = chrome("knurled", rough=0.1)
     rolled = chrome("rolled", rough=0.05, band=True)
     steel = worn(principled("blade", (0.62, 0.63, 0.65), rough=0.22, metal=1.0), "Scratches003", 1.5, 0.15)
@@ -343,9 +421,9 @@ def razor(stage):
     root = stage.add("razor", None)
     root.rotation_euler = (0, slope, 0)
     root.location = (0.05, -H / 2, (low * math.cos(slope) + foot * math.sin(slope)) * MM)
-    soap = principled("soap", SOAP, rough=0.8)
-    for part in (*head(stage, plate, cast, steel, soap), *handle(stage, plate, turned, rolled)):
+    for part in (*head(stage, plate, steel), *handle(stage, plate, turned, rolled)):
         part.parent = root
+    room(stage)
 
     strip_light(stage, "strip", (W / 2, -H / 2 + 5.0, 30.0), 70.0, 9.0, 3.0)
     stage.shoot("razor", (0, 0, W, H), bleed=1.0, shadow=1.3, card=1.4, sharp=1.5)
