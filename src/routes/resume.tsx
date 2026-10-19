@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Vitrine } from '../components/Vitrine'
+import { Vitrine } from '../components/vitrine'
 import { pages } from '../content'
 import { seo } from '../lib/seo'
 

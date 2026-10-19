@@ -1,8 +1,8 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
 
-import { ErrorPage, InStack } from '../components/ErrorPage'
-import { NotFound } from '../components/NotFound'
-import { SiteShell } from '../components/SiteShell'
+import { ErrorPage, InStack } from '../components/error-page'
+import { NotFound } from '../components/not-found'
+import { SiteShell } from '../components/site-shell'
 import { pages, site } from '../content'
 
 import appCss from '../styles.css?url'

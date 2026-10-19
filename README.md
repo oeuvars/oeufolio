@@ -7,7 +7,7 @@ pnpm install
 pnpm dev
 ```
 
-Content lives in `src/content.ts`. Sheet colors are set in `src/components/SiteShell.tsx`. Routes are under `src/routes`; TanStack Router updates `src/routeTree.gen.ts` for you.
+Content lives in `src/content.ts`. Sheet colors are set in `src/components/site-shell.tsx`. Routes are under `src/routes`; TanStack Router updates `src/route-tree.gen.ts` for you.
 
 Build the production app with:
 

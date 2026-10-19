@@ -1,5 +1,5 @@
-import { StripHouse } from './StripHouse'
-import { StripPoster } from './StripPoster'
+import { StripHouse } from './strip-house'
+import { StripPoster } from './strip-poster'
 
 type ArtProps = {
   index: number

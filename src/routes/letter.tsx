@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Letter } from '../components/Letter'
-import { Reveal } from '../components/Reveal'
+import { Letter } from '../components/letter'
+import { Reveal } from '../components/reveal'
 import { pages, profile } from '../content'
 import { seo } from '../lib/seo'
 

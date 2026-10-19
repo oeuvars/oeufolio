@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { cv, profile } from '../../content'
 import type { CvRole } from '../../types'
-import Counter from '../bits/Counter'
+import Counter from '../bits/counter'
 
 /** "March 2025 to now" as "Mar 2025 – now". */
 const period = (text: string) =>

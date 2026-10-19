@@ -40,7 +40,7 @@ PASSAGES = [(305, 302, 398, 453), (512, 374, 642, 451), (100, 484, 302, 561), (3
 # The folded strip's column, in the reference's pixels: the windows stacked down its middle.
 STRIP = (300, 594)
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
-# is shown at, src/components/SiteShell.tsx PAPER, the poster being shown about a third of its size).
+# is shown at, src/components/site-shell.tsx PAPER, the poster being shown about a third of its size).
 PAPER_TAKES = 420
 PAPER_SIZE = 280
 # How far over the paper's own dark the wall's light has to be to count as light printed on it.

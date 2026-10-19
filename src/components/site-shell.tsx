@@ -5,14 +5,14 @@ import { useEffect, useId, useState } from 'react'
 
 import { profile } from '../content'
 import type { NavItem, VersionSearch } from '../types'
-import { Art } from './Art'
-import { Badge } from './Badge'
+import { Art } from './art'
+import { Badge } from './badge'
 import { POSTER } from './house'
-import { Desk } from './mat/Desk'
-import { Resume } from './Resume'
+import { Desk } from './mat/desk'
+import { Resume } from './resume'
 import tabcut from './tabcut.json'
-import { Ticket } from './ticket/Ticket'
-import { useStackMetrics } from './useStackMetrics'
+import { Ticket } from './ticket/ticket'
+import { useStackMetrics } from './use-stack-metrics'
 
 /** A material as a tile that repeats without a seam, and how many CSS pixels square it is shown. */
 type Paper = {
@@ -167,7 +167,7 @@ const pageTones: Tone[] = [
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
 // The hide's tile: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are. It is
-// TILE (8) em of the ticket's spread across, and the spread is 90vh tall for its 29.85 em (ticket/Ticket.tsx), so the
+// TILE (8) em of the ticket's spread across, and the spread is 90vh tall for its 29.85 em (ticket/ticket.tsx), so the
 // hide's grain is the size it was beside the ticket in the scene's photograph.
 const HIDE = `calc(90vh * ${8 / 29.85})`
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
@@ -311,7 +311,7 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
       </svg>
       {leather && (
         // The leather is the mat's, so it is in the mat's light. The mat lends this where its map of the
-        // light lies (mat/Mat.tsx). The clip isolates what is in it, so the map multiplies on white and the
+        // light lies (mat/mat.tsx). The clip isolates what is in it, so the map multiplies on white and the
         // whole multiplies the leather.
         <div
           aria-hidden

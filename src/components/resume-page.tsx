@@ -5,10 +5,10 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 
 import { cv, profile } from '../content'
-import Noise from './bits/Noise'
-import Waves from './bits/Waves'
-import { CommandPalette, PaletteKey } from './resume/CommandPalette'
-import { TechIcon } from './resume/TechIcon'
+import Noise from './bits/noise'
+import Waves from './bits/waves'
+import { CommandPalette, PaletteKey } from './resume/command-palette'
+import { TechIcon } from './resume/tech-icon'
 import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
 
 const LOGOS: Record<string, string> = {

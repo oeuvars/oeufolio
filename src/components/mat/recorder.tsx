@@ -4,7 +4,7 @@ import type { Like } from '../../types'
 import { PROP, RENDER } from './classes'
 import lean from './lean.json'
 import { playTape } from './tape'
-import { useRevving } from './useRevving'
+import { useRevving } from './use-revving'
 
 type RecorderProps = {
   like: Like

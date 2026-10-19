@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router'
 
 import { profile } from '../content'
-import { Label } from './waybill/Label'
-import { Slip } from './waybill/Slip'
+import { Label } from './waybill/label'
+import { Slip } from './waybill/slip'
 
 // The box the label is stuck on: plain corrugated kraft, flat, with nothing drawn on it.
 const KRAFT = '#bf9465'

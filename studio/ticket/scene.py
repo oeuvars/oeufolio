@@ -13,7 +13,7 @@ on its back at the top, over the ticket's corner. punch is the same set with the
 ticket, photographed only round the hole, for the page to lay over open once the address is copied.
 
 Every piece is the one its own script builds (leather.py, ticket.py, leica.py), laid where the page has it, in the
-spread's em (Ticket.tsx: the stamps' column from 0 to BESIDE across, the ticket's frame after it, FRAME_H down). The light is the stand's room and
+spread's em (ticket.tsx: the stamps' column from 0 to BESIDE across, the ticket's frame after it, FRAME_H down). The light is the stand's room and
 the key lamp (key.py), four times as bright, up to the left; the exposure is the one the white card needs, and the
 hide's dye is dark enough to be its deep crimson at that exposure, as it would be in one photograph.
 

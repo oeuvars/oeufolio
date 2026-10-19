@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 
 import { cn } from '../../lib/utils'
 import type { PlateId, PropId } from '../../types'
-import { Rulers } from './Rulers'
+import { Rulers } from './rulers'
 import { PLATES, PORTRAITS } from './layout'
 
 type MatProps = {

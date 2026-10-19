@@ -1,11 +1,11 @@
 import { profile } from '../../content'
-import { BusinessCard } from './BusinessCard'
-import { KeyBunch } from './KeyBunch'
-import { Mat } from './Mat'
-import { MatchTicket } from './MatchTicket'
-import { RecordSleeve } from './RecordSleeve'
-import { Recorder } from './Recorder'
-import { Wallet } from './Wallet'
+import { BusinessCard } from './business-card'
+import { KeyBunch } from './key-bunch'
+import { Mat } from './mat'
+import { MatchTicket } from './match-ticket'
+import { RecordSleeve } from './record-sleeve'
+import { Recorder } from './recorder'
+import { Wallet } from './wallet'
 
 /**
  * The extras, as what was left on a desk: a teal leather cutting mat seen from overhead, with the things I

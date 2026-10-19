@@ -4,7 +4,7 @@
  * The 404: a paste-up on a wall at night. Every piece is a layer laid over the last with a blend, as a
  * photomontage is built: the stained wall, a halftone wash and two gels of light, the number printed three times
  * out of register, two runs of tape across it, and over all of it the screen's own lines
- * and grain. The filters are in NotFound.tsx.
+ * and grain. The filters are in not-found.tsx.
  */
 .nf {
   --nf-void: #09090a;

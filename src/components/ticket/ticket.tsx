@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { profile } from '../../content'
 import { slide } from '../house'
 import contact from './contact.json'
-import { Print } from './Print'
+import { Print } from './print'
 import ticket from './ticket.json'
 
 const [W, H] = ticket.size

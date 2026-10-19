@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Dollhouse } from '../components/Dollhouse'
-import { Masthead } from '../components/Masthead'
-import { Poster } from '../components/Poster'
-import { Reveal } from '../components/Reveal'
+import { Dollhouse } from '../components/dollhouse'
+import { Masthead } from '../components/masthead'
+import { Poster } from '../components/poster'
+import { Reveal } from '../components/reveal'
 import { pages, profile } from '../content'
 import { seo } from '../lib/seo'
 import type { VersionSearch } from '../types'

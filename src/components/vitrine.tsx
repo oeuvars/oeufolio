@@ -6,8 +6,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 import { cv, profile } from '../content'
 import type { CvRole } from '../types'
-import GlassSurface from './bits/GlassSurface'
-import Silk from './bits/Silk'
+import GlassSurface from './bits/glass-surface'
+import Silk from './bits/silk'
 
 // Claret silk under clear glass, and the type in ivory on it.
 const CLARET = '#80263a'
