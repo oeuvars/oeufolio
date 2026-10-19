@@ -4,8 +4,8 @@ pressed flat toward the crimp, with a few small creases there where the white la
 shallow dents thumbs leave in thin aluminium further along. The white enamel shoulder and the ribbed white cap screwed on its thread are dulled with
 dried soap. The crimp is bitten by the jaws that closed it and stamped with a
 lot number.
-The lacquer is a satin gloss, lit only by the room the rest of the desk is in. The logo is the maker's own
-drawing, the signature is lifted from the packshot and the lettering is reset."""
+The lacquer is a satin gloss, lit only by the room the rest of the desk is in. The front's print is a real tube's,
+unrolled from a photograph of one; round the sides the logo's panel, the green and the flag are drawn."""
 
 import math
 import os
@@ -117,14 +117,15 @@ def label():
         sheet.art(os.path.join(ART, f"proraso-{name}.png"), mid + x0 * F, y0 * F, mid + x1 * F, y1 * F)
 
     printed("white-logo", -0.4645, 0.467, 0.4645, 1.0715)
-    printed("white-lettering", -0.4, 1.3, 0.4, 1.62)
-    printed("signature", -0.3997, 2.3183, 0.4023, 2.5125)
+    # Over the front, a real tube's print, unrolled from a photograph of one (art/prorasophoto.py): its inks, its
+    # registration and the faint unevenness of its lacquer. The drawing above is left only round the sides, where
+    # the logo's panel wraps; the lettering and the signature are the photograph's alone.
+    printed("print", -0.5, 0.0, 0.5, LENGTH / F)
 
-    # Every gold on it is a pale metallic ink.
-    for ink in ("#c19138", GOLD):
-        gilt = np.clip(1.5 - np.abs(sheet.rgb - linear(ink)).sum(axis=-1) / 0.12, 0, 1)
-        sheet.paint(gilt, GOLD)
-        sheet.finish(gilt, metal=0.35)
+    # Every gold on it is a pale metallic ink: warm, and yellow rather than red.
+    r, g, b = sheet.rgb[..., 0], sheet.rgb[..., 1], sheet.rgb[..., 2]
+    gilt = np.clip(((r - b) / np.maximum(r, 1e-3) - 0.35) / 0.15, 0, 1) * np.clip((g / np.maximum(r, 1e-3) - 0.6) / 0.1, 0, 1) * np.clip((r - 0.08) / 0.05, 0, 1)
+    sheet.finish(gilt, metal=0.35)
 
     # The crimp: the end folded over three times and pressed, each fold a step down toward the wall, none of
     # them straight. The jaws that pressed it left their teeth in it and the lot number, and the lacquer has
@@ -170,7 +171,7 @@ def label():
 
     # The green is a translucent lacquer over the bright aluminium, so the light it throws back is green too.
     # In the photographs its lit band is a saturated blue green, never grey.
-    green = np.clip((sheet.rgb[..., 1] - np.maximum(sheet.rgb[..., 0], sheet.rgb[..., 2])) / 0.04, 0, 1) * (1 - bare)
+    green = np.clip(((sheet.rgb[..., 1] - np.maximum(sheet.rgb[..., 0], sheet.rgb[..., 2])) / np.maximum(sheet.rgb[..., 1], 1e-3) - 0.3) / 0.15, 0, 1) * (1 - bare)
     sheet.finish(green, metal=0.55)
     sheet.rgb += (green * (1 - outside))[..., None] * (linear(SHEEN) - sheet.rgb) * 0.45
 
