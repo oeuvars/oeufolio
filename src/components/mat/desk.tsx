@@ -10,7 +10,7 @@ import { Wallet } from './wallet'
 /**
  * The extras, as what was left on a desk: a teal leather cutting mat seen from overhead, with the things I
  * like lying on it, rendered as one photograph, my business card among them. The shaving cream, the razor,
- * the picks and the Seiko Alpinist are only in the picture. The mat is the page, and the page is the whole
+ * the picks, the Seiko Alpinist and the mug of coffee are only in the picture. The mat is the page, and the page is the whole
  * strip. The page's own margins are given over to it: the ones undone here are SiteShell's padding round a
  * page, up to where the strip before this one lies over it, and the band beside it. The sports cars like has no object of its
  * own: it is the car key on the bunch that carries the name. SiteShell keeps the desk in its strip, open or

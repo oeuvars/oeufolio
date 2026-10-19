@@ -28,7 +28,7 @@ import bpy  # noqa: E402
 import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
-from objects import card, catlamp, chrono, donutlamp, flutelamp, ilolamp, lustrelamp, mat, mushroomlamp, name, pick, proraso, razor, record, recorder, ticket, wallet, watch  # noqa: E402
+from objects import card, catlamp, chrono, donutlamp, flutelamp, ilolamp, lustrelamp, mat, mug, mushroomlamp, name, pick, proraso, razor, record, recorder, ticket, wallet, watch  # noqa: E402
 from paint import linear  # noqa: E402
 from stage import GAIN, LENS_HEIGHT, MAT, SHADOW, Stage, shoulder  # noqa: E402
 
@@ -59,6 +59,7 @@ BUILDERS = {
     **mushroomlamp.SHOTS,
     **watch.SHOTS,
     **chrono.SHOTS,
+    **mug.SHOTS,
 }
 
 # Each object on the page is a box this many em wide and tall, drawn k times its size, made of these shots.
@@ -83,6 +84,7 @@ PROPS = {
     "mushroomlamp": {"box": (mushroomlamp.W, mushroomlamp.H), "k": 0.9, "shots": {"mushroomlamp": (0, 0, 0)}},
     "watch": {"box": (watch.W, watch.H), "shots": {"watch": (0, 0, 0)}},
     "chrono": {"box": (chrono.W, chrono.H), "k": 1.07, "shots": {"chrono": (0, 0, 0)}},
+    "mug": {"box": (mug.W, mug.H), "shots": {"mug": (0, 0, 0)}},
 }
 # Shots the page turns, rendered as layers of their own and left out of the plate. The reel's shot carries a
 # stand-in for the reel under the hub, which the recorder's own shot has for real. A shot's parts are in the layer
@@ -98,11 +100,12 @@ STAND_INS = {"reel": ("reel",)}
 # straight over it, at the height the plate's camera is held: the plate's camera, off to one side of it, would draw
 # the tall round glass leaning away from it, egg-shaped. So are the ILO lamp, its dock hidden under its ring, and
 # the fluted copper lamp and the smoked lustre glass lamp, lying on their backs with their faces up, as their faces
-# were photographed, and the lacquered mushroom lamp standing on its foot. Each is left out of the plate's camera
+# were photographed, the lacquered mushroom lamp standing on its foot, and the mug of coffee, seen from over it as
+# the user photographed it, its coffee showing and not its side. Each is left out of the plate's camera
 # but stays in the set, throwing its shadow and its light on the mat under it, and is rendered on its own by that camera, at the plate's own size, set where it stands. Each is its shot, and the module that built it, which knows the camera
 # (photograph()) in the coordinates of its object (the mesh named BODY, or else the one carrying the photograph),
 # the middle of the object (MIDDLE), and the point on the desk under that middle (STANDS).
-PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp), "lustrelamp": ("lustrelamp", lustrelamp), "mushroomlamp": ("mushroomlamp", mushroomlamp)}
+PORTRAITS = {"catlamp": ("catlamp", catlamp), "donutlamp": ("donutlamp", donutlamp), "ilolamp": ("ilolamp", ilolamp), "flutelamp": ("flutelamp", flutelamp), "lustrelamp": ("lustrelamp", lustrelamp), "mushroomlamp": ("mushroomlamp", mushroomlamp), "mug": ("mug", mug)}
 # The page shows an em of the plate at up to 22 pixels, 44 on a screen of two pixels to the point; this many leaves
 # room to zoom in before the render runs out.
 DENSITY = 64
@@ -339,7 +342,8 @@ class Desk:
             optics.clip_end = 1000
             camera = self.low = self.stage.add("portrait", optics)
         where = placed @ Vector(centre)
-        looking = turn @ Matrix(axes).transposed()
+        # A prop with a handle (SQUARE) is seen with the page's own axes, so it shows turned as the layout turns it.
+        looking = (Matrix(axes).transposed() if getattr(held, "SQUARE", False) else turn @ Matrix(axes).transposed())
         camera.matrix_world = Matrix.Translation(where) @ looking.to_4x4()
         into = looking.transposed()
 
