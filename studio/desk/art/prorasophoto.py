@@ -30,6 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PHOTO = os.path.join(HERE, "proraso-own.jpg")
 PRINT = os.path.join(HERE, "proraso-print.png")
 RELIEF = os.path.join(HERE, "proraso-relief.png")
+HEIGHT = os.path.join(HERE, "proraso-height.png")
 SHAPE = os.path.join(HERE, "proraso-shape.json")
 # As objects/proraso.py has it: the tube's length from the crimped edge to the shoulder, and the print's width once
 # round, in em.
@@ -46,17 +47,27 @@ SHOULDER = 1900.0
 # How deep the tube is, as a share of how wide, from the crimp to the shoulder: shut flat at the crimp, pressed flat
 # for the first few em, round by the shoulder. (along in em, share)
 DEEP = ((0.0, 0.03), (0.7, 0.03), (0.85, 0.02), (1.5, 0.05), (3.5, 0.09), (5.5, 0.17), (8.0, 0.3), (11.0, 0.47), (14.0, 0.62), (17.0, 0.8), (20.0, 0.95), (LENGTH, 1.0))
-# The lacquer's white in the model, #e4e4df; how far the light divided out is smoothed, along and round, and the
+# The lacquer's white in the print, #c7c9ca, low enough under the glints' white to leave them their light; how far the light divided out is smoothed, along and round, and the
 # size of the crumples' relief, in em.
-BODY = (0xE4, 0xE4, 0xDF)
-BROAD = (1.0, 0.25)
+BODY = (0xC7, 0xC9, 0xCA)
+BROAD = (2.0, 0.04)
 # How far round from the middle of the front the photograph is read, in shares of the way round.
-SIDE = 0.235
-# The photographer's shadow: from this far along (em), over the left side from this share round to this.
-SHADOW = (16.0, 0.25, 0.45)
+SIDE = 0.22
+# The photographer's shadow: from this far along (em), over the left side from this share round left of the middle
+# out to the edge.
+SHADOW = (16.5, 0.08)
 FINE = 0.12
-# How much brighter than the lacquer a glint may stay.
-GLINT = 0.04
+# The brightest a glint may be in the print, as linear white.
+GLINT = 0.92
+# The photograph's light, the way toward it across and down the print, and how steep a facet is per unit of log
+# brightness (a key about 60 degrees up).
+LIGHT = np.array((-0.3, -0.95))
+SLOPE = 2.6
+# The logo panel, from and to this far down the print (em).
+PANEL = (2.6, 7.8)
+# The crumples kept are finer than this (em), and their creases sharpened this much.
+BULGE = 0.4
+SHARPEN = 2.5
 
 
 def linear(c):
@@ -115,9 +126,11 @@ def main():
     share = (np.arange(cols_out) + 0.5) / cols_out
     # The back is the front mirrored about the sides.
     front = np.where(share < 0.25, 0.5 - share, np.where(share > 0.75, 1.5 - share, share))
-    # Toward each side the photograph sees the tube edge on, dark and with the marble in it: there the print is
-    # carried out from as far round as the photograph reads it.
-    front = np.clip(front, 0.5 - SIDE, 0.5 + SIDE)
+    # Toward each side the photograph sees the tube edge on, dark and with the marble in it: past as far round as
+    # it reads, the print is reflected back on itself.
+    reach = np.abs(front - 0.5)
+    facing = reach.copy()
+    front = 0.5 + np.sign(front - 0.5) * np.where(reach > SIDE, 2 * SIDE - reach, reach)
     ya = CRIMP + v * scale
     ra = np.interp(ya, rows, half)
     rb = ra * np.interp(v, *zip(*DEEP))
@@ -143,8 +156,8 @@ def main():
     inside = (np.abs(front - 0.5) < 0.17)[None, :]
     ink = ((g > 1.2 * r) & (g > 1.1 * b)) | ((r > 2.5 * g) & (r > 0.1)) | ((grey < 0.05) & (chroma < 0.8) & inside)
     white = ~ndimage.binary_dilation(ink, iterations=2)
-    # Its broad light divided out, colour and all: smoothed far along the tube and a little round it, so the falloff
-    # toward each edge goes and the crumples, which never run far, keep their own light and dark.
+    # Its broad light divided out, colour and all: smoothed far along the tube and hardly round it, so the falloff
+    # toward each edge goes and the crumples, which run every way, keep their own light and dark.
     sigma = (BROAD[0] * PX, BROAD[1] * PX)
     weight = ndimage.gaussian_filter(white.astype(np.float64), sigma, mode=("nearest", "wrap"))
     light = np.stack([ndimage.gaussian_filter(lin[..., k] * white, sigma, mode=("nearest", "wrap")) for k in range(3)], -1) / np.maximum(weight, 1e-6)[..., None]
@@ -153,21 +166,49 @@ def main():
         weight = ndimage.gaussian_filter(white.astype(np.float64), sigma, mode=("nearest", "wrap"))
         return np.stack([ndimage.gaussian_filter(lin[..., k] * white, sigma, mode=("nearest", "wrap")) for k in range(3)], -1) / np.maximum(weight, 1e-6)[..., None]
 
-    v0, s0, s1 = SHADOW
-    box = np.clip((v[:, None] - v0) / 1.5, 0, 1) * np.clip(1 - np.abs(np.abs(front - 0.5) * np.sign(0.5 - front) - (0.5 - (s0 + s1) / 2)) / ((s1 - s0) / 2), 0, 1)[None, :]
-    box = ndimage.gaussian_filter(box, 0.3 * PX)[..., None]
+    v0, x0 = SHADOW
+    box = np.clip((v[:, None] - v0) / 1.5, 0, 1) * np.clip((0.5 - front - x0) / 0.04, 0, 1)[None, :]
+    box = ndimage.gaussian_filter(box, 0.1 * PX)[..., None]
     light = light * (1 - box) + smoothed((0.3 * PX, 0.08 * PX)) * box
-    flat = lin / np.maximum(light, 1e-4)
-    # The photograph's glints are its lamp's, not the desk's: anything brighter than the lacquer is pressed back
-    # to it, and the render's own gloss puts the desk's glints on the crumples.
-    flat = np.where(flat > 1, 1 + GLINT * np.tanh((flat - 1) / GLINT), flat) * linear(np.array(BODY) / 255)
+    # For the print, the light is only the falloff toward each edge, the same all along, times the room's, brighter
+    # toward one end and the same all round. Neither has any crumple in it, so the crumples' shading and glints stay
+    # in the print just as the photograph has them.
+    lacquer = np.where((white & (box[..., 0] < 0.01))[..., None], lin, np.nan)
+    across = np.nanmedian(np.where(((v > 1.0) & (v < LENGTH - 0.6))[:, None, None], lacquer, np.nan), axis=0)
+    across = ndimage.gaussian_filter1d(across, 0.1 * PX, axis=0, mode="wrap")
+    down = np.nanmedian(np.where((np.abs(front - 0.5) < 0.12)[None, :, None], lacquer / across, np.nan), axis=1)
+    known = ~np.isnan(down)
+    down = ndimage.gaussian_filter1d(np.where(known, down, 0), PX, axis=0, mode="nearest") / np.maximum(ndimage.gaussian_filter1d(known.astype(np.float64), PX, axis=0, mode="nearest"), 1e-6)
+    lit = down[:, None] * across[None]
+    lit = lit * (1 - box) + smoothed((0.3 * PX, 0.08 * PX)) * box
+    flat = lin / np.maximum(lit, 1e-4)
+    # Under it, and at the edge beside it where the marble shows, the lacquer is the other side's, mirrored; the
+    # signature's ink stays its own.
+    stroke = (ndimage.grey_closing(grey, size=(9, 9)) - grey) > 0.22 * light.mean(-1)
+    printed = ndimage.gaussian_filter(ndimage.binary_dilation(ink | stroke, iterations=2).astype(np.float64), 1)[..., None]
+    borrow = box * (1 - printed) * (1 - printed[:, ::-1])
+    flat = flat * (1 - borrow) + flat[:, ::-1] * borrow
+    # Past what the photograph reads, only its coloured inks carry round; the lacquer there is plain, and takes its
+    # crumples from the wall's own shape.
+    beyond = np.clip((facing - (SIDE - 0.03)) / 0.03, 0, 1)[None, :, None]
+    coloured = ndimage.gaussian_filter(ndimage.binary_dilation(((g > 1.2 * r) & (g > 1.1 * b)) | ((r > 2.5 * g) & (r > 0.1)) | ((grey < 0.06) & (facing < SIDE)[None, :]), iterations=2).astype(np.float64), 1)[..., None]
+    lacquer = np.median(flat[white & (np.abs(front - 0.5) < 0.1)[None, :]], axis=0)
+    flat = flat * (1 - beyond * (1 - coloured)) + lacquer * beyond * (1 - coloured)
+    # The glints are kept, as bright as the print can hold: up to GLINT white, eased in.
+    body = linear(np.array(BODY) / 255)
+    head = (GLINT - body) / body
+    flat = np.where(flat > 1, 1 + head * np.tanh((flat - 1) / head), flat) * body
     srgb = np.clip(encode(flat) * 255, 0, 255).astype(np.uint8)
     Image.fromarray(srgb, "RGB").save(PRINT)
 
     # The crumples' relief: the white's fine light and dark, the inks left out.
     # The gold and the grey of the panel's frame are inks here too: any line much darker than the lacquer around it.
     gilt = (r > g) & (g > b) & (chroma > 0.5)
-    lines = (grey < 0.55 * light.mean(-1)) & ~ndimage.binary_opening(grey < 0.55 * light.mean(-1), iterations=4)
+    # Thin printed lines (the frame, the rules, the signature): much darker than a closing of the picture over them.
+    lines = (ndimage.grey_closing(grey, size=(9, 9)) - grey) > 0.22 * light.mean(-1)
+    # The logo panel's grey frame is broad and pale: inside its band, a wider and gentler test.
+    band = ((v > PANEL[0]) & (v < PANEL[1]))[:, None]
+    lines |= band & ((ndimage.grey_closing(grey, size=(19, 19)) - grey) > 0.1 * light.mean(-1))
     clean = white & ~ndimage.binary_dilation(gilt | lines, iterations=3)
     plain = ndimage.gaussian_filter(ndimage.binary_erosion(clean, iterations=6).astype(np.float64), 2)
     level = np.log(np.maximum(grey, 1e-3) / np.maximum(light.mean(-1), 1e-3))
@@ -177,6 +218,48 @@ def main():
     fine *= plain
     relief = 128 + 127 * np.clip(fine / (3 * fine[plain > 0.5].std()), -1, 1)
     Image.fromarray(relief.astype(np.uint8), "L").save(RELIEF)
+
+    # The creases themselves, for the wall's shape, from the photograph's shading. Its light fell from the crimp's end
+    # and a little from the left (LIGHT, toward it in the print, x across and y down), so a facet tilted toward it
+    # is lighter and one tilted away darker: the shading is the slope along that way, SLOPE em up per unit of
+    # log brightness. The height whose slope that is comes from a Poisson solve. Where there is ink, and in the
+    # glints, the shading is not the metal's: there the slope is carried over smoothly from the lacquer round it.
+    # The photographer's shadow is not the metal's either.
+    plain = plain * (1 - box[..., 0])
+    shade = np.clip(level, -0.6, 0.25)
+    shade = shade - ndimage.gaussian_filter(shade * plain, 0.8 * PX) / np.maximum(ndimage.gaussian_filter(plain, 0.8 * PX), 1e-6)
+    near = ndimage.gaussian_filter(plain, 0.05 * PX)
+    filled = ndimage.gaussian_filter(shade * plain, 0.05 * PX) / np.maximum(near, 1e-6)
+    shade = shade * plain + filled * (1 - plain) * np.clip(near / 0.2, 0, 1)
+    # Under the photographer's shadow the crumples are borrowed from the other side of the front, mirrored.
+    hidden = box[..., 0]
+    shade = shade * (1 - hidden) + shade[:, ::-1] * hidden
+    dx, dy = LIGHT / np.hypot(*LIGHT)
+    slope = -SLOPE * shade
+    gx, gy = slope * dx, slope * dy
+    # Mirrored down, so the solve wraps cleanly both ways; once round already wraps across.
+    gx = np.concatenate((gx, gx[::-1]), 0)
+    gy = np.concatenate((gy, -gy[::-1]), 0)
+    div = (np.roll(gx, -1, 1) - np.roll(gx, 1, 1)) / 2 + (np.roll(gy, -1, 0) - np.roll(gy, 1, 0)) / 2
+    fy, fx = np.meshgrid(np.fft.fftfreq(div.shape[0]), np.fft.fftfreq(div.shape[1]), indexing="ij")
+    lap = -(np.sin(np.pi * fx) ** 2 + np.sin(np.pi * fy) ** 2) * 4
+    lap[0, 0] = 1
+    solved = np.fft.fft2(div) / lap
+    solved[0, 0] = 0
+    height = np.real(np.fft.ifft2(solved))[:rows_out] / PX
+    # The tube's own roundness the model has already: only the crumples, finer than an em or so, are kept.
+    height -= ndimage.gaussian_filter(height, (BULGE * PX, BULGE * PX), mode=("nearest", "wrap"))
+    # Thin metal folds in flat facets meeting at sharp creases: the finest of the solve, which a Poisson solve
+    # always softens, given back.
+    height += SHARPEN * (height - ndimage.gaussian_filter(height, 0.05 * PX, mode=("nearest", "wrap")))
+    span = float(np.abs(height).max())
+    Image.fromarray(((height / span * 0.5 + 0.5) * 65535).astype(np.uint16)).save(HEIGHT)
+    with open(SHAPE) as file:
+        record = json.load(file)
+    record["crumple"] = span
+    with open(SHAPE, "w") as file:
+        json.dump(record, file)
+    print("crumples", round(height.std(), 4), "em deep (sd),", round(span, 3), "at most")
     print(cols_out, "x", rows_out, "white", round(white.mean(), 3), "crimp", round(a[0], 2), "shoulder", round(a[-1], 2), "em half width")
 
 

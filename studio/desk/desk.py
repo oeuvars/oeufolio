@@ -73,7 +73,7 @@ PROPS = {
     "wallet": {"box": (14.8, 18.0), "shots": {"wallet": (0, 0, 0)}},
     "pick-fin": {"box": (3.145, 3.3), "k": 1.6, "shots": {"pick-fin": (0, 0, 0)}},
     "pick-wedge": {"box": (2.76, 3.125), "k": 1.6, "shots": {"pick-wedge": (0, 0, 0)}},
-    "proraso": {"box": (25.5, 7.95), "shots": {"proraso": (0, 0, 0)}},
+    "proraso": {"box": (proraso.W, proraso.H), "shots": {"proraso": (0, 0, 0)}},
     "razor": {"box": (17.5, 7.3), "shots": {"razor": (0, 0, 0)}},
     "catlamp": {"box": (27.0, 10.0), "k": 0.7, "shots": {"catlamp": (0, 0, 0)}},
     "donutlamp": {"box": (donutlamp.W, donutlamp.H), "shots": {"donutlamp": (0, 0, 0)}},
