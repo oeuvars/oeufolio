@@ -5,7 +5,7 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
               through its steel folding clasp with the shield engraved in the cover
     proraso   Proraso's green under its own badge, clamped in the grip of a Merkur razor: chrome, knurled,
               with Merkur's mark struck into its collar
-    lacoste   a cut off a navy piqué polo, hemmed: the embroidered crocodile, and the collar's rib knit with ecru and
+    lacoste   a cut off a burgundy piqué polo, hemmed: the embroidered crocodile, and the collar's rib knit with ecru and
               gold tipping
     prs       a Blackstar Debut's tolex in a PRS Silver Sky's Sandglow Yellow, with four of the outline birds PRS
               inlays down its fretboards let into it one under another, mother-of-pearl in rosewood, and a band off the
@@ -440,11 +440,11 @@ RIB_KNIT, RIB_WALES, RIB_COURSES = 8.3, 139, 153
 
 
 def lacoste(name, height):
-    """A cut off a navy Lacoste polo, hemmed and stitched to the tab: the knit is petit piqué, the scan of a real
+    """A cut off a burgundy Lacoste polo, hemmed and stitched to the tab: the knit is petit piqué, the scan of a real
     knit (ambientCG Fabric036) at its own scale, its little cells half a millimetre across; the crocodile is the
     embroidered badge sewn on at the chest, its thread raised and running across the body in satin stitch; and at
     its foot is the collar's rib, knit stitch by stitch, tipped in ecru and gold."""
-    sheet = Sheet(WIDTH, height, NAVY, rough=0.92, density=6)
+    sheet = Sheet(WIDTH, height, BURGUNDY, rough=0.92, density=6)
     sheet.coat[:] = 0.0
     shape = outline(height)
     edge = within(sheet.X, sheet.Y, shape)
@@ -456,7 +456,7 @@ def lacoste(name, height):
     along = np.arctan2(Y - height / 2, X - MIDDLE) * 40
     stitches = stitch_line & (np.sin(along) > -0.2)
     sheet.press(blur(stitches.astype(float), 1.2), 0.006)
-    sheet.paint(blur(stitches.astype(float), 0.8) * 0.5, "#141d36")
+    sheet.paint(blur(stitches.astype(float), 0.8) * 0.5, "#3a1219")
 
     # The collar's rib at the foot. Its stitches are a photograph's, a real knit's (Poly Haven's Knitted Fleece, CC0):
     # its relief and the light and dark of its yarn, at a fine gauge, a stitch column about six tenths of a millimetre
@@ -873,8 +873,8 @@ def tagheuer(name, height):
 # A PRS Silver Sky in Sandglow Yellow, the warm, sandy vintage yellow of the John Mayer Defender, as its satin
 # body shows it in the light.
 SANDGLOW = "#dab65c"
-# Lacoste's navy, and the ecru and muted gold its collar is tipped in.
-NAVY = "#1d2a4a"
+# Lacoste's burgundy, and the ecru and muted gold its collar is tipped in.
+BURGUNDY = "#5c1f2b"
 ECRU = "#ece4d2"
 GOLD = "#c49a4a"
 # A Blackstar ID:Core in red: its tolex, a dusky wine.
@@ -884,7 +884,7 @@ WINE = "#6e3438"
 # its strip), which lights the piece's edges from below, how the piece was set down (see stuck), and what
 # builds it.
 TABS = {
-    "lacoste": (10, "#e3d3c1", (0.9, 0.02, -0.03), lacoste),
+    "lacoste": (10, "#ede3a1", (0.9, 0.02, -0.03), lacoste),
     "proraso": (10, "#d9d4c2", (-0.7, -0.02, 0.02), proraso),
     "teenage": (10, "#1e2740", (0.5, 0.03, 0.03), teenage),
     "prs": (10, "#ece8df", (-1.0, 0.0, -0.02), prs),
