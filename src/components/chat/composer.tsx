@@ -41,7 +41,7 @@ export const Composer = ({ placeholder, subject, onSend }: { placeholder: string
   }
 
   return (
-    <footer className="sticky bottom-0 z-10 border-t border-[var(--chat-rule)] bg-[var(--chat-bar)] backdrop-blur-xl backdrop-saturate-150">
+    <footer className="shrink-0 border-t border-[var(--chat-rule)] bg-[var(--chat-bar)]">
       <div className="mx-auto flex max-w-[44rem] items-end px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <div className="flex min-h-9 flex-1 items-end rounded-[19px] border border-[var(--chat-rule)] bg-[var(--chat-field)] py-[3px] pr-[3px] pl-3.5">
           <textarea

@@ -32,16 +32,20 @@ export const Conversation = () => {
   const [live, setLive] = useState<Live[]>([])
   const [typing, setTyping] = useState(false)
   const nextId = useRef(0)
+  const scroller = useRef<HTMLElement>(null)
   const opened = useOpenedAt()
 
   const thread: ChatMessage[] = [...chat.thread, ...live]
   // Messages says Read under the reader's last message. Theirs from the composer went to Gmail, so it says nothing.
   const read = chat.thread.map((message) => message.side).lastIndexOf('you')
 
+  // The page itself never scrolls, only the thread, so the thread takes focus at once and the scroll keys move it.
+  useEffect(() => scroller.current?.focus({ preventScroll: true }), [])
+
   // Each new message, and my typing, scrolls the thread to its foot.
   useEffect(() => {
     if (live.length === 0 && !typing) return
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' })
   }, [live.length, typing])
 
   const add = (side: ChatMessage['side'], text: string) => setLive((all) => [...all, { id: nextId.current++, side, kind: 'text', text }])
@@ -56,10 +60,10 @@ export const Conversation = () => {
   }
 
   return (
-    <div className="imessage min-h-dvh antialiased">
+    <div className="imessage flex h-dvh flex-col overflow-hidden antialiased">
       <h1 className="sr-only">Anurag Das, résumé</h1>
 
-      <header className="sticky top-0 z-10 border-b border-[var(--chat-rule)] bg-[var(--chat-bar)] backdrop-blur-xl backdrop-saturate-150">
+      <header className="shrink-0 border-b border-[var(--chat-rule)] bg-[var(--chat-bar)]">
         <div className="mx-auto grid max-w-[44rem] grid-cols-[1fr_auto_1fr] items-center px-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-1.5">
           <Link
             to="/"
@@ -82,27 +86,33 @@ export const Conversation = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[44rem] px-3 pt-4 pb-6">
-        <p className="mb-3 text-center text-[11px] leading-[14px] text-[var(--chat-quiet)]">
-          <span className="font-semibold">iMessage</span>
-          <br />
-          Today{opened && ` ${opened}`}
-        </p>
+      <main
+        ref={scroller}
+        tabIndex={-1}
+        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="mx-auto max-w-[44rem] px-3 pt-4 pb-6">
+          <p className="mb-3 text-center text-[11px] leading-[14px] text-[var(--chat-quiet)]">
+            <span className="font-semibold">iMessage</span>
+            <br />
+            Today{opened && ` ${opened}`}
+          </p>
 
-        <div role="log" aria-label="Conversation with Anurag" aria-live="polite">
-          {thread.map((message, i) => {
-            const receipt = i === read && live.length === 0
-            return (
-              <div key={'id' in message ? `live-${message.id}` : i} className={i > 0 && thread[i - 1].side !== message.side ? 'mt-3.5' : 'mt-0.5'}>
-                <Bubble message={message} tail={ends(thread, i)} order={i < chat.thread.length ? Math.min(i, 14) : 0}>
-                  {receipt && (
-                    <p className="mt-0.5 mr-2 text-[11px] leading-[14px] font-semibold text-[var(--chat-quiet)]">Read</p>
-                  )}
-                </Bubble>
-              </div>
-            )
-          })}
-          {typing && <Typing />}
+          <div role="log" aria-label="Conversation with Anurag" aria-live="polite">
+            {thread.map((message, i) => {
+              const receipt = i === read && live.length === 0
+              return (
+                <div key={'id' in message ? `live-${message.id}` : i} className={i > 0 && thread[i - 1].side !== message.side ? 'mt-3.5' : 'mt-0.5'}>
+                  <Bubble message={message} tail={ends(thread, i)} order={i < chat.thread.length ? Math.min(i, 14) : 0}>
+                    {receipt && (
+                      <p className="mt-0.5 mr-2 text-[11px] leading-[14px] font-semibold text-[var(--chat-quiet)]">Read</p>
+                    )}
+                  </Bubble>
+                </div>
+              )
+            })}
+            {typing && <Typing />}
+          </div>
         </div>
       </main>
 
