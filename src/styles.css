@@ -543,3 +543,13 @@
     transition: none !important;
   }
 }
+
+/* The résumé's shipping label printing: it feeds out of the printer from its top edge, a line at a time. */
+@keyframes label-feed {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
