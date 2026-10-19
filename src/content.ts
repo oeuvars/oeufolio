@@ -178,7 +178,7 @@ export const chat: Chat = {
     { side: 'me', kind: 'text', text: 'Ekarth Ventures, in Chennai, for about eight months. I led the frontend team on Altern8, a real estate lending platform' },
     { side: 'me', kind: 'link', href: 'https://nahar.om', title: 'Ekarth Ventures', icon: '/objects/resume/ekarth.png' },
     { side: 'me', kind: 'text', text: 'I also ended up pitching it to investors in the US, Turkey, the Netherlands and India' },
-    { side: 'me', kind: 'text', text: 'Before that I interned at DataVerse India. My first job as an engineer, making websites for clients and learning the whole thing as I went' },
+    { side: 'me', kind: 'text', text: 'Before that I interned at DataVerse India' },
     { side: 'you', kind: 'text', text: 'What do you like working with?' },
     { side: 'me', kind: 'text', text: 'Mostly TypeScript, with some Swift, Python and Go' },
     { side: 'me', kind: 'text', text: "And I'm picky about fonts, which you might have noticed" },
