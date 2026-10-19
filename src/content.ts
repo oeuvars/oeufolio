@@ -166,7 +166,7 @@ export const chat: Chat = {
   thread: [
     { side: 'me', kind: 'text', text: "Hey, I'm Anurag" },
     { side: 'me', kind: 'photo', src: '/photos/face.jpg', alt: 'Me, with curly hair and a maroon shirt, against a dark teal wall.', size: [1000, 1000] },
-    { side: 'me', kind: 'text', text: 'Product engineer at Cybership, based in Kolkata' },
+    { side: 'me', kind: 'text', text: 'Product engineer at Cybership' },
     { side: 'you', kind: 'text', text: 'What do you do there?' },
     { side: 'me', kind: 'text', text: "Full stack, remote, since March 2025. It's a 3PL fulfillment platform" },
     { side: 'me', kind: 'link', href: 'https://cybership.io', title: 'Cybership', icon: '/objects/resume/cybership.png' },
@@ -183,7 +183,7 @@ export const chat: Chat = {
     { side: 'me', kind: 'text', text: 'TypeScript, Swift, Python and Go' },
     { side: 'me', kind: 'text', text: 'Next.js, Hono, Django, Gin and SvelteKit, on PostgreSQL and MySQL, hosted on AWS and Digital Ocean' },
     { side: 'you', kind: 'text', text: 'Where did you study?' },
-    { side: 'me', kind: 'text', text: 'B.Tech in Electronics and Communication at Heritage Institute of Technology, Kolkata. CGPA 8.21' },
+    { side: 'me', kind: 'text', text: 'B.Tech in Electronics and Communication at Heritage Institute of Technology. CGPA 8.21' },
     { side: 'you', kind: 'text', text: 'Can I get the PDF?' },
     { side: 'me', kind: 'file', href: '/resume.pdf', name: 'Anurag Das, résumé.pdf', detail: 'PDF Document · 33 KB' },
     { side: 'me', kind: 'text', text: 'Anything else, text me here. It opens in Gmail, addressed to me' },
