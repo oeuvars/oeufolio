@@ -101,31 +101,36 @@ export function Mat({ children, className }: MatProps) {
   useLayoutEffect(() => {
     const frame = root.current
     const board = sheet.current
-    const tab = document.querySelector<HTMLElement>('[data-mat-light]')
-    if (!frame || !board || !tab || !geometry) return
+    const tabs = [...document.querySelectorAll<HTMLElement>('[data-mat-light]')]
+    if (!frame || !board || !tabs.length || !geometry) return
     const plate = PLATES[geometry.id]
     const [w, h] = plate.size
     const [bx, by] = plate.bleed
     const { em } = geometry
     const place = () => {
       const mat = board.getBoundingClientRect()
-      const at = tab.getBoundingClientRect()
-      tab.style.setProperty('--light-at', `${mat.left - at.left + geometry.x - bx * em}px ${mat.top - at.top + geometry.y - by * em}px`)
+      for (const tab of tabs) {
+        const at = tab.getBoundingClientRect()
+        tab.style.setProperty('--light-at', `${mat.left - at.left + geometry.x - bx * em}px ${mat.top - at.top + geometry.y - by * em}px`)
+      }
     }
-    tab.style.setProperty('--light-rim', plate.rim)
-    tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
-    tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
+    for (const tab of tabs) {
+      tab.style.setProperty('--light-rim', plate.rim)
+      tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
+      tab.style.setProperty('--light-past', `url(/objects/mat/desk-${geometry.id}-light-past.avif)`)
+      tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
+    }
     place()
     // The strip slides open after the mat is laid, and the page scrolls under the tab.
     const moving = new ResizeObserver(place)
     moving.observe(board)
-    const strip = tab.closest('section')
+    const strip = tabs[0].closest('section')
     if (strip) moving.observe(strip)
     window.addEventListener('scroll', place, true)
     return () => {
       moving.disconnect()
       window.removeEventListener('scroll', place, true)
-      for (const name of ['--light-rim', '--light-image', '--light-size', '--light-at']) tab.style.removeProperty(name)
+      for (const tab of tabs) for (const name of ['--light-rim', '--light-image', '--light-past', '--light-size', '--light-at']) tab.style.removeProperty(name)
     }
   }, [geometry])
 

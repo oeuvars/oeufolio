@@ -325,6 +325,16 @@ function Tab({ label, shape, to, search, current, src, footless, leather, surfac
           />
         </div>
       )}
+      {leather && (
+        // Where the lamp lights the leather brighter than it was photographed, the mat adds the rest of its light
+        // over it, and so does the tab. The ruler's band darkens that light too, so it comes in as dark here.
+        <div
+          aria-hidden
+          data-mat-light
+          className="pointer-events-none absolute left-0 bg-no-repeat opacity-84 mix-blend-plus-lighter"
+          style={{ top: -reach, width, height: shape.height + 2 * reach, clipPath: `url(#${cut})`, backgroundImage: 'var(--light-past)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
+        />
+      )}
       {/* The cut itself, rendered: the light its edge catches and turns from, and the shadow it leaves on the page
           below as the tab lifts off the folder. It is only light, so it lies over whatever the strip is made of. */}
       <img aria-hidden alt="" src={edge.src} draggable={false} className="tab-cut" style={{ left: edge.left, top: edge.top, width: edge.width, height: edge.height }} />
