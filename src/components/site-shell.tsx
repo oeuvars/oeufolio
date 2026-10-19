@@ -255,9 +255,9 @@ type TabCut = {
 /**
  * The outline of a folder tab, as the reference cuts it: it leaves the strip's edge on a slant, runs
  * straight down and slants back in, with every corner eased. Its foot is the length of band it grows out of, when
- * the band shows. Returns the path and how far its joins reach.
+ * the band shows. A footless tab can lap this far back over the strip. Returns the path and how far its joins reach.
  */
-const tabOutline = ({ band, protrude, height }: TabShape, footless = false) => {
+const tabOutline = ({ band, protrude, height }: TabShape, footless = false, overlap = 0) => {
   const rise = protrude * 0.33
   const ease = protrude * 0.2
   const reach = ease * 2
@@ -278,67 +278,70 @@ const tabOutline = ({ band, protrude, height }: TabShape, footless = false) => {
     const after = toward(corner, corners[i + 2])
     return `L${before[0]} ${before[1]} Q${corner[0]} ${corner[1]} ${after[0]} ${after[1]}`
   })
-  const foot = footless ? band : 0
+  const foot = footless ? band - overlap : 0
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
 const Tab = ({ label, shape, to, search, current, src, footless, leather, surface, paper, cut: edge }: TabProps) => {
-  const { reach, path } = tabOutline(shape, footless)
+  // A leather tab laps a pixel back over its strip, so the two never meet edge to edge, where each would let
+  // through a little of what is under both and the seam would show as a line.
+  const { reach, path } = tabOutline(shape, footless, leather ? 1 : 0)
   const hide = useId()
   const cut = useId()
   const width = shape.band + shape.protrude
   const margin = (tabMargin * width) / tabSpan
   const inside = (
     <>
-      <svg
-        aria-hidden
-        className="tab-shape"
-        width={width}
-        height={shape.height + 2 * reach}
-        viewBox={`0 ${-reach} ${width} ${shape.height + 2 * reach}`}
-        style={{ top: -reach }}
-      >
-        {leather && (
-          <defs>
-            <pattern id={hide} patternUnits="userSpaceOnUse" width="160" height="160">
-              <rect width="160" height="160" className="fill-mat" />
-              <image href="/objects/mat/leather.avif" width="160" height="160" />
-              {/* The tab grows out of the mat's ruler, so it is as dark as the ruler's band. */}
-              <rect width="160" height="160" fill="black" opacity="0.16" />
-            </pattern>
-            <clipPath id={cut}>
-              <path d={path} transform={`translate(0 ${reach})`} />
-            </clipPath>
-          </defs>
-        )}
-        {/* A tab cut from the page's own hide has the strip's hide laid under it (SiteShell's hideOver), so it is clear here. */}
-        <path d={path} fill={leather ? `url(#${hide})` : surface || paper ? 'none' : undefined} />
-      </svg>
-      {leather && (
-        // The leather is the mat's, so it is in the mat's light. The mat lends this where its map of the
-        // light lies (mat/mat.tsx). The clip isolates what is in it, so the map multiplies on white and the
-        // whole multiplies the leather.
+      {leather ? (
+        // The leather is the mat's, so it is in the mat's light. The mat lends that where its map of the light
+        // lies (mat/mat.tsx). The leather and its light are cut out together, at one edge: cut apart, the edge
+        // would show the leather unlit.
         <div
           aria-hidden
-          data-mat-light
-          className="pointer-events-none absolute left-0 bg-white mix-blend-multiply"
+          className="pointer-events-none absolute left-0 isolate"
           style={{ top: -reach, width, height: shape.height + 2 * reach, clipPath: `url(#${cut})` }}
         >
+          <svg width={width} height={shape.height + 2 * reach} className="absolute inset-0" viewBox={`0 ${-reach} ${width} ${shape.height + 2 * reach}`}>
+            <defs>
+              <pattern id={hide} patternUnits="userSpaceOnUse" width="160" height="160">
+                <rect width="160" height="160" className="fill-mat" />
+                <image href="/objects/mat/leather.avif" width="160" height="160" />
+                {/* The tab grows out of the mat's ruler, so it is as dark as the ruler's band. */}
+                <rect width="160" height="160" fill="black" opacity="0.16" />
+              </pattern>
+              <clipPath id={cut}>
+                <path d={path} transform={`translate(0 ${reach})`} />
+              </clipPath>
+            </defs>
+            <rect y={-reach} width={width} height={shape.height + 2 * reach} fill={`url(#${hide})`} />
+          </svg>
+          {/* The map multiplies on white in its own group, and the whole multiplies the leather. */}
+          <div data-mat-light className="absolute inset-0 isolate bg-white mix-blend-multiply">
+            <div
+              className="absolute inset-0 bg-no-repeat mix-blend-multiply"
+              style={{ backgroundColor: 'var(--light-rim, white)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
+            />
+          </div>
+          {/* Where the lamp lights the leather brighter than it was photographed, the mat adds the rest of its light
+              over it, and so does the tab. The ruler's band darkens that light too, so it comes in as dark here. */}
           <div
-            className="absolute inset-0 bg-no-repeat mix-blend-multiply"
-            style={{ backgroundColor: 'var(--light-rim, white)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
+            data-mat-light
+            className="absolute inset-0 bg-no-repeat opacity-84 mix-blend-plus-lighter"
+            style={{ backgroundImage: 'var(--light-past)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
           />
         </div>
-      )}
-      {leather && (
-        // Where the lamp lights the leather brighter than it was photographed, the mat adds the rest of its light
-        // over it, and so does the tab. The ruler's band darkens that light too, so it comes in as dark here.
-        <div
+      ) : (
+        <svg
           aria-hidden
-          data-mat-light
-          className="pointer-events-none absolute left-0 bg-no-repeat opacity-84 mix-blend-plus-lighter"
-          style={{ top: -reach, width, height: shape.height + 2 * reach, clipPath: `url(#${cut})`, backgroundImage: 'var(--light-past)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
-        />
+          className="tab-shape"
+          width={width}
+          height={shape.height + 2 * reach}
+          viewBox={`0 ${-reach} ${width} ${shape.height + 2 * reach}`}
+          style={{ top: -reach }}
+        >
+          {/* A tab cut from the page's own hide has the strip's hide laid under it (SiteShell's hideOver), so it is clear here. */}
+          <path d={path} fill={surface || paper ? 'none' : undefined} />
+        </svg>
       )}
       {/* The cut itself, rendered: the light its edge catches and turns from, and the shadow it leaves on the page
           below as the tab lifts off the folder. It is only light, so it lies over whatever the strip is made of. */}
