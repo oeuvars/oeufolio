@@ -26,8 +26,8 @@ from paint import linear
 
 ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "art")
 
-# The body, in em, sized to the gap on the desk it stands in. Its height, the wall's thickness, the floor's, and the
-# foot's step, are the photographs' proportions of its width.
+# The body, in em, as built; the desk draws it at 0.85 of this (its k in desk.PROPS). Its height, the wall's
+# thickness, the floor's, and the foot's step, are the photographs' proportions of its width.
 D = 11.0
 R = D / 2
 TALL = 0.85 * D
