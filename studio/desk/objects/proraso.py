@@ -13,7 +13,7 @@ import bmesh
 import bpy
 import numpy as np
 
-from paint import blur, cloud, ramp
+from paint import ramp
 from solids import finish, grain, principled, worn
 from stock import Sheet, pixels_of
 
@@ -22,24 +22,22 @@ ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "art")
 # The tube's outline from the photograph: every 0.05 em from the crimped edge, its half width, its depth and how far
 # its middle wanders off its axis, in em. Drawn WIDE times as broad and deep as the photograph measures it, the
 # length kept, and its width and middle smoothed over STRAIGHT em: the photograph's small waves in the outline read
-# as bends.
+# as bends. Its depth is smoothed over SOFT em, so the pinch behind the crimp is a soft fold and not a ruled line.
 WIDE = 1.125
 STRAIGHT = 1.5
+SOFT = 0.4
 with open(os.path.join(ART, "proraso-shape.json")) as _file:
     SHAPE = json.load(_file)
-_reach = int(3 * STRAIGHT / 0.05)
-_kernel = np.exp(-0.5 * (np.arange(-_reach, _reach + 1) * 0.05 / STRAIGHT) ** 2)
-for _key in ("half", "deep", "off"):
-    _line = np.array(SHAPE[_key])
-    if _key != "deep":
-        _line = np.convolve(np.pad(_line, _reach, mode="edge"), _kernel / _kernel.sum(), mode="valid")
+for _key, _over in (("half", STRAIGHT), ("deep", SOFT), ("off", STRAIGHT)):
+    _reach = int(3 * _over / 0.05)
+    _kernel = np.exp(-0.5 * (np.arange(-_reach, _reach + 1) * 0.05 / _over) ** 2)
+    _line = np.convolve(np.pad(SHAPE[_key], _reach, mode="edge"), _kernel / _kernel.sum(), mode="valid")
     SHAPE[_key] = list(WIDE * _line)
 # The print's width once round (as art/prorasophoto.py lays it out), the length from the crimped edge to the
 # shoulder, and the diameter at the shoulder, where the tube is round.
 FRONT = math.pi * 5.0 / 2
 LENGTH = 22.31
 D = 2 * SHAPE["half"][-1]
-FOLD = 0.7
 # How much of the crumples' depth the wall takes.
 DENT = 0.25
 
@@ -50,13 +48,14 @@ PLASTIC = "#e6e5e0"
 DOME = 0.62
 NECK = 0.72
 CAP_R, CAP_H = 0.345 * D, 0.53 * D
-RIBS = 84
+RIBS = 100
+WELL = 0.6
 W, H = 25.5, 8.95
 
 
 def crumples(rows, cols):
     """The crumples' height, in em, from the photograph's shading (art/prorasophoto.py), at rows by cols over the
-    print: once round across, crimp to shoulder down. Dying out over the folded crimp and at the shoulder."""
+    print: once round across, crimp to shoulder down. Dying out at the crimped edge and at the shoulder's rim."""
     image = pixels_of(os.path.join(ART, "proraso-height.png"))[..., 0].astype(np.float64)
     ys = np.clip((np.arange(rows) + 0.5) * image.shape[0] / rows - 0.5, 0, image.shape[0] - 1)
     xs = (np.arange(cols) + 0.5) * image.shape[1] / cols - 0.5
@@ -68,24 +67,14 @@ def crumples(rows, cols):
     bottom = image[y0 + 1][:, x0] * (1 - fx) + image[y0 + 1][:, x1] * fx
     height = ((top * (1 - fy) + bottom * fy) - 0.5) * 2 * SHAPE["crumple"]
     along = (np.arange(rows) + 0.5) / rows * LENGTH
-    return height * (ramp(FOLD, FOLD + 0.5, along) * (1 - ramp(LENGTH - 0.6, LENGTH - 0.1, along)))[:, None]
+    return height * (ramp(0.05, 0.35, along) * (1 - ramp(LENGTH - 0.35, LENGTH - 0.05, along)))[:, None]
 
 
 def label():
     """The print, as the photograph unrolls it: once round the tube across, crimp to shoulder down."""
     sheet = Sheet(2 * FRONT, LENGTH, BODY, rough=0.3, density=3)
-    Y = sheet.Y
-    shape = sheet.height.shape
+    # The crimped end is pressed flat and plain, as the photograph has it: no folds or teeth drawn on it.
     sheet.art(os.path.join(ART, "proraso-print.png"), 0, 0, 2 * FRONT, LENGTH)
-
-    # The crimp: the end folded over three times and pressed, each fold a step down toward the wall, none of them
-    # straight, and the jaws' teeth bitten into it.
-    wavy = 0.03 * cloud((1, shape[1]), 2, falloff=1.6) + 0.012 * cloud((1, shape[1]), 12, falloff=0.9)
-    folds = ((FOLD, 0.03), (FOLD * 0.68, 0.022), (FOLD * 0.33, 0.02))
-    sheet.height += blur(sum(step * sheet.mask(Y - y - wavy * (1 + n)) for n, (y, step) in enumerate(folds)), 2)
-    band = sheet.mask(Y - FOLD + 0.06 - wavy) * ramp(0.02, 0.1, Y)
-    bitten = np.clip(0.6 + 0.5 * cloud(shape, 13, falloff=1.8), 0, 1) * band
-    sheet.press((0.5 + 0.5 * np.cos(2 * np.pi * sheet.X / 0.085)) * bitten, 0.006)
 
     # The gold is a pale metallic ink, found by colour; the green is a plain gloss ink, as bright as the photograph's.
     r, g, b = sheet.rgb[..., 0], sheet.rgb[..., 1], sheet.rgb[..., 2]
@@ -148,6 +137,8 @@ def body(stage, material):
     along = np.linspace(0, LENGTH, rings)
     a = np.interp(along, SHAPE["along"], SHAPE["half"])
     b = np.maximum(np.interp(along, SHAPE["along"], SHAPE["deep"]), 0.11)
+    # Held round by the shoulder over its last em, to meet the shoulder's rim all the way round.
+    b = b + (a - b) * ramp(LENGTH - 1.0, LENGTH, along)
     off = np.interp(along, SHAPE["along"], SHAPE["off"])
 
     # Points evenly spaced round each oval, as the print was unrolled.
@@ -217,10 +208,11 @@ def turned(stage, name, rings, material, steps, wave=None):
 
 
 def shoulder(stage, enamel):
-    """The stiff end of the tube: a dome in white enamel from the wall in to the neck."""
+    """The stiff end of the tube: a dome in white enamel from the wall's rim in to the neck. It starts just inside
+    the wall, so nothing of it shows past the rim."""
     r = D / 2
     k = r - CAP_R
-    dome = [(-0.3, r - 0.04 * k), (0.0, r - 0.006 * k), (0.05, r - 0.03 * k), (0.14, r - 0.11 * k), (0.3, r - 0.38 * k), (0.45, r - 0.7 * k), (DOME, CAP_R + 0.02), (DOME + 0.12, CAP_R - 0.3), (DOME + 0.2, NECK), (DOME + 0.5, NECK)]
+    dome = [(-0.05, r - 0.02), (0.0, r - 0.006 * k), (0.05, r - 0.03 * k), (0.14, r - 0.11 * k), (0.3, r - 0.38 * k), (0.45, r - 0.7 * k), (DOME, CAP_R + 0.02), (DOME + 0.12, CAP_R - 0.3), (DOME + 0.2, NECK), (DOME + 0.5, NECK)]
     part = turned(stage, "shoulder", [(h, radius, None) for h, radius in dome], enamel, 160)
     part.rotation_euler = (0, math.radians(90), 0)
     part.location = (LENGTH, 0, r)
@@ -228,17 +220,20 @@ def shoulder(stage, enamel):
 
 
 def cap(stage, plastic):
-    """The screw cap on its thread: a straight ribbed wall, a hair narrower toward its closed end, and a
-    flat end with a tight round on its edge. It turns about its own z axis, open end down."""
+    """The screw cap on its thread, as the photographs have it: a straight wall finely ribbed the whole way up, a
+    hair narrower toward its closed end, and that end a flat ring round a round well WELL across and 0.3 em deep.
+    It turns about its own z axis, open end down."""
     def wall(h):
         return CAP_R * (1 - 0.03 * h / CAP_H)
 
+    well = WELL * CAP_R
     rings = [(0.0, CAP_R - 0.22, None), (0.0, CAP_R - 0.07, None), (0.03, CAP_R - 0.02, None), (0.07, CAP_R, "ribs")]
     rings += [(h, wall(h), "ribs") for h in np.linspace(0.12, CAP_H - 0.12, 14)]
-    rings += [(CAP_H - 0.05, wall(CAP_H) - 0.02, "ribs"), (CAP_H - 0.015, wall(CAP_H) - 0.05, None), (CAP_H, wall(CAP_H) - 0.1, None), (CAP_H, 0, None)]
+    rings += [(CAP_H - 0.05, wall(CAP_H) - 0.02, "ribs"), (CAP_H - 0.015, wall(CAP_H) - 0.05, None), (CAP_H, wall(CAP_H) - 0.1, None)]
+    rings += [(CAP_H, well + 0.04, None), (CAP_H - 0.015, well, None), (CAP_H - 0.3, well - 0.01, None), (CAP_H - 0.3, 0, None)]
 
     def ribs(part, height, angles):
-        return -0.075 * (0.5 - 0.5 * np.cos(RIBS * angles)) ** 0.7 * ramp(0.05, 0.12, height)
+        return -0.035 * (0.5 - 0.5 * np.cos(RIBS * angles)) * ramp(0.05, 0.12, height)
 
     return turned(stage, "cap", rings, plastic, RIBS * 6, ribs)
 
@@ -246,7 +241,9 @@ def cap(stage, plastic):
 def proraso(stage):
     paint = lacquer(label(), "lacquer")
     enamel = worn(principled("enamel", BODY, rough=0.28), "SurfaceImperfections003", 3, 0.15)
-    plastic = worn(grain(principled("cap", PLASTIC, rough=0.4), 320, 0.0015), "SurfaceImperfections003", 3, 0.12)
+    # Moulded polypropylene: a satin white that lets a little light into it.
+    plastic = principled("cap", PLASTIC, rough=0.32, subsurface_weight=0.2, subsurface_scale=0.03)
+    plastic = worn(grain(plastic, 320, 0.0015), "SurfaceImperfections003", 3, 0.12)
 
     root = stage.add("proraso", None)
     root.location = (0.04, -H / 2, 0)
