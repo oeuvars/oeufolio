@@ -1,0 +1,231 @@
+    %-------------------------
+% Resume in Latex
+% Author
+% License : MIT
+%------------------------
+
+%---- Required Packages and Functions ----
+
+\documentclass[a4paper,11pt]{article}
+\usepackage{latexsym}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{ragged2e}
+\usepackage[empty]{fullpage}
+\usepackage{wrapfig}
+\usepackage{lipsum}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{geometry}
+\usepackage{marvosym}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{fontspec}
+% Timeless Serif has no italic or small caps; italic maps to the upright cut.
+\setmainfont{TimelessSerifText}[
+  Path=fonts/,
+  Extension=.ttf,
+  UprightFont=*-Book,
+  BoldFont=*-Semibold,
+  ItalicFont=*-Book,
+  BoldItalicFont=*-Semibold,
+  Ligatures=TeX,
+]
+% Headings: name, section titles and entry titles.
+\newfontfamily\headingfont{GeistMono}[
+  Path=fonts/,
+  Extension=.ttf,
+  UprightFont=*-SemiBold,
+  BoldFont=*-SemiBold,
+  ItalicFont=*-SemiBold,
+  BoldItalicFont=*-SemiBold,
+  LetterSpace=-2.0,
+  WordSpace=0.8,
+]
+\setlength{\multicolsep}{0pt} 
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\geometry{left=1.4cm, top=0.8cm, right=1.2cm, bottom=1cm}
+% Adjust margins
+%\addtolength{\oddsidemargin}{-0.5in}
+%\addtolength{\evensidemargin}{-0.5in}
+%\addtolength{\textwidth}{1in}
+\usepackage[most]{tcolorbox}
+\tcbset{
+	frame code={}
+	center title,
+	left=0pt,
+	right=0pt,
+	top=0pt,
+	bottom=0pt,
+	colback=gray!20,
+	colframe=white,
+	width=\dimexpr\textwidth\relax,
+	enlarge left by=-2mm,
+	boxsep=4pt,
+	arc=0pt,outer arc=0pt,
+}
+
+\urlstyle{same}
+
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\headingfont\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-7pt}]
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[2]{
+  \item{
+    \textbf{#1}{\hspace{0.5mm}#2 \vspace{-0.5mm}}
+  }
+}
+
+\newcommand{\resumePOR}[3]{
+\vspace{0.5mm}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+        \textbf{#1}\hspace{0.3mm}#2 & \textit{\small{#3}} 
+    \end{tabular*}
+    \vspace{-2mm}
+}
+
+\newcommand{\resumeSubheading}[4]{
+\vspace{0.5mm}\item
+    \begin{tabular*}{0.98\textwidth}[t]{l@{\extracolsep{\fill}}r}
+        {\headingfont #1} & \textit{\footnotesize{#4}} \\
+        \textit{\footnotesize{#3}} &  \footnotesize{#2}\\
+    \end{tabular*}
+    \vspace{-2.4mm}
+}
+
+\newcommand{\resumeProject}[4]{
+\vspace{0.5mm}\item
+    \begin{tabular*}{0.98\textwidth}[t]{l@{\extracolsep{\fill}}r}
+        \textbf{#1} & \textit{\footnotesize{#3}} \\
+        \footnotesize{\textit{#2}} & \footnotesize{#4}
+    \end{tabular*}
+    \vspace{-2.4mm}
+}
+
+\newcommand{\resumeSubItem}[2]{\resumeItem{#1}{#2}\vspace{-4pt}}
+% \renewcommand{\labelitemii}{$\circ$}
+\renewcommand{\labelitemi}{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=*,labelsep=0mm]}
+\newcommand{\resumeHeadingSkillStart}{\begin{itemize}[leftmargin=*,itemsep=1.7mm, rightmargin=2ex]}
+\newcommand{\resumeItemListStart}{\begin{justify}\begin{itemize}[leftmargin=3ex, rightmargin=2ex, noitemsep,labelsep=1.2mm,itemsep=0mm]\small}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{2mm}}
+\newcommand{\resumeHeadingSkillEnd}{\end{itemize}\vspace{-2mm}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\end{justify}\vspace{-2mm}}
+\newcommand{\cvsection}[1]{%
+\vspace{2mm}
+\begin{tcolorbox}
+    \textbf{\large #1}
+\end{tcolorbox}
+    \vspace{-4mm}
+}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}%
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}%
+\newcolumntype{C}{>{\centering\arraybackslash}X}%
+%---- End of Packages and Functions ------
+
+%-------------------------------------------
+%%%%%%  CV STARTS HERE  %%%%%%%%%%%
+%%%%%% DEFINE ELEMENTS HERE %%%%%%%
+\newcommand{\name}{Anurag Das} % Your Name
+\newcommand{\course}{Electronics and Communication} % Your Program
+\newcommand{\roll}{xxxxxxx} % Your Roll No.
+\newcommand{\emaila}{oeuvars@gmail.com} %Email 1
+
+\begin{document}
+%----------HEADING-----------------
+
+{
+\begin{tabularx}{\linewidth}{L r} \\
+  {\headingfont\Large \name} & \href{https://github.com/oeuvars}{\raisebox{0.0\height}{\footnotesize \faGithub}\ {GitHub Profile}} \\
+  Product Engineer \href{https://cybership.io}{\underline {@Cybership}}. & \href{mailto:sudo@anurag.gg/}{\raisebox{0.0\height}{\footnotesize}\ {sudo@anurag.gg}}
+\end{tabularx}
+}
+
+
+%-----------SUMMARY-----------------
+\section{\textbf{Summary}}
+  \small{Product Engineer with about three years of experience building production systems for 3PL fulfillment and real estate lending. Built a rule engine processing 50,000+ executions daily, a label system handling 10,000+ generations daily, and a packing-station desktop app with 64 scale protocol decoders. Works in TypeScript, Python, Go, Next.js, and PostgreSQL.}
+\vspace{-2mm}
+
+%-----------EXPERIENCE-----------------
+\section{\textbf{Experience}}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {\href{https://cybership.io}{Cybership.io | A 3PL Fulfillment Platform}}{Remote}
+      {Product Engineer}{March 2025 - Present}
+      \resumeItemListStart
+    \item {Single-handedly architected and implemented the complete Automation Rules engine from scratch (similar to Shopify Flow), enabling merchants to create complex conditional workflows with 50 trigger types, 16 condition operators with conditional \& Array operations, and 7 action types. Built a type-safe rule evaluation system using Zod validation that processes 50,000+ rule executions daily across order processing, inventory allocation, and shipping automation.}
+    \item {Built Cybership Desktop, a packing-station app that replaces the third-party PrintNode agent. It prints through the OS spooler, raw TCP, USB and HID, reads scales over serial, HID, USB, Bluetooth and TCP with 64 protocol decoders, and ships as signed, auto-updating macOS and Windows builds. Printing is idempotent across server and device through UUID keys, PostgreSQL row-lock claims, an audited job state machine and an fsynced on-device ledger that will not reprint a job interrupted by a crash.}
+    \item {Owned production incidents that blocked customer warehouses from shipping, taking each from first report through root cause to a permanent fix, often the same day. Repaired live data alongside their teams while keeping them informed throughout, and fed what they ran into back into the product so the failure could not recur.}
+    \item {Built the entire Shipping Labels system end-to-end, integrating with 5 external APIs including EasyPost, USPS (OAuth2), BukuShip, ShipStation for multi-carrier support (FedEx, UPS, USPS, DHL, Canada Post), and Mapbox for geocoding and route visualization. Implemented PDF generation with pdf-lib, Redis-based caching for rate shopping, webhook management with retry logic, and batch processing capabilities handling 10,000+ label generations daily with sub-2-second average response times and 99.9\% uptime.}
+    \resumeItemListEnd
+    \resumeSubheading
+      {\href{https://nahar.om}{Ekarth Ventures | Nahar OM}}{Chennai, India}
+      {Product Engineer}{July 2024 - March 2025}
+      \resumeItemListStart
+    \item {Led frontend development and managed the team delivering Altern8, a real estate lending platform, designing its Next.js and Django architecture for cost efficiency and performance.}
+    \item {Drove CI/CD pipelines on Digital Ocean that cut deployment turnaround by an average of 10 seconds and Docker build size 10-fold (2.2 GB -> 178 MB), and managed development and deployment of several third-party B2B APIs for integration with \href{http://ethyx.in}{ETHYX Club} and the Altern8 platform for data and system interconnectivity.}
+    \item {Pitched and demonstrated the platform to investors across the US, Turkey, Netherlands and India.}
+    \resumeItemListEnd
+    \resumeSubheading
+      {\href{https://dataverseindia.com}{DataVerse India}}{Kolkata, India}
+      {Product Engineer (Intern)}{August 2023 -  July 2024}
+      \resumeItemListStart
+    \item {My first role as an engineer, where I created websites and web applications for various clients and talked to them as a technical spokesperson, learning the fundamentals of full-stack development and getting hands-on experience with cloud hosting platforms like AWS and Hostinger.}
+    \resumeItemListEnd
+    
+    \vspace{2.0mm}
+      
+\vspace{-5.5mm}
+
+%-----------Technical skills-----------------
+\section{\textbf{Technical Skills and Interests}}
+ \begin{itemize}[leftmargin=0.05in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Typescript, Swift, Python, Golang } \\
+     \textbf{Tools I Use}{: Popsql, VS Code, Obsidian, Postman, XCode, Figma, Spline, Orbstack } \\ 
+     \textbf{Frameworks}{: Next.js, Django, Express.js, Hono.js, Gin, SvelteKit, SolidStart } \\
+     \textbf{Cloud/Databases}{:Postgresql, MySql, RDS, S3, EC2, Lambda, Lightsail, Digital Ocean Droplet, VPS Servers
+ } \\
+     \textbf{Backend and Integrations}{: Zod, Redis, pdf-lib, Mapbox, EasyPost, ShipStation, OAuth2, Webhooks, Idempotent job processing } \\
+     \textbf{DevOps}{: Docker, CI/CD, Digital Ocean } \\
+     \textbf{AI Tools}{: AI-assisted development } \\
+     
+     \textbf{Relevant Coursework}{: Data Structures \& Algorithms, Operating Systems, Object Oriented Programming, Network Security, Computer Networks, Database Management System, Big Data and Web. } \\ 
+     \textbf{Areas of Interest}{: Web Design, Server-less architectures, Cryptography, Typography, Low latency back-end.} \\
+     \textbf{Soft Skills}{: Product Demo, Public Speaking, Self-learning, Adaptability} \\
+    }}
+ \end{itemize}
+ \vspace{-16pt}
+
+%-----------EDUCATION-----------
+\section{\textbf{Education}}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Bachelor of Technology in Electronics and Communication}{CGPA: 8.21}
+      {Heritage Institute of Technology, Kolkata}{}
+     \resumeSubheading
+      {High School}{Percentage: 91}
+      {Ramkrishna Mission Rahara, Kolkata}{}
+  \resumeSubHeadingListEnd
+\vspace{-5.5mm}
+
+  \resumeSubHeadingListEnd
+
+\end{document}
