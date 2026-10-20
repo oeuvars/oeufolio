@@ -189,7 +189,7 @@ export const Mat = ({ children, className }: MatProps) => {
             />
             <img src={`/objects/mat/desk-${geometry.id}.avif`} alt="" draggable={false} className={LAID} style={over(geometry, 0, 0, ...plate.size)} />
             {/* The watch's dial again over the plate's, its hands at the viewer's time. */}
-            {DIALS[geometry.id] && <WatchHands plate={geometry.id} em={geometry.em} className={LAID} style={over(geometry, ...DIALS[geometry.id]!.dial)} />}
+            {DIALS[geometry.id] && <WatchHands plate={geometry.id} className={LAID} style={over(geometry, ...DIALS[geometry.id]!.dial)} />}
             {/* The props seen from a camera of their own, over the plate where they stand on it. */}
             {Object.entries(PORTRAITS[geometry.id] ?? {}).map(([prop, seen]) => (
               <img

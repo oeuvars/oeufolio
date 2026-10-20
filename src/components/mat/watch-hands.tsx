@@ -6,8 +6,6 @@ import { DIALS } from './layout'
 
 type WatchHandsProps = {
   plate: PlateId
-  /** How many pixels an em of the plate is drawn. */
-  em: number
   className?: string
   style?: React.CSSProperties
 }
@@ -31,7 +29,7 @@ const load = (src: string) => {
  * shadow it throws on the dial, multiplying it, and the hand itself over that. Like a quartz watch's, the running
  * seconds step once a second, on the second.
  */
-export const WatchHands = ({ plate, em, className, style }: WatchHandsProps) => {
+export const WatchHands = ({ plate, className, style }: WatchHandsProps) => {
   const canvas = useRef<HTMLCanvasElement>(null)
   const dial = DIALS[plate]
 
@@ -39,10 +37,10 @@ export const WatchHands = ({ plate, em, className, style }: WatchHandsProps) => 
     const board = canvas.current
     const context = board?.getContext('2d')
     if (!board || !context || !dial) return
-    const scale = window.devicePixelRatio || 1
-    board.width = Math.round(dial.dial[2] * em * scale)
-    board.height = Math.round(dial.dial[3] * em * scale)
-    const k = board.width / dial.size[0]
+    // Drawn as large as it was rendered, as the plate is, so the browser scales the two alike, zoomed in or not.
+    const [width, height] = dial.size
+    board.width = width
+    board.height = height
     // The shadows are gathered on a sheet of their own first: where two fall on the same place the lamp is blocked
     // once, so the deeper of them darkens the dial, not both.
     const sheet = document.createElement('canvas')
@@ -62,19 +60,18 @@ export const WatchHands = ({ plate, em, className, style }: WatchHandsProps) => 
             const hand = dial[name]
             return { picture: pictures[i], frame: hand.frames[Math.floor(((time % period) / period) * hand.stops)], gutter: hand.gutter }
           })
-          context.imageSmoothingQuality = shading.imageSmoothingQuality = 'high'
           context.globalCompositeOperation = 'source-over'
           context.clearRect(0, 0, board.width, board.height)
-          context.drawImage(face, 0, 0, board.width, board.height)
+          context.drawImage(face, 0, 0)
           shading.globalCompositeOperation = 'source-over'
           shading.clearRect(0, 0, sheet.width, sheet.height)
           shading.globalCompositeOperation = 'darken'
-          for (const { picture, frame: [x, y, w, h, dx, dy] } of stopped) shading.drawImage(picture, x, y, w, h, dx * k, dy * k, w * k, h * k)
+          for (const { picture, frame: [x, y, w, h, dx, dy] } of stopped) shading.drawImage(picture, x, y, w, h, dx, dy, w, h)
           context.globalCompositeOperation = 'multiply'
           context.drawImage(sheet, 0, 0)
           context.globalCompositeOperation = 'source-over'
           for (const { picture, frame: [x, y, w, h, dx, dy], gutter } of stopped) {
-            context.drawImage(picture, x + w + 2 * gutter, y, w, h, dx * k, dy * k, w * k, h * k)
+            context.drawImage(picture, x + w + 2 * gutter, y, w, h, dx, dy, w, h)
           }
           // On to the next second, a little after it turns.
           timer = window.setTimeout(draw, 1005 - (Date.now() % 1000))
@@ -89,7 +86,7 @@ export const WatchHands = ({ plate, em, className, style }: WatchHandsProps) => 
       window.clearTimeout(timer)
       delete board.dataset.ready
     }
-  }, [plate, em, dial])
+  }, [plate, dial])
 
   if (!dial) return null
   return <canvas ref={canvas} aria-hidden className={cn('opacity-0 data-ready:opacity-100', className)} style={style} />
