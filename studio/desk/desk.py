@@ -10,7 +10,14 @@ Then each object is put down where src/components/mat/desk.json places it on the
 rendered to public/objects/mat/desk-<plate>.avif: the objects, and the shadows they throw on the mat, with
 nothing of the mat itself, which the page lays under it. Parts that move on the page, the reel of the
 recorder, are rendered on their own beside it, and any prop the page shows from a low camera of its own
-(PORTRAITS), as it was photographed, by that camera."""
+(PORTRAITS), as it was photographed, by that camera.
+
+The watch's hands keep the viewer's time on the page, from frames rendered in the same set (HANDS):
+
+    blender -b --factory-startup -P studio/desk/desk.py -- --plate wide --hands [seconds hour minute] [--truth 04:21:10]
+
+They are not rendered with the plate, for they take an hour or more; render them again after anything near the watch,
+or the light, changes."""
 
 import argparse
 import json
@@ -40,6 +47,8 @@ LAYOUT = os.path.join(ROOT, "src", "components", "mat", "desk.json")
 LEAN = os.path.join(ROOT, "src", "components", "mat", "lean.json")
 # Where on the plate each portrait lies, in em: written here, read by the page.
 PORTRAIT = os.path.join(ROOT, "src", "components", "mat", "portrait.json")
+# Where on the plate the watch's dial lies, and where on it each hand's frames lie: written here, read by the page.
+HANDS_AT = os.path.join(ROOT, "src", "components", "mat", "hands.json")
 BUILDERS = {
     **mat.SHOTS,
     **card.SHOTS,
@@ -124,6 +133,32 @@ SHADE_TURN = (-6.0, -8.0)
 # The maps of the light on the mat are drawn this many pixels to the em, enough for a shadow's sharp edge where an
 # object touches the mat.
 MAP_DENSITY = 32
+# The watch keeps the viewer's time. The plate has its hands where the photograph has them; over its dial the page
+# lays the dial again without them, out to DIAL mm from the middle, past the tip of the plate's minute hand, fading
+# out over the black ring of the tachymeter scale beyond it. Over that lies each hand that moves, rendered in the set
+# at every place it stops, as the shadow it throws and the hand itself. Each is its parts in the chrono shot and how
+# many places round the dial it stops at. The running seconds are the small dial at 6, and step once a second, as a
+# quartz watch's do; the minute hand stops every 20 seconds and the hour hand every 5 minutes, each step about a pixel
+# at its tip where the page shows the plate largest. The chronograph's red hand is stopped at 12, as it is while the
+# chronograph is not running, and stays in the plate.
+DIAL = (12.9, 0.5)
+HANDS = {
+    "seconds": {"parts": ("chrono-small-2",), "stops": 60},
+    "hour": {"parts": ("chrono-hour", "chrono-hour-lume"), "stops": 144},
+    "minute": {"parts": ("chrono-minute", "chrono-minute-lume"), "stops": 180},
+}
+# Each frame is the box round the hand and this many mm more all round, for its shadow. How much of each pixel the
+# hand covers is rendered on its own, everything round it held out, with this many samples.
+THROW = 1.0
+COVER_SAMPLES = 32
+# Two renders of the same dial differ by up to this much where nothing on it has changed.
+NOISE = 3 / 255
+# A frame is rendered this many pixels larger all round than it is kept, so the denoiser sees past its edges, and
+# kept with this many empty pixels round it, in a picture this wide, so frames side by side never run into each other
+# on the page.
+MARGIN = 8
+GUTTER = 3
+SHEET = 2048
 
 
 class Keeper(Stage):
@@ -437,8 +472,9 @@ def encoded(colour):
     return np.where(colour <= 0.0031308, colour * 12.92, 1.055 * colour ** (1 / 2.4) - 0.055)
 
 
-def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE):
-    """The pixels as an AVIF with straight alpha, the shadow on the mat under them, as Stage.develop does it."""
+def finished(pixels, cast, exposure=EXPOSURE):
+    """The pixels as the page shows them: sRGB colour and straight alpha, the shadow on the mat under them, as
+    Stage.develop does it."""
     light = pixels[..., :3] * GAIN * 2.0**exposure
     cover = pixels[..., 3]
     alpha = np.clip(np.maximum(cover, light.max(axis=-1)), 0, 1)
@@ -447,19 +483,87 @@ def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE):
     total = alpha + under
     colour = (colour * alpha[..., None] + SHADOW * under[..., None]) / np.maximum(total, 1e-6)[..., None]
     colour = np.clip(colour, 0, 1)
-    colour = np.where(colour <= 0.0031308, colour * 12.92, 1.055 * colour ** (1 / 2.4) - 0.055)
+    return np.where(colour <= 0.0031308, colour * 12.92, 1.055 * colour ** (1 / 2.4) - 0.055), total
+
+
+def develop(pixels, cast, out, proofs, name, exposure=EXPOSURE):
+    """The pixels as an AVIF with straight alpha, the shadow on the mat under them."""
+    colour, total = finished(pixels, cast, exposure)
     colour += (np.random.default_rng(0).random(colour.shape, dtype=np.float32) - 0.5) / 255
     encoded = np.dstack((np.clip(colour, 0, 1), total)).astype(np.float32)
-    lossless = os.path.join(tempfile.gettempdir(), f"desk-{name}.png")
-    save(encoded, lossless)
-    subprocess.run(["uv", "run", "--quiet", os.path.join(HERE, "encode.py"), lossless, out], check=True)
-    os.remove(lossless)
+    publish(encoded, out, name)
     if proofs:
         value = MAT.lstrip("#")
         mat = np.array([int(value[i : i + 2], 16) / 255 for i in (0, 2, 4)], dtype=np.float32)
         encoded[..., :3] = encoded[..., :3] * encoded[..., 3:] + mat * (1 - encoded[..., 3:])
         encoded[..., 3] = 1
         save(encoded, os.path.join(proofs, f"{name}.png"))
+
+
+def publish(encoded, out, name):
+    """Encoded sRGB and straight alpha, rows from the top, as the page's AVIF."""
+    lossless = os.path.join(tempfile.gettempdir(), f"desk-{name}.png")
+    save(encoded, lossless)
+    subprocess.run(["uv", "run", "--quiet", os.path.join(HERE, "encode.py"), lossless, out], check=True)
+    os.remove(lossless)
+
+
+def grown(mask, steps):
+    """A mask grown by this many pixels, to the eight pixels round each."""
+    for _ in range(steps):
+        padded = np.pad(mask, 1)
+        mask = np.zeros_like(mask)
+        for dy in (0, 1, 2):
+            for dx in (0, 1, 2):
+                mask = mask | padded[dy : dy + mask.shape[0], dx : dx + mask.shape[1]]
+    return mask
+
+
+def filled(values, unknown):
+    """Values where unknown is set carried in from those round them, ring by ring."""
+    values = values.copy()
+    unknown = unknown.copy()
+    rows, cols = unknown.shape
+    while unknown.any():
+        known = np.pad(~unknown, 1).astype(np.float32)
+        padded = np.pad(values * ~unknown[..., None], ((1, 1), (1, 1), (0, 0)))
+        total = np.zeros_like(values)
+        count = np.zeros(unknown.shape, dtype=np.float32)
+        for dy in (0, 1, 2):
+            for dx in (0, 1, 2):
+                total += padded[dy : dy + rows, dx : dx + cols]
+                count += known[dy : dy + rows, dx : dx + cols]
+        reached = unknown & (count > 0)
+        if not reached.any():
+            break
+        values[reached] = total[reached] / count[reached][:, None]
+        unknown &= ~reached
+    return values
+
+
+def parted(seen, cover, under, reach):
+    """A hand in one frame, as two layers the page lays over the dial without it (under): the shadow it throws, which
+    multiplies what lies under it, and the hand itself, laid over that. seen is the frame, cover how much of each
+    pixel the hand covers, both as the page shows them. Under the hand its shadow is not seen; it is carried in from
+    beside it. Returns the shadow, opaque where it darkens anything, and the hand, each as sRGB and straight alpha."""
+    on = cover > 1 / 255
+    shadow = np.clip(seen / np.maximum(under, 1 / 255), 0, 1)
+    # The shadow lies within reach pixels of the hand, and darkens the dial by more than the noise between two
+    # renders of it; elsewhere a frame differs from the dial only by that noise.
+    shadow[~grown(on, reach) | ((1 - shadow).max(axis=-1) < NOISE)] = 1
+    shadow = filled(shadow, on)
+    # Where the hand covers a pixel in part, what shows beside it fixes the shadow under it: no darker than leaves the
+    # hand's own colour at least black, no lighter than leaves it at most white.
+    seen_beside = (1 - cover)[..., None] * under
+    lightest = seen / np.maximum(seen_beside, 1e-6)
+    darkest = (seen - cover[..., None]) / np.maximum(seen_beside, 1e-6)
+    shadow = np.where(on[..., None], np.clip(np.minimum(shadow, lightest), np.maximum(darkest, 0), 1), shadow)
+    hand = np.clip((seen - (1 - cover)[..., None] * under * shadow) / np.maximum(cover, 1 / 255)[..., None], 0, 1)
+    hand[~on] = 0
+    darkens = grown((shadow < 1 - 0.5 / 255).any(axis=-1), 1)
+    shadow[~darkens] = 1
+    rebuilt = np.where(on[..., None], cover[..., None] * hand, 0) + (1 - np.where(on, cover, 0))[..., None] * under * shadow
+    return np.dstack((shadow, darkens)), np.dstack((hand, np.where(on, cover, 0))), np.abs(rebuilt - seen).max()
 
 
 def save(encoded, path):
@@ -483,15 +587,18 @@ def main():
     parser.add_argument("--layers", nargs="*", help="render only these layers the page lays over the plate, or all of them, and keep the plates")
     parser.add_argument("--shot", help="photograph this one shot on a stand of its own, as a proof, and nothing else")
     parser.add_argument("--layout", help="lay the desk out as this file has it, in desk.json's form, instead: a proof only")
+    parser.add_argument("--hands", nargs="*", help="render only the watch's dial and the frames of these hands, or of all of them, and keep the plates; --hands dial renders the dial alone")
+    parser.add_argument("--truth", nargs="*", default=[], help="with --hands, also render the dial with every hand where it stops at these times (HH:MM:SS), whole, as proofs to check the frames by")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
     if args.scale != 1 or args.layout:
         # A proof at another scale, or of another layout, never takes the place of the page's plates, or the page
         # would show a plate of one render with a layer of another.
-        global OUT, LEAN, PORTRAIT, LAYOUT
+        global OUT, LEAN, PORTRAIT, HANDS_AT, LAYOUT
         LAYOUT = args.layout or LAYOUT
         OUT = args.proofs or tempfile.mkdtemp(prefix="desk-")
         LEAN = os.path.join(OUT, "lean.json")
         PORTRAIT = os.path.join(OUT, "portrait.json")
+        HANDS_AT = os.path.join(OUT, "hands.json")
         os.makedirs(OUT, exist_ok=True)
 
     if args.shot:
@@ -660,10 +767,166 @@ def main():
         rim = np.concatenate((light[0], light[-1], light[:, 0], light[:, -1])).mean(axis=0)
         return "#" + "".join(f"{round(float(c) * 255):02x}" for c in np.clip(rim, 0, 1))
 
-    plates = args.layers is None
+    def watch_hands():
+        """The watch's dial without the hands that move, and each of those hands at every place it stops, each
+        rendered in the plate's set by the plate's camera, cut to the box round it and its shadow. Where on the plate
+        the dial lies, and where on the dial and in its picture each frame, goes to HANDS_AT for the page."""
+        from bpy_extras.object_utils import world_to_camera_view
+
+        with open(chrono.HANDS_ART) as file:
+            measured = json.load(file)
+        parts = {obj.name.split(".")[0]: obj for obj in desk.parts["chrono"]}
+        moving = {name: [parts[part] for part in hand["parts"]] for name, hand in HANDS.items()}
+        was = {obj: obj.matrix_basis.copy() for objects in moving.values() for obj in objects}
+        photographed = {"seconds": measured["small"]["at"][2][2], "hour": measured["hour"]["angle"], "minute": measured["minute"]["angle"]}
+        wanted = [name for name in HANDS if not args.hands or name in args.hands]
+        cols, rows = scene.render.resolution_x, scene.render.resolution_y
+
+        def turn(name, angle):
+            for obj in moving[name]:
+                obj.matrix_basis = was[obj] @ Matrix.Rotation(-math.radians(angle - photographed[name]), 4, "Z")
+            bpy.context.view_layer.update()
+
+        def pixel(point):
+            u, v, _ = world_to_camera_view(scene, scene.camera, point)
+            return np.array((u * cols, (1 - v) * rows))
+
+        def ring(obj, reach):
+            """Where the plate's camera sees a hand's pivot, and how far out from it, in pixels, it sees reach mm."""
+            low = min(v.co.z for v in obj.data.vertices)
+            middle = pixel(obj.matrix_world @ Vector((0, 0, low)))
+            return middle, max(np.linalg.norm(pixel(obj.matrix_world @ Vector((reach * math.cos(a), reach * math.sin(a), low))) - middle) for a in np.linspace(0, 2 * math.pi, 16, endpoint=False))
+
+        def around(name):
+            """The box of pixels a hand covers as it lies now, and THROW mm more all round, for its shadow."""
+            seen = np.array([pixel(obj.matrix_world @ v.co) for obj in moving[name] for v in obj.data.vertices])
+            _, more = ring(moving[name][0], THROW)
+            return (math.floor(seen[:, 0].min() - more), math.floor(seen[:, 1].min() - more), math.ceil(seen[:, 0].max() + more), math.ceil(seen[:, 1].max() + more))
+
+        def rendered(box, samples=None):
+            """The pixels of box, rendered with MARGIN more all round, so the denoiser sees past its edges."""
+            x0, y0, x1, y1 = box
+            full = (max(x0 - MARGIN, 0), max(y0 - MARGIN, 0), min(x1 + MARGIN, cols), min(y1 + MARGIN, rows))
+            scene.render.use_border = True
+            scene.render.use_crop_to_border = True
+            # Blender rounds a border down to whole pixels: a quarter of one in keeps it on the pixel meant.
+            scene.render.border_min_x, scene.render.border_max_x = (full[0] + 0.25) / cols, (full[2] + 0.25) / cols
+            scene.render.border_min_y, scene.render.border_max_y = (rows - full[3] + 0.25) / rows, (rows - full[1] + 0.25) / rows
+            pixels = stage._expose(raw, samples=samples)
+            scene.render.use_border = False
+            if pixels.shape[:2] != (full[3] - full[1], full[2] - full[0]):
+                sys.exit(f"Rendered {pixels.shape[1]}x{pixels.shape[0]} for the region {full}")
+            return pixels[y0 - full[1] : y1 - full[1], x0 - full[0] : x1 - full[0]]
+
+        def held_out(kept, on):
+            """Everything but what is kept held out, so a render's alpha is how much of each pixel it covers. The
+            crystal stays over it, bending what shows through it as it does, and nothing is denoised. The crystal
+            throws back a little of the room, which counts toward the alpha as well: the dial with no hand on it
+            shows how much."""
+            for obj in scene.objects:
+                if obj.type in ("MESH", "CURVE") and obj not in kept and not obj.name.startswith("chrono-crystal"):
+                    obj.is_holdout = on
+            scene.cycles.use_adaptive_sampling = scene.cycles.use_denoising = not on
+
+        for objects in moving.values():
+            cast(objects, False)
+        pivot, inner = ring(moving["minute"][0], DIAL[0])
+        _, outer = ring(moving["minute"][0], DIAL[0] + DIAL[1])
+        dial_box = (math.floor(pivot[0] - outer), math.floor(pivot[1] - outer), math.ceil(pivot[0] + outer), math.ceil(pivot[1] + outer))
+        began = time.time()
+        dial, _ = finished(rendered(dial_box), np.zeros(1))
+        dial_rows, dial_cols = dial.shape[:2]
+        yy, xx = np.mgrid[0:dial_rows, 0:dial_cols]
+        out = np.hypot(xx + dial_box[0] + 0.5 - pivot[0], yy + dial_box[1] + 0.5 - pivot[1])
+        fade = np.clip((outer - out) / (outer - inner), 0, 1)
+        grain = (np.random.default_rng(0).random(dial.shape, dtype=np.float32) - 0.5) / 255
+        publish(np.dstack((np.clip(dial + grain, 0, 1), fade)).astype(np.float32), os.path.join(OUT, f"{named}-dial.avif"), f"{named}-dial")
+        print(f"DIAL {dial_cols}x{dial_rows} at {dial_box} {time.time() - began:.0f}s", flush=True)
+        held_out([], True)
+        glare = rendered(dial_box, COVER_SAMPLES)[..., 3]
+        held_out([], False)
+        found = {"dial": [round(value / density, 4) for value in (dial_box[0], dial_box[1], dial_cols, dial_rows)], "size": [dial_cols, dial_rows]}
+
+        for name in wanted:
+            hand = HANDS[name]
+            angles = [360 * k / hand["stops"] for k in range(hand["stops"])]
+            cast(moving[name], True)
+            boxes = []
+            for angle in angles:
+                turn(name, angle)
+                x0, y0, x1, y1 = around(name)
+                # Inside the dial's own picture, where nothing else of the watch moves.
+                boxes.append((max(x0, dial_box[0]), max(y0, dial_box[1]), min(x1, dial_box[2]), min(y1, dial_box[3])))
+            began = time.time()
+            seen = []
+            for angle, box in zip(angles, boxes):
+                turn(name, angle)
+                seen.append(finished(rendered(box), np.zeros(1))[0])
+            print(f"HAND {name} {len(angles)} frames {time.time() - began:.0f}s", flush=True)
+            began = time.time()
+            held_out(moving[name], True)
+            covers = []
+            for angle, box in zip(angles, boxes):
+                turn(name, angle)
+                bare = glare[box[1] - dial_box[1] : box[3] - dial_box[1], box[0] - dial_box[0] : box[2] - dial_box[0]]
+                covers.append(np.clip((rendered(box, COVER_SAMPLES)[..., 3] - bare) / np.maximum(1 - bare, 1e-3), 0, 1))
+            held_out(moving[name], False)
+            print(f"COVER {name} {time.time() - began:.0f}s", flush=True)
+            # Each frame is its shadow and its hand side by side, GUTTER empty pixels round each, laid in rows.
+            _, more = ring(moving[name][0], THROW)
+            pairs, frames, worst = [], [], 0.0
+            x = y = tallest = 0
+            for frame, cover, box in zip(seen, covers, boxes):
+                dx, dy = box[0] - dial_box[0], box[1] - dial_box[1]
+                h, w = frame.shape[:2]
+                under = dial[dy : dy + h, dx : dx + w]
+                shadow, painted, error = parted(frame, cover, under, round(more))
+                worst = max(worst, error)
+                painted[..., :3] = np.clip(painted[..., :3] + grain[dy : dy + h, dx : dx + w], 0, 1)
+                if x + 2 * w + 4 * GUTTER > SHEET:
+                    x, y, tallest = 0, y + tallest, 0
+                pairs.append((x, y, shadow, painted))
+                frames.append([x + GUTTER, y + GUTTER, w, h, dx, dy])
+                x += 2 * w + 4 * GUTTER
+                tallest = max(tallest, h + 2 * GUTTER)
+            sheet = np.zeros((y + tallest, SHEET, 4), dtype=np.float32)
+            for x, y, shadow, painted in pairs:
+                h, w = shadow.shape[:2]
+                sheet[y + GUTTER : y + GUTTER + h, x + GUTTER : x + GUTTER + w] = shadow
+                sheet[y + GUTTER : y + GUTTER + h, x + 3 * GUTTER + w : x + 3 * GUTTER + 2 * w] = painted
+            print(f"PARTED {name} {sheet.shape[1]}x{sheet.shape[0]} worst {worst * 255:.2f}/255", flush=True)
+            publish(sheet, os.path.join(OUT, f"{named}-{name}.avif"), f"{named}-{name}")
+            if args.proofs:
+                save(sheet, os.path.join(args.proofs, f"{named}-{name}.png"))
+            cast(moving[name], False)
+            found[name] = {"stops": hand["stops"], "gutter": GUTTER, "frames": frames}
+
+        for when in args.truth:
+            hours, minutes, seconds = map(int, when.split(":"))
+            now = hours * 3600 + minutes * 60 + seconds
+            for name, period in (("seconds", 60), ("hour", 43200), ("minute", 3600)):
+                stops = HANDS[name]["stops"]
+                turn(name, 360 * math.floor(now % period / period * stops) / stops)
+                cast(moving[name], True)
+            whole, _ = finished(rendered(dial_box), np.zeros(1))
+            save(np.dstack((whole, np.ones(whole.shape[:2]))).astype(np.float32), os.path.join(args.proofs or OUT, f"truth-{named}-{when.replace(':', '')}.png"))
+            print(f"TRUTH {when}", flush=True)
+
+        for name, objects in moving.items():
+            turn(name, photographed[name])
+            cast(objects, True)
+        known = json.load(open(HANDS_AT)) if os.path.exists(HANDS_AT) else {}
+        known[args.plate] = {**{key: value for key, value in known.get(args.plate, {}).items() if key in HANDS}, **found}
+        with open(HANDS_AT, "w") as file:
+            file.write(json.dumps(known, separators=(",", ":")) + "\n")
+
+    plates = args.layers is None and args.hands is None
     show(layered, False)
     cast(layered, False)
     show(portrayed, False)
+    if args.hands is not None:
+        watch_hands()
+        return
     if plates:
         # The objects in the lamp's light, the mat unseen but lighting them from below and showing in them, and the
         # light on the mat as a map.

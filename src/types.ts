@@ -131,6 +131,19 @@ export type Rect = [number, number, number, number]
  */
 export type Portraits = Partial<Record<PropId, { picture: Rect; body: Rect }>>
 
+/**
+ * One hand of the desk's watch as its frames: how many places round the dial it stops at, the first at 12, and for
+ * each, in pixels, where its shadow lies in the hand's picture, how large it is, and where it lies on the dial's
+ * picture. The hand itself lies beside its shadow, gutter empty pixels on either side of each.
+ */
+export type HandFrames = { stops: number; gutter: number; frames: [number, number, number, number, number, number][] }
+
+/**
+ * The desk's watch on a plate: the rectangle of the plate its dial's picture covers, and that picture's size in
+ * pixels, with the frames of the hands that keep the time.
+ */
+export type WatchDial = { dial: Rect; size: [number, number]; seconds: HandFrames; hour: HandFrames; minute: HandFrames }
+
 export type Profile = {
   handle: string
   nav: NavItem[]
