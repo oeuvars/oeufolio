@@ -37,7 +37,7 @@ FOOT = (0.2, 0.06 * D)
 # The handle: a strap this thick and wide, its loop reaching this far out from the side and this far down from just
 # under the rim, its outer side leaning in by LEAN at its foot, its corners rounded inside and out.
 STRAP = (0.068 * D, 0.18 * D)
-REACH = 0.45 * D
+REACH = 0.3 * D
 DROP = 0.5 * TALL
 UNDER = 0.035 * D
 LEAN = 0.02 * D
@@ -46,15 +46,15 @@ BEND = 0.06 * D
 LEVEL = TALL - 0.11 * D
 MENISCUS = (0.012 * D, 0.03 * D)
 
-# The glaze, measured off the overhead photograph against the white card it stands on: a slate blue black, salted
-# with fine grains lighter and darker than it, every GRAIN em or so; greener and darker in the well, where it pooled;
-# darker again along the handle's edges, where it gathered; and a thin amber line round the shoulders of the lip,
-# where it ran thin.
-GLAZE = "#252b30"
-POOL = "#151916"
-SALT = "#4c5862"
-PEPPER = "#0b0d0f"
-GATHERED = "#120f0d"
+# The glaze, measured off the overhead photograph against the white card it stands on, then lightened so it reads
+# under the desk's dim light: a slate blue black, salted with fine grains lighter and darker than it, every GRAIN em
+# or so; greener and darker in the well, where it pooled; darker again along the handle's edges, where it gathered;
+# and a thin amber line round the shoulders of the lip, where it ran thin.
+GLAZE = "#343c43"
+POOL = "#1f2521"
+SALT = "#62717d"
+PEPPER = "#131619"
+GATHERED = "#1e1a17"
 AMBER = "#6a3414"
 GRAIN = 0.045
 GLOSS = 0.07
