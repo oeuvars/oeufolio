@@ -40,14 +40,16 @@ for _key, _over in (("half", STRAIGHT), ("deep", SOFT), ("off", STRAIGHT)):
 FRONT = math.pi * 5.0 / 2
 LENGTH = 22.31
 D = 2 * SHAPE["half"][-1]
-# The crumples are a scan of creased paper (ambientCG Paper003, fetched by fetch.py): broad facets between folds,
-# as squeezed aluminium takes them. The scan is laid TILE em to a repeat, once round the tube, and softened over
-# ROUND em, for aluminium folds round over where paper creases sharp and the paper's own crinkle is not in metal.
-# Its heights are spread DENT em about their middle (one deviation), and none goes more than REACH deviations in or
-# out. They give way where the flattened tube folds over at its edges (FOLD em, see body()), and the crimped end is
-# pressed flat for its first CRIMP em.
+# The crumples are a scan of creased paper (ambientCG Paper003, fetched by fetch.py), turned over: the paper's
+# ridges are the folds a squeezed tube is pressed in along, and its broad facets the wall between them. The scan is
+# laid TILE em to a repeat, once round the tube, and softened over ROUND em, for aluminium folds round over where
+# paper creases sharp and the paper's own crinkle is not in metal. Anything in it broader than BROAD em is taken out:
+# the tube's own shape is the photograph's. Its heights are spread DENT em about their middle (one deviation), eased
+# off toward REACH deviations so no single fold stands out. They give way where the flattened tube folds over at its
+# edges (FOLD em, see body()), and the crimped end is pressed flat for its first CRIMP em.
 TILE = 2 * FRONT
 ROUND = 0.035
+BROAD = 1.0
 DENT = 0.09
 REACH = 2.5
 FOLD = 0.3
@@ -90,9 +92,15 @@ def crumples(round_, along):
     image.pixels.foreach_get(data)
     bpy.data.images.remove(image)
     scan = data.reshape(size, size, 4)[::-1, :, 0].astype(np.float64)
-    # Softened over ROUND em by a blur that wraps round the tile as the tile wraps round the tube.
-    sigma, f = ROUND / TILE * size, np.fft.fftfreq(size)
-    scan = np.real(np.fft.ifft2(np.fft.fft2(scan) * np.exp(-2 * (np.pi * sigma) ** 2 * (f[:, None] ** 2 + f[None, :] ** 2))))
+    # Softened over ROUND em and its broad swells taken out, by blurs that wrap round the tile as the tile wraps
+    # round the tube.
+    f = np.fft.fftfreq(size)
+    f2 = f[:, None] ** 2 + f[None, :] ** 2
+
+    def gauss(over):
+        return np.exp(-2 * (np.pi * over / TILE * size) ** 2 * f2)
+
+    scan = np.real(np.fft.ifft2(np.fft.fft2(scan) * gauss(ROUND) * (1 - gauss(BROAD))))
 
     xs, ys = np.meshgrid(round_ / TILE * size, along / TILE * size)
     x0, y0 = np.floor(xs).astype(int), np.floor(ys).astype(int)
@@ -101,7 +109,7 @@ def crumples(round_, along):
     x1, y1 = (x0 + 1) % size, (y0 + 1) % size
     top = scan[y0, x0] * (1 - fx) + scan[y0, x1] * fx
     bottom = scan[y1, x0] * (1 - fx) + scan[y1, x1] * fx
-    height = DENT * np.clip(((top * (1 - fy) + bottom * fy) - scan.mean()) / scan.std(), -REACH, REACH)
+    height = -DENT * REACH * np.tanh(((top * (1 - fy) + bottom * fy) - scan.mean()) / scan.std() / REACH)
     return height * (ramp(CRIMP, CRIMP + 0.4, along) * (1 - ramp(LENGTH - 0.35, LENGTH - 0.05, along)))[:, None]
 
 
@@ -193,13 +201,13 @@ def lacquer(sheet, name, wear=()):
     links.new(packed.outputs["Alpha"], shader.inputs["Coat Weight"])
     links.new(bump.outputs["Normal"], shader.inputs["Normal"])
     links.new(bump.outputs["Normal"], shader.inputs["Coat Normal"])
-    # The shine is the varnish's alone: a hard gloss, which finger marks dull a little.
+    # The shine is the varnish's alone: a gloss, worn a little soft by handling, which finger marks dull further.
     shader.inputs["Specular IOR Level"].default_value = 0.1
     for asset, size, dull in wear:
         worn(material, asset, size, dull)
     varnish = nodes.new("ShaderNodeMath")
     varnish.operation = "MULTIPLY"
-    varnish.inputs[1].default_value = 0.12
+    varnish.inputs[1].default_value = 0.3
     links.new(shader.inputs["Roughness"].links[0].from_socket, varnish.inputs[0])
     links.new(varnish.outputs[0], shader.inputs["Coat Roughness"])
     return material
