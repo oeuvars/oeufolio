@@ -1,9 +1,10 @@
 """Shaving soap in a tube: Proraso's white Pelli Sensibili, with oatmeal and green tea, 150 ml, as the user's own,
-used and crumpled, photographed from above (art/proraso-own.jpg). A lacquered aluminium tube lying on its back,
-crimped end to the left: flattened and flared toward the crimp, narrowing to the shoulder, its whole length crumpled
-into small sharp facets. Its outline is the photograph's, followed down both edges, and so is its print, unrolled
-round it with the crumples' own light and glints in it (art/prorasophoto.py). The white shoulder and the ribbed
-white cap screwed on its thread are clean. The lacquer is a hard gloss, lit by the room the rest of the desk is in."""
+used and crumpled, photographed from above (art/proraso-own.jpg). An aluminium tube lacquered white and printed,
+under a clear gloss varnish, lying on its back with the crimped end to the left: flattened and flared toward the
+crimp, narrowing to the shoulder. Its outline is the photograph's, followed down both edges (art/prorasophoto.py).
+Its print is Proraso's own artwork with the green and gold drawn, laid where the photograph has them; its crumples
+are real folds, from a scan of creased paper, so the light on them is the scene's. A few chips and finger marks
+show it has been used. The white shoulder and the ribbed white cap screwed on its thread are clean."""
 
 import json
 import math
@@ -13,9 +14,10 @@ import bmesh
 import bpy
 import numpy as np
 
-from paint import ramp
+from paint import disc, linear, ramp
 from solids import finish, grain, principled, worn
-from stock import Sheet, pixels_of
+from stage import ASSETS
+from stock import Sheet, fit, pixels_of
 
 ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "art")
 
@@ -33,16 +35,41 @@ for _key, _over in (("half", STRAIGHT), ("deep", SOFT), ("off", STRAIGHT)):
     _kernel = np.exp(-0.5 * (np.arange(-_reach, _reach + 1) * 0.05 / _over) ** 2)
     _line = np.convolve(np.pad(SHAPE[_key], _reach, mode="edge"), _kernel / _kernel.sum(), mode="valid")
     SHAPE[_key] = list(WIDE * _line)
-# The print's width once round (as art/prorasophoto.py lays it out), the length from the crimped edge to the
-# shoulder, and the diameter at the shoulder, where the tube is round.
+# The print's width once round, the length from the crimped edge to the shoulder, and the diameter at the shoulder,
+# where the tube is round.
 FRONT = math.pi * 5.0 / 2
 LENGTH = 22.31
 D = 2 * SHAPE["half"][-1]
-# How much of the crumples' depth the wall takes.
-DENT = 0.25
+# The crumples are a scan of creased paper (ambientCG Paper003, fetched by fetch.py): broad facets between folds,
+# as squeezed aluminium takes them. The scan is laid TILE em to a repeat, once round the tube, and softened over
+# ROUND em, for aluminium folds round over where paper creases sharp and the paper's own crinkle is not in metal.
+# Its heights are spread DENT em about their middle (one deviation), and none goes more than REACH deviations in or
+# out. They give way where the flattened tube folds over at its edges (FOLD em, see body()), and the crimped end is
+# pressed flat for its first CRIMP em.
+TILE = 2 * FRONT
+ROUND = 0.035
+DENT = 0.09
+REACH = 2.5
+FOLD = 0.3
+CRIMP = 0.5
 
-BODY = "#c7c9ca"
+# The tube's white lacquer, and Proraso's inks: a deep green, a red, and a gold that is a metallic ink.
+WHITE = "#d2d1cc"
+LEAF = "#14583a"
+RED = "#7a2620"
+GOLD = "#c09a5b"
 PLASTIC = "#e6e5e0"
+# Where the print lies, in em round from the middle of the face up and down from the crimped edge, as the photograph
+# has it. The gold bands, BAND_W wide, are BAND em out at FEET em down and run SLOPE em further out for each em up,
+# to the crimp; outside them the green runs round the sides to SIDE em, down to GREEN em, and under it, behind the
+# logo's panel, a band of red and a line of gold. The logo's panel, the lettering and the signature are boxes
+# (left, top, right, bottom) round the front's middle.
+BAND, FEET, SLOPE, BAND_W = 1.37, 4.82, 0.723, 0.15
+SIDE, GREEN = 5.03, 4.56
+FLAG = ((5.32, 6.30, RED), (6.30, 6.40, GOLD))
+LOGO = (-3.55, 3.45, 3.75, 8.05)
+LETTERING = (-3.02, 9.8, 3.17, 12.27)
+SIGNATURE = (-3.2, 18.07, 3.7, 19.74)
 
 # The shoulder domes in from the wall to the neck, and the cap covers the neck from where the dome is this wide.
 DOME = 0.62
@@ -53,36 +80,84 @@ WELL = 0.6
 W, H = 25.5, 8.95
 
 
-def crumples(rows, cols):
-    """The crumples' height, in em, from the photograph's shading (art/prorasophoto.py), at rows by cols over the
-    print: once round across, crimp to shoulder down. Dying out at the crimped edge and at the shoulder's rim."""
-    image = pixels_of(os.path.join(ART, "proraso-height.png"))[..., 0].astype(np.float64)
-    ys = np.clip((np.arange(rows) + 0.5) * image.shape[0] / rows - 0.5, 0, image.shape[0] - 1)
-    xs = (np.arange(cols) + 0.5) * image.shape[1] / cols - 0.5
-    y0 = np.minimum(ys.astype(int), image.shape[0] - 2)
-    x0 = np.floor(xs).astype(int) % image.shape[1]
-    x1 = (x0 + 1) % image.shape[1]
-    fy, fx = (ys - y0)[:, None], (xs - np.floor(xs))[None, :]
-    top = image[y0][:, x0] * (1 - fx) + image[y0][:, x1] * fx
-    bottom = image[y0 + 1][:, x0] * (1 - fx) + image[y0 + 1][:, x1] * fx
-    height = ((top * (1 - fy) + bottom * fy) - 0.5) * 2 * SHAPE["crumple"]
-    along = (np.arange(rows) + 0.5) / rows * LENGTH
-    return height * (ramp(0.05, 0.35, along) * (1 - ramp(LENGTH - 0.35, LENGTH - 0.05, along)))[:, None]
+def crumples(round_, along):
+    """The crumples' height, in em about their middle, at points so far round the tube and so far along it from the
+    crimped edge, in em: a row for each along. Pressed flat in the crimp and dying out at the shoulder's rim."""
+    image = bpy.data.images.load(os.path.join(ASSETS, "Paper003", "Paper003_2K-PNG_Displacement.png"))
+    image.colorspace_settings.name = "Non-Color"
+    size = image.size[0]
+    data = np.empty(size * size * 4, dtype=np.float32)
+    image.pixels.foreach_get(data)
+    bpy.data.images.remove(image)
+    scan = data.reshape(size, size, 4)[::-1, :, 0].astype(np.float64)
+    # Softened over ROUND em by a blur that wraps round the tile as the tile wraps round the tube.
+    sigma, f = ROUND / TILE * size, np.fft.fftfreq(size)
+    scan = np.real(np.fft.ifft2(np.fft.fft2(scan) * np.exp(-2 * (np.pi * sigma) ** 2 * (f[:, None] ** 2 + f[None, :] ** 2))))
+
+    xs, ys = np.meshgrid(round_ / TILE * size, along / TILE * size)
+    x0, y0 = np.floor(xs).astype(int), np.floor(ys).astype(int)
+    fx, fy = xs - x0, ys - y0
+    x0, y0 = x0 % size, y0 % size
+    x1, y1 = (x0 + 1) % size, (y0 + 1) % size
+    top = scan[y0, x0] * (1 - fx) + scan[y0, x1] * fx
+    bottom = scan[y1, x0] * (1 - fx) + scan[y1, x1] * fx
+    height = DENT * np.clip(((top * (1 - fy) + bottom * fy) - scan.mean()) / scan.std(), -REACH, REACH)
+    return height * (ramp(CRIMP, CRIMP + 0.4, along) * (1 - ramp(LENGTH - 0.35, LENGTH - 0.05, along)))[:, None]
+
+
+def printed(sheet, name, left, top, right, bottom):
+    """Print one of Proraso's artworks in a box given in em round the front's middle. Its white is the tube's own
+    white lacquer and covers whatever is printed under it; its inks go over that."""
+    r0, r1, c0, c1 = (round(v * sheet.ppe) for v in (top, bottom, FRONT + left, FRONT + right))
+    image = fit(pixels_of(os.path.join(ART, f"proraso-{name}.png")).astype(np.float64), r1 - r0, c1 - c0)
+    srgb, alpha = image[..., :3], image[..., 3]
+    own = np.where(srgb <= 0.04045, srgb / 12.92, ((srgb + 0.055) / 1.055) ** 2.4)
+    ink = alpha * (1 - ramp(0.8, 0.95, srgb.min(axis=-1)))
+    patch = sheet.rgb[r0:r1, c0:c1]
+    patch += alpha[..., None] * (linear(WHITE) - patch)
+    patch += ink[..., None] * (own - patch)
 
 
 def label():
-    """The print, as the photograph unrolls it: once round the tube across, crimp to shoulder down."""
-    sheet = Sheet(2 * FRONT, LENGTH, BODY, rough=0.3, density=3)
-    # The crimped end is pressed flat and plain, as the photograph has it: no folds or teeth drawn on it.
-    sheet.art(os.path.join(ART, "proraso-print.png"), 0, 0, 2 * FRONT, LENGTH)
+    """The print, once round the tube across and crimp to shoulder down: ink and lacquer only, for the light on the
+    crumples is the geometry's."""
+    sheet = Sheet(2 * FRONT, LENGTH, WHITE, rough=0.3, density=3)
+    X, Y = sheet.X, sheet.Y
+    out = np.abs(X - FRONT)
 
-    # The gold is a pale metallic ink, found by colour; the green is a plain gloss ink, as bright as the photograph's.
+    # The green outside the gold bands and round the sides, and the red and gold under it at the sides.
+    spread = BAND + (FEET - Y) * SLOPE
+    outside = sheet.mask(spread - out) * sheet.mask(out - SIDE)
+    sheet.paint(outside * sheet.mask(Y - GREEN), LEAF)
+    for top, foot, colour in FLAG:
+        sheet.paint(outside * sheet.mask(top - Y) * sheet.mask(Y - foot), colour)
+    band = sheet.mask(np.abs(out - spread) / math.hypot(1, SLOPE) - BAND_W / 2) * sheet.mask(Y - FEET - 0.15)
+    sheet.paint(band, GOLD)
+
+    printed(sheet, "white-logo", *LOGO)
+    printed(sheet, "white-lettering", *LETTERING)
+    printed(sheet, "signature", *SIGNATURE)
+
+    # The gold is a metallic ink, found by its colour: warm, and yellow rather than red.
     r, g, b = sheet.rgb[..., 0], sheet.rgb[..., 1], sheet.rgb[..., 2]
-    gilt = np.clip(((r - b) / np.maximum(r, 1e-3) - 0.35) / 0.15, 0, 1) * np.clip((g / np.maximum(r, 1e-3) - 0.6) / 0.1, 0, 1) * np.clip((r - 0.08) / 0.05, 0, 1)
-    sheet.finish(gilt, metal=0.35)
+    warm, yellow = (r - b) / np.maximum(r, 1e-3), g / np.maximum(r, 1e-3)
+    gilt = ramp(0.45, 0.6, warm) * ramp(0.3, 0.4, yellow) * (1 - ramp(0.85, 0.95, yellow)) * ramp(0.06, 0.12, r)
+    sheet.finish(gilt, rough=0.25, metal=0.7)
 
-    # The whole print is under one clear, hard varnish.
-    sheet.coat[:] = 0.8
+    # Used: the lacquer is chipped in a few small specks down to the bare aluminium, most of them round the
+    # shoulder's rim and the crimp, where the tube is knocked and pressed.
+    rng = np.random.default_rng(8799)
+    chips = np.zeros(sheet.height.shape)
+    for _ in range(40):
+        y = rng.choice((rng.uniform(LENGTH - 0.5, LENGTH - 0.05), rng.uniform(0.05, 1.2), rng.uniform(1.2, LENGTH - 0.5)), p=(0.3, 0.2, 0.5))
+        x = FRONT + rng.uniform(-4.2, 4.2)
+        rows, cols = sheet.window(x - 0.05, y - 0.05, x + 0.05, y + 0.05)
+        chips[rows, cols] = np.maximum(chips[rows, cols], sheet.mask(disc(X[rows, cols], Y[rows, cols], x, y, rng.uniform(0.008, 0.025))))
+    sheet.paint(chips, "#d6d8da")
+    sheet.finish(chips, rough=0.35, metal=1.0)
+
+    # The whole print is under one clear, hard varnish, except where it is chipped.
+    sheet.coat[:] = 1 - chips
     return sheet
 
 
@@ -150,19 +225,23 @@ def body(stage, material):
         s = np.concatenate(([0], np.cumsum((ds[1:] + ds[:-1]) / 2)))
         turn[i] = np.interp(share * s[-1], s, phi)
     y, z = a[:, None] * np.sin(turn), b[:, None] * np.cos(turn)
-    # The crumples pushed out along each point's normal on the oval, gently: the print carries the photograph's own
-    # shading of them. Only on the face up: the outline is already the photograph's, dents and all.
+    # The crumples pushed out along each point's normal on the oval, all the way round.
     ny, nz = b[:, None] * np.sin(turn), a[:, None] * np.cos(turn)
     length = np.hypot(ny, nz)
-    push = DENT * crumples(rings, steps) * (1 - ramp(0.12, 0.2, np.abs(share - 0.5)))[None, :]
+    push = crumples(share * 2 * FRONT, along)
+    # Where the flattened tube folds over at its edges the wall curves tighter than any crumple and stays a fold: the
+    # crumples die away as the radius it curves on falls below FOLD em. Pushed in no further than under half the gap
+    # to the wall facing it, which may be pushed in as far, eased in toward that: the gap closes toward the edges.
+    curve = (a[:, None] ** 2 * np.cos(turn) ** 2 + b[:, None] ** 2 * np.sin(turn) ** 2) ** 1.5 / (a * b)[:, None]
+    push = push * curve / (curve + FOLD)
+    give = 0.45 * b[:, None] * np.abs(np.cos(turn)) + 1e-4
+    push = np.where(push < 0, -give * np.tanh(-push / give), push)
     y, z = y + push * ny / length + off[:, None], z + push * nz / length
 
-    # It lies on the mat. The crimped end has a wave in it, its edge is not cut quite straight, and one corner has
-    # been bent a little up off the mat.
+    # It lies on the mat. The crimped end has a wave in it, and its edge is not cut quite straight.
     x = np.broadcast_to(along[:, None], (rings, steps))
     round_ = (share[None, :] - 0.5) * 2 * FRONT
     z = np.maximum(z + b[:, None], 0.0) + 0.045 * (1 + np.sin(0.8 + 1.25 * round_)) * (1 - ramp(0, 3.0, x))
-    z = z + 0.2 * np.clip(1 - np.hypot(x, y - a[0]) / 1.5, 0, 1) ** 2
     x = x + 0.05 * np.sin(0.6 + 0.9 * round_) * (1 - ramp(0, 1.4, x))
 
     verts = np.column_stack((x.ravel(), y.ravel(), z.ravel()))
@@ -239,8 +318,9 @@ def cap(stage, plastic):
 
 
 def proraso(stage):
-    paint = lacquer(label(), "lacquer")
-    enamel = worn(principled("enamel", BODY, rough=0.28), "SurfaceImperfections003", 3, 0.15)
+    # Finger marks dull the varnish where the tube is held and squeezed.
+    paint = lacquer(label(), "lacquer", wear=(("Fingerprints009", 6, 0.12),))
+    enamel = worn(principled("enamel", WHITE, rough=0.2, coat_weight=1.0, coat_roughness=0.04), "SurfaceImperfections003", 3, 0.15)
     # Moulded polypropylene: a satin white that lets a little light into it.
     plastic = principled("cap", PLASTIC, rough=0.32, subsurface_weight=0.2, subsurface_scale=0.03)
     plastic = worn(grain(plastic, 320, 0.0015), "SurfaceImperfections003", 3, 0.12)

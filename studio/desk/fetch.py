@@ -29,6 +29,9 @@ MATERIALS = (
     "Clay003",
     "Wood067",
 )
+# ambientCG scans whose relief is built as real geometry, 2K PNG sets for their 16-bit displacement: creased paper,
+# for the folds of a squeezed tube.
+RELIEFS = ("Paper003",)
 # Poly Haven HDRI: a small studio with softboxes.
 HDRI = "studio_small_08"
 
@@ -41,12 +44,12 @@ def get(url, path):
 
 def main():
     os.makedirs(ASSETS, exist_ok=True)
-    for material in MATERIALS:
+    for material, kind in [(name, "1K-JPG") for name in MATERIALS] + [(name, "2K-PNG") for name in RELIEFS]:
         folder = os.path.join(ASSETS, material)
         if os.path.isdir(folder):
             continue
         archive = os.path.join(ASSETS, f"{material}.zip")
-        get(f"https://ambientcg.com/get?file={material}_1K-JPG.zip", archive)
+        get(f"https://ambientcg.com/get?file={material}_{kind}.zip", archive)
         os.makedirs(folder)
         with zipfile.ZipFile(archive) as bundle:
             for member in bundle.namelist():
