@@ -10,6 +10,10 @@ cut a little ragged with fibres, lying on the page below. The tab stands off the
 tip, as a folder's tab does once it has been handled. Everything is white, under the copy stand's own studio light
 (studio/desk's stage, its room and octabox), so what is rendered is only light and shadow. Writes OUT_DIR/cut.exr, that
 render, and OUT_DIR/bare.exr, the same frame with nothing on the page, for tabcut.py to divide one by the other.
+
+SPEC may make it of other stuff: its thickness, lift, raggedness and the voxels that round its cut in rem, and its
+colour and roughness and the page's colour (linear), as a leather tab cut from a mat is, thick, flat and dark. Then it also writes OUT_DIR/flat.exr, its
+flat top, and OUT_DIR/cover.exr, where it lies.
 """
 
 import json
@@ -29,9 +33,9 @@ spec_path, out_dir = sys.argv[sys.argv.index("--") + 1 :]
 spec = json.load(open(spec_path))
 band, protrude, height = spec["band"], spec["protrude"], spec["height"]
 x0, y0, w, h = spec["frame"]
-THICK = 0.035  # rem
-LIFT = 0.07  # rem, at the tab's tip
-RAGGED = 0.012  # rem, how far the cut wanders
+THICK = spec.get("thick", 0.035)  # rem
+LIFT = spec.get("lift", 0.07)  # rem, at the tab's tip
+RAGGED = spec.get("ragged", 0.012)  # rem, how far the cut wanders
 rng = np.random.default_rng(spec.get("seed", 5))
 
 
@@ -89,7 +93,7 @@ def sheet():
     # Even voxels through it, which round its cut a little as a real cut is, and give it the vertices to bend by.
     remesh = obj.modifiers.new("even", "REMESH")
     remesh.mode = "VOXEL"
-    remesh.voxel_size = THICK / 4
+    remesh.voxel_size = spec.get("voxel", THICK / 4)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.modifier_apply(modifier="even")
     co = np.empty(len(obj.data.vertices) * 3, np.float32)
@@ -105,12 +109,12 @@ def sheet():
     return obj
 
 
-def white(name):
+def white(name, colour=(0.8, 0.8, 0.8), roughness=0.9):
     material = bpy.data.materials.new(name)
     material.use_nodes = True
     shader = material.node_tree.nodes["Principled BSDF"]
-    shader.inputs["Base Color"].default_value = (0.8, 0.8, 0.8, 1)
-    shader.inputs["Roughness"].default_value = 0.9
+    shader.inputs["Base Color"].default_value = (*colour, 1)
+    shader.inputs["Roughness"].default_value = roughness
     shader.inputs["Specular IOR Level"].default_value = 0.2
     return material
 
@@ -153,7 +157,7 @@ ground = bpy.data.meshes.new("page")
 ground.from_pydata([(-90, -90, 0), (90, -90, 0), (90, 90, 0), (-90, 90, 0)], [], [(0, 1, 2, 3)])
 page = bpy.data.objects.new("page", ground)
 scene.collection.objects.link(page)
-ground.materials.append(white("page"))
+ground.materials.append(white("page", spec.get("under", (0.8, 0.8, 0.8)), 0.7))
 
 camera_data = bpy.data.cameras.new("overhead")
 camera_data.type = "ORTHO"
@@ -166,6 +170,25 @@ scene.camera = camera
 for name, with_paper in (("bare", False), ("cut", True)):
     if with_paper:
         paper = sheet()
-        paper.data.materials.append(white("paper"))
+        paper.data.materials.append(white("paper", spec.get("colour", (0.8, 0.8, 0.8)), spec.get("roughness", 0.9)))
     scene.render.filepath = os.path.join(out_dir, f"{name}.exr")
+    bpy.ops.render.render(write_still=True)
+
+# A sheet of a colour other than the page's is also rendered lying flat over the whole frame, its top far from any
+# cut, and alone on a clear ground, which gives where it covers the page: tabcut.py takes what it does to the light
+# on its own top from the one and over the page from the other.
+if "colour" in spec:
+    top = bpy.data.meshes.new("top")
+    top.from_pydata([(-90, -90, THICK), (90, -90, THICK), (90, 90, THICK), (-90, 90, THICK)], [], [(0, 1, 2, 3)])
+    top.materials.append(paper.data.materials[0])
+    flat = bpy.data.objects.new("top", top)
+    scene.collection.objects.link(flat)
+    paper.hide_render = True
+    scene.render.filepath = os.path.join(out_dir, "flat.exr")
+    bpy.ops.render.render(write_still=True)
+    flat.hide_render, paper.hide_render, page.hide_render = True, False, True
+    scene.render.film_transparent = True
+    scene.cycles.samples = 16
+    scene.cycles.use_denoising = False
+    scene.render.filepath = os.path.join(out_dir, "cover.exr")
     bpy.ops.render.render(write_still=True)

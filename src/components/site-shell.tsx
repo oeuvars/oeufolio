@@ -45,6 +45,11 @@ type Tone = {
   /** The shadow the cloth leaves on the page beyond its cut, rendered from the same mask (studio/linen.py --shadow):
    * a tile down the edge, CAST_WIDTH px wide from the mask's left, laid under the cloth and out over the next strip. */
   cast?: string
+  /** What the strip's edge does to the light where it lies on the strip after it, rendered (studio/edgecast) in place of
+   * a drop shadow: the shadow it leaves there, and its own cut's turn from the light and catch of it. A tile down the
+   * edge, from EDGECAST_FROM px in over the strip to EDGECAST_SPAN px across, as long as the length it repeats over,
+   * for each layout, as the edge is torn straight in a different place for each one's tab. */
+  edgecast?: Record<'wide' | 'phone', string> & { length: number }
   /** The strip is handmade paper, its edge the deckle the pulp stopped at, thinning to loose fibres: this mask of
    * it (studio/paper/edge.py), in place of a straight cut. Paper casts its shadow, as the strip's own does. */
   deckled?: string
@@ -71,6 +76,9 @@ const TEAR_LENGTH = 1600
 const FRAY_PAST = 9
 // How wide the cloth's shadow tile is, from the frayed mask's left (studio/linen.py SHADOW_FRAME).
 const CAST_WIDTH = 40
+// Where a strip's rendered edge lies, from its edge, and how wide it runs (studio/edgecast FRAME).
+const EDGECAST_FROM = -6
+const EDGECAST_SPAN = 40
 // The same for a handmade sheet's deckle mask (studio/paper/edge.py, DECKLE_PAST).
 const DECKLE_PAST = 9
 
@@ -172,8 +180,9 @@ const pageTones: Tone[] = [
   { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.png', cast: '/objects/linen-shadow.png', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: '/objects/likes-edge.png', paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
-  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, tab: '/objects/tab-teenage.avif' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, tab: '/objects/tab-proraso.avif' },
+  // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.
+  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.png', phone: '/objects/poster-cast-phone.png', length: TEAR_LENGTH }, tab: '/objects/tab-teenage.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1 }, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
 // The hide's tile: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are. It is
@@ -413,8 +422,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
   // The render of a tab's cut for this layout and the tab's height, in pixels.
-  const tabCut = (slot: number): TabCut => {
-    const { src, x, y, width, height } = tabcut[`${mobile ? 'phone' : 'wide'}-${tabHeights[slot]}` as keyof typeof tabcut]
+  // The mat's tab is its thick leather, which has a render of its own.
+  const tabCut = (slot: number, leather = false): TabCut => {
+    const { src, x, y, width, height } = tabcut[`${mobile ? 'phone' : 'wide'}-${tabHeights[slot]}${leather ? '-leather' : ''}` as keyof typeof tabcut]
     const rem = metrics.rem
     return { src, left: x * rem, top: y * rem, width: width * rem, height: height * rem }
   }
@@ -472,8 +482,30 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     const { frayed, deckled } = tones[i]
     if (frayed) return { '--torn-core': `url(${frayed})`, filter: 'none' } as CSSProperties
     if (deckled) return { '--torn-core': `url(${deckled})` } as CSSProperties
-    return torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(tones[i]), reachesOver(i))
+    const edge = torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(tones[i]), reachesOver(i))
+    // An edge rendered as it lies on the next strip casts no drop shadow: it leaves its own (edgecast).
+    return tones[i].edgecast ? { ...edge, filter: 'none' } : edge
   })
+  // A strip's rendered edge, laid down it over its own edge and out over the strip after it. Where its tab grows out,
+  // the tab's cut is rendered with the edge beside it (studio/tabcut), fading out within the tab's joins as t ** 1.5
+  // over 0.6 of their reach, so the strip's own fades in there as much.
+  const edgecastOf = (i: number, cast: NonNullable<Tone['edgecast']>): CSSProperties => {
+    const shape = tabShape(i + 1)
+    const top = tabTops[i + 1] * metrics.rem
+    const { reach } = tabOutline(shape)
+    const ramp = 0.6 * reach
+    const steps = [0, 0.25, 0.5, 0.75, 1]
+    const into = steps.map((t) => `rgb(0 0 0 / ${(1 - t ** 1.5).toFixed(3)}) ${(top - reach + t * ramp).toFixed(1)}px`)
+    const out = steps.map((t) => `rgb(0 0 0 / ${(1 - (1 - t) ** 1.5).toFixed(3)}) ${(top + shape.height + reach - ramp + t * ramp).toFixed(1)}px`)
+    return {
+      left: `calc(100% + ${EDGECAST_FROM}px)`,
+      width: EDGECAST_SPAN,
+      backgroundImage: `url(${cast[mobile ? 'phone' : 'wide']})`,
+      backgroundSize: `${EDGECAST_SPAN}px ${cast.length}px`,
+      backgroundRepeat: 'repeat-y',
+      maskImage: `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
+    }
+  }
   const fixed = mobile ? 0 : spine + end
   const gaps = mobile ? count - 1 : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
@@ -647,8 +679,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   <div aria-hidden className="torn torn-wear" />
                 </>
               )}
+              {tones[i].edgecast && <div aria-hidden className="pointer-events-none absolute inset-y-0" style={edgecastOf(i, tones[i].edgecast)} />}
               {pageTones[i].surface && <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-2" style={hideOver(i)} />}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tabCut(i + 1)} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tabCut(i + 1, tones[i].fills)} />
             </motion.section>
           )
         })}

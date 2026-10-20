@@ -26,5 +26,19 @@
     "y": -1.6,
     "width": 3.0,
     "height": 11.537500000000001
+  },
+  "wide-10-leather": {
+    "src": "/objects/tabcut-wide-10-leather.avif",
+    "x": 1.2999999999999998,
+    "y": -1.84,
+    "width": 3.6,
+    "height": 13.68
+  },
+  "phone-10-leather": {
+    "src": "/objects/tabcut-phone-10-leather.avif",
+    "x": 0.7999999999999999,
+    "y": -1.6,
+    "width": 3.0,
+    "height": 10.45
   }
 }
