@@ -17,9 +17,9 @@ the edge it shades whatever lies there.
 The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.png. The poster's tear
 runs straight where its tab grows out, and where that is depends on the layout, so there is a length of it for each:
 public/objects/poster-cast-<layout>.png. Each runs FRAME across, in CSS px from the strip's edge, at DENSITY. The
-mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.png (dodge). The contact strip's hide
-is a leather mat as well, cut and burnished as the green one is, lying on the walnut desk past the folders:
-contact-cast.png and contact-cast-light.png.
+mat's edge lays only its shadow. The contact strip's hide is a leather mat as well, cut and burnished as the green
+one is, lying on the walnut desk past the folders: contact-cast.png, and its lit rim, which is leather's colour
+brightened, not paler, a layer of its own, contact-cast-light.png (dodge).
 
 The spine is paper too, printed blue with the traffic signal, torn down its whole length with no tab, lying on the
 linen strip's card in its sleeve: public/objects/spine-cast.png. Its print lying flat catches no more light at its
@@ -57,7 +57,9 @@ MAT, CONTACT, POSTER = "#236653", "#651415", "#2a2622"
 # The walnut desk past the folders (studio/resume), as it shows beside the contact strip.
 WALNUT = "#1e1610"
 # Each leather mat: its name, its leather and what it lies on.
-LEATHERS = (("mat", MAT, CONTACT), ("contact", CONTACT, WALNUT))
+# The green mat's lit rim showed as a stripe of paler green down its edge beside its shadow, so it has none: only its
+# shadow is laid.
+LEATHERS = (("mat", MAT, CONTACT, False), ("contact", CONTACT, WALNUT, True))
 
 # The spine's tear bites up to REACH * 1.4 in from its edge, so its frame starts further in.
 SPINE_FRAME = (-16.0, 34.0)
@@ -178,9 +180,9 @@ def dodge(ratio, inward):
     return np.dstack([grey, grey, grey, on])
 
 
-def save(ratio, inward, name, proof, frame=FRAME, coloured=False):
+def save(ratio, inward, name, proof, frame=FRAME, coloured=False, lit=True):
     """Writes the shadow; coloured, the strip's lit edge is a colour, leather or print, so its light is a layer of
-    its own (dodge), not white."""
+    its own (dodge), not white, unless it is not to be lit at all."""
     dark = np.clip(1 - ratio, 0, 1)
     light = np.clip((ratio - 1) * LIGHT, 0, 1)
     if coloured:
@@ -188,9 +190,9 @@ def save(ratio, inward, name, proof, frame=FRAME, coloured=False):
         layer = dodge(ratio, inward)
         brightest = float(1 / (1 - layer[..., 0].max()))
         # Paper flat on paper catches no more light at its edge than on its face: then there is no layer to lay.
-        if brightest > 1.02:
+        if lit and brightest > 1.02:
             Image.fromarray((np.clip(layer, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").save(os.path.join(proof or OUT, f"{name}-light.png"), optimize=True)
-        print(name + "-light", "brightest", round(brightest, 3), "" if brightest > 1.02 else "(none written)")
+        print(name + "-light", "brightest", round(brightest, 3), "" if lit and brightest > 1.02 else "(none written)")
     alpha = dark + light
     colour = np.where(light > dark, 1.0, 0.0)
     rgba = np.dstack([colour, colour, colour, alpha])
@@ -209,14 +211,14 @@ def main():
     if args.proof:
         os.makedirs(args.proof, exist_ok=True)
 
-    for name, leather, under in LEATHERS:
+    for name, leather, under, lit in LEATHERS:
         if args.only not in (None, name):
             continue
         # Straight, so a short length of it, averaged down, is every row of it.
         spec = {"kind": "mat", "thick": MAT_THICK, "length": 64, "past": 0, "colour": linear(leather), "roughness": 0.55, "under": linear(under)}
         ratio, inward = render(spec, args.samples, np.zeros(64 * DENSITY))
         rows = ratio[8:-8].mean(axis=0, keepdims=True)
-        save(np.repeat(rows, DENSITY, axis=0), np.repeat(inward[:1], DENSITY, axis=0), f"{name}-cast", args.proof, coloured=True)
+        save(np.repeat(rows, DENSITY, axis=0), np.repeat(inward[:1], DENSITY, axis=0), f"{name}-cast", args.proof, coloured=True, lit=lit)
 
     if args.only in (None, "poster"):
         rng = np.random.default_rng(67)
