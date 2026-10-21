@@ -52,8 +52,9 @@ type Tone = {
    * tile of its own (light), laid over it in colour-dodge, so it brightens the leather and keeps its colour. */
   edgecast?: Record<'wide' | 'phone', string> & { length: number; light?: string }
   /** The strip is handmade paper, its edge the deckle the pulp stopped at, thinning to loose fibres: this mask of
-   * it (studio/paper/edge.py), in place of a straight cut. Paper casts its shadow, as the strip's own does. */
-  deckled?: string
+   * it (studio/paper/edge.py), in place of a straight cut, for each layout, as the deckle settles into a straight cut
+   * where its tab is cut out, in a different place for each. Paper casts its shadow, as the strip's own does. */
+  deckled?: Record<'wide' | 'phone', string>
   /** What the page is made of, as a tile that repeats, size CSS pixels square: the poster's wall (studio/poster) or
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
    * from it, so they are the page's own paper and not a flat colour. */
@@ -180,7 +181,7 @@ const pageTones: Tone[] = [
   // The plate is cut, not torn, and its colours are the linen's middle tone, under the plate before it loads.
   { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.png', cast: '/objects/linen-shadow.png', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
-  { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: '/objects/likes-edge.png', paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
+  { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: { wide: '/objects/likes-edge-wide.png', phone: '/objects/likes-edge-phone.png' }, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.png', phone: '/objects/poster-cast-phone.png', length: TEAR_LENGTH }, tab: '/objects/tab-teenage.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1, light: '/objects/mat-cast-light.png' }, tab: '/objects/tab-proraso.avif' },
@@ -490,7 +491,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     const { reach } = tabOutline(shape)
     const { frayed, deckled } = tones[i]
     if (frayed) return { '--torn-core': `url(${frayed})`, filter: 'none' } as CSSProperties
-    if (deckled) return { '--torn-core': `url(${deckled})` } as CSSProperties
+    if (deckled) return { '--torn-core': `url(${deckled[mobile ? 'phone' : 'wide']})` } as CSSProperties
     const edge = torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(tones[i]), reachesOver(i))
     // An edge rendered as it lies on the next strip casts no drop shadow: it leaves its own (edgecast).
     return tones[i].edgecast ? { ...edge, filter: 'none' } : edge
