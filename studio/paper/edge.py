@@ -38,7 +38,7 @@ from scipy import ndimage
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 EDGE_LENGTH = 1600
-EDGE_DENSITY = 3  # pixels of the mask to the CSS px
+EDGE_DENSITY = 6  # pixels of the mask to the CSS px: fine enough for its fibres, a third of a px across, zoomed in
 OVER = 2  # drawn at twice that, then averaged down, for its edges
 LINE = 2.5  # where the line runs on average, in CSS px past the edge
 CUT = 7  # the strip's edge, in CSS px from the mask's left (16 - SiteShell's DECKLE_PAST)
