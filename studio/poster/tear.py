@@ -9,9 +9,10 @@ all leaves on the mat, in place of SiteShell's drawn tear.
 
 Paper torn by hand does not part on one line. The printed face gives way first, on a line that wanders at every
 scale, from the slow swing of the hand down to the single fibre, never in even teeth. Below it the sheet splits
-through its thickness and its core holds on further, so past the print runs a rim of bare white paper, thinning as it
-goes, wide where the tear ran one way and gone where it ran the other, and fibres pulled out of it lie loose past
-it, most of them straight out from it, the way they were pulled. The torn strip lifts a little off the mat.
+through its thickness, and in stretches its core holds on further, so past the print runs a narrow rim of bare
+white paper, a poster's paper being thin, thinning as it goes, there where the tear ran one way and gone where it
+ran the other, and fibres pulled out of it lie loose past it, most of them straight out from it, the way they were
+pulled. Where print and core gave way together the edge is the print's own, with only a stray fibre. The torn strip lifts a little off the mat.
 
 This lays that out at the scale the mat's rulers are printed at (24 CSS px to the cm, MM px to the mm): the print's
 line, the rim and its fibres, each fibre as long and fine as paper's own, and tear_render.py renders it in Blender
@@ -54,7 +55,7 @@ MARGIN = 16  # rows rendered above and below one length, for the seam
 LINE, SWING = 5.0, 3.6
 # Its wander at each scale, in CSS px across and how much: rougher the finer, but never in even teeth.
 OCTAVES = ((90, 1.0), (30, 0.6), (10, 0.5), (3.5, 0.38), (1.2, 0.2), (0.4, 0.08))
-RIM = 3.6  # how wide the bared paper runs past the print at most, in CSS px (1.5 mm)
+RIM = 1.4  # how wide the bared paper runs past the print at most, in CSS px (0.6 mm): a poster's paper is thin
 EASE = 36  # over how many px the tear settles into the straight edge at the tab, as SiteShell's does
 PAPER = (0.93, 0.92, 0.89)  # the poster's paper, bare, as it shows on the page: white, a little warm
 # The fibres: length and width in mm (median, lognormal spread); a single one lets THROUGH of the light past it.
@@ -81,9 +82,10 @@ def lines(layout, rng):
         f = np.clip(np.maximum(start - y, y - end) / EASE, 0, 1)
         settled = np.minimum(settled, f * f * (3 - 2 * f))
     line = settled * (LINE + SWING * np.tanh(wander / 1.6))
-    # The rim: wide where the tear ran so the core held on, a hair where it ran the other way.
-    hold = np.clip(0.35 + 0.5 * octave(rng, 22, FIELD) + 0.3 * octave(rng, 5, FIELD), 0, 1)
-    rim = settled * (0.25 + (RIM - 0.25) * hold**1.6)
+    # The rim: there where the tear ran so the core held on.
+    # Only in stretches: elsewhere the print and the core gave way together, and the edge is the print's own.
+    hold = np.clip(-0.2 + 0.6 * octave(rng, 22, FIELD) + 0.3 * octave(rng, 5, FIELD), 0, 1)
+    rim = settled * RIM * hold**1.3
     lift = np.interp(y, np.arange(TEAR_LENGTH + 1), curl(calm_of(layout), rng))
     return line, line + rim, settled, lift
 
@@ -107,6 +109,7 @@ def fibres(rng, cx, cy, heading, length, width, points=8):
 def tear(layout, samples, proof):
     rng = np.random.default_rng(83 if layout == "wide" else 89)
     line, core, settled, lift = lines(layout, rng)
+    rim = core - line
     rows = len(line)
 
     def raised(x, at):
@@ -117,7 +120,10 @@ def tear(layout, samples, proof):
     # from just under the print's edge out. Those by the edge lie along it as often as not; the rest any way.
     x = np.arange(-2 * FIELD, 24 * FIELD) / FIELD + 0.5 / FIELD
     d = core[:, None] - x[None, :]
-    density = PER_PX / (1 + np.exp(-d / THIN)) * (x[None, :] > line[:, None] - 1.0) * settled[:, None] ** 0.5
+    # Past the print, only as many as the core held on there: where the two gave way together, a few stray ones.
+    bared = np.clip(rim / 0.6, 0.12, 1)[:, None]
+    past = np.where(x[None, :] > line[:, None], bared, 1.0)
+    density = PER_PX / (1 + np.exp(-d / THIN)) * past * (x[None, :] > line[:, None] - 1.0) * settled[:, None] ** 0.5
     n = rng.poisson(density / FIELD**2)
     r, c = np.nonzero(n)
     r, c = np.repeat(r, n[r, c]), np.repeat(c, n[r, c])
@@ -133,7 +139,7 @@ def tear(layout, samples, proof):
     # The pulled fibres: rooted in the core, lying out past it, straight out more or less.
     count = rng.poisson(PULLED * TEAR_LENGTH)
     at = rng.integers(0, rows, count)
-    keep = rng.random(count) < settled[at]
+    keep = rng.random(count) < settled[at] * np.clip(rim[at] / 0.6, 0.15, 1)
     at = at[keep]
     root = core[at] - rng.uniform(0.2, 1.2, len(at))
     heading = rng.normal(0, 0.55, len(at))
