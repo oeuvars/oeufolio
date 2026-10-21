@@ -1,8 +1,8 @@
 // The loader, run inline at the top of the body so it is drawn before the bundle, the fonts or a single picture
 // arrive. It is a page out of a colouring book, drawn in the manner of Jay Cover's Woset: Anurag at a pulley
 // clothesline, hanging the site's pages out to dry as their pictures come in, the badge, the letter, the poster,
-// the mat and the ticket, each coloured in as it is pegged. Once everything is in, he is coloured too, a gust
-// comes, and the sheet blows off the page. A classic script, not a module: no imports, nothing left on window.
+// the mat and the ticket, each coloured in as it is pegged, and a little more of Dilly, his cat, sat watching, with
+// each. Once everything is in, he is coloured too, a gust comes, and the sheet blows off the page. A classic script, not a module: no imports, nothing left on window.
 ;(() => {
   const root = document.getElementById('loader')
   if (!root) return
@@ -15,6 +15,8 @@
   const PLUM = '#5e3b5b'
   const GREEN = '#2d6a4a'
   const YELLOW = '#e5c25a'
+  const GINGER = '#d0782f'
+  const PINK = '#e39b94'
   // A page in by this is from the cache, and the paper is lifted straight off without the scene being played.
   const QUICK = 250
   // How long the pegging takes to get most of the way when nothing is known of what is still to come, in ms.
@@ -136,7 +138,7 @@
   // What he stands in: the ground and its tufts and a flower, the post with its wheel, the tree with its wheel,
   // a cloud, the basket, and a bird on the post.
   const GROUND =
-    'M24 474C140 469 260 477 400 472S640 476 784 470M98 474L93 459M104 474L105 454M110 474L117 461M430 473L426 461M436 473L438 457M560 472L556 460M566 472L571 462M752 471L748 458M758 471L762 455M512 472C513 456 510 446 514 436M514 436C506 432 506 424 513 424 512 416 521 416 520 424 528 422 529 431 521 432 524 440 515 441 514 436ZM514 452C522 446 528 448 530 452'
+    'M24 474C140 469 260 477 400 472S640 476 784 470M98 474L93 459M104 474L105 454M110 474L117 461M430 473L426 461M436 473L438 457M560 472L556 460M566 472L571 462M752 471L748 458M758 471L762 455M608 472C609 456 606 446 610 436M610 436C602 432 602 424 609 424 608 416 617 416 616 424 624 422 625 431 617 432 620 440 611 441 610 436ZM610 452C618 446 624 448 626 452'
   const POST = 'M99 472V184M109 472V184M96 160H112M99 160V172M109 160V172M92 184A12 12 0 1 0 116 184A12 12 0 1 0 92 184M103 184h2'
   const TREE =
     'M692 472C695 400 688 320 692 196M712 472C709 400 716 320 712 196M684 197A12 12 0 1 0 708 197A12 12 0 1 0 684 197M695 197h2M712 300C724 292 732 284 736 272'
@@ -148,17 +150,29 @@
     wing: ['M98 146C102 150 108 150 112 146', 'M100 146C98 132 110 130 112 146'],
   }
 
-  // His dog, sat by the basket watching the pages go up, its tail going whenever one does.
-  const DOG = {
-    body: 'M494 472C487 450 489 424 501 412 511 402 527 404 533 418 539 434 539 456 535 472Z',
-    head: 'M499 411C490 405 477 405 469 399 462 394 464 386 472 386 480 386 488 380 494 374 504 366 520 370 522 384 524 397 514 409 499 411Z',
-    ink: 'M499 440V472M509 441V472M497 409C505 415 517 413 523 405M505 425C511 430 519 430 523 425',
-    ear: 'M511 372C523 366 534 378 529 394 527 400 520 398 518 391 516 383 513 377 511 372Z',
-    nose: [466, 389],
-    eye: [500, 384],
-    tag: [512, 415],
-    tail: 'M535 462C550 458 554 445 549 434',
+  // Dilly, his cat, a long-haired Turkish Van sat by the basket, facing out: a white ball of fur with tufted cheeks
+  // and a ruff, a ginger cap over her head and ears parted by a white blaze that narrows to a point a little to her
+  // right, a ginger patch on her left lip and a fleck on her right, a pink nose, amber eyes and a plume of a tail,
+  // solid ginger. Drawn about the ground under her, her eyes about their middles; her head turns about her neck.
+  const DILLY = {
+    at: [470, 472],
+    tail: 'M30-4C46 0 58-4 63-14L68-15 64-20C66-28 66-36 63-42L67-46 61-47C60-52 57-56 54-60 53-50 51-40 47-32 42-22 36-17 30-16Z',
+    body: 'M-18-56C-28-52-34-42-35-32L-39-30-35-27C-37-18-38-10-38-6L-42-4-37-2V0H37V-2L42-4 38-6C38-10 37-18 35-27L39-30 35-32C34-42 28-52 18-56Z',
+    bodyInk: 'M-4-28V0M4-28V0M-18 0C-18-7-5-8-4 0M4 0C5-8 18-7 18 0M-11-49Q-9-43-6-45M-3-47Q0-40 3-47M6-45Q9-43 11-49',
+    head: 'M-22-72C-24-80-22-86-19-89L-23-110-5-96C-2-96.6 2-96.6 5-96L23-110 19-89C22-86 24-80 22-72L29-66 24-64 30-58 23-57 26-51 17-52C12-46-12-46-17-52L-26-51-23-57-30-58-24-64-29-66Z',
+    cap: [
+      'M-22-72C-24-80-22-86-19-89L-23-110-5-96-2-95-4.5-79C-10-81-17-80-22-74Z',
+      'M-2-95L5-96 23-110 19-89C22-86 24-80 22-74 17-80 10-81 4.5-79Z',
+    ],
+    patches: 'M2-60C7-63 13-61 12-56 10-53 5-53 2.5-56ZM-3-58.5C-6-60-9-59-8.5-56.5-7-55-4-55.5-3-57Z',
+    face: 'M-20-103L-15-95M20-103L15-95M0-61V-59M-4-57.5Q-2-56 0-59Q2-56 4-57.5',
+    whiskers: 'M-10-62L-32-65M-10-59L-31-56M10-62L32-65M10-59L31-56',
+    nose: 'M-3.5-65H3.5L0-61Z',
+    eyes: [-10, 10],
+    eye: 'M-5.5 0Q0-6 5.5 0Q0 5-5.5 0Z',
   }
+  // Where she looks: her pupils' shift in their eyes and the tilt of her head, in degrees.
+  const GAZES = { ahead: [0, 0, 3], him: [-2.4, -0.3, -5], line: [-1.5, -0.7, -9], bird: [-2.2, -0.7, -13] }
 
   /** A seeded random, so the hand's wobble is the same on every visit. */
   const random = (seed) => () => {
@@ -329,6 +343,107 @@
     }
   }
 
+  /**
+   * Dilly. Like a cat on film she is still most of the time: her head goes pose to pose to whatever is moving and
+   * holds there, her tail sweeps when a page goes up, and now and then she gives a slow blink.
+   */
+  class Dilly {
+    constructor(defs, parent) {
+      const group = element('g', { filter: 'url(#ldr-boil)', transform: `translate(${DILLY.at.join(' ')})` }, parent)
+      // What is coloured of her as each page is pegged: her cap first, so she is herself early, then her tail, her
+      // patches, her nose and her eyes.
+      const dye = (node, colour) => ({ colour: (duration) => node.animate([{ fill: PAPER }, { fill: colour }], { duration: duration || 1, fill: 'forwards' }) })
+      this.tail = element('g', {}, group)
+      element('path', { d: DILLY.tail, fill: PAPER }, this.tail)
+      const tail = new Fill(defs, this.tail, DILLY.tail, GINGER, [28, -62, 42, 60])
+      ink(DILLY.tail, this.tail)
+      element('path', { d: DILLY.body, fill: PAPER }, group)
+      ink(DILLY.body, group)
+      ink(DILLY.bodyInk, group, 2.6)
+      this.head = element('g', {}, group)
+      element('path', { d: DILLY.head, fill: PAPER }, this.head)
+      const cap = DILLY.cap.map((d) => new Fill(defs, this.head, d, GINGER, [-25, -112, 50, 36]))
+      const patches = new Fill(defs, this.head, DILLY.patches, GINGER, [-9, -64, 22, 12])
+      ink(DILLY.head, this.head)
+      ink(DILLY.face, this.head, 2.2)
+      ink(DILLY.whiskers, this.head, 1.4)
+      const nose = element('path', { d: DILLY.nose, fill: PAPER }, this.head)
+      ink(DILLY.nose, this.head, 2)
+      this.eyes = element('g', {}, this.head)
+      const irises = []
+      this.pupils = []
+      for (const x of DILLY.eyes) {
+        const eye = element('g', { transform: `translate(${x} -74)` }, this.eyes)
+        irises.push(dye(element('path', { d: DILLY.eye, fill: PAPER }, eye), YELLOW))
+        this.pupils.push(element('ellipse', { rx: 1.6, ry: 2.7, fill: INK }, eye))
+        ink(DILLY.eye, eye, 2)
+      }
+      this.lids = ink(DILLY.eyes.map((x) => `M${x - 5.5} -74Q${x} -70 ${x + 5.5} -74`).join(''), this.head, 2.2)
+      this.lids.setAttribute('visibility', 'hidden')
+      this.parts = [cap, [tail], [patches], [dye(nose, PINK)], irises]
+
+      this.rand = random(23)
+      this.gaze = 'ahead'
+      this.hold = 2
+      this.look = [0, 0]
+      this.tilt = 0
+      this.turn = 0
+      this.sweep = 0
+      this.swing = 0
+      this.swishing = 0
+      this.nextBlink = 3000
+    }
+
+    /** Turns her to `gaze`, held there for `hold` seconds before her attention wanders. */
+    watch(gaze, hold = 2) {
+      this.gaze = gaze
+      this.hold = hold
+    }
+
+    /** One sweep of her tail. */
+    swish() {
+      this.swishing = 0.6
+    }
+
+    /** Colours in the `part`th of her. */
+    colour(part, duration) {
+      for (const piece of this.parts[part] || []) piece.colour(duration)
+    }
+
+    tick(time, dt, still) {
+      if (still) return
+      this.hold -= dt
+      if (this.hold <= 0) this.watch(this.gaze === 'him' ? 'ahead' : 'him', 1.5 + this.rand() * 3)
+      const [x, y, tilt] = GAZES[this.gaze]
+      // Her eyes dart; her head and her tail are sprung, so they start slowly, arrive in about half a second and
+      // settle by about one and a half.
+      const dart = 1 - Math.exp(-dt * 18)
+      this.look[0] += (x - this.look[0]) * dart
+      this.look[1] += (y - this.look[1]) * dart
+      this.swishing -= dt
+      const sweep = this.swishing > 0 ? 20 : 0
+      for (let left = dt; left > 0; left -= 1 / 120) {
+        const step = Math.min(left, 1 / 120)
+        this.turn += (-(this.tilt - tilt) * 36 - this.turn * 12) * step
+        this.tilt += this.turn * step
+        this.swing += (-(this.sweep - sweep) * 30 - this.swing * 7) * step
+        this.sweep += this.swing * step
+      }
+      this.head.setAttribute('transform', `rotate(${this.tilt.toFixed(2)} 0 -54)`)
+      this.tail.setAttribute('transform', `rotate(${this.sweep.toFixed(2)} 32 -10)`)
+      for (const pupil of this.pupils) {
+        pupil.setAttribute('cx', this.look[0].toFixed(2))
+        pupil.setAttribute('cy', this.look[1].toFixed(2))
+      }
+      if (time > this.nextBlink) {
+        const shut = time < this.nextBlink + 420
+        this.eyes.setAttribute('visibility', shut ? 'hidden' : 'visible')
+        this.lids.setAttribute('visibility', shut ? 'visible' : 'hidden')
+        if (!shut) this.nextBlink = time + 4000 + this.rand() * 5000
+      }
+    }
+  }
+
   /** The pictures the page has asked for and how many of them are in, by URL. */
   class Arrivals {
     constructor() {
@@ -370,7 +485,7 @@
     }
   }
 
-  /** The colouring-book page: the scenery, the caption, Anurag, his basket and the pages, and what they do next. */
+  /** The colouring-book page: the scenery, the caption, Anurag, Dilly, his basket and the pages, and what they do next. */
   class Scene {
     constructor(svg, still) {
       this.still = still
@@ -420,7 +535,7 @@
       element('path', { d: 'M316 430H404V437H316ZM320 437H400L392 472H328Z', fill: PAPER }, basket)
       ink(BASKET, basket)
 
-      this.dog = this.sit(svg)
+      this.dilly = new Dilly(defs, svg)
       this.hanger = new Hanger(defs, svg)
       const line = element('g', {}, svg)
       this.pages = PAGES.map((spec, i) => new Page(defs, line, spec, i))
@@ -454,23 +569,6 @@
       }
     }
 
-    /** The dog, who wags harder for a while each time a page goes up. */
-    sit(parent) {
-      const group = element('g', { filter: 'url(#ldr-boil)' }, parent)
-      const tail = ink(DOG.tail, group, 3)
-      for (const d of [DOG.body, DOG.head]) {
-        element('path', { d, fill: PAPER }, group)
-        ink(d, group)
-      }
-      ink(DOG.ink, group, 2.6)
-      element('path', { d: DOG.ear, fill: INK, stroke: INK, 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, group)
-      element('circle', { cx: DOG.nose[0], cy: DOG.nose[1], r: 3.6, fill: INK }, group)
-      element('circle', { cx: DOG.eye[0], cy: DOG.eye[1], r: 2.4, fill: INK }, group)
-      const tag = element('circle', { cx: DOG.tag[0], cy: DOG.tag[1], r: 4, fill: PAPER }, group)
-      ink(`M${DOG.tag[0] - 4} ${DOG.tag[1]}A4 4 0 1 0 ${DOG.tag[0] + 4} ${DOG.tag[1]}A4 4 0 1 0 ${DOG.tag[0] - 4} ${DOG.tag[1]}`, group, 2)
-      return { tail, tag, excited: 0 }
-    }
-
     /** The bird on the post, who flies off when the wind gets up. */
     perch(parent) {
       const group = element('g', { filter: 'url(#ldr-boil)' }, parent)
@@ -489,7 +587,10 @@
         let from = 0
         this.actions.push({
           duration: 760 * k,
-          start: () => (from = this.offset),
+          start: () => {
+            from = this.offset
+            this.dilly.watch('him', 1.6)
+          },
           update: (u, time) => {
             this.offset = from + SPACING * ease(u)
             // Hand over hand.
@@ -503,6 +604,7 @@
           this.hung = index + 1
           this.sheets[PAGES.length - 1 - index].setAttribute('visibility', 'hidden')
           this.hanger.pose('up')
+          this.dilly.watch('line', 2.4)
           page.group.setAttribute('visibility', 'visible')
         },
         update: (u) => (page.lift = (1 - ease(u)) * 70),
@@ -512,7 +614,7 @@
         start: () => {
           page.lift = 0
           page.spin = 26
-          this.dog.excited = 1
+          this.dilly.swish()
           if (!this.still) for (const peg of page.pegs) peg.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' })
         },
       })
@@ -521,6 +623,8 @@
         start: () => {
           this.hanger.pose('rest')
           page.fills.forEach((fill, i) => (this.still ? fill.colour(0) : setTimeout(() => fill.colour(520 * k), i * 160 * k)))
+          if (this.still) this.dilly.colour(index, 0)
+          else setTimeout(() => this.dilly.colour(index, 480 * k), page.fills.length * 160 * k + 120)
         },
       })
     }
@@ -531,14 +635,15 @@
         duration: 700,
         start: () => {
           this.hanger.colour(this.still ? 0 : 600)
-          this.dog.tag.setAttribute('fill', YELLOW)
-          this.dog.excited = 1
+          this.dilly.watch('ahead', 1)
         },
       })
       this.actions.push({
         duration: 700,
         start: () => {
           if (this.still) return
+          this.dilly.watch('bird', 4)
+          this.dilly.swish()
           this.bird.wing.setAttribute('d', BIRD.wing[1])
           this.bird.group.animate(
             [{ transform: 'translate(0,0)' }, { transform: 'translate(-60px,-40px) rotate(-8deg)', offset: 0.4 }, { transform: 'translate(-220px,-260px) rotate(-14deg)' }],
@@ -572,12 +677,7 @@
       // Every pegged page sits a pull further along for each page hung after it.
       for (let i = 0; i < this.hung; i++) this.pages[i].place(PEG_AT + this.offset - SPACING * i, time, this.wind, this.still ? 0 : dt)
       this.hanger.tick(time, this.still)
-      if (!this.still) {
-        const dog = this.dog
-        dog.excited = Math.max(0, dog.excited - dt * 0.5)
-        const wag = Math.sin(time / (dog.excited > 0 ? 70 : 260)) * (8 + dog.excited * 14)
-        dog.tail.setAttribute('transform', `rotate(${wag.toFixed(1)} 535 462)`)
-      }
+      this.dilly.tick(time, dt, this.still)
     }
   }
 
@@ -616,14 +716,13 @@ html:has(#loader>.ldr-paper){overflow:hidden}
       root.appendChild(this.paper)
       const svg = element('svg', { viewBox: '0 0 800 520', 'aria-hidden': 'true' }, this.paper)
       this.scene = new Scene(svg, this.still)
-      // Played already this session: every page is up and coloured, and he waits beside them, dressed.
+      // Played already this session: every page is up and coloured, and he and Dilly wait beside them, coloured too.
       if (this.seen) {
         const { scene } = this
         scene.still = true
         for (let i = 0; i < PAGES.length; i++) scene.hangNext(true)
         while (!scene.idle) scene.tick(0, 0)
         scene.hanger.colour(0)
-        scene.dog.tag.setAttribute('fill', YELLOW)
         scene.still = this.still
       }
 
