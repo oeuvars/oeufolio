@@ -81,6 +81,15 @@ const CAST_WIDTH = 40
 // Where a strip's rendered edge lies, from its edge, and how wide it runs (studio/edgecast FRAME).
 const EDGECAST_FROM = -6
 const EDGECAST_SPAN = 40
+// The spine's, its tear biting further in (studio/edgecast SPINE_FRAME): its paper on the linen strip's card, as
+// it lies there, in place of a drop shadow. It runs one tear's length down, and the spine has no tab to leave room for.
+const SPINE_CAST: CSSProperties = {
+  left: 'calc(100% - 16px)',
+  width: 50,
+  backgroundImage: 'url(/objects/spine-cast.png)',
+  backgroundSize: `50px ${TEAR_LENGTH}px`,
+  backgroundRepeat: 'repeat-y',
+}
 // The same for a handmade sheet's deckle mask (studio/paper/edge.py, DECKLE_PAST).
 const DECKLE_PAST = 9
 
@@ -581,7 +590,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
         {!mobile && (
           <aside
             className="strip"
-            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7, [], 'torn') }}
+            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7, [], 'torn'), filter: 'none' }}
           >
             <div aria-hidden className="torn" style={grained()} />
             {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
@@ -590,6 +599,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
             <Link to="/" aria-label={profile.handle} className="torn">
               <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
             </Link>
+            <div aria-hidden className="pointer-events-none absolute inset-y-0" style={SPINE_CAST} />
           </aside>
         )}
 
