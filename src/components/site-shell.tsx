@@ -52,8 +52,8 @@ type Tone = {
    * tile of its own (light), laid over it in colour-dodge, so it brightens the leather and keeps its colour. */
   edgecast?: Record<'wide' | 'phone', string> & { length: number; light?: string }
   /** The strip is handmade paper, its edge the deckle the pulp stopped at, thinning to loose fibres: this mask of
-   * it (studio/paper/edge.py), in place of a straight cut, for each layout, as the deckle settles into a straight cut
-   * where its tab is cut out, in a different place for each. Paper casts its shadow, as the strip's own does. */
+   * it (studio/paper/edge.py), in place of a straight cut, for each layout, as the deckle runs on round its tab,
+   * which lies in a different place for each. Paper casts its shadow, as the strip's own does. */
   deckled?: Record<'wide' | 'phone', string>
   /** What the page is made of, as a tile that repeats, size CSS pixels square: the poster's wall (studio/poster) or
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
@@ -90,8 +90,10 @@ const SPINE_CAST: CSSProperties = {
   backgroundSize: `50px ${TEAR_LENGTH}px`,
   backgroundRepeat: 'repeat-y',
 }
-// The same for a handmade sheet's deckle mask (studio/paper/edge.py, DECKLE_PAST).
-const DECKLE_PAST = 9
+// A handmade sheet's deckle mask runs round its tab too (studio/paper/edge.py): it begins DECKLE_IN px in from the
+// strip's edge and runs out 9 px past the tab, this wide for each layout (edge_width).
+const DECKLE_IN = 7
+const DECKLE_WIDTH = { wide: 50, phone: 40 }
 
 type Grain = Array<{ every: number; amount: number }>
 
@@ -264,8 +266,9 @@ type TabProps = {
   surface?: string
   /** The tab is cut from the page's paper, which the panel draws under it (SiteShell's sheet), so it is clear here. */
   paper?: boolean
-  /** The tab's cut, rendered (studio/tabcut): where its render lies, in pixels from the tab's top left. */
-  cut: TabCut
+  /** The tab's cut, rendered (studio/tabcut): where its render lies, in pixels from the tab's top left. A deckled tab
+   * has none: its edge is no cut, and it casts its shadow as its strip's deckle does. */
+  cut?: TabCut
 }
 
 /** A rendered cut over a tab: the light and shadow of its edge, and where that lies from the tab's top left. */
@@ -358,7 +361,7 @@ const Tab = ({ label, shape, to, search, current, src, footless, leather, surfac
           />
           {/* The light the cut's edge catches brightens the leather and keeps its colour (colour-dodge), here inside
               its cut, where the leather lies under it to brighten. */}
-          {edge.light && (
+          {edge?.light && (
             <img aria-hidden alt="" src={edge.light} draggable={false} className="tab-cut mix-blend-color-dodge" style={{ left: edge.left, top: edge.top + reach, width: edge.width, height: edge.height }} />
           )}
         </div>
@@ -377,7 +380,7 @@ const Tab = ({ label, shape, to, search, current, src, footless, leather, surfac
       )}
       {/* The cut itself, rendered: the light its edge catches and turns from, and the shadow it leaves on the page
           below as the tab lifts off the folder. It is only light, so it lies over whatever the strip is made of. */}
-      <img aria-hidden alt="" src={edge.src} draggable={false} className="tab-cut" style={{ left: edge.left, top: edge.top, width: edge.width, height: edge.height }} />
+      {edge && <img aria-hidden alt="" src={edge.src} draggable={false} className="tab-cut" style={{ left: edge.left, top: edge.top, width: edge.width, height: edge.height }} />}
       <img
         aria-hidden
         alt=""
@@ -470,15 +473,28 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // A page of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
   // is cut to the strip, its edge torn or cut as the strip's is, and to the tab's outline, so the tab is the same
   // piece of paper as the page, its tile and grain running on unbroken, with no join between them.
-  const sheet = (i: number, { paper, plate }: Tone): CSSProperties => {
+  const sheet = (i: number, { paper, plate, deckled }: Tone): CSSProperties => {
     const shape = tabShape(i + 1)
+    // A handmade sheet's deckle runs on round its tab, so its mask is the tab's outline as well as its edge.
+    if (deckled) {
+      const layout = mobile ? 'phone' : 'wide'
+      const w = DECKLE_WIDTH[layout]
+      return {
+        right: DECKLE_IN - w,
+        ...grained(paper),
+        maskImage: `linear-gradient(#000, #000), url(${deckled[layout]})`,
+        maskSize: `calc(100% - ${w - 1}px) 100%, ${w}px ${TEAR_LENGTH}px`,
+        maskPosition: 'left 0 top 0, right 0 top 0',
+        maskRepeat: 'no-repeat, repeat-y',
+      }
+    }
     // The outline with its foot, so the tab and the page overlap over the band and no hairline opens between them.
     const { reach, path } = tabOutline(shape)
     const w = shape.band + shape.protrude
     const h = shape.height + 2 * reach
     const outline = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-reach} ${w} ${h}" preserveAspectRatio="none"><path d="${path}"/></svg>`
     // How far past the strip's edge its tear reaches, over the strip after it.
-    const out = reachesOver(i) ? TEAR_WIDTH : tones[i].frayed ? FRAY_PAST : tones[i].deckled ? DECKLE_PAST : 0
+    const out = reachesOver(i) ? TEAR_WIDTH : tones[i].frayed ? FRAY_PAST : 0
     return {
       right: -shape.protrude,
       // The plate is 36 by 24 em (studio/linen.py), 3 by 2.
@@ -704,7 +720,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 <div aria-hidden className="pointer-events-none absolute inset-y-0 mix-blend-color-dodge" style={edgecastOf(i, tones[i].edgecast, tones[i].edgecast.light)} />
               )}
               {pageTones[i].surface && <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-2" style={hideOver(i)} />}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tabCut(i + 1, tones[i].fills)} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tones[i].deckled ? undefined : tabCut(i + 1, tones[i].fills)} />
             </motion.section>
           )
         })}
