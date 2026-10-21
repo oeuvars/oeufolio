@@ -78,6 +78,14 @@ const TEAR_LENGTH = 1600
 const FRAY_PAST = 9
 // How wide the cloth's shadow tile is, from the frayed mask's left (studio/linen.py SHADOW_FRAME).
 const CAST_WIDTH = 40
+// The cloth's tab, cut from it with the same scissors (studio/linentab.py), for each layout: the mask the tab is cut
+// with and the render of its yarn ends and shadow, from the frayed mask's left and from the strip's top, in CSS px.
+// The render takes over from the strip's own over CLOTH_TAB_HANDOVER px at either end, where the two are the same.
+const CLOTH_TAB = {
+  wide: { edge: '/objects/linen-tab-edge-wide.png', cast: '/objects/linen-tab-wide.png', top: 90, height: 268, width: 43, castWidth: 57 },
+  phone: { edge: '/objects/linen-tab-edge-phone.png', cast: '/objects/linen-tab-phone.png', top: 94, height: 216, width: 33, castWidth: 47 },
+}
+const CLOTH_TAB_HANDOVER = 20
 // Where a strip's rendered edge lies, from its edge, and how wide it runs (studio/edgecast FRAME).
 const EDGECAST_FROM = -6
 const EDGECAST_SPAN = 40
@@ -267,8 +275,8 @@ type TabProps = {
   surface?: string
   /** The tab is cut from the page's paper, which the panel draws under it (SiteShell's sheet), so it is clear here. */
   paper?: boolean
-  /** The tab's cut, rendered (studio/tabcut): where its render lies, in pixels from the tab's top left. A deckled tab
-   * has none: its edge is no cut, and it casts its shadow as its strip's deckle does. */
+  /** The tab's cut, rendered (studio/tabcut): where its render lies, in pixels from the tab's top left. A deckled or a
+   * frayed tab has none: its edge is its strip's own, deckle or fray, and so is its shadow. */
   cut?: TabCut
 }
 
@@ -466,6 +474,26 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       maskRepeat: 'no-repeat',
     }
   }
+  // Where the render of a cloth's tab takes over from the strip's own render of its edge, and hands back: the strip's
+  // fades out over CLOTH_TAB_HANDOVER px and the tab's in, at either end of the tab's.
+  const clothTabHandover = (tab: boolean) => {
+    const { top, height } = CLOTH_TAB[mobile ? 'phone' : 'wide']
+    const [from, to] = tab ? [0, height] : [top, top + height]
+    const [outside, inside] = tab ? ['transparent', '#000'] : ['#000', 'transparent']
+    return `linear-gradient(${outside} ${from}px, ${inside} ${from + CLOTH_TAB_HANDOVER}px, ${inside} ${to - CLOTH_TAB_HANDOVER}px, ${outside} ${to}px)`
+  }
+  const clothTabCast = (): CSSProperties => {
+    const tab = CLOTH_TAB[mobile ? 'phone' : 'wide']
+    return {
+      left: `calc(100% + ${FRAY_PAST - TEAR_WIDTH}px)`,
+      top: tab.top,
+      width: tab.castWidth,
+      height: tab.height,
+      backgroundImage: `url(${tab.cast})`,
+      backgroundSize: '100% 100%',
+      maskImage: clothTabHandover(true),
+    }
+  }
   // The tab's cut is leather when the tab is cut from a leather mat: the mat's own, or the hide the page lies on.
   const stuffOf = (tone: Tone) => (tone.fills ? 'leather' : tone.surface ? 'hide' : undefined)
   const hideLight = (i: number) => {
@@ -485,8 +513,21 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // A page of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
   // is cut to the strip, its edge torn or cut as the strip's is, and to the tab's outline, so the tab is the same
   // piece of paper as the page, its tile and grain running on unbroken, with no join between them.
-  const sheet = (i: number, { paper, plate, deckled }: Tone): CSSProperties => {
+  const sheet = (i: number, { paper, plate, deckled, frayed }: Tone): CSSProperties => {
     const shape = tabShape(i + 1)
+    // A cloth's tab is cut out of it with the same scissors (studio/linentab.py), so its mask is the cut round the tab.
+    if (frayed) {
+      const tab = CLOTH_TAB[mobile ? 'phone' : 'wide']
+      const inset = TEAR_WIDTH - FRAY_PAST
+      return {
+        right: inset - tab.width,
+        ...(plate ? { backgroundImage: `url(${plate})`, backgroundSize: 'max(100vw, 150vh) auto', backgroundPosition: '0 0' } : grained(paper)),
+        maskImage: `linear-gradient(#000, #000), var(--torn-core), url(${tab.edge})`,
+        maskSize: `calc(100% - ${tab.width - 1}px) 100%, ${TEAR_WIDTH}px ${TEAR_LENGTH}px, ${tab.width}px ${tab.height}px`,
+        maskPosition: `left 0 top 0, right ${tab.width - TEAR_WIDTH}px top 0, right 0 top ${tab.top}px`,
+        maskRepeat: 'no-repeat, repeat-y, no-repeat',
+      }
+    }
     // A handmade sheet's deckle runs on round its tab, so its mask is the tab's outline as well as its edge.
     if (deckled) {
       const layout = mobile ? 'phone' : 'wide'
@@ -506,7 +547,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     const h = shape.height + 2 * reach
     const outline = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-reach} ${w} ${h}" preserveAspectRatio="none"><path d="${path}"/></svg>`
     // How far past the strip's edge its tear reaches, over the strip after it.
-    const out = reachesOver(i) ? TEAR_WIDTH : tones[i].frayed ? FRAY_PAST : 0
+    const out = reachesOver(i) ? TEAR_WIDTH : 0
     return {
       right: -shape.protrude,
       // The plate is 36 by 24 em (studio/linen.py), 3 by 2.
@@ -646,17 +687,21 @@ export const SiteShell = ({ children }: SiteShellProps) => {
               {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
               {!hangs(tones[i]) && <div aria-hidden className="torn" />}
               {tones[i].cast && (
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-y-0"
-                  style={{
-                    left: `calc(100% + ${FRAY_PAST - TEAR_WIDTH}px)`,
-                    width: CAST_WIDTH,
-                    backgroundImage: `url(${tones[i].cast})`,
-                    backgroundSize: `${CAST_WIDTH}px ${TEAR_LENGTH}px`,
-                    backgroundRepeat: 'repeat-y',
-                  }}
-                />
+                <>
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-y-0"
+                    style={{
+                      left: `calc(100% + ${FRAY_PAST - TEAR_WIDTH}px)`,
+                      width: CAST_WIDTH,
+                      backgroundImage: `url(${tones[i].cast})`,
+                      backgroundSize: `${CAST_WIDTH}px ${TEAR_LENGTH}px`,
+                      backgroundRepeat: 'repeat-y',
+                      maskImage: clothTabHandover(false),
+                    }}
+                  />
+                  <div aria-hidden className="pointer-events-none absolute" style={clothTabCast()} />
+                </>
               )}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
@@ -735,7 +780,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
               {/* The light a hide tab's cut catches brightens the hide laid over it here, outside the tab, which is
                   a layer of its own with nothing under it to brighten. */}
               {pageTones[i].surface && hideLight(i)}
-              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tones[i].deckled ? undefined : tabCut(i + 1, stuffOf(tones[i]))} />
+              <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tones[i].deckled || tones[i].frayed ? undefined : tabCut(i + 1, stuffOf(tones[i]))} />
             </motion.section>
           )
         })}
