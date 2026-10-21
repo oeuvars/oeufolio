@@ -16,7 +16,8 @@ the edge it shades whatever lies there.
 
 The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.png. The poster's tear
 runs straight where its tab grows out, and where that is depends on the layout, so there is a length of it for each:
-public/objects/poster-cast-<layout>.png. Each runs FRAME across, in CSS px from the strip's edge, at DENSITY.
+public/objects/poster-cast-<layout>.png. Each runs FRAME across, in CSS px from the strip's edge, at DENSITY. The
+mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.png (dodge).
 """
 
 import argparse
@@ -142,9 +143,27 @@ def render(spec, samples, edge):
     return cast / np.maximum(cover * flat + (1 - cover) * bare, 1e-5)
 
 
-def save(ratio, name, proof):
+def dodge(ratio):
+    """The light an edge catches as a colour-dodge layer, <name>-light.png: laid over the leather, it divides it by one
+    less its grey, so it brightens the leather by the rendered ratio and keeps its colour, as a lit leather edge
+    does in the reference photographs. White laid over it, as on paper, washes the green out pale instead. The
+    ratio is in linear light, so on the page's sRGB it is ratio ** (1 / 2.2)."""
+    brighter = np.maximum(ratio, 1) ** (1 / 2.2)
+    # Only on the strip's own leather, in from its edge: past it the strip after lies in a layer of its own, so there
+    # is nothing under this one to brighten, and its grey would show.
+    on = FRAME[0] + (np.arange(ratio.shape[-1]) + 0.5) / DENSITY < 0
+    grey = (1 - 1 / brighter) * on
+    return np.dstack([grey, grey, grey, np.broadcast_to(on, grey.shape).astype(np.float32)])
+
+
+def save(ratio, name, proof, leather=False):
     dark = np.clip(1 - ratio, 0, 1)
     light = np.clip((ratio - 1) * LIGHT, 0, 1)
+    if leather:
+        light = np.zeros_like(light)
+        layer = Image.fromarray((np.clip(dodge(ratio), 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA")
+        layer.save(os.path.join(proof or OUT, f"{name}-light.png"), optimize=True)
+        print(name + "-light", "brightest", round(float(np.maximum(ratio, 1).max() ** (1 / 2.2)), 3))
     alpha = dark + light
     colour = np.where(light > dark, 1.0, 0.0)
     rgba = np.dstack([colour, colour, colour, alpha])
@@ -168,7 +187,7 @@ def main():
         spec = {"kind": "mat", "thick": MAT_THICK, "length": 64, "past": 0, "colour": linear(MAT), "roughness": 0.55, "under": linear(CONTACT)}
         ratio = render(spec, args.samples, np.zeros(64 * DENSITY))
         rows = ratio[8:-8].mean(axis=0, keepdims=True)
-        save(np.repeat(rows, DENSITY, axis=0), "mat-cast", args.proof)
+        save(np.repeat(rows, DENSITY, axis=0), "mat-cast", args.proof, leather=True)
 
     if args.only in (None, "poster"):
         rng = np.random.default_rng(67)

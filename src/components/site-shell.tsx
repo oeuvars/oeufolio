@@ -48,8 +48,9 @@ type Tone = {
   /** What the strip's edge does to the light where it lies on the strip after it, rendered (studio/edgecast) in place of
    * a drop shadow: the shadow it leaves there, and its own cut's turn from the light and catch of it. A tile down the
    * edge, from EDGECAST_FROM px in over the strip to EDGECAST_SPAN px across, as long as the length it repeats over,
-   * for each layout, as the edge is torn straight in a different place for each one's tab. */
-  edgecast?: Record<'wide' | 'phone', string> & { length: number }
+   * for each layout, as the edge is torn straight in a different place for each one's tab. A leather edge's light has a
+   * tile of its own (light), laid over it in colour-dodge, so it brightens the leather and keeps its colour. */
+  edgecast?: Record<'wide' | 'phone', string> & { length: number; light?: string }
   /** The strip is handmade paper, its edge the deckle the pulp stopped at, thinning to loose fibres: this mask of
    * it (studio/paper/edge.py), in place of a straight cut. Paper casts its shadow, as the strip's own does. */
   deckled?: string
@@ -182,7 +183,7 @@ const pageTones: Tone[] = [
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: '/objects/likes-edge.png', paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.png', phone: '/objects/poster-cast-phone.png', length: TEAR_LENGTH }, tab: '/objects/tab-teenage.avif' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1 }, tab: '/objects/tab-proraso.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1, light: '/objects/mat-cast-light.png' }, tab: '/objects/tab-proraso.avif' },
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, surface: '/objects/leather.avif', tab: '/objects/tab-tagheuer.avif' },
 ]
 // The hide's tile: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are. It is
@@ -260,6 +261,8 @@ type TabProps = {
 /** A rendered cut over a tab: the light and shadow of its edge, and where that lies from the tab's top left. */
 type TabCut = {
   src: string
+  /** A leather cut's light, apart, laid over it in colour-dodge, so it brightens the leather and keeps its colour. */
+  light?: string
   left: number
   top: number
   width: number
@@ -343,6 +346,11 @@ const Tab = ({ label, shape, to, search, current, src, footless, leather, surfac
             className="absolute inset-0 bg-no-repeat opacity-84 mix-blend-plus-lighter"
             style={{ backgroundImage: 'var(--light-past)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
           />
+          {/* The light the cut's edge catches brightens the leather and keeps its colour (colour-dodge), here inside
+              its cut, where the leather lies under it to brighten. */}
+          {edge.light && (
+            <img aria-hidden alt="" src={edge.light} draggable={false} className="tab-cut mix-blend-color-dodge" style={{ left: edge.left, top: edge.top + reach, width: edge.width, height: edge.height }} />
+          )}
         </div>
       ) : (
         <svg
@@ -424,9 +432,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // The render of a tab's cut for this layout and the tab's height, in pixels.
   // The mat's tab is its thick leather, which has a render of its own.
   const tabCut = (slot: number, leather = false): TabCut => {
-    const { src, x, y, width, height } = tabcut[`${mobile ? 'phone' : 'wide'}-${tabHeights[slot]}${leather ? '-leather' : ''}` as keyof typeof tabcut]
+    const cut: { src: string; light?: string; x: number; y: number; width: number; height: number } =
+      tabcut[`${mobile ? 'phone' : 'wide'}-${tabHeights[slot]}${leather ? '-leather' : ''}` as keyof typeof tabcut]
     const rem = metrics.rem
-    return { src, left: x * rem, top: y * rem, width: width * rem, height: height * rem }
+    return { src: cut.src, light: cut.light, left: cut.x * rem, top: cut.y * rem, width: cut.width * rem, height: cut.height * rem }
   }
   // The tab of a strip whose page is a hide is cut from that hide: the same tile, anchored at the strip's top left as
   // the panel's is, laid over the strip and out past its edge and masked to the tab, so the hide runs on unbroken. The
@@ -489,7 +498,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // A strip's rendered edge, laid down it over its own edge and out over the strip after it. Where its tab grows out,
   // the tab's cut is rendered with the edge beside it (studio/tabcut), fading out within the tab's joins as t ** 1.5
   // over 0.6 of their reach, so the strip's own fades in there as much.
-  const edgecastOf = (i: number, cast: NonNullable<Tone['edgecast']>): CSSProperties => {
+  const edgecastOf = (i: number, cast: NonNullable<Tone['edgecast']>, src = cast[mobile ? 'phone' : 'wide']): CSSProperties => {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
@@ -500,7 +509,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     return {
       left: `calc(100% + ${EDGECAST_FROM}px)`,
       width: EDGECAST_SPAN,
-      backgroundImage: `url(${cast[mobile ? 'phone' : 'wide']})`,
+      backgroundImage: `url(${src})`,
       backgroundSize: `${EDGECAST_SPAN}px ${cast.length}px`,
       backgroundRepeat: 'repeat-y',
       maskImage: `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
@@ -680,6 +689,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 </>
               )}
               {tones[i].edgecast && <div aria-hidden className="pointer-events-none absolute inset-y-0" style={edgecastOf(i, tones[i].edgecast)} />}
+              {tones[i].edgecast?.light && (
+                <div aria-hidden className="pointer-events-none absolute inset-y-0 mix-blend-color-dodge" style={edgecastOf(i, tones[i].edgecast, tones[i].edgecast.light)} />
+              )}
               {pageTones[i].surface && <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-2" style={hideOver(i)} />}
               <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tabCut(i + 1, tones[i].fills)} />
             </motion.section>

@@ -17,8 +17,9 @@ paper, leather or picture, and the tab and its page stay one surface.
 There is one render for each size of tab SiteShell cuts: on a wide screen and on a phone (their band and how far the
 tab stands out differ), at each tab height. Writes public/objects/tabcut-<layout>-<height>.avif, and
 src/components/tabcut.json, where each lies in the tab's own rem and which file is which. The extras strip's tab is
-not paper but its mat's thick leather, so it has one of its own, tabcut-<layout>-10-leather.avif; --leather renders
-only those.
+not paper but its mat's thick leather, so it has one of its own, tabcut-<layout>-10-leather.avif, with the light
+its edge catches apart in tabcut-<layout>-10-leather-light.avif, for the page to lay over it in colour-dodge;
+--leather renders only those.
 """
 
 import argparse
@@ -90,17 +91,32 @@ def cut(layout, tall, samples, proof, stuff=None):
     # is torn, and wanders off the straight edge rendered here. So the render fades out within the joins.
     rows = (np.arange(ratio.shape[0]) + 0.5) / DENSITY + frame[1]
     fade = np.clip(np.minimum(rows + reach, height + reach - rows) / (0.6 * reach), 0, 1) ** 1.5
+    name = f"tabcut-{layout}-{str(tall).replace('.', '_')}" + ("" if stuff is None else f"-{stuff['name']}")
+    entry = {"src": f"/objects/{name}.avif", "x": frame[0], "y": frame[1], "width": frame[2], "height": frame[3]}
+    if stuff is not None:
+        # Leather's lit edge is brighter leather, not paler: a colour-dodge layer of its own, which brightens what is
+        # under it by the ratio (on the page's sRGB, ratio ** (1 / 2.2)) and keeps its colour, as studio/edgecast
+        # lights the mat's own edge, so the two meet at the tab's joins as one edge.
+        # Only on the leather: off it, nothing lies under the layer to brighten, and the grey would show.
+        grey = (1 - 1 / np.maximum(ratio, 1) ** (1 / 2.2)) * (cover > 0.5)
+        layer = np.dstack([grey, grey, grey, (cover > 0.5) * fade[:, None]])
+        write(layer, f"{name}-light", proof)
+        entry["light"] = f"/objects/{name}-light.avif"
+        print(name + "-light", "brightest", round(float(1 / (1 - grey.max())), 3))
+        light = np.zeros_like(light)
     alpha = (dark + light) * fade[:, None]
     colour = np.where(light > dark, 1.0, 0.0)
-    rgba = np.dstack([colour, colour, colour, alpha])
-    name = f"tabcut-{layout}-{str(tall).replace('.', '_')}" + ("" if stuff is None else f"-{stuff['name']}")
+    write(np.dstack([colour, colour, colour, alpha]), name, proof)
+    print(name, "darkest", round(float(dark.max()), 3), "lightest", round(float(light.max()), 3))
+    return entry
+
+
+def write(rgba, name, proof):
     image = Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA")
     image.save(os.path.join(ROOT, "public", "objects", f"{name}.avif"), quality=80, subsampling="4:4:4", speed=2)
     if proof:
         os.makedirs(proof, exist_ok=True)
         image.save(os.path.join(proof, f"{name}.png"))
-    print(name, "darkest", round(float(dark.max()), 3), "lightest", round(float(light.max()), 3))
-    return {"src": f"/objects/{name}.avif", "x": frame[0], "y": frame[1], "width": frame[2], "height": frame[3]}
 
 
 def main():
