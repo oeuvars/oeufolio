@@ -1,6 +1,7 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
 
 import { ErrorPage, InStack } from '../components/error-page'
+import { Loader } from '../components/loader'
 import { NotFound } from '../components/not-found'
 import { SiteShell } from '../components/site-shell'
 import { pages, site } from '../content'
@@ -31,6 +32,7 @@ const RootDocument = ({ children }: { children: React.ReactNode }) => {
         <HeadContent />
       </head>
       <body>
+        <Loader />
         {children}
 
         <Scripts />
