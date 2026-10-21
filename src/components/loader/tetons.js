@@ -1,10 +1,10 @@
 // The loader, run inline at the top of the body so it is up before the bundle, the fonts or a single picture arrive.
-// The Tetons at dusk, set in type, with the nine birds of PRS's fretboard inlays flying left to right over them in
-// mother of pearl, the farther ones smaller, slower and dimmer. The type is set here, on whatever grid fits the
+// The Tetons at dusk, set in type, with a distant flock of the birds of PRS's fretboard inlays flying left to right
+// over them in a loose V, in mother of pearl. The type is set here, on whatever grid fits the
 // screen at about five pixels a character, from the photograph as studio/tetons/ascii.py worked it over
 // (public/loader/tetons.webp: each point's colour, and the tone that picks its character) and the ridge it traced
 // (public/loader/tetons.txt, with the birds). A hiss of noise lies over it all, and now and then the picture tears for
-// a moment like a bad signal: bands of it slip sideways, tinted. Once everything is in, the type goes out cell by cell
+// a moment like a weak signal: a line or two of it slips sideways. Once everything is in, the type goes out cell by cell
 // and the picture is lifted. It is drawn on a canvas, one character to a cell. A classic script, not a module: no
 // imports, nothing left on window.
 ;(() => {
@@ -29,19 +29,12 @@
   const SKY = ':'
   const SKY_ELSE = ".:'.-"
   const SKY_ODD = 0.07
-  // The birds, farthest first: which bird, how tall, in eight-pixel rows on a screen 1200 wide, where along the
-  // crossing they start, how high, as a share of the sky over the peaks, and how fast, in screen widths a second.
-  const FLIGHTS = [
-    { bird: 6, rows: 5, from: 0.1, high: 0.55, speed: 0.018 },
-    { bird: 1, rows: 5, from: 0.62, high: 0.22, speed: 0.021 },
-    { bird: 0, rows: 5, from: 0.86, high: 0.68, speed: 0.016 },
-    { bird: 2, rows: 8, from: 0.36, high: 0.48, speed: 0.03 },
-    { bird: 5, rows: 8, from: 0.78, high: 0.1, speed: 0.034 },
-    { bird: 3, rows: 8, from: 0.02, high: 0.3, speed: 0.028 },
-    { bird: 7, rows: 12, from: 0.55, high: 0.42, speed: 0.05 },
-    { bird: 8, rows: 12, from: 0.2, high: 0.06, speed: 0.056 },
-    { bird: 4, rows: 17, from: 0.72, high: 0.16, speed: 0.075 },
-  ]
+  // The flock: how many birds, the nine of the PRS set in turn; how tall each is, in pixels on a screen 1440 wide;
+  // how far apart they fly, in birds' widths and heights; where along its crossing it starts; how high, as a share of
+  // the sky over the peaks; and how fast, in screen widths a second.
+  const FLOCK = { count: 17, height: 24, apart: [1.1, 0.5], from: 0.3, high: 0.42, speed: 0.024 }
+  // How bright the pearl is at the flock's distance.
+  const DISTANCE = 0.9
   // Mother of pearl: white with a sheen of pink, green and blue that drifts across each bird.
   const PEARL = [
     [238, 242, 244],
@@ -52,16 +45,16 @@
   // The noise: a few tiles of speckle, one at a time at a random offset, swapped this often, in ms, at this opacity.
   const TILE = 128
   const TILES = 4
-  const NOISE = 0.12
+  const NOISE = 0.07
   const HISS = 50
   // The tears: the calm between them and how long each lasts, in ms; how often its bands are cut again while it does;
   // how many bands at most, how far they slip, in pixels, and the tints they take.
-  const CALM = [1400, 3800]
-  const TEAR = [90, 260]
-  const CUT = [40, 70]
-  const BANDS = 5
-  const SLIP = 44
-  const TINTS = ['rgba(255,255,255,.1)', 'rgba(0,0,0,.25)', 'rgba(255,48,128,.14)', 'rgba(0,255,236,.14)']
+  const CALM = [5000, 11000]
+  const TEAR = [60, 140]
+  const CUT = [50, 80]
+  const BANDS = 2
+  const SLIP = 12
+  const TINTS = ['rgba(255,255,255,.05)', 'rgba(0,0,0,.12)', 'rgba(255,48,128,.06)', 'rgba(0,255,236,.06)']
   // On the way out each bird's characters break down through these, a step every so often; the mountains' simply go.
   const DECAY = '%+:. '
   const STEP = 45
@@ -170,7 +163,7 @@
       this.bands = []
       for (let i = 0; i < count; i++) {
         const top = this.rand() < 0.65 ? high + this.rand() * (low - high) : this.rand() * innerHeight
-        const height = this.rand() < 0.4 ? 1 + this.rand() * 3 : 6 + this.rand() ** 2 * 60
+        const height = this.rand() < 0.7 ? 1 + this.rand() * 2 : 4 + this.rand() ** 2 * 14
         const shift = Math.round((this.rand() - 0.5) * 2 * SLIP)
         this.bands.push({ top, height, shift, tint: TINTS[Math.floor(this.rand() * TINTS.length)] })
       }
@@ -293,26 +286,39 @@
       base.globalCompositeOperation = 'source-over'
       this.order = null
 
-      // Each flight at the height it was set nearest the one it was given, scaled with the screen's width, so a
-      // phone's narrow sky is not crowded.
-      const scale = Math.min(1.3, Math.max(0.4, w / 1200))
-      this.flights = FLIGHTS.map((flight) => {
-        const sizes = this.art.birds[flight.bird]
-        const want = (flight.rows * 8 * scale) / size
-        const rows = Object.keys(sizes)
-          .map(Number)
-          .reduce((best, n) => (Math.abs(n - want) < Math.abs(best - want) ? n : best))
-        return { ...flight, shape: sizes[rows], dim: 0.72 + 0.28 * Math.min(1, flight.rows / 17), phase: flight.from * 7 }
+      // The flock: each bird at the height it was set nearest the flock's, a little larger or smaller as birds are,
+      // in a loose V behind the leader, its arms trailing up and down and back, every place a little off true.
+      const want = (FLOCK.height * Math.min(1.3, Math.max(0.55, w / 1440))) / size
+      const nearest = (sizes, n) => sizes[Object.keys(sizes).map(Number).reduce((best, k) => (Math.abs(k - n) < Math.abs(best - n) ? k : best))]
+      const flock = random(31)
+      const shapes = Array.from({ length: FLOCK.count }, (_, i) => nearest(this.art.birds[i % this.art.birds.length], want * (0.9 + flock() * 0.2)))
+      // A bird's room in the V, from the birds as they were set.
+      const unit = [(shapes.reduce((sum, shape) => sum + shape.cols, 0) / shapes.length) * cell, (shapes.reduce((sum, shape) => sum + shape.rows, 0) / shapes.length) * size]
+      this.flock = shapes.map((shape, i) => {
+        const rank = Math.ceil(i / 2)
+        const side = i % 2 ? -1 : 1
+        return {
+          id: i,
+          shape,
+          x: -rank * unit[0] * FLOCK.apart[0] * (0.85 + flock() * 0.3),
+          y: side * rank * unit[1] * FLOCK.apart[1] * (0.8 + flock() * 0.4),
+          phase: flock() * Math.PI * 2,
+        }
       })
+      const reach = Math.max(...this.flock.map((bird) => -bird.x)) + unit[0]
+      this.flock.width = reach
+      this.flock.top = Math.max(-Math.min(...this.flock.map((bird) => bird.y)) + size, FLOCK.high * this.sky)
       this.context.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
-    /** Where a bird is `t` seconds in, in cells: across the screen and round again, rising and falling a little. */
-    place(flight, t) {
-      const span = this.cols + flight.shape.cols
-      const c = Math.round(((flight.from * span + (flight.speed * this.w * t) / this.cell) % span) - flight.shape.cols)
-      const y = flight.high * Math.max(0, this.sky - flight.shape.rows * this.size) + Math.sin(t * 0.8 + flight.phase) * this.size * 1.5
-      return [c, Math.round(y / this.size)]
+    /** Where a bird of the flock is `t` seconds in, in cells: the flock across the screen and round again, each
+     * bird drifting a little about its place in it. */
+    place(bird, t) {
+      const span = this.w + this.flock.width
+      const lead = ((FLOCK.from * span + FLOCK.speed * this.w * t) % span) - this.size
+      const x = lead + bird.x + Math.sin(t * 0.9 + bird.phase) * this.cell * 1.5
+      const y = this.flock.top + bird.y + Math.sin(t * 1.3 + bird.phase * 1.7) * this.size * 0.9
+      return [Math.round(x / this.cell), Math.round(y / this.size)]
     }
 
     /** Draws the picture at `now`: the mountains, any tear through them, and the birds over them. On the way out,
@@ -327,9 +333,9 @@
       }
       const t = Math.max(0, now - this.born) / 1000
       context.font = this.font
-      for (const flight of this.flights) {
-        const [c0, r0] = this.place(flight, t)
-        const { lines } = flight.shape
+      for (const bird of this.flock) {
+        const [c0, r0] = this.place(bird, t)
+        const { lines } = bird.shape
         for (let r = 0; r < lines.length; r++) {
           const line = lines[r]
           for (let c = 0; c < line.length; c++) {
@@ -338,7 +344,7 @@
             const x = (c0 + c) * cell
             if (x < -cell || x > w) continue
             if (gone) {
-              const step = gone(flight, r, c)
+              const step = gone(bird, r, c)
               if (step >= DECAY.length - 1) continue
               if (step >= 0) char = DECAY[step]
             }
@@ -346,11 +352,11 @@
             // The bird is cut out of what lies behind it, and laid in pearl that shimmers as it goes.
             context.fillStyle = this.art.night
             context.fillRect(x, y, cell, size)
-            const wave = (c * 0.35 + r * 0.6 + t * 1.6 + flight.phase) % PEARL.length
+            const wave = (c * 0.35 + r * 0.6 + t * 1.6 + bird.phase) % PEARL.length
             const a = PEARL[Math.floor(wave)]
             const b = PEARL[(Math.floor(wave) + 1) % PEARL.length]
             const f = wave % 1
-            const k = flight.dim
+            const k = DISTANCE
             context.fillStyle = `rgb(${(a[0] + (b[0] - a[0]) * f) * k},${(a[1] + (b[1] - a[1]) * f) * k},${(a[2] + (b[2] - a[2]) * f) * k})`
             context.fillText(char, x, y + this.baseline)
           }
@@ -533,8 +539,8 @@ html:has(#loader>.ldr-paper){overflow:hidden}
       const rand = random(3)
       const moments = new Map()
       let age = 0
-      const gone = (flight, r, c) => {
-        const key = `${flight.bird}:${r}:${c}`
+      const gone = (bird, r, c) => {
+        const key = `${bird.id}:${r}:${c}`
         if (!moments.has(key)) moments.set(key, rand() * SCATTER)
         return Math.floor((age - moments.get(key)) / STEP)
       }

@@ -11,8 +11,8 @@ The loader sets the mountains itself, at whatever grid fits the screen, about fi
 as much of the photograph as type can. From here it gets:
 
 - public/loader/tetons.webp: the photograph (art/tetons.jpg) worked over for type, twice as tall as it is. Its top
-  half is each point's colour, made bluer and lifted toward a pale blue-white the brighter it is, since type covers
-  only part of its cell and must still read as the picture does. Its bottom half is each point's tone, which picks
+  half is each point's colour, mapped from its tone through teal, azure and ice, bright, since type covers only part
+  of its cell and must still read as the picture does. Its bottom half is each point's tone, which picks
   the character: the photograph's brightest channel with its local contrast raised, so snow stands off rock. The sky,
   flat and as bright as the snow, is given a tone and colour of its own, lower, so the peaks stand against it.
 - public/loader/tetons.txt: the night the type is set on; the sky's colour; the ramp of characters, bare to full,
@@ -52,14 +52,15 @@ NIGHT = '#04080e'
 DARK, LIGHT = 34, 168
 CONTRAST = 1.2
 SKY_TONE = 0.45
-# The colours: how much bluer than the photograph, the pale they are lifted toward, and how far, bare to full.
-SATURATE = 1.5
-PALE = np.array([214, 232, 255])
-LIFT = (0.2, 0.92)
+# The colours, by tone, bare to full: deep teal in the shadows, through azure in the rock, to ice on the snow; the
+# sky a cobalt of its own. A little of the photograph's own colour is kept in each.
+STOPS = [(0.0, (18, 84, 112)), (0.25, (26, 140, 176)), (0.5, (52, 146, 240)), (0.75, (122, 192, 255)), (1.0, (236, 246, 255))]
+SKY_COLOUR = np.array([74, 124, 232])
+KEEP = 0.2
 # The ramp, re-sorted by Menlo's own ink.
 RAMP = " .,:;-~=+*xoe%#&@"
 # The birds: their heights, in rows; which look left and are turned; how far they lean into their flight, in degrees.
-HEIGHTS = (6, 9, 13, 19, 27, 38)
+HEIGHTS = (4, 5, 6, 8, 11, 15)
 LEFTWARD = (5, 6, 7)
 LEAN = 14
 
@@ -115,11 +116,12 @@ def mountains(maps):
     tone = ndimage.gaussian_filter(np.clip((detail - DARK) / (LIGHT - DARK), 0, 1), 0.6)
     tone[sky] = SKY_TONE
 
-    luma = (rgb @ np.array([0.299, 0.587, 0.114]))[..., None]
-    paint = np.clip(luma + (rgb - luma) * SATURATE, 0, 255)
-    lift = LIFT[0] + (LIFT[1] - LIFT[0]) * tone[..., None] ** 1.4
-    paint = paint + (PALE - paint) * lift
-    sky_colour = paint[sky].mean(0)
+    marks = [t for t, _ in STOPS]
+    paint = np.stack([np.interp(tone, marks, [c[i] for _, c in STOPS]) for i in range(3)], -1)
+    # The photograph's own colour, brought up to the same brightness, kept a little.
+    own = rgb * (paint.mean(-1, keepdims=True) / np.maximum(rgb.mean(-1, keepdims=True), 1))
+    paint = paint * (1 - KEEP) + np.clip(own, 0, 255) * KEEP
+    sky_colour = SKY_COLOUR
     paint[sky] = sky_colour
 
     sheet = np.concatenate([paint, np.repeat(tone[..., None] * 255, 3, 2)], 0)
@@ -163,7 +165,7 @@ def birds(maps, proof):
             lines = [''.join(CHARS[i] if sub[y, x].mean() > 0.08 else ' ' for x, i in enumerate(row)).rstrip() for y, row in enumerate(pick)]
             out.append(f'{b} {rows} {cols}')
             out.extend(lines)
-            if rows == HEIGHTS[3]:
+            if rows == HEIGHTS[-1]:
                 proofs.append(lines)
     if proof:
         lines = []
