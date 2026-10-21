@@ -56,6 +56,11 @@ type Tone = {
    * strip after it (cast), in place of a drop shadow, for each layout, as the deckle runs on round its tab, which lies
    * in a different place for each. */
   deckled?: Record<'wide' | 'phone', { edge: string; cast: string }>
+  /** The strip is printed paper torn by hand, rendered (studio/poster/tear.py): the mask its print is cut with (edge),
+   * in place of a drawn tear, and the white paper the tear bares past the print, with its fibres (core), for each
+   * layout, as the tear runs straight in a different place for each one's tab. Both, and its shadow (edgecast), lie
+   * under the print. */
+  tear?: Record<'wide' | 'phone', { edge: string; core: string }>
   /** What the page is made of, as a tile that repeats, size CSS pixels square: the poster's wall (studio/poster) or
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
    * from it, so they are the page's own paper and not a flat colour. */
@@ -205,7 +210,7 @@ const pageTones: Tone[] = [
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: { wide: { edge: '/objects/likes-edge-wide.png', cast: '/objects/likes-cast-wide.png' }, phone: { edge: '/objects/likes-edge-phone.png', cast: '/objects/likes-cast-phone.png' } }, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.
-  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.png', phone: '/objects/poster-cast-phone.png', length: TEAR_LENGTH }, tab: '/objects/tab-teenage.avif' },
+  { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.png', phone: '/objects/poster-cast-phone.png', length: TEAR_LENGTH }, tear: { wide: { edge: '/objects/poster-edge-wide.png', core: '/objects/poster-core-wide.png' }, phone: { edge: '/objects/poster-edge-phone.png', core: '/objects/poster-core-phone.png' } }, tab: '/objects/tab-teenage.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1, light: '/objects/mat-cast-light.png' }, tab: '/objects/tab-proraso.avif' },
   // The contact strip's hide is a leather mat too, cut straight and burnished as the green one is, lying on the walnut.
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, cut: true, surface: '/objects/leather.avif', edgecast: { wide: '/objects/contact-cast.png', phone: '/objects/contact-cast.png', length: 1, light: '/objects/contact-cast-light.png' }, tab: '/objects/tab-tagheuer.avif' },
@@ -587,7 +592,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
-    const { frayed, deckled } = tones[i]
+    const { frayed, deckled, tear: tearOf } = tones[i]
+    // A torn print's edge is rendered, and lies on the strip after it with its own shadow.
+    if (tearOf) return { '--torn-core': `url(${tearOf[mobile ? 'phone' : 'wide'].edge})`, filter: 'none' } as CSSProperties
     if (frayed) return { '--torn-core': `url(${frayed})`, filter: 'none' } as CSSProperties
     // A handmade sheet's deckle is rendered lying on the strip after it, so it casts no drop shadow: it leaves its own.
     if (deckled) return { '--torn-core': `url(${deckled[mobile ? 'phone' : 'wide'].edge})`, filter: 'none' } as CSSProperties
@@ -598,7 +605,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // A strip's rendered edge, laid down it over its own edge and out over the strip after it. Where its tab grows out,
   // the tab's cut is rendered with the edge beside it (studio/tabcut), fading out within the tab's joins as t ** 1.5
   // over 0.6 of their reach, so the strip's own fades in there as much.
-  const edgecastOf = (i: number, cast: NonNullable<Tone['edgecast']>, src = cast[mobile ? 'phone' : 'wide']): CSSProperties => {
+  const edgecastOf = (i: number, cast: NonNullable<Tone['edgecast']>, src = cast[mobile ? 'phone' : 'wide'], fades = true): CSSProperties => {
     const shape = tabShape(i + 1)
     const top = tabTops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
@@ -615,7 +622,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       backgroundImage: `url(${src})`,
       backgroundSize: `${EDGECAST_SPAN}px ${cast.length}px`,
       backgroundRepeat: 'repeat-y',
-      maskImage: src === cast.light ? square : `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
+      maskImage: !fades ? undefined : src === cast.light ? square : `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
     }
   }
   const fixed = mobile ? 0 : spine + end
@@ -728,6 +735,13 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 </>
               )}
               {tones[i].deckled && <div aria-hidden className="pointer-events-none absolute inset-y-0" style={deckleCast(tones[i].deckled)} />}
+              {/* A torn print's shadow and the paper its tear bares lie under the print, which its mask cuts back to its own line. */}
+              {tones[i].tear && tones[i].edgecast && (
+                <>
+                  <div aria-hidden className="pointer-events-none absolute inset-y-0" style={edgecastOf(i, tones[i].edgecast)} />
+                  <div aria-hidden className="pointer-events-none absolute inset-y-0" style={edgecastOf(i, tones[i].edgecast, tones[i].tear[mobile ? 'phone' : 'wide'].core, false)} />
+                </>
+              )}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
                 style={sheets(tones[i]) ? sheet(i, tones[i]) : undefined}
@@ -797,7 +811,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   <div aria-hidden className="torn torn-wear" />
                 </>
               )}
-              {tones[i].edgecast && <div aria-hidden className="pointer-events-none absolute inset-y-0" style={edgecastOf(i, tones[i].edgecast)} />}
+              {tones[i].edgecast && !tones[i].tear && <div aria-hidden className="pointer-events-none absolute inset-y-0" style={edgecastOf(i, tones[i].edgecast)} />}
               {tones[i].edgecast?.light && (
                 <div aria-hidden className="pointer-events-none absolute inset-y-0 mix-blend-color-dodge" style={edgecastOf(i, tones[i].edgecast, tones[i].edgecast.light)} />
               )}

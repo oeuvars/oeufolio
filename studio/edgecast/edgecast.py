@@ -4,19 +4,20 @@
 # ///
 """The shadow two strips' edges leave on the strip after them, rendered, in place of a drop shadow.
 
-    uv run studio/edgecast/edgecast.py [--only mat|poster] [--samples 1024] [--proof DIR]
+    uv run studio/edgecast/edgecast.py [--only mat|contact|spine] [--samples 1024] [--proof DIR]
 
-The extras strip is a leather mat, MAT_THICK thick, lying on the contact strip; the work strip is the poster, paper
-torn down its edge, lying on the mat. render.py builds each edge in Blender, the mat's cut burnished round and the
-poster's along the very tear SiteShell cuts it with, all in white under the copy stand's light (as studio/tabcut
+The extras strip is a leather mat, MAT_THICK thick, lying on the contact strip; the spine is paper torn down its
+edge, lying on the linen strip's card. render.py builds each edge in Blender, the mat's cut burnished round and the
+spine's along the very tear SiteShell cuts it with, all in white under the copy stand's light (as studio/tabcut
 renders the tabs' cuts), and renders it with and without the strip. The one divided by the other is only what the
 strip does to the light: dark where it shuts the room off the page beside it, and on its own edge where that turns
 from the light, light where its edge catches it. That is written as black and white over a clear ground, so laid over
 the edge it shades whatever lies there.
 
-The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.png. The poster's tear
-runs straight where its tab grows out, and where that is depends on the layout, so there is a length of it for each:
-public/objects/poster-cast-<layout>.png. Each runs FRAME across, in CSS px from the strip's edge, at DENSITY. The
+The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.png, FRAME across, in
+CSS px from the strip's edge, at DENSITY. The poster's tear is rendered with the paper it bares and its fibres by
+studio/poster/tear.py, which writes its shadow, public/objects/poster-cast-<layout>.png, in the same frame; it uses
+the work strip's tab span (calm_of) and curl from here. The
 mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.png (dodge). The contact strip's hide
 is a leather mat as well, cut and burnished as the green one is, lying on the walnut desk past the folders:
 contact-cast.png and contact-cast-light.png.
@@ -202,7 +203,7 @@ def save(ratio, inward, name, proof, frame=FRAME, coloured=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--only", choices=("mat", "contact", "poster", "spine"))
+    parser.add_argument("--only", choices=("mat", "contact", "spine"))
     parser.add_argument("--samples", type=int, default=1024)
     parser.add_argument("--proof")
     args = parser.parse_args()
@@ -217,18 +218,6 @@ def main():
         ratio, inward = render(spec, args.samples, np.zeros(64 * DENSITY))
         rows = ratio[8:-8].mean(axis=0, keepdims=True)
         save(np.repeat(rows, DENSITY, axis=0), np.repeat(inward[:1], DENSITY, axis=0), f"{name}-cast", args.proof, coloured=True)
-
-    if args.only in (None, "poster"):
-        rng = np.random.default_rng(67)
-        for layout in LAYOUTS:
-            calm = calm_of(layout)
-            edge = tear(calm)
-            spec = {"kind": "poster", "thick": PAPER_THICK, "length": TEAR_LENGTH, "past": 120, "curl": CURL, "edge": edge.tolist(), "lift": curl(calm, rng).tolist()}
-            spec |= {"colour": linear(POSTER), "roughness": 0.8, "under": linear(MAT)}
-            rows = np.mod((np.arange((TEAR_LENGTH + 240) * DENSITY) + 0.5) / DENSITY - 120, TEAR_LENGTH)
-            ratio, inward = render(spec, args.samples, np.interp(rows, np.arange(TEAR_LENGTH + 1), edge))
-            top = 120 * DENSITY
-            save(ratio[top : top + TEAR_LENGTH * DENSITY], inward[top : top + TEAR_LENGTH * DENSITY], f"poster-cast-{layout}", args.proof)
 
     if args.only in (None, "spine"):
         # Torn its whole length, so its curl swells all the way down.
