@@ -1,0 +1,414 @@
+0 5 17
+  __m@@m
+ m@N@@@@@m,__
+@@@@@@@@@NNNN@@m,
+````'MNNNNNN@@C``
+       TMMMMMMMm
+0 8 27
+       @@@@m_
+   _@@w@@@@@@,
+  @NN@@@@@@@@@@@,___
+ _@@@@@@@@@@@@NNNNNNN@mm,_
+WNN@M@@@@@@@@NNNNNNN@@@@@@w
+```  ``^MNNNNNNNNN@@@@K` `
+          "NNNNN@@@@@@@m_
+             "`"^^^^MMMM%
+0 12 41
+           m@@@mmw
+       __ ^@@@@@@@m_
+     _@NN@m@@@@@@@@@m
+  m@NNN@@@@@@@@@@@@@@@@m_
+   @N@@@@@@@@@@@@@@@@@NNNN@@@@@@___
+ _@@@@@@@@@@@@@@@@@@@NNNNNNNNNN@@@@@mm_
+w@@@@@@@@@@@@@@@@@@NNNNNNNNNN@@@@@@@@@@m
+TMMMMMMMMMM@@@@@@NNNNNNNNNNN@@@@@@MMMMMM'
+           `^MNNNNNNNNNNNN@@@@@@@@K_
+               MMNNNNNNN@@@@@@@@@@@m_
+                 `"MMMNNNN@@@@@@@@@@@K
+                       `  `'``^M^^MMMM
+0 17 58
+                g_@@@mmw_
+               @@@@@@@@@@m,
+         _@@@_ m@@@@@@@@@@@m_
+       _@@N@@@m@@@@@@@@@@@@@@,
+    @@@NNN@@@@@@@@@@@@@@@@@@@@mmm_
+    NNNNN@@@@@@@@@@@@@@@@@@@@@@@@N@@__  __
+    `@N@@@@@@@@@@@@@@@@@@@@@@@@NNNNNNNN@@N@@@@___
+   m@@@@@@@@@@@@@@@@@@@@@@@@@NNNNNNNNNNNNNN@@@@@@@mm___
+ m@@@@@@@@@@@@@@@@@@@@@@@@@NNNNNNNNNNNNNNNN@@@@@@@@@@@@m
+m@@@@@@@@@@@@@@@@@@@@@@@@NNNNNNNNNNNNNNNN@@@@@@@@@@@@@@@m
+^NNMMMMMMMMMmMM@@@@@@@@NNNNNNNNNNNNNNNN@@@@@@@@@@MMmMMMMM`
+  `            ^MMN@@NNNNNNNNNNNNNNNN@@@@@@@@@@@M  `
+                  ^MMNNNNNNNNNNNNNN@@@@@@@@@@@@@@m
+                     ^MMNNNNNNNNN@@@@@@@@@@@@@@@@@@_
+                        TMMNNN@@@@@@@@@@@@@@@@@@@@@@m
+                           ^M"""MMMMMMMMMMm@@@@@@@@@@_
+                                           `^``'^MMMM`
+1 5 11
+  __@W
+@@NN@C__
+`TM@@@@@@g
+  _@C`T"WN@
+  lM     `'
+1 8 18
+       @N_
+ _@@@@@@@`
+@NNNN@@@@____
+^MMM@@@@@@@@@@m
+    J@@@@@@@@NNN_
+    [@@C```"MNNN@_
+    @@M       ?MNK
+    WN^
+1 12 27
+          m@@,
+     __  _@@@@
+  _@@NNN@@@@@M
+,@NNNNN@@@@@@C
+0NNNN@@@@@@@@@mmm@mmw
+ ``"MM@@@@@@@@@@@@@@N@_
+      `@@@@@@@@@@@@NNN@@
+       @@@@MMMNMNNNNNNNNN
+       @@@M      `TMNNNNNN
+      @@@@K         `"MN@@K
+     '@@@N              ^M
+      #NM`
+1 17 38
+               @@m_
+              @N@@@m
+      __@@   m@@@@@M
+   _@@NNNN@@@@@@@@@K
+ _@@NNNNNN@@@@@@@@@
+@@NNNNNNN@@@@@@@@@@_    __
+MNNNNNN@@@@@@@@@@@@@@m@@@@@@m_
+ `""MMMN@@@@@@@@@@@@@@@@@@@@@@N
+        `M@@@@@@@@@@@@@@@@@NNNN@,
+         `@@@@@@@@@@@@@@@NNNNNNNN@_
+         m@@@@@@@MN@@N@@NNNNNNNNNNN_
+         l@@@@@K`  `` `"MMMNNNNNNN@N
+         m@@@@M            "WNNNNNN@N
+        m@@@@@K              `^MNN@@@K
+        M@@@@@`                  ?MMN
+        %@@@NM
+        ?MNNM
+2 5 11
+ m,  ____#
+MNN@@@@@@@m
+   ^%@@@@NW
+     ^0NN`
+       TML
+2 8 17
+ m@_          @
+_@NNm,_@mmmwm@@
+^MNNN@@@@@@@@@@N
+   `MM@@@@@@@@NN_
+      `%@@@@@NNM"
+        ^N@NNN
+          MNNNK
+            TMK
+2 12 26
+  @g                 _@
+  @NN@_      ___   _m@M
+_@NNNNNNm,@@@@@@@mm@@@@_
+TMNNNNN@@@@@@@@@@@@@@@@@L
+  ``MM@@@@@@@@@@@@@@@@NNM
+      `^MM@@@@@@@@@@@NNN@_
+          %@@@@@@@@NNNNNNM
+           ^%@@@@NNNNM"`
+             ^NNNNNNNN
+               MNNNNNN
+                 TNNNN
+                   "MNm
+2 17 37
+   @__                         @m
+  m@N@@_                      @@M
+  @NNNNNNg_       ______   _m@@@K
+_@@NNNNNNN@@m,m@@@@@@@@@@m@@@@@@@_
+0NNNNNNNNNN@@@@@@@@@@@@@@@@@@@@@@@w
+ `JMNNNNN@@@@@@@@@@@@@@@@@@@@@@@@NN
+     ^MM@@@@@@@@@@@@@@@@@@@@@@@NNNM
+        `^MMM@@@@@@@@@@@@@@@@NNNNNN
+             ^m@@@@@@@@@@@@NNNNNNNNNN
+               %@@@@@@@@@NNNNNNNNNMM`
+                ?M@@@@@NNNNNNNMM"`
+                  MN@@NNNNNNNN,
+                    M@NNNNNNNNN
+                     TMNNNNNNNN,
+                       'MNNNNN@C
+                          fWN@@K
+                            `4WM
+3 5 15
+ _,@@_ __m
+TMMMN@@@@@__
+     _@@MNNNNN
+   ,m@#`  ```^%
+   ` M`
+3 8 24
+     ___      _@
+,@NNNNN@@mmmmm@@m
+'"T"MM@@@@@@@@@C__
+       `^%@@@@NNNNNN@w
+        _@@@MMMNNNNN@@m
+     _m@@@N"     ````MMm
+     #M`@N^
+       mM^
+3 12 36
+                      _@
+  _@@wg@@@@@w_      w@@@L
+w@NNNNNNN@@@@@mmmm@@@@@@M
+ MM"MMNN@@@@@@@@@@@@@@N"
+        '^MMM@@@@@@@@@N@@@@m@,_
+             `W@@@@@@NNNNNNNNNN@w
+             _@@@@NNMMNNNNNNN@@@@m
+          _w@@@@NMM   `T"MMMMMM@@@m
+        m@@@@@@NM              `^Mm}
+        @MM"@NNM
+           _NNM
+           JNM
+3 17 51
+                                m@m
+           __@@mw             _m@@m
+  _@@@@@@@@NNN@@@@m_       _m@@@@@@_
+,@@NNNNNNNNN@@@@@@@@@m@m@m@@@@@@@@NM
+`NNNMNNNNNN@@@@@@@@@@@@@@@@@@@@@NM^
+       `"MMM@@@@@@@@@@@@@@@@@@@@&
+            `^MMMM@@@@@@@@@@@@@NNN@@@@@@@@__
+                  `%@@@@@@@@@NNNNNNNNNNNNNNN@m
+                    @@@@@@@NNNNNNNNNNNNNNNN@@@m
+                  _w@@@@@NNNMMMNNNNNNNNNN@@@@@@m
+              __wm@@@@@NNMM     `TMMMNNNNNN@@@@@m_
+            _m@@@@@@@NNM"                ` `^M@@@@,
+           m@@@@NN@@NNM                       `^^M`
+           @@MMT`@@NNM`
+           "'   _@NNNK
+                4NNN"
+                4NK
+4 5 16
+m@@m@_  _
+`MNN@@@m@w,,,__
+   ^MMM@@NNNNN@m
+      @N`"MM^"'`
+     4NM
+4 8 26
+q@@@m@g_
+4NNNNNN@@mm__wm
+  TNN@@@@@@@@@@w,@@,___
+    'MM@@@@@@@NNNNNNNN@@m_
+        `^@@@NNNNNNN@@@@@m
+         _@NN `"MMMMM"`'`
+         @NNM
+         NNM
+4 12 38
+ m@@@m@g__
+4NNNNNNNNN@mw_      _
+HNNNNNNNN@@@@@@mw__m@_
+  ^MNNN@@@@@@@@@@@@@@@______
+     MN@@@@@@@@@@@@@@@@NNNNNNN@@@m_
+       `MW@@@@@@@@@@@NNNNNNNNNN@@@@@m
+           `^MM0@@@NNNNNNNNNN@@@@@@@@
+              _@@NNMMNNNNNNN@@@MMM@MK`
+              @NNNN   ``"^""""`   `
+             @NNNNK
+            mNNNN0
+             MNNM`
+4 17 54
+ _,@@@@@@__
+_@@NNNNNNNNN@@@g_
+4NNNNNNNNNNNNN@@@@mw_        w
+ NNNNNNNNNNN@@@@@@@@@@m,_ _m@@_
+  "MNNNNNNN@@@@@@@@@@@@@@@@@@@@
+     ^NNN@@@@@@@@@@@@@@@@@@@@@@m@@m@@@@@@@__
+       'M@@@@@@@@@@@@@@@@@@@@@@NNNNNNNNNNNNNN@@@m_
+          ^WM@@@@@@@@@@@@@@@@NNNNNNNNNNNNNNN@@@@@@@m,
+             ^MMM@@@@@@@@@@NNNNNNNNNNNNNNNN@@@@@@@@@@
+                  `^"M@@@NNNNNNNNNNNNNNNN@@@@@@@@@@@m
+                     @@NNNNNMNNNNNNNNNN@@@@@@@M@@@@@^
+                    @NNNNNN   `"MMNNNNNNMMMM^`  '^``
+                   m@NNNNNM
+                  %@NNNNNNM
+                  @NNNNNNK
+                  0NNNNNN
+                   MNNMM`
+5 5 12
+   _@m__m@^
+ _@NMM@@@M@,
+WM`   `M0 `"
+       @K
+       #F
+5 8 19
+      _@m_   mm@M
+    w@N@@@mwm@@@m
+  _@N@NMM@@@@@NNN@
+ @NM"`   `^W@@M ^MN
+#M          00
+            NK
+           @M0
+           0 K
+5 12 28
+          _@w_     _mmmmM
+       _@@N@@@m_  J@@@@K
+     _@@N@@@@@@@m@@@@@@@@_
+    @@N@@@@@@@@@@@@@@@@@NNw
+  _@N@NMM"` '%m@@@@@@M"MNN@_
+ @@NM^`        `MW@@N   `MN&
+@NM`              @NK
+`                _NNM
+                 @NNM
+                 @MNM
+                4N @M
+                4K M
+5 17 40
+               __g,         ,mmwmm@m
+            _@@@@@@@_     _@@@@@@M`
+          _@@N@@@@@@@m_  _m@@@@@@@w
+        _@NN@@@@@@@@@@@@@@@@@@@@@@@N
+      _@@NN@@@@@@@@@@@@@@@@@@@@@@@@N@_
+     g@NN@@@@@@MMM@@@@@@@@@@@@@N@NNNNN
+   _@NN@@@NM"`    `Mm@@@@@@@@@M``MNNNNN
+  @@N@NMM`           `MM@@@@@N`   `TWNNL
+ @@NMM`                 `%@NNK       ^MM
+@NM"                     mNNN`
+'`                       @NNN
+                         @NNN
+                        @NNNN
+                        @NM@N
+                       mNN @N
+                       QNK @N
+                       4N  T^
+6 5 7
+    ,w^
+   _B]
+_wNM@m
+"`  [K
+    J
+6 8 12
+         _mM
+       @@K
+       B@]
+   m@@@@@@
+_@@MMMM0@@
+``     `@M
+        @
+       mK
+6 12 18
+               _mm
+           ,w@0M`
+          J@@@`
+          '@@@
+     ___,mm@@@m
+    _@@@@@@@@@@
+ _@@@@@@MMM@@@@
+mNMM^"`    0@@N
+           J@@`
+           H@0
+           QN%
+           #M
+6 17 25
+                      _mm
+                   _m@M"`
+               w@@@@M`
+              m@@@@]
+              J@@@@m
+               @@@@m
+        ___wmm@@@@@@L
+      _@@@@@@@@@@@@@m
+    _w@@@@@@@@@@@@@@@
+ _@@@@@@@@MMMMM@@@@@@
+w@@NMMM^``     l@@@@#
+ ``             @@@N%
+                0@@K
+                @@N`
+                @NM
+                @N
+               4NK
+7 5 10
+,@@mmw_@]
+"""MMMM@]
+       M@L
+      @MJK
+      ^  #
+7 8 16
+ __@@@@w_   mM
+@NNNNNN@@@@@@m
+ ```""^MM@@@@]
+           @@@@
+          m@MNNL
+          @K ^NE
+          NM  4K
+              JK
+7 12 24
+     _______      ym@
+ @@NNNNNNNN@@mw__m@@]
+WNNNNNNNN@@@@@@@@@@@M
+ `'``"MMMMMM@@@@@@@@K
+            `^^M%@@@@_
+                @@@@@NK
+                @@M0NNN
+               q@0 `0NN
+               @NK  ^NNL
+               NN    3NK
+               "^     @K
+                      N
+7 17 33
+                         _m@m>
+   ,@@@@@@@@@@N@mm_     ,@@@]
+ @@NNNNNNNNNNN@@@@@@mmmm@@@@]
+@@NNNNNNNNNN@@@@@@@@@@@@@@@@K
+^MMMMMMMNNNN@@@@@@@@@@@@@@@@K
+              ^MM@@@@@@@@@@@
+                  `^^^%@@@@@@w
+                      J@@@@@@N@
+                      @@@@@NNNNL
+                      @@N`MNNNN&
+                     J@NK  MNNNN
+                     @NN`   MNNN
+                    @NNM     WNN_
+                    4NNM     3NNL
+                     MM       @@K
+                              BN
+                              0K
+8 5 14
+   _wwwm
+ _@N@@@@mmm
+fM"` %@@NNN@_
+     JK   `MMy
+     0M
+8 8 23
+       __ _@K
+    _w@@@@@@@
+  _@N@@@@@@@@@m@NW
+@@NMMM"`%@@@@@NNNN@,
+         0@NNMMMNNNNN
+         @N`     `MMMm
+        qNK          `%
+        4N"
+8 12 34
+                _@,
+         _@@@m_@@@@
+      _@@@@@@@@@@@@,   __
+    _@N@@@@@@@@@@@@@mw@@@N_
+ _@@N@@@@MM@@@@@@@@@@@NNNN@,
+@NNNMMM"``  %@@@@@@@@NNNNNNNN_
+`            %@@@@NNNNMNNNNNN@,
+             m@@M"T`    ^MNN@@@m
+             @@NM          `MM@@m
+             @N0               ^%m
+            @NNK
+            #NM
+8 17 48
+                       m@m
+               _@w,   m@@@m
+            _@@@@@@m_m@@@@@
+         _@@@@@@@@@@@@@@@@@_
+       _@@@@@@@@@@@@@@@@@@@@w__w@@@m
+    _@@NN@@@@@@@@@@@@@@@@@@@@@@@@NNN@,
+  _@@NN@@@@@@@MM@@@@@@@@@@@@@@@NNNNNNNN_
+_@NNNN@NNMM^"`  '%@@@@@@@@@@@NNNNNNNNNN@_
+#MMM""`           %@@@@@@@@NNNNNNNNNNNNNNN
+                   @@@@@@NNNNNMMMNNNNNNNN@@_
+                   4@@@NM"```     "MNNN@@@@@m
+                   @@@N             `^MM@@@@@m
+                  mNNNM                 `^%M@@m
+                  @@NNM                     `%@m
+                  @NNN                         `
+                 @NNNK
+                 ?MNK
