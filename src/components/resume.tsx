@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 
 import type { Resume as ResumeData } from '../types'
 import frame from './resume.json'
+import { ResumeCat } from './resume-cat'
 
 type ResumeProps = {
   resume: ResumeData
@@ -45,7 +46,7 @@ const spread = (room: number) => {
  * the tag open the résumé page (/resume). The photograph runs a bleed past the strip on every side, out under the last folder, which
  * lies over the strip's first rem, and past the window's edge. Turkish Vans cut out of photographs taken from above lie
  * about the desk, each with the shadow the desk's lamp gives it (studio/resume/cats.py), so they can be spread over
- * whatever desk the window shows.
+ * whatever desk the window shows. The rigged ones breathe and move (resume-cat.tsx).
  */
 export const Resume = ({ resume, room }: ResumeProps) => {
   const [width, height] = frame.size
@@ -62,12 +63,9 @@ export const Resume = ({ resume, room }: ResumeProps) => {
         style={{ left: `${-bleed}rem`, top: `${-bleed}rem`, width: `${width + 2 * bleed}rem`, height: `${height + 2 * bleed}rem` }}
       />
       {spread(room).map((cat) => (
-        <img
+        <ResumeCat
           key={cat.src}
-          alt=""
           src={cat.src}
-          draggable={false}
-          className="pointer-events-none absolute max-w-none select-none"
           style={{
             left: `${cat.x - cat.size[0] / 2 - frame.cats.bleed}rem`,
             top: `${cat.top - frame.cats.bleed}rem`,
