@@ -151,35 +151,33 @@
     wing: ['M98 146C102 150 108 150 112 146', 'M100 146C98 132 110 130 112 146'],
   }
 
-  // Dilly, his cat, a long-haired Turkish Van sat by the basket, facing out, drawn from her photographs: a small
-  // wedge of a head sunk in a cloud of white coat, big ears set wide with pale pink insides, a ginger cap over her
-  // crown and the roots of her ears parted by a wide white blaze that runs to a point a little to her right, heavy
-  // lids over amber eyes, a pink nose over a ginger moustache, larger on her left, and a plume of a tail, solid
-  // ginger. Drawn about the ground under her; her head turns about her neck.
+  // Dilly, his cat, a long-haired Turkish Van sat by the basket, facing out, drawn the way Schulz drew Snoopy: a big
+  // round head on a small body, dot eyes with a glint, a button nose and a little mouth. Hers are the markings: a
+  // ginger cap over her head and ears parted by a white blaze that runs to a point a little to her right, pale pink
+  // ears, a ginger moustache either side of her nose, larger on her left, and a plume of a tail, solid ginger. Drawn
+  // about the ground under her; her head turns about her neck.
   const DILLY = {
     at: [470, 472],
-    // Her coat: an oval of tufts, its middle, its half width and its half height, cut flat where she sits.
-    coat: [-30, 42, 54],
-    tail: 'M34-4C50 0 62-4 67-14L72-15 68-20C70-28 70-36 67-42L71-46 65-47C64-52 61-56 58-60 57-50 55-40 51-32 46-22 40-17 34-16Z',
-    legs: 'M-3-24V-1M3-24V-1M-15 0C-15-7-4-8-3 0M3 0C4-8 15-7 15 0',
-    head: 'M-6-92C-2-93 2-93 6-92L30-110 20-84C23-76 22-68 17-62 13-56 7-51 0-51S-13-56-17-62C-22-68-23-76-20-84L-30-110Z',
+    size: 1.25,
+    tail: 'M22-3C38-1 48-12 46-28C45-36 40-42 36-40 38-32 38-24 33-17 30-13 26-12 22-13Z',
+    body: 'M-16-44C-24-36-26-16-24 0H24C26-16 24-36 16-44Z',
+    legs: 'M-4-16V-1M4-16V-1M-14 0C-14-5-5-6-4 0M4 0C5-6 14-5 14 0',
+    ears: 'M-24-68L-27-97Q-26.5-101-23-99L-5-82ZM24-68L27-97Q26.5-101 23-99L5-82Z',
+    inner: 'M-21-73L-23-93-11-82ZM21-73L23-93 11-82Z',
+    head: 'M-27-60C-28-74-18-84 0-84S28-74 27-60C26-48 14-41 0-41S-26-48-27-60Z',
     cap: [
-      'M-2-92L-6-92-13-97-24.2-95-20-84C-21-80-21-77-20-74-15-77.5-10-78-5-77Z',
-      'M-2-92L6-92 13-97 24.2-95 20-84C21.5-80 21.5-77 20.5-73 16-78 10-78.5 5-77Z',
+      'M-2-84C-14-84-27-77-27-63-21-68-13-69-5-68Z',
+      'M-2-84C14-84.5 27-77 27-63 21-68 13-69 5-68Z',
     ],
-    ears: 'M-27-105L-19-88-9-92ZM27-105L19-88 9-92Z',
-    patches: 'M-1.5-59C1.5-61.5 6.5-61.5 8.5-59 8-56 3.5-55-.5-57ZM-3.5-59C-6-61-10.5-60.5-11-58-10-55.5-6-56-4-57Z',
-    mouth: 'M0-57V-55.5M-3.5-54Q-1.8-53 0-55.5Q1.8-53 3.5-54',
-    whiskers: 'M-9-57L-25-59M-9-55L-24-52M9-57L25-59M9-55L24-52',
-    nose: 'M-4-61H4L0-56.5Z',
-    // Each eye about its middle: the eye, her heavy upper lid over it, and the lid shut.
-    eyes: [
-      [-10, 'M-6-1.5Q0-3 6 0Q0 8.5-6-1.5Z', 'M-6.5-1.8Q0-3.6 6.5 0', 'M-6-1.5Q0 3 6 0'],
-      [10, 'M6-1.5Q0-3-6 0Q0 8.5 6-1.5Z', 'M6.5-1.8Q0-3.6-6.5 0', 'M6-1.5Q0 3-6 0'],
-    ],
+    patches: 'M-.5-53.5C2-55.5 6.5-55 7-52.5 6.5-50 2.5-49.5-.5-51ZM-3.5-53.5C-6-55.5-9.5-55-10-52.5-9.5-50-6-50-4-51.5Z',
+    cheeks: [[-18, -52], [18, -52]],
+    mouth: 'M0-52.5V-51M-4-49.5Q-2-47.5 0-51Q2-47.5 4-49.5',
+    whiskers: 'M-15-54L-27-56M-15-51L-27-50M15-54L27-56M15-51L27-50',
+    nose: 'M-3-55.5H3Q3-54 0-52.5-3-54-3-55.5Z',
+    eyes: [-11, 11],
   }
-  // Where she looks: her pupils' shift in their eyes and the tilt of her head, in degrees.
-  const GAZES = { ahead: [0, 0, 3], him: [-2.6, 0, -5], line: [-1.6, -0.3, -9], bird: [-2.4, -0.3, -13] }
+  // Where she looks: how far her eyes shift and the tilt of her head, in degrees.
+  const GAZES = { ahead: [0, 0, 4], him: [-2, -0.4, -6], line: [-1.4, -1.6, -10], bird: [-1.8, -1.8, -14] }
 
   /** A seeded random, so the hand's wobble is the same on every visit. */
   const random = (seed) => () => {
@@ -352,64 +350,47 @@
 
   /**
    * Dilly. Like a cat on film she is still most of the time: her head goes pose to pose to whatever is moving and
-   * holds there, her tail sweeps when a page goes up, and now and then she gives a slow blink.
+   * holds there, her eyes ahead of it, her tail sweeps when a page goes up, and now and then she gives a slow blink.
    */
   class Dilly {
     constructor(defs, parent) {
-      const group = element('g', { filter: 'url(#ldr-boil)', transform: `translate(${DILLY.at.join(' ')})` }, parent)
-      // What is coloured of her as each page is pegged: her cap first, so she is herself early, then her tail, her
-      // patches, her nose and her eyes.
+      const group = element('g', { filter: 'url(#ldr-boil)', transform: `translate(${DILLY.at.join(' ')}) scale(${DILLY.size})` }, parent)
+      // What is coloured of her as each page is pegged: her cap and ears first, so she is herself early, then her
+      // tail, her moustache, her nose and the insides of her ears, and last her cheeks.
       const dye = (node, colour) => ({ colour: (duration) => node.animate([{ fill: PAPER }, { fill: colour }], { duration: duration || 1, fill: 'forwards' }) })
       this.tail = element('g', {}, group)
       element('path', { d: DILLY.tail, fill: PAPER }, this.tail)
-      const tail = new Fill(defs, this.tail, DILLY.tail, GINGER, [32, -62, 42, 60])
+      const tail = new Fill(defs, this.tail, DILLY.tail, GINGER, [20, -44, 30, 44])
       ink(DILLY.tail, this.tail)
-      // Her coat, combed down: each tuft swells out to a point and falls back in to the next.
-      const rand = random(31)
-      const [middle, across, high] = DILLY.coat
-      const ground = Math.asin(-middle / high)
-      const sweep = Math.PI + 2 * ground
-      const at = (t, r) => {
-        const a = ground - t * sweep
-        return `${(across * r * Math.cos(a)).toFixed(1)} ${Math.min(0, middle + high * r * Math.sin(a)).toFixed(1)}`
-      }
-      const tufts = 13
-      let coat = `M${at(0, 1)}`
-      for (let i = 0; i < tufts; i++) {
-        const tip = (i + 0.45 + rand() * 0.25) / tufts
-        coat += `Q${at((i + 0.15) / tufts, 1.07)} ${at(tip, 1.1 + rand() * 0.05)}Q${at((i + 0.8) / tufts, 1.03)} ${at((i + 1) / tufts, 1)}`
-      }
-      coat += 'Z'
-      element('path', { d: coat, fill: PAPER }, group)
-      ink(coat, group)
+      element('path', { d: DILLY.body, fill: PAPER }, group)
+      ink(DILLY.body, group)
       ink(DILLY.legs, group, 2.4)
       this.head = element('g', {}, group)
+      element('path', { d: DILLY.ears, fill: PAPER }, this.head)
+      const ears = new Fill(defs, this.head, DILLY.ears, GINGER, [-28, -102, 56, 34])
+      const inner = element('path', { d: DILLY.inner, fill: PAPER }, this.head)
+      ink(DILLY.ears, this.head)
       element('path', { d: DILLY.head, fill: PAPER }, this.head)
-      const cap = DILLY.cap.map((d) => new Fill(defs, this.head, d, GINGER, [-23, -102, 46, 28]))
-      const ears = element('path', { d: DILLY.ears, fill: PAPER }, this.head)
-      ink(DILLY.ears, this.head, 1.6)
-      const patches = new Fill(defs, this.head, DILLY.patches, GINGER, [-12, -63, 24, 10])
+      const cap = DILLY.cap.map((d) => new Fill(defs, this.head, d, GINGER, [-28, -86, 56, 22]))
+      const cheeks = DILLY.cheeks.map(([cx, cy]) => dye(element('ellipse', { cx, cy, rx: 4, ry: 2.4, fill: PAPER }, this.head), BLUSH))
+      const patches = new Fill(defs, this.head, DILLY.patches, GINGER, [-11, -56, 19, 7])
       ink(DILLY.head, this.head)
       ink(DILLY.mouth, this.head, 2)
-      ink(DILLY.whiskers, this.head, 1.2)
+      ink(DILLY.whiskers, this.head, 1.3)
       const nose = element('path', { d: DILLY.nose, fill: PAPER }, this.head)
-      ink(DILLY.nose, this.head, 2)
+      ink(DILLY.nose, this.head, 1.8)
       this.eyes = element('g', {}, this.head)
-      const irises = []
       this.pupils = []
-      for (const [x, d, lid, shut] of DILLY.eyes) {
-        const eye = element('g', { transform: `translate(${x} -73)` }, this.eyes)
-        const clip = element('clipPath', { id: `ldr-eye-${x < 0 ? 'right' : 'left'}` }, defs)
-        element('path', { d }, clip)
-        irises.push(dye(element('path', { d, fill: PAPER }, eye), YELLOW))
-        this.pupils.push(element('ellipse', { rx: 1.8, ry: 3, cy: 2, fill: INK, 'clip-path': `url(#${clip.id})` }, eye))
-        ink(d, eye, 1.8)
-        ink(lid, eye, 2.4)
+      for (const x of DILLY.eyes) {
+        const eye = element('g', {}, element('g', { transform: `translate(${x} -62)` }, this.eyes))
+        element('ellipse', { rx: 2.6, ry: 3.6, fill: INK }, eye)
+        element('circle', { cx: 0.9, cy: -1.4, r: 0.9, fill: PAPER }, eye)
+        this.pupils.push(eye)
       }
-      this.lids = element('g', {}, this.head)
-      for (const [x, , , shut] of DILLY.eyes) ink(shut, element('g', { transform: `translate(${x} -73)` }, this.lids), 2.6)
+      // Shut, her eyes are happy little arches.
+      this.lids = ink(DILLY.eyes.map((x) => `M${x - 3.5} -61Q${x} -66 ${x + 3.5} -61`).join(''), this.head, 2.2)
       this.lids.setAttribute('visibility', 'hidden')
-      this.parts = [cap, [tail], [patches], [dye(nose, PINK), dye(ears, BLUSH)], irises]
+      this.parts = [[...cap, ears], [tail], [patches], [dye(nose, PINK), dye(inner, BLUSH)], cheeks]
 
       this.rand = random(23)
       this.gaze = 'ahead'
@@ -458,12 +439,9 @@
         this.swing += (-(this.sweep - sweep) * 30 - this.swing * 7) * step
         this.sweep += this.swing * step
       }
-      this.head.setAttribute('transform', `rotate(${this.tilt.toFixed(2)} 0 -58)`)
-      this.tail.setAttribute('transform', `rotate(${this.sweep.toFixed(2)} 38 -10)`)
-      for (const pupil of this.pupils) {
-        pupil.setAttribute('cx', this.look[0].toFixed(2))
-        pupil.setAttribute('cy', (2 + this.look[1]).toFixed(2))
-      }
+      this.head.setAttribute('transform', `rotate(${this.tilt.toFixed(2)} 0 -44)`)
+      this.tail.setAttribute('transform', `rotate(${this.sweep.toFixed(2)} 24 -8)`)
+      for (const eye of this.pupils) eye.setAttribute('transform', `translate(${this.look[0].toFixed(2)} ${this.look[1].toFixed(2)})`)
       if (time > this.nextBlink) {
         const shut = time < this.nextBlink + 420
         this.eyes.setAttribute('visibility', shut ? 'hidden' : 'visible')
