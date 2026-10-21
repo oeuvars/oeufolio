@@ -1,65 +1,164 @@
 // The loader, run inline at the top of the body so it is drawn before the bundle, the fonts or a single picture
-// arrive. अनुराग is a dot-to-dot puzzle: a pencil joins the numbered dots in writing order as the page's pictures
-// come in, the headline last, as the name is written by hand. Once everything is in, the dots burst into confetti
-// over the page. It is a classic script, not a module: no imports, and nothing left on window.
+// arrive. It is a page out of a colouring book, drawn in the manner of Jay Cover's Woset: Anurag at a pulley
+// clothesline, hanging the site's pages out to dry as their pictures come in, the badge, the letter, the poster,
+// the mat and the ticket, each coloured in as it is pegged. Once everything is in, he is coloured too, a gust
+// comes, and the sheet blows off the page. A classic script, not a module: no imports, nothing left on window.
 ;(() => {
   const root = document.getElementById('loader')
   if (!root) return
 
   const SVG = 'http://www.w3.org/2000/svg'
-  const INK = '#1d1c1a'
-  const PAPER = '#ebeae4'
-  const CONFETTI = ['#b8263d', '#4b6cb0', '#6b3b5c', '#2f6a4e', '#e6c35a']
-  const YELLOW = CONFETTI[4]
-  // A page in by this is from the cache, and the paper is lifted straight off it without the puzzle being joined.
+  const INK = '#1e1d1b'
+  const PAPER = '#ebe9e3'
+  const RED = '#b0283f'
+  const BLUE = '#4d6cb3'
+  const PLUM = '#5e3b5b'
+  const GREEN = '#2d6a4a'
+  const YELLOW = '#e5c25a'
+  // A page in by this is from the cache, and the paper is lifted straight off without the scene being played.
   const QUICK = 250
-  // How long the line takes to get most of the way when nothing is known of what is still to come, in ms.
+  // How long the pegging takes to get most of the way when nothing is known of what is still to come, in ms.
   const PATIENCE = 9000
   // Past this the page is shown as it is, so a request that never ends cannot hold it shut.
   const GIVE_UP = 120000
 
-  // The centrelines of अ न ु र ा ग in the order they are written, the headline across them last, in units where the
-  // headline is at 68 and the line the letters stand on at 160. Every point a segment ends on is a dot.
-  const STROKES = [
-    'M24 77C32 66 50 63 58 74C66 86 60 104 44 106C62 106 68 120 66 132C62 150 34 152 20 138',
-    'M58 108C68 118 82 121 98 112',
-    'M98 68C96.8 99 99.2 130 98 160',
-    'M131 124C125 118 124 111 128 106C143 107.4 160 104.8 175 106',
-    'M175 68C176.2 99 173.8 130 175 160',
-    'M157 170C166 161 186 163 190 179C193 195 176 198 166 196C150 193 136 184 128 174',
-    'M236 68C235.4 79 236.6 90 236 100C236 110 228 114 220 114C212 114 207 110 203 106',
-    'M220 117C228 128 236 146 242 158',
-    'M277 68C278 99 276 130 277 160',
-    'M321 68C320.2 88 321.6 108 321 127C312 127 307 118 308 110',
-    'M360 68C358.9 99 361.1 130 360 160',
-    'M77 68C180 66.4 280 69.8 384 68',
-  ]
-  const VIEW = [6, 40, 398, 172]
-
-  // Numerals written with a pen, five wide and nine tall.
-  const DIGITS = [
-    'M2.5 0C.6 0 0 2.4 0 4.5S.6 9 2.5 9 5 6.6 5 4.5 4.4 0 2.5 0Z',
-    'M.8 1.8L2.8 0V9',
-    'M.3 2C.6.4 4.6-.2 4.7 2.3 4.8 4.4 1.5 6.2.2 9H5',
-    'M.4 1C2.2-.4 5 .3 4.6 2.3 4.3 3.8 2.6 4.2 1.8 4.3 4 4.3 5.2 5.6 4.8 7.2 4.3 9.3 1.4 9.4.2 8.2',
-    'M3.8 9V0L0 6.4H5.2',
-    'M4.8 0H1.1L.6 4C2.3 3 4.9 3.5 5 6 5.1 8.5 2.2 9.6.2 8.3',
-    'M4.3.3C1.5.6 0 3.3.2 6.2.4 8.4 1.6 9.1 2.7 9 4.3 8.9 5 7.6 4.9 6.2 4.8 4.4 3.4 3.7 2.4 3.8 1.3 3.9.6 4.6.3 5.6',
-    'M0 .2H5L1.8 9',
-    'M2.6 4.3C.6 3.9.3 2.4.6 1.4 1 .2 4.1 0 4.5 1.5 4.9 3 3.6 3.9 2.6 4.3.7 4.9 0 6.1.3 7.5.7 9.2 4.4 9.4 4.9 7.4 5.2 5.9 4.1 4.8 2.6 4.3Z',
-    'M4.7 3.4C4.4 4.9 2.2 5.4 1 4.7-.3 3.9 0 1.5 1.4.6 2.9-.3 4.8.6 4.8 2.6V9',
+  // Capitals and a few small letters written with one pen, about ten wide and sixteen tall, as Woset's captions are.
+  const GLYPHS = {
+    A: [10, 'M0 16L5 0L10 16M2 10H8'],
+    a: [9, 'M8 10C7 6 1 6 1 11.5S7 17 8 12M8 8V16'],
+    N: [10, 'M0 16V0L10 16V0'],
+    U: [10, 'M0 0V11C0 17 10 17 10 11V0'],
+    R: [10, 'M0 16V0H5C10 0 10 8 5 8H0M5 8L10 16'],
+    G: [10, 'M10 3C8 0 0-1 0 8S10 17 10 10H5'],
+    H: [10, 'M0 0V16M10 0V16M0 8H10'],
+    S: [10, 'M10 2C7-1 0 0 1 4S10 7 10 12 2 17 0 14'],
+    i: [3, 'M1.5 7V16M1.5 2.6V3'],
+    P: [10, 'M0 16V0H5C10 0 10 8 5 8H0'],
+    E: [9, 'M9 0H0V16H9M0 8H7'],
+    O: [10, 'M5 0C-1 0-1 16 5 16S11 0 5 0Z'],
+    o: [8, 'M4 7C0 7 0 16 4 16S8 7 4 7Z'],
+    T: [10, 'M0 0H10M5 0V16'],
+    D: [10, 'M0 0V16H3C11 16 11 0 3 0Z'],
+    Y: [10, 'M0 0L5 8 10 0M5 8V16'],
+  }
+  const CAPTION = [
+    ['aNURaG  HANGS', 70, 58],
+    ['HiS  PaGES  OUT', 104, 96],
+    ['To  DRY', 188, 134],
   ]
 
-  // The pencil, its point at the origin and its length along x: lead, sharpened wood, a yellow hexagonal body, the
-  // ferrule and the eraser.
-  const PENCIL = [
-    ['M14-3.6L1.6-.7Q0 0 1.6.7L14 3.6Z', PAPER],
-    ['M5.2-1.5L1.6-.7Q0 0 1.6.7L5.2 1.5Q4.4 0 5.2-1.5Z', INK],
-    ['M14-3.6H48V3.6H14Q12.8 0 14-3.6Z', YELLOW],
-    ['M14.6-1.2H48M14.6 1.2H48', null],
-    ['M48-3.6H53.5V3.6H48ZM49.8-3.6V3.6M51.6-3.6V3.6', PAPER],
-    ['M53.5-3.3H57.4Q60.4-3.3 60.4 0T57.4 3.3H53.5Z', CONFETTI[0]],
+  // The pages he hangs, in the order the site stacks them, each drawn about its top middle where it is pegged: its
+  // outline, the colours it is filled with, and the drawing over them.
+  const PAGES = [
+    {
+      // The badge: the card in its holder, its photo and its lines.
+      width: 60,
+      height: 84,
+      outline: 'M-30 4Q-30 0-26 0H26Q30 0 30 4V80Q30 84 26 84H-26Q-30 84-30 80Z',
+      fills: [
+        ['M-30 4Q-30 0-26 0H26Q30 0 30 4V80Q30 84 26 84H-26Q-30 84-30 80Z', YELLOW],
+        ['M-14 24H14V48H-14Z', BLUE],
+      ],
+      ink: 'M-9 10H9Q12 10 12 13T9 16H-9Q-12 16-12 13T-9 10ZM-14 24H14V48H-14ZM-5 34A5 5 0 1 0 5 34A5 5 0 1 0-5 34M-9 48C-8 41 8 41 9 48M-6 32C-9 29-5 25-3 28-3 25 1 24 2 27 4 25 7 27 6 30M-20 58C-12 56-4 60 4 58S16 56 20 58M-20 66C-10 64 0 68 10 66M-20 74C-14 72-8 76 0 74',
+    },
+    {
+      // The letter on handmade paper, its bottom edge deckled, written over in a loose hand and signed.
+      width: 64,
+      height: 86,
+      outline: 'M-32 0H32V82C28 86 26 80 22 84S14 82 10 85 2 81-2 84-10 81-14 85-22 81-26 84-30 82-32 83Z',
+      fills: [['M-32 0H32V82C28 86 26 80 22 84S14 82 10 85 2 81-2 84-10 81-14 85-22 81-26 84-30 82-32 83Z', BLUE]],
+      ink: 'M-24 14c3-5 5 5 8 0s5 5 8 0 5 5 8 0 5 5 8 0 5 5 8 0M-24 26c3-5 5 5 8 0s5 5 8 0 5 5 8 0 5 5 8 0M-24 38c3-5 5 5 8 0s5 5 8 0 5 5 8 0 5 5 8 0 5 5 8 0M-24 50c3-5 5 5 8 0s5 5 8 0 5 5 8 0M2 68c4-8 8 4 4 6s6-10 10-2 4 2 8 0',
+    },
+    {
+      // The poster: a block of flats at night under the moon, a few of its windows lit.
+      width: 68,
+      height: 94,
+      outline: 'M-34 0H34V94H-34Z',
+      fills: [
+        ['M-34 0H34V94H-34Z', PLUM],
+        ['M-26 16A6 6 0 1 0-14 16A6 6 0 1 0-26 16ZM-15 40h8v9h-8zM7 40h8v9h-8zM-4 54h8v9h-8zM-15 68h8v9h-8z', YELLOW],
+      ],
+      ink: 'M-26 16A6 6 0 1 0-14 16A6 6 0 1 0-26 16M-22 94V34L0 22 22 34V94M-15 40h8v9h-8zM-4 40h8v9h-8zM7 40h8v9h-8zM-15 54h8v9h-8zM-4 54h8v9h-8zM7 54h8v9h-8zM-15 68h8v9h-8zM-4 68h8v9h-8zM7 68h8v9h-8zM-4 94V84h8v10',
+    },
+    {
+      // The cutting mat with its grid, a record and a watch lying on it.
+      width: 76,
+      height: 76,
+      outline: 'M-38 0H38V76H-38Z',
+      fills: [
+        ['M-38 0H38V76H-38Z', GREEN],
+        ['M-27 42A17 17 0 1 0 7 42A17 17 0 1 0-27 42Z', INK],
+        ['M15 58A7 7 0 1 0 29 58A7 7 0 1 0 15 58Z', PAPER],
+      ],
+      ink: 'M-27 42A17 17 0 1 0 7 42A17 17 0 1 0-27 42M-15 42A5 5 0 1 0-5 42A5 5 0 1 0-15 42M15 58A7 7 0 1 0 29 58A7 7 0 1 0 15 58M19 51V40M25 51V40M19 65V76M25 65V76M22 58L24.5 55',
+      fine: 'M-38 19H38M-38 38H38M-38 57H38M-19 0V76M0 0V76M19 0V76',
+    },
+    {
+      // The ticket off a roll, notched at its sides, its stub on a perforation, a star stamped on it.
+      width: 84,
+      height: 44,
+      outline: 'M-42 0H42V16A6 6 0 0 0 42 28V44H-42V28A6 6 0 0 0-42 16Z',
+      fills: [
+        ['M-42 0H42V16A6 6 0 0 0 42 28V44H-42V28A6 6 0 0 0-42 16Z', RED],
+        ['M31 14L33.5 19.5 39 20 35 24 36.5 29.5 31 26.5 25.5 29.5 27 24 23 20 28.5 19.5Z', YELLOW],
+      ],
+      ink: 'M20 3V7M20 11V15M20 19V23M20 27V31M20 35V39M-32 12H8M-32 20C-24 18-16 22-8 20S4 18 8 20M-32 30H-4M-32 37H0M31 14L33.5 19.5 39 20 35 24 36.5 29.5 31 26.5 25.5 29.5 27 24 23 20 28.5 19.5Z',
+    },
   ]
+
+  // Where he pegs, and how far one pull of the line carries the pages along it.
+  const PEG_AT = 340
+  const SPACING = 84
+  // The two runs of the pulley line, from the wheel on the post to the wheel on the tree.
+  const UPPER = [104, 172, 400, 200, 696, 186]
+  const LOWER = [104, 196, 400, 226, 696, 208]
+
+  // Anurag, side on, facing the line: a mop of black curls, a big nose. His arms and legs are tubes, an ink stroke
+  // with a narrower stroke of the cloth's colour down it; each of his poses is where his arms reach.
+  const POSES = {
+    rest: ['M178 324C168 352 168 378 172 400', 'M226 324C238 350 240 374 236 398'],
+    up: ['M178 324C186 280 260 230 316 206', 'M226 324C262 290 318 236 364 206'],
+    pull: ['M178 324C184 290 232 240 256 214', 'M226 324C252 292 282 248 296 216'],
+    over: ['M178 324C184 290 216 240 240 212', 'M226 324C254 292 274 246 282 214'],
+  }
+  const BODY = {
+    legs: ['M186 398C186 424 187 446 187 461', 'M220 398C226 424 230 446 233 461'],
+    hips: 'M167 390H241L239 412H169Z',
+    shoes: 'M172 471C171 461 187 458 194 462 202 464 206 470 202 472H174ZM222 471C221 461 237 458 244 462 252 464 256 470 252 472H224Z',
+    torso: 'M165 394C161 368 161 342 168 322 174 308 190 302 204 302S234 306 240 322C246 342 246 368 243 394Z',
+    collar: 'M195 303L204 316 213 303M220 336H234V347H220Z',
+    head: 'M190 292C172 288 162 270 166 250 170 228 190 216 210 218 224 220 232 230 234 244 242 248 252 254 252 262S244 270 236 268C234 280 224 292 206 294Z',
+    hair: 'M234 230C242 220 234 206 222 210 222 198 206 193 199 202 194 191 177 194 177 205 164 200 154 213 161 222 148 226 151 242 159 245 148 254 155 268 165 266 162 278 175 283 182 276L186 268C186 258 188 248 194 242 206 234 220 232 234 230Z',
+    ear: 'M195 249C187 249 187 264 195 264',
+    face: 'M215 239Q221 236 227 239M229 281Q233 283 237 280',
+  }
+
+  // What he stands in: the ground and its tufts and a flower, the post with its wheel, the tree with its wheel,
+  // a cloud, the basket, and a bird on the post.
+  const GROUND =
+    'M24 474C140 469 260 477 400 472S640 476 784 470M98 474L93 459M104 474L105 454M110 474L117 461M430 473L426 461M436 473L438 457M560 472L556 460M566 472L571 462M752 471L748 458M758 471L762 455M512 472C513 456 510 446 514 436M514 436C506 432 506 424 513 424 512 416 521 416 520 424 528 422 529 431 521 432 524 440 515 441 514 436ZM514 452C522 446 528 448 530 452'
+  const POST = 'M99 472V184M109 472V184M96 160H112M99 160V172M109 160V172M92 184A12 12 0 1 0 116 184A12 12 0 1 0 92 184M103 184h2'
+  const TREE =
+    'M692 472C695 400 688 320 692 196M712 472C709 400 716 320 712 196M684 197A12 12 0 1 0 708 197A12 12 0 1 0 684 197M695 197h2M712 300C724 292 732 284 736 272'
+  const CLOUD = 'M520 92C506 92 504 74 520 74 520 60 540 56 548 66 556 54 578 58 578 72 594 70 598 92 580 92Z'
+  const BASKET = 'M316 430H404V437H316ZM320 437H400L392 472H328ZM324 449H396M326 461H394M340 437L344 472M360 437V472M380 437L376 472'
+  const BIRD = {
+    outline: 'M92 150C92 140 102 134 112 138 118 140 120 146 118 150 114 154 96 156 92 150Z',
+    body: 'M92 150C92 140 102 134 112 138 118 140 120 146 118 150 114 154 96 156 92 150ZM118 142L126 144 118 146M92 148L82 142 84 152ZM102 154V160M108 154V160',
+    wing: ['M98 146C102 150 108 150 112 146', 'M100 146C98 132 110 130 112 146'],
+  }
+
+  // His dog, sat by the basket watching the pages go up, its tail going whenever one does.
+  const DOG = {
+    body: 'M494 472C487 450 489 424 501 412 511 402 527 404 533 418 539 434 539 456 535 472Z',
+    head: 'M499 411C490 405 477 405 469 399 462 394 464 386 472 386 480 386 488 380 494 374 504 366 520 370 522 384 524 397 514 409 499 411Z',
+    ink: 'M499 440V472M509 441V472M497 409C505 415 517 413 523 405M505 425C511 430 519 430 523 425',
+    ear: 'M511 372C523 366 534 378 529 394 527 400 520 398 518 391 516 383 513 377 511 372Z',
+    nose: [466, 389],
+    eye: [500, 384],
+    tag: [512, 415],
+    tail: 'M535 462C550 458 554 445 549 434',
+  }
 
   /** A seeded random, so the hand's wobble is the same on every visit. */
   const random = (seed) => () => {
@@ -68,6 +167,7 @@
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
+  const ease = (u) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2)
 
   const element = (name, attributes, parent) => {
     const node = document.createElementNS(SVG, name)
@@ -75,22 +175,161 @@
     if (parent) parent.appendChild(node)
     return node
   }
+  const ink = (d, parent, width = 3) =>
+    element('path', { d, fill: 'none', stroke: INK, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent)
 
-  /** A path of absolute M and C commands, read into its numbers and the points its segments end on. */
-  const parse = (d) => {
-    const tokens = d.match(/[MC]|-?\d*\.?\d+/g)
-    const commands = []
-    for (let i = 0; i < tokens.length; ) {
-      const letter = tokens[i++]
-      const values = []
-      while (i < tokens.length && !/[MC]/.test(tokens[i])) values.push(+tokens[i++])
-      for (let j = 0; j < values.length; j += letter === 'M' ? 2 : 6) commands.push([letter, values.slice(j, j + (letter === 'M' ? 2 : 6))])
+  /** How high a run of the line is at `x`. */
+  const along = ([x0, y0, cx, cy, x1, y1], x) => {
+    let lo = 0
+    let hi = 1
+    for (let i = 0; i < 20; i++) {
+      const t = (lo + hi) / 2
+      if ((1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1 < x) lo = t
+      else hi = t
     }
-    return commands
+    return (1 - lo) ** 2 * y0 + 2 * (1 - lo) * lo * cy + lo * lo * y1
   }
-  const print = (commands) => commands.map(([letter, values]) => letter + values.map((v) => v.toFixed(2)).join(' ')).join('')
 
-  /** The pictures the page has asked for and how many of them are in, by URL, so the puzzle can be joined that far. */
+  let masks = 0
+  /**
+   * A colour laid in under the drawing, a little off its lines as a printed colour is, and wiped in with a crayon's
+   * zigzag when it is coloured.
+   */
+  class Fill {
+    constructor(defs, parent, d, colour, [x, y, w, h]) {
+      const id = `ldr-mask-${masks++}`
+      const mask = element('mask', { id, maskUnits: 'userSpaceOnUse', x: x - 20, y: y - 20, width: w + 40, height: h + 40 }, defs)
+      // The crayon goes back and forth down the shape, each stroke wide enough to cover the gap to the next.
+      const rows = Math.max(3, Math.round(h / 12))
+      let zigzag = `M${x - 6} ${y - 4}`
+      for (let i = 0; i <= rows; i++) zigzag += `L${i % 2 ? x - 6 : x + w + 6} ${(y - 4 + ((h + 8) * (i + 0.5)) / (rows + 1)).toFixed(1)}`
+      this.stroke = element(
+        'path',
+        { d: zigzag, fill: 'none', stroke: '#fff', 'stroke-width': ((h / rows) * 1.7 + 6).toFixed(1), 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': '1 2', 'stroke-dashoffset': 1 },
+        mask,
+      )
+      element('path', { d, fill: colour, transform: 'translate(2.5 2.5)', mask: `url(#${id})` }, parent)
+    }
+
+    colour(duration) {
+      if (!duration) return this.stroke.setAttribute('stroke-dashoffset', '0')
+      this.stroke.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration, easing: 'cubic-bezier(.4,.1,.6,1)', fill: 'forwards' })
+    }
+  }
+
+  /** One of the site's pages, hung by two pegs, swinging on the line. */
+  class Page {
+    constructor(defs, parent, spec, index) {
+      this.seed = index * 1.7
+      this.angle = 0
+      this.spin = 0
+      this.lift = 0
+      this.group = element('g', { visibility: 'hidden' }, parent)
+      const body = element('g', { filter: 'url(#ldr-boil)' }, this.group)
+      const box = [-spec.width / 2, 0, spec.width, spec.height]
+      element('path', { d: spec.outline, fill: PAPER }, body)
+      this.fills = spec.fills.map(([d, colour]) => new Fill(defs, body, d, colour, box))
+      if (spec.fine) element('path', { d: spec.fine, fill: 'none', stroke: INK, 'stroke-width': 1.1, 'stroke-opacity': 0.55 }, body)
+      ink(spec.ink, body, 2.2)
+      ink(spec.outline, body, 2.8)
+      // The pegs, sprung shut over the line.
+      this.pegs = [-1, 1].map((side) => {
+        const peg = element('g', { transform: `translate(${side * (spec.width / 2 - 9)} 0)` }, body)
+        const inner = element('g', { class: 'ldr-peg' }, peg)
+        element('path', { d: 'M-3.5-9H3.5V9H-3.5Z', fill: PAPER }, inner)
+        ink('M-3.5-9H3.5V9H-3.5ZM-3.5 0H3.5', inner, 2)
+        return inner
+      })
+    }
+
+    /** Puts the page at `x` on the line, or `lift` below it in his hands, swinging as the breeze lets it. */
+    place(x, time, wind, dt) {
+      // A sheet on a line swings as a pendulum about its pegs: drawn back to hang straight, slowed by the air,
+      // pushed about by the breeze.
+      // A frame held back by the page's start-up is taken in short steps, so a long one cannot fling the sheet.
+      const breeze = Math.sin(time / 900 + this.seed) * 0.6 + Math.sin(time / 370 + this.seed * 3) * 0.3
+      for (let left = dt; left > 0; left -= 1 / 120) {
+        const step = Math.min(left, 1 / 120)
+        this.spin += (-this.angle * 22 - this.spin * 2.6 + (breeze + wind) * 14) * step
+        this.angle += this.spin * step
+      }
+      const y = along(UPPER, x) + this.lift
+      this.group.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${(this.lift ? 0 : this.angle).toFixed(2)})`)
+    }
+  }
+
+  /** Anurag: his tubes of arms and legs, the poses he takes, his breathing and a blink now and then. */
+  class Hanger {
+    constructor(defs, parent) {
+      const group = element('g', { filter: 'url(#ldr-boil)' }, parent)
+      this.group = group
+      const tube = (d, width = 13) => [
+        element('path', { d, fill: 'none', stroke: INK, 'stroke-width': width, 'stroke-linecap': 'round' }, group),
+        element('path', { d, fill: 'none', stroke: PAPER, 'stroke-width': width - 5.6, 'stroke-linecap': 'round' }, group),
+      ]
+      const hand = () => element('circle', { r: 7, fill: PAPER, stroke: INK, 'stroke-width': 3 }, group)
+      this.back = tube(POSES.rest[0])
+      this.backHand = hand()
+      this.legs = BODY.legs.map((d) => tube(d, 19))
+      element('path', { d: BODY.shoes, fill: INK }, group)
+      element('path', { d: BODY.hips, fill: PAPER }, group)
+      this.trousers = new Fill(defs, group, BODY.hips, BLUE, [163, 386, 82, 30])
+      ink(BODY.hips, group)
+      element('path', { d: BODY.torso, fill: PAPER }, group)
+      this.shirt = new Fill(defs, group, BODY.torso, RED, [158, 298, 90, 98])
+      ink(BODY.torso, group)
+      ink(BODY.collar, group, 2.4)
+      element('path', { d: BODY.head, fill: PAPER }, group)
+      ink(BODY.head, group)
+      element('path', { d: BODY.hair, fill: INK, stroke: INK, 'stroke-width': 3, 'stroke-linejoin': 'round' }, group)
+      element('path', { d: BODY.ear, fill: PAPER }, group)
+      ink(BODY.ear, group, 2.6)
+      ink(BODY.face, group, 2.4)
+      this.eye = element('circle', { cx: 222, cy: 249, r: 2.7, fill: INK }, group)
+      this.lid = ink('M218.5 249.5H225.5', group, 2.2)
+      this.lid.setAttribute('visibility', 'hidden')
+      this.front = tube(POSES.rest[1])
+      this.frontHand = hand()
+      this.pose('rest')
+      this.nextBlink = 1800
+    }
+
+    pose(name) {
+      if (this.current === name) return
+      this.current = name
+      const [back, front] = POSES[name]
+      for (const path of this.back) path.setAttribute('d', back)
+      for (const path of this.front) path.setAttribute('d', front)
+      const end = (d) => d.match(/(-?[\d.]+) (-?[\d.]+)$/).slice(1)
+      ;[[this.backHand, end(back)], [this.frontHand, end(front)]].forEach(([hand, [x, y]]) => {
+        hand.setAttribute('cx', x)
+        hand.setAttribute('cy', y)
+      })
+    }
+
+    /** Dresses him: his shirt and sleeves red, his trousers blue. */
+    colour(duration) {
+      this.shirt.colour(duration)
+      this.trousers.colour(duration)
+      const dye = ([, cloth], colour) => cloth.animate([{ stroke: PAPER }, { stroke: colour }], { duration: duration || 1, fill: 'forwards' })
+      dye(this.back, RED)
+      dye(this.front, RED)
+      for (const leg of this.legs) dye(leg, BLUE)
+    }
+
+    tick(time, still) {
+      if (still) return
+      this.group.setAttribute('transform', `translate(0 ${(Math.sin(time / 700) * 0.8).toFixed(2)})`)
+      if (time > this.nextBlink) {
+        const shut = time < this.nextBlink + 130
+        this.eye.setAttribute('visibility', shut ? 'hidden' : 'visible')
+        this.lid.setAttribute('visibility', shut ? 'visible' : 'hidden')
+        if (!shut) this.nextBlink = time + 2200 + ((time * 7) % 2400)
+      }
+    }
+  }
+
+  /** The pictures the page has asked for and how many of them are in, by URL. */
   class Arrivals {
     constructor() {
       this.seen = new Set()
@@ -106,7 +345,7 @@
 
     static picture = /\.(avif|webp|png|jpe?g|gif|svg)(\?|#|$)/i
 
-    /** Counts what is asked for in the markup so far and what has come in. */
+    /** The share of what the markup has asked for so far that has come in. */
     take() {
       for (const img of document.images) if (img.currentSrc || img.src) this.seen.add(new URL(img.currentSrc || img.src, location.href).href)
       for (const node of document.querySelectorAll('[style*="url("]')) {
@@ -131,150 +370,229 @@
     }
   }
 
-  /** The puzzle on the paper: the dots and their numbers, the line joined so far, and the pencil joining it. */
-  class Puzzle {
+  /** The colouring-book page: the scenery, the caption, Anurag, his basket and the pages, and what they do next. */
+  class Scene {
     constructor(svg, still) {
       this.still = still
-      const rand = random(7)
-      const measure = element('g', { visibility: 'hidden' }, svg)
-      const rings = element('g', {}, svg)
-      const lines = element('g', { fill: 'none', stroke: INK, 'stroke-width': 2.1, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg)
-      const dots = element('g', { fill: INK }, svg)
-      const numbers = element('g', { fill: 'none', stroke: INK, 'stroke-opacity': 0.72, 'stroke-width': 1.3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg)
+      const defs = element('defs', {}, svg)
+      // Lines drawn by hand never sit still on film: each frame is traced again, a little off the last.
+      const boil = element('filter', { id: 'ldr-boil', x: '-10%', y: '-10%', width: '120%', height: '120%' }, defs)
+      this.noise = element('feTurbulence', { type: 'fractalNoise', baseFrequency: 0.03, numOctaves: 1, seed: 1 }, boil)
+      element('feDisplacementMap', { in: 'SourceGraphic', scale: still ? 0 : 2.6 }, boil)
 
-      // Each stroke as its true path to measure along, and as three tracings of it a hand never quite repeats,
-      // swapped a few times a second as a drawing does when it is filmed frame by frame.
-      this.strokes = STROKES.map((d) => {
-        const commands = parse(d)
-        const base = element('path', { d }, measure)
-        const tracings = [0, 1, 2].map(() =>
-          print(commands.map(([letter, values]) => [letter, values.map((v) => v + (rand() - 0.5) * 1.5)])),
-        )
-        const line = element('path', { d: tracings[0], pathLength: 1, 'stroke-dasharray': '1 2', 'stroke-dashoffset': 1, visibility: 'hidden' }, lines)
-        // The dots are where each segment ends, at their lengths along the stroke.
-        const ends = []
-        for (let k = 0; k < commands.length; k++) {
-          const values = commands[k][1]
-          const x = values[values.length - 2]
-          const y = values[values.length - 1]
-          const along = k === 0 ? 0 : element('path', { d: print(commands.slice(0, k + 1)) }, measure).getTotalLength()
-          ends.push({ x, y, along })
-        }
-        return { base, line, tracings, ends, length: base.getTotalLength() }
+      const rand = random(11)
+      const scenery = element('g', { filter: 'url(#ldr-boil)' }, svg)
+      ink(GROUND, scenery)
+      ink(POST, scenery)
+      // The tree's crown, a cloud of bumps, with its fruit.
+      let crown = ''
+      const bumps = 12
+      for (let i = 0; i <= bumps; i++) {
+        const a = (i / bumps) * Math.PI * 2 + 0.3
+        const x = (704 + Math.cos(a) * 80).toFixed(1)
+        const y = (116 + Math.sin(a) * 68).toFixed(1)
+        const m = a - Math.PI / bumps
+        const bulge = 1.22 + rand() * 0.1
+        crown += i ? `Q${(704 + Math.cos(m) * 80 * bulge).toFixed(1)} ${(116 + Math.sin(m) * 68 * bulge).toFixed(1)} ${x} ${y}` : `M${x} ${y}`
+      }
+      element('path', { d: crown, fill: PAPER }, scenery)
+      ink(crown, scenery)
+      for (let i = 0; i < 9; i++) {
+        const a = rand() * Math.PI * 2
+        const r = Math.sqrt(rand()) * 52
+        const cx = (704 + Math.cos(a) * r * 1.1).toFixed(1)
+        const cy = (112 + Math.sin(a) * r * 0.85).toFixed(1)
+        ink(`M${cx - 5} ${cy}A5 5 0 1 0 ${+cx + 5} ${cy}A5 5 0 1 0 ${cx - 5} ${cy}M${+cx + 1} ${cy - 5}l2-4`, scenery, 2.4)
+      }
+      ink(TREE, scenery)
+      ink(CLOUD, scenery)
+      ink(`M${UPPER[0]} ${UPPER[1]}Q${UPPER.slice(2).join(' ')}M${LOWER[0]} ${LOWER[1]}Q${LOWER.slice(2).join(' ')}`, scenery, 1.8)
+      this.caption(scenery)
+
+      // The basket, with the pages still to hang lying in it.
+      const basket = element('g', { filter: 'url(#ldr-boil)' }, svg)
+      this.sheets = PAGES.map((_, i) => {
+        const sheet = element('g', { transform: `translate(${336 + i * 12} 433) rotate(${((rand() - 0.5) * 24).toFixed(1)})` }, basket)
+        element('path', { d: 'M-11 2V-20H11V2Z', fill: PAPER }, sheet)
+        ink('M-11 2V-20H11V2', sheet, 2.4)
+        return sheet
       })
+      element('path', { d: 'M316 430H404V437H316ZM320 437H400L392 472H328Z', fill: PAPER }, basket)
+      ink(BASKET, basket)
 
-      // The pencil's way: along each stroke, then lifted across to the start of the next.
-      this.legs = []
-      let total = 0
-      this.strokes.forEach((stroke, i) => {
-        this.legs.push({ stroke, from: total, span: stroke.length })
-        total += stroke.length
-        const next = this.strokes[i + 1]
-        if (!next) return
-        const a = stroke.ends[stroke.ends.length - 1]
-        const b = next.ends[0]
-        const span = Math.hypot(b.x - a.x, b.y - a.y) * 0.5
-        this.legs.push({ from: total, span, a, b })
-        total += span
-      })
-      this.total = total
+      this.dog = this.sit(svg)
+      this.hanger = new Hanger(defs, svg)
+      const line = element('g', {}, svg)
+      this.pages = PAGES.map((spec, i) => new Page(defs, line, spec, i))
+      this.bird = this.perch(svg)
 
-      // Every dot, numbered in the order it is reached, a dot shared by two strokes counted once.
-      const samples = []
-      for (const stroke of this.strokes) for (let s = 0; s <= stroke.length; s += 3) samples.push(stroke.base.getPointAtLength(s))
-      this.dots = []
-      const taken = []
-      for (const leg of this.legs) {
-        if (!leg.stroke) continue
-        for (const end of leg.stroke.ends) {
-          if (this.dots.some((dot) => Math.hypot(dot.x - end.x, dot.y - end.y) < 1)) continue
-          const ring = element('circle', { cx: end.x, cy: end.y, r: 4.8, fill: YELLOW, class: 'ldr-ring' }, rings)
-          const dot = element('circle', { cx: end.x, cy: end.y, r: 2.3 }, dots)
-          this.dots.push({ x: end.x, y: end.y, at: leg.from + end.along, ring, dot })
+      this.hung = 0
+      this.queued = 0
+      this.offset = 0
+      this.wind = 0
+      this.actions = []
+      this.lastBoil = 0
+    }
+
+    /** Writes the caption out letter by letter, each a little off its neighbours' size and line. */
+    caption(parent) {
+      const rand = random(5)
+      for (const [text, left, top] of CAPTION) {
+        let x = left
+        for (const letter of text) {
+          if (letter === ' ') {
+            x += 5
+            continue
+          }
+          const [width, d] = GLYPHS[letter]
+          const size = 1.25 + (rand() - 0.5) * 0.3
+          const y = top + (rand() - 0.5) * 3 - 16 * size
+          const g = element('g', { transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${((rand() - 0.5) * 7).toFixed(1)} 5 8) scale(${size.toFixed(3)})` }, parent)
+          ink(d, g, 2.6 / size)
+          x += (width + 4.5) * size
         }
       }
-      // A number goes on whichever side of its dot is farthest from the line, the dots and the numbers already set.
-      this.dots.forEach((dot, i) => {
-        const label = String(i + 1)
-        const width = label.length * 6.4 - 1.4
-        let best = null
-        for (let k = 0; k < 16; k++) {
-          const angle = (k / 16) * Math.PI * 2
-          const cx = dot.x + Math.cos(angle) * (6.5 + width * 0.25)
-          const cy = dot.y + Math.sin(angle) * 7.5
-          let room = Infinity
-          for (const p of samples) room = Math.min(room, Math.hypot(p.x - cx, p.y - cy) - 2)
-          for (const t of taken) room = Math.min(room, Math.hypot(t.x - cx, t.y - cy) - 5)
-          for (const other of this.dots) room = Math.min(room, Math.hypot(other.x - cx, other.y - cy) - 3)
-          if (!best || room > best.room) best = { room, cx, cy }
-        }
-        taken.push({ x: best.cx, y: best.cy })
-        const scale = 0.6
-        const g = element('g', { transform: `translate(${best.cx - (width * scale) / 2} ${best.cy - 4.5 * scale}) scale(${scale})` }, numbers)
-        ;[...label].forEach((digit, j) => element('path', { d: DIGITS[+digit], transform: `translate(${j * 6.4} 0)` }, g))
-      })
-
-      const pencil = element('g', { class: 'ldr-pencil', stroke: INK, 'stroke-width': 1.1, 'stroke-linejoin': 'round' }, svg)
-      this.pencil = element('g', {}, pencil)
-      for (const [d, fill] of PENCIL) element('path', { d, fill: fill || 'none' }, this.pencil)
-      this.tracing = 0
-      this.place(0, 0)
     }
 
-    /** Joins the puzzle up to `progress` of the way, with the pencil at the end of the line. */
-    place(progress, time) {
-      const reach = progress * this.total
-      let tip = null
-      let lift = 0
-      for (const leg of this.legs) {
-        const into = Math.min(Math.max(reach - leg.from, 0), leg.span)
-        if (leg.stroke) {
-          const drawn = into / leg.span
-          leg.stroke.line.setAttribute('visibility', drawn > 0 ? 'visible' : 'hidden')
-          leg.stroke.line.setAttribute('stroke-dashoffset', String(1 - drawn))
-          if (!tip && reach <= leg.from + leg.span) tip = leg.stroke.base.getPointAtLength(into)
-        } else if (!tip && reach < leg.from + leg.span) {
-          const u = into / leg.span
-          tip = { x: leg.a.x + (leg.b.x - leg.a.x) * u, y: leg.a.y + (leg.b.y - leg.a.y) * u }
-          lift = Math.sin(Math.PI * u) * 12
-        }
+    /** The dog, who wags harder for a while each time a page goes up. */
+    sit(parent) {
+      const group = element('g', { filter: 'url(#ldr-boil)' }, parent)
+      const tail = ink(DOG.tail, group, 3)
+      for (const d of [DOG.body, DOG.head]) {
+        element('path', { d, fill: PAPER }, group)
+        ink(d, group)
       }
-      tip = tip || this.strokes[this.strokes.length - 1].base.getPointAtLength(Infinity)
-      for (const dot of this.dots) dot.ring.classList.toggle('ldr-hit', reach >= dot.at - 0.5)
-      // A hand at rest still moves a little; one drawing leans into the stroke.
-      const sway = this.still ? 0 : Math.sin(time / 420) * 1.6
-      const bob = this.still ? 0 : Math.sin(time / 260) * 0.8
-      this.pencil.setAttribute('transform', `translate(${tip.x} ${tip.y - lift + bob}) rotate(${-52 + sway})`)
+      ink(DOG.ink, group, 2.6)
+      element('path', { d: DOG.ear, fill: INK, stroke: INK, 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, group)
+      element('circle', { cx: DOG.nose[0], cy: DOG.nose[1], r: 3.6, fill: INK }, group)
+      element('circle', { cx: DOG.eye[0], cy: DOG.eye[1], r: 2.4, fill: INK }, group)
+      const tag = element('circle', { cx: DOG.tag[0], cy: DOG.tag[1], r: 4, fill: PAPER }, group)
+      ink(`M${DOG.tag[0] - 4} ${DOG.tag[1]}A4 4 0 1 0 ${DOG.tag[0] + 4} ${DOG.tag[1]}A4 4 0 1 0 ${DOG.tag[0] - 4} ${DOG.tag[1]}`, group, 2)
+      return { tail, tag, excited: 0 }
     }
 
-    /** The next of the three tracings, a few times a second. */
-    boil() {
-      if (this.still) return
-      this.tracing = (this.tracing + 1) % 3
-      for (const stroke of this.strokes) stroke.line.setAttribute('d', stroke.tracings[this.tracing])
+    /** The bird on the post, who flies off when the wind gets up. */
+    perch(parent) {
+      const group = element('g', { filter: 'url(#ldr-boil)' }, parent)
+      element('path', { d: BIRD.outline, fill: PAPER }, group)
+      ink(BIRD.body, group, 2.4)
+      element('circle', { cx: 113, cy: 142, r: 1.8, fill: INK }, group)
+      return { group, wing: ink(BIRD.wing[0], group, 2.4) }
     }
 
-    /** The dots' places on the screen, for the confetti to burst from. */
-    points() {
-      return this.dots.map((dot) => {
-        const box = dot.dot.getBoundingClientRect()
-        return { x: box.left + box.width / 2, y: box.top + box.height / 2 }
+    /** Queues the next page: pull the line along, lift the page up to it, peg it and colour it. */
+    hangNext(fast) {
+      const index = this.queued++
+      const page = this.pages[index]
+      const k = fast ? 0.55 : 1
+      if (index > 0) {
+        let from = 0
+        this.actions.push({
+          duration: 760 * k,
+          start: () => (from = this.offset),
+          update: (u, time) => {
+            this.offset = from + SPACING * ease(u)
+            // Hand over hand.
+            this.hanger.pose(u < 1 && Math.floor(time / 170) % 2 ? 'pull' : 'over')
+          },
+        })
+      }
+      this.actions.push({
+        duration: 520 * k,
+        start: () => {
+          this.hung = index + 1
+          this.sheets[PAGES.length - 1 - index].setAttribute('visibility', 'hidden')
+          this.hanger.pose('up')
+          page.group.setAttribute('visibility', 'visible')
+        },
+        update: (u) => (page.lift = (1 - ease(u)) * 70),
       })
+      this.actions.push({
+        duration: 260 * k,
+        start: () => {
+          page.lift = 0
+          page.spin = 26
+          this.dog.excited = 1
+          if (!this.still) for (const peg of page.pegs) peg.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' })
+        },
+      })
+      this.actions.push({
+        duration: 700 * k,
+        start: () => {
+          this.hanger.pose('rest')
+          page.fills.forEach((fill, i) => (this.still ? fill.colour(0) : setTimeout(() => fill.colour(520 * k), i * 160 * k)))
+        },
+      })
+    }
+
+    /** Queues the end: he is coloured in, the wind gets up and the bird leaves. */
+    finish() {
+      this.actions.push({
+        duration: 700,
+        start: () => {
+          this.hanger.colour(this.still ? 0 : 600)
+          this.dog.tag.setAttribute('fill', YELLOW)
+          this.dog.excited = 1
+        },
+      })
+      this.actions.push({
+        duration: 700,
+        start: () => {
+          if (this.still) return
+          this.bird.wing.setAttribute('d', BIRD.wing[1])
+          this.bird.group.animate(
+            [{ transform: 'translate(0,0)' }, { transform: 'translate(-60px,-40px) rotate(-8deg)', offset: 0.4 }, { transform: 'translate(-220px,-260px) rotate(-14deg)' }],
+            { duration: 1400, easing: 'ease-in', fill: 'forwards' },
+          )
+        },
+        update: (u) => (this.wind = u * 3),
+      })
+    }
+
+    /** Whether nothing is queued or playing. */
+    get idle() {
+      return !this.actions.length
+    }
+
+    tick(time, dt) {
+      if (!this.still && time - this.lastBoil > 125) {
+        this.lastBoil = time
+        this.noise.setAttribute('seed', String(1 + (Math.floor(time / 125) % 4)))
+      }
+      const action = this.actions[0]
+      if (action) {
+        if (action.began === undefined) {
+          action.began = time
+          action.start?.()
+        }
+        const u = this.still ? 1 : Math.min(1, (time - action.began) / action.duration)
+        action.update?.(u, time)
+        if (u >= 1) this.actions.shift()
+      }
+      // Every pegged page sits a pull further along for each page hung after it.
+      for (let i = 0; i < this.hung; i++) this.pages[i].place(PEG_AT + this.offset - SPACING * i, time, this.wind, this.still ? 0 : dt)
+      this.hanger.tick(time, this.still)
+      if (!this.still) {
+        const dog = this.dog
+        dog.excited = Math.max(0, dog.excited - dt * 0.5)
+        const wag = Math.sin(time / (dog.excited > 0 ? 70 : 260)) * (8 + dog.excited * 14)
+        dog.tail.setAttribute('transform', `rotate(${wag.toFixed(1)} 535 462)`)
+      }
     }
   }
 
-  /** The overlay: paper over the page while it loads, the puzzle on it, and the burst it leaves by. */
+  /** The overlay: paper over the page while it loads, the scene on it, and the gust it leaves on. */
   class Loader {
     constructor() {
       this.still = matchMedia('(prefers-reduced-motion: reduce)').matches
       this.started = performance.now()
       this.arrivals = new Arrivals()
-      this.progress = 0
       this.target = 0
       this.finishing = false
-      // The name is written out and burst once a session; after that the paper only waits for the page.
+      this.ending = false
+      // The scene is played through once a session; after that the paper only waits for the page.
       try {
-        this.seen = sessionStorage.getItem('loader') === 'written'
+        this.seen = sessionStorage.getItem('loader') === 'played'
       } catch {
         this.seen = false
       }
@@ -282,131 +600,109 @@
       const style = document.createElement('style')
       style.textContent = `
 html:has(#loader>.ldr-paper){overflow:hidden}
-#loader{position:fixed;inset:0;z-index:2147483647;pointer-events:auto}
-#loader .ldr-paper{position:absolute;inset:0;background:${PAPER}}
-#loader svg{opacity:0;animation:ldr-in .3s ${QUICK}ms ease-out forwards}
-#loader svg{position:absolute;left:50%;top:50%;width:min(92vw,640px);height:auto;transform:translate(-50%,-56%);overflow:visible}
-#loader .ldr-ring{transform-box:fill-box;transform-origin:center;transform:scale(0);transition:transform .32s cubic-bezier(.3,1.6,.5,1)}
-#loader .ldr-ring.ldr-hit{transform:scale(1)}
-#loader .ldr-confetti{position:fixed;left:0;top:0;border-radius:50%;pointer-events:none;will-change:transform,opacity}
-@keyframes ldr-in{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){#loader .ldr-ring{transition:none}}`
+#loader{position:fixed;inset:0;z-index:2147483647}
+#loader .ldr-paper{position:absolute;inset:0;background:${PAPER};transform-origin:50% 0}
+#loader svg{position:absolute;left:50%;top:50%;width:min(96vw,1000px,150vh);height:auto;transform:translate(-50%,-50%);opacity:0;animation:ldr-in .3s ${QUICK}ms ease-out forwards}
+#loader .ldr-peg{transform-box:fill-box;transform-origin:center}
+@media (max-aspect-ratio:3/4){#loader svg{width:118vw}}
+@keyframes ldr-in{to{opacity:1}}`
       document.head.appendChild(style)
       this.style = style
 
       root.setAttribute('role', 'progressbar')
       root.setAttribute('aria-label', 'Loading')
-      root.setAttribute('aria-valuemin', '0')
-      root.setAttribute('aria-valuemax', '100')
       this.paper = document.createElement('div')
       this.paper.className = 'ldr-paper'
       root.appendChild(this.paper)
-      const svg = element('svg', { viewBox: VIEW.join(' '), 'aria-hidden': 'true' }, this.paper)
-      this.puzzle = new Puzzle(svg, this.still)
+      const svg = element('svg', { viewBox: '0 0 800 520', 'aria-hidden': 'true' }, this.paper)
+      this.scene = new Scene(svg, this.still)
+      // Played already this session: every page is up and coloured, and he waits beside them, dressed.
+      if (this.seen) {
+        const { scene } = this
+        scene.still = true
+        for (let i = 0; i < PAGES.length; i++) scene.hangNext(true)
+        while (!scene.idle) scene.tick(0, 0)
+        scene.hanger.colour(0)
+        scene.dog.tag.setAttribute('fill', YELLOW)
+        scene.still = this.still
+      }
 
-      this.lastBoil = 0
       this.lastTake = -Infinity
       this.last = performance.now()
       this.frame = requestAnimationFrame((now) => this.tick(now))
     }
 
     tick(now) {
-      // The page's own start-up can hold the frames back a good while; the pencil keeps to the clock, not the frames.
+      // The page's own start-up can hold the frames back a good while; the scene keeps to the clock, not the frames.
       const dt = Math.min(now - this.last, 500) / 1000
       this.last = now
       const age = now - this.started
 
       if (now - this.lastTake > 200) {
         this.lastTake = now
-        const share = this.arrivals.take()
         // The small pictures come in first and the large ones last, so how many are in says little of how long is
-        // left. The line runs on at a pace that slows as it goes, and the pictures that are in can only hurry it. It
-        // stops short of the headline's end, the last of it for when all are in.
+        // left. The pages go up at a pace that slows as it goes, and the pictures that are in can only hurry it.
+        const share = this.arrivals.take()
         const patience = 1 - Math.exp(-age / PATIENCE)
-        this.target = Math.max(this.target, Math.min(1, Math.max(patience, share * 0.6)) * 0.94)
-        root.setAttribute('aria-valuenow', String(Math.round(this.progress * 100)))
+        this.target = Math.max(this.target, Math.min(1, Math.max(patience, share * 0.6)))
+        root.setAttribute('aria-valuenow', String(Math.round(this.target * 100)))
         if (!this.finishing && (this.arrivals.settled(now) || age > GIVE_UP)) {
-          // In before the puzzle was shown, or the name was already written for this visitor in this session: the paper
-          // is just lifted, with nothing to finish.
+          // In before the scene was shown, or played already this session: the paper is just lifted.
           if (age < QUICK || this.seen) return this.leave(false)
           this.finishing = true
-          this.target = 1
         }
       }
 
-      // The pencil goes toward what is in, never faster than a hand writes; once all is in, quick enough that the
-      // name is done in a second and a half.
-      const pace = this.finishing ? Math.max(0.7, (1 - this.progress) / 1.5) : 0.22
-      if (this.progress < this.target) this.progress = Math.min(this.target, this.progress + Math.max(pace * dt * Math.min(1, (this.target - this.progress) * 6), 0.02 * dt))
-      if (this.still && this.finishing) this.progress = 1
-
-      if (now - this.lastBoil > 110) {
-        this.lastBoil = now
-        this.puzzle.boil()
+      // A page goes up for each sixth of the way; once everything is in, the rest go up quickly and the wind comes.
+      const { scene } = this
+      if (scene.idle) {
+        if (scene.queued < PAGES.length && (this.finishing || this.target >= (scene.queued + 1) / (PAGES.length + 1))) scene.hangNext(this.finishing)
+        else if (this.finishing && scene.hung === PAGES.length && !this.ending) {
+          this.ending = true
+          scene.finish()
+        }
       }
-      this.puzzle.place(this.progress, now)
-
-      if (this.finishing && this.progress >= 1) return this.leave(!this.still)
+      scene.tick(now, dt)
+      if (this.ending && scene.idle) return this.leave(!this.still)
       this.frame = requestAnimationFrame((next) => this.tick(next))
     }
 
-    /** Lifts the paper off the page. */
-    fade(duration = 500) {
-      this.paper.animate([{ opacity: 1 }, { opacity: 0 }], { duration, easing: 'ease-in', fill: 'forwards' })
-    }
-
-    /** Takes the paper away, the dots bursting over the page as it goes if `burst`. */
-    leave(burst) {
-      cancelAnimationFrame(this.frame)
+    /** Takes the paper away: blown off the page by the gust if `blown`, or lifted plainly. */
+    leave(blown) {
       const done = () => {
+        cancelAnimationFrame(this.frame)
         root.replaceChildren()
         root.removeAttribute('role')
         root.removeAttribute('aria-label')
+        root.removeAttribute('aria-valuenow')
         this.style.remove()
       }
-      if (!burst) {
-        this.fade(200)
-        return setTimeout(done, 220)
+      if (!blown) {
+        cancelAnimationFrame(this.frame)
+        this.paper.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-in', fill: 'forwards' })
+        return setTimeout(done, 240)
       }
-      // The pencil is lifted away and every dot throws a handful of confetti across the paper. The paper is lifted
-      // as the confetti falls, so the last of it comes down over the page.
-      this.puzzle.pencil.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-in', fill: 'forwards' })
-      setTimeout(() => {
-        const rand = random(31)
-        const from = this.puzzle.points()
-        const reach = Math.hypot(innerWidth, innerHeight) * 0.5
-        for (let i = 0; i < 220; i++) {
-          const start = from[i % from.length]
-          const size = 6 + rand() ** 1.6 * 16
-          const angle = rand() * Math.PI * 2
-          const distance = reach * (0.15 + rand() * 0.9)
-          const piece = document.createElement('i')
-          piece.className = 'ldr-confetti'
-          piece.style.cssText = `width:${size}px;height:${size}px;background:${CONFETTI[Math.floor(rand() * CONFETTI.length)]}`
-          root.appendChild(piece)
-          const x = start.x - size / 2
-          const y = start.y - size / 2
-          const bx = x + Math.cos(angle) * distance
-          const by = y + Math.sin(angle) * distance * 0.75
-          const drift = (rand() - 0.5) * 60
-          const fall = 140 + rand() * 220
-          piece.animate(
-            [
-              { transform: `translate(${x}px,${y}px) scale(.3)`, opacity: 1, easing: 'cubic-bezier(.1,.75,.3,1)' },
-              { transform: `translate(${bx}px,${by}px) scale(1)`, opacity: 1, offset: 0.3, easing: 'cubic-bezier(.45,0,.75,.55)' },
-              { transform: `translate(${bx + drift * 0.7}px,${by + fall * 0.6}px) scale(.95)`, opacity: 1, offset: 0.75 },
-              { transform: `translate(${bx + drift}px,${by + fall}px) scale(.9)`, opacity: 0 },
-            ],
-            { duration: 1800 + rand() * 800, delay: rand() * 90, fill: 'both' },
-          )
-        }
-        root.style.pointerEvents = 'none'
-        try {
-          sessionStorage.setItem('loader', 'written')
-        } catch {}
-        setTimeout(() => this.fade(650), 380)
-        setTimeout(done, 2900)
-      }, 260)
+      try {
+        sessionStorage.setItem('loader', 'played')
+      } catch {}
+      root.style.pointerEvents = 'none'
+      // The gust keeps the pages flying while the sheet goes: it lifts, curls a little, and is carried up and away.
+      const gust = (now) => {
+        this.scene.wind = 4
+        this.scene.tick(now, Math.min(now - this.last, 500) / 1000)
+        this.last = now
+        this.frame = requestAnimationFrame(gust)
+      }
+      this.frame = requestAnimationFrame(gust)
+      this.paper.animate(
+        [
+          { transform: 'translate(0,0) rotate(0) skewY(0)' },
+          { transform: 'translate(2vw,-8vh) rotate(-2deg) skewY(-1deg)', offset: 0.3 },
+          { transform: 'translate(10vw,-115vh) rotate(-9deg) skewY(-3deg)' },
+        ],
+        { duration: 1150, easing: 'cubic-bezier(.55,0,.75,.2)', fill: 'forwards' },
+      )
+      setTimeout(done, 1200)
     }
   }
 
