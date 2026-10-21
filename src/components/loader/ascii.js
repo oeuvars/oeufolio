@@ -232,6 +232,8 @@
       this.started = performance.now()
       this.arrivals = new Arrivals()
       this.loop = read(source.textContent)
+      // With ?loader in the address the crows stay up, to be looked at.
+      this.kept = new URLSearchParams(location.search).has('loader')
       // The loop is played through at least once a session; after that the paper only waits for the page.
       try {
         this.seen = sessionStorage.getItem('loader') === 'played'
@@ -274,7 +276,7 @@ html:has(#loader>.ldr-paper){overflow:hidden}
         const share = this.arrivals.take()
         const patience = 1 - Math.exp(-Math.max(0, age) / PATIENCE)
         root.setAttribute('aria-valuenow', String(Math.round(Math.min(1, Math.max(patience, share * 0.6)) * 100)))
-        if (this.arrivals.settled(now) || age > GIVE_UP) {
+        if (!this.kept && (this.arrivals.settled(now) || age > GIVE_UP)) {
           // In before the crows were shown, or shown already this session: the paper is just lifted.
           if (age < QUICK || this.seen || this.still) return this.leave(false)
           // Otherwise the crows get round their loop once before they go.
