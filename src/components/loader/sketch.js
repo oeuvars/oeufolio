@@ -2,7 +2,8 @@
 // arrive. It is a page out of a colouring book, drawn in the manner of Jay Cover's Woset: Anurag at a pulley
 // clothesline, hanging the site's pages out to dry as their pictures come in, the badge, the letter, the poster,
 // the mat and the ticket, each coloured in as it is pegged, and a little more of Dilly, his cat, sat watching, with
-// each. Once everything is in, he is coloured too, a gust comes, and the sheet blows off the page. A classic script, not a module: no imports, nothing left on window.
+// each, under hills with a house on them, a dozing sun and a paper plane. Once everything is in, he and all round
+// him are coloured too, a gust comes, and the sheet blows off the page. A classic script, not a module: no imports, nothing left on window.
 ;(() => {
   const root = document.getElementById('loader')
   if (!root) return
@@ -151,6 +152,34 @@
     wing: ['M98 146C102 150 108 150 112 146', 'M100 146C98 132 110 130 112 146'],
   }
 
+  // Behind him, two hills, each its shape down to the ground and the line of its top, grass marked on them, and on
+  // the far one three small trees and a house with smoke going up.
+  const HILLS = [
+    'M24 384C70 356 130 348 190 362S300 352 360 344 470 330 540 342 650 334 700 344 760 352 784 348',
+    'M24 414C80 392 170 390 240 404S340 420 400 448C420 458 440 466 460 472',
+  ]
+  const GRASS = [[60, 392], [140, 380], [300, 380], [340, 374], [540, 366], [620, 362], [664, 354], [744, 368], [70, 444], [110, 430], [262, 444], [292, 436]]
+  const FAR_TREES = [[300, 352], [380, 345], [640, 338]]
+  const HOUSE = {
+    walls: 'M566 326H596V350H566Z',
+    roof: 'M561 328L581 312 601 328Z',
+    window: 'M569 332H576V339H569Z',
+    ink: 'M577 350V340H585V350M590 319V310H595V323M593 306C589 300 599 296 594 290',
+  }
+  // Up in the sky, a sun dozing, a page folded into a plane looping by, and two birds far off.
+  const SUN = { at: [430, 74], face: 'M421 72q3-3 6 0M433 72q3-3 6 0M424 79q6 5 12 0' }
+  const PLANE = { trail: 'M262 150C286 118 318 168 338 146', body: 'M346 144L392 134 360 156Z', fold: 'M360 156L364 145 392 134' }
+  const BIRDS = 'M466 118q4-5 8 0q4-5 8 0M488 104q3-4 6 0q3-4 6 0'
+  // On the ground, a flowering bush by the post, his mug by the basket and a watering can by the tree; under it,
+  // pebbles and the tree's roots.
+  const BUSH = { shape: 'M28 472C22 460 28 446 40 448 40 436 56 432 62 442 68 432 84 436 84 448 94 450 96 466 92 472Z', flowers: [[46, 452, RED], [66, 444, YELLOW], [80, 460, RED]] }
+  const MUG = { body: 'M410 456H426V472H410Z', ink: 'M426 460C433 460 433 468 426 468M415 450C412 446 418 443 415 438M421 450C418 446 424 443 421 438' }
+  const CAN = { body: 'M728 452Q728 448 732 448H752Q756 448 756 452V472H728Z', ink: 'M756 458L770 444M756 466L774 448M768 442L782 438 780 452 772 448M732 448C730 434 754 434 752 448' }
+  const UNDER = {
+    pebbles: [[60, 488, 6, 3], [150, 496, 4, 2.5], [250, 486, 7, 3.5], [380, 500, 5, 3], [470, 490, 4, 2], [560, 496, 8, 4], [650, 500, 4, 2.5], [770, 492, 6, 3]],
+    roots: 'M692 472C686 482 676 486 664 488M700 472C700 480 698 488 702 496M712 472C720 482 732 484 744 490',
+  }
+
   // Dilly, his cat, a long-haired Turkish Van sat by the basket, facing out, drawn the way Schulz drew Snoopy: a big
   // round head on a small body, dot eyes with a glint, a button nose and a little mouth. Hers are the markings: a
   // ginger cap over her head and ears parted by a white blaze that runs to a point a little to her right, pale pink
@@ -228,6 +257,7 @@
         mask,
       )
       element('path', { d, fill: colour, transform: 'translate(2.5 2.5)', mask: `url(#${id})` }, parent)
+      this.left = x
     }
 
     colour(duration) {
@@ -504,6 +534,29 @@
 
       const rand = random(11)
       const scenery = element('g', { filter: 'url(#ldr-boil)' }, svg)
+      // What is coloured in once every page is up.
+      this.backdrop = []
+      const paint = (d, colour, box, width = 2.4) => {
+        element('path', { d, fill: PAPER }, scenery)
+        this.backdrop.push(new Fill(defs, scenery, d, colour, box))
+        ink(d, scenery, width)
+      }
+      const circle = (x, y, r) => `M${x - r} ${y}A${r} ${r} 0 1 0 ${x + r} ${y}A${r} ${r} 0 1 0 ${x - r} ${y}Z`
+      // The hills first, so all the rest stands in front of them.
+      for (const top of HILLS) {
+        element('path', { d: `${top}V472H24Z`, fill: PAPER }, scenery)
+        ink(top, scenery, 2.4)
+      }
+      ink(GRASS.map(([x, y]) => `M${x - 2.5} ${y}l2.5-4 2.5 4`).join(''), scenery, 1.6)
+      for (const [x, y] of FAR_TREES) {
+        ink(`M${x} ${y}V${y - 15}`, scenery, 2.2)
+        paint(circle(x, y - 22, 8), GREEN, [x - 8, y - 30, 16, 16], 2.2)
+      }
+      element('path', { d: HOUSE.walls, fill: PAPER }, scenery)
+      ink(HOUSE.walls, scenery, 2.2)
+      paint(HOUSE.roof, RED, [561, 312, 40, 16], 2.2)
+      paint(HOUSE.window, YELLOW, [569, 332, 7, 7], 1.8)
+      ink(HOUSE.ink, scenery, 2.2)
       ink(GROUND, scenery)
       ink(POST, scenery)
       // The tree's crown, a cloud of bumps, with its fruit.
@@ -530,6 +583,33 @@
       ink(CLOUD, scenery)
       ink(`M${UPPER[0]} ${UPPER[1]}Q${UPPER.slice(2).join(' ')}M${LOWER[0]} ${LOWER[1]}Q${LOWER.slice(2).join(' ')}`, scenery, 1.8)
       this.caption(scenery)
+
+      const [sx, sy] = SUN.at
+      paint(circle(sx, sy, 17), YELLOW, [sx - 17, sy - 17, 34, 34])
+      ink(SUN.face, scenery, 2.2)
+      this.rays = element('g', {}, scenery)
+      let rays = ''
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2
+        rays += `M${(sx + Math.cos(a) * 23).toFixed(1)} ${(sy + Math.sin(a) * 23).toFixed(1)}L${(sx + Math.cos(a) * 30).toFixed(1)} ${(sy + Math.sin(a) * 30).toFixed(1)}`
+      }
+      ink(rays, this.rays, 2.4)
+      this.plane = element('g', {}, scenery)
+      ink(PLANE.trail, this.plane, 1.8).setAttribute('stroke-dasharray', '3 6')
+      element('path', { d: PLANE.body, fill: PAPER }, this.plane)
+      ink(PLANE.body, this.plane, 2.2)
+      ink(PLANE.fold, this.plane, 2)
+      ink(BIRDS, scenery, 2)
+
+      element('path', { d: BUSH.shape, fill: PAPER }, scenery)
+      ink(BUSH.shape, scenery)
+      for (const [x, y, colour] of BUSH.flowers) paint(circle(x, y, 3.4), colour, [x - 3.4, y - 3.4, 6.8, 6.8], 2)
+      paint(MUG.body, RED, [410, 456, 16, 16])
+      ink(MUG.ink, scenery, 2.2)
+      paint(CAN.body, BLUE, [728, 448, 28, 24])
+      ink(CAN.ink, scenery, 2.4)
+      ink(UNDER.pebbles.map(([x, y, rx, ry]) => `M${x - rx} ${y}A${rx} ${ry} 0 1 0 ${x + rx} ${y}A${rx} ${ry} 0 1 0 ${x - rx} ${y}`).join(''), scenery, 2)
+      ink(UNDER.roots, scenery, 2.4)
 
       // The basket, with the pages still to hang lying in it.
       const basket = element('g', { filter: 'url(#ldr-boil)' }, svg)
@@ -636,12 +716,18 @@
       })
     }
 
-    /** Queues the end: he is coloured in, the wind gets up and the bird leaves. */
+    /** Colours in the hills' trees, the house, the sun and the things on the ground, left to right. */
+    colourBackdrop(duration) {
+      this.backdrop.sort((a, b) => a.left - b.left).forEach((fill, i) => (duration ? setTimeout(() => fill.colour(duration), i * 70) : fill.colour(0)))
+    }
+
+    /** Queues the end: he and everything round him are coloured in, the wind gets up and the bird leaves. */
     finish() {
       this.actions.push({
-        duration: 700,
+        duration: 1300,
         start: () => {
           this.hanger.colour(this.still ? 0 : 600)
+          this.colourBackdrop(this.still ? 0 : 480)
           this.dilly.watch('ahead', 1)
         },
       })
@@ -685,6 +771,10 @@
       for (let i = 0; i < this.hung; i++) this.pages[i].place(PEG_AT + this.offset - SPACING * i, time, this.wind, this.still ? 0 : dt)
       this.hanger.tick(time, this.still)
       this.dilly.tick(time, dt, this.still)
+      if (!this.still) {
+        this.rays.setAttribute('transform', `rotate(${((time / 140) % 360).toFixed(1)} ${SUN.at.join(' ')})`)
+        this.plane.setAttribute('transform', `translate(0 ${(Math.sin(time / 650) * 4).toFixed(2)}) rotate(${(Math.sin(time / 900) * 2).toFixed(2)} 360 148)`)
+      }
     }
   }
 
@@ -730,6 +820,7 @@ html:has(#loader>.ldr-paper){overflow:hidden}
         for (let i = 0; i < PAGES.length; i++) scene.hangNext(true)
         while (!scene.idle) scene.tick(0, 0)
         scene.hanger.colour(0)
+        scene.colourBackdrop(0)
         scene.still = this.still
       }
 
