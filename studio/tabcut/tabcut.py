@@ -51,11 +51,10 @@ LIGHT = 0.6
 # strip's red hide, as studio/edgecast renders the strip's own edge. Its tab is the one height.
 # Its cut is the mat's own (studio/edgecast): knife-straight, its top edge burnished round by ROUND of its thickness.
 ROUND = 0.32
-# Its lit rim is left off, as studio/edgecast leaves the mat's own edge's off (lit), so the two meet at its joins.
-LEATHER = {"name": "leather", "thick": 0.375, "lift": 0.0, "ragged": 0.0, "round": ROUND, "colour": "#236653", "roughness": 0.55, "under": "#651415", "lit": False}
+LEATHER = {"name": "leather", "thick": 0.375, "lift": 0.0, "ragged": 0.0, "round": ROUND, "colour": "#236653", "roughness": 0.55, "under": "#651415"}
 # The contact strip's tab is cut from its hide, a leather mat as thick, the hide's red (its panel in SiteShell) on the
 # walnut desk beyond the folders (studio/resume), as it shows past the strip. Its tab is the taller one.
-HIDE = {**LEATHER, "name": "hide", "colour": "#651415", "under": "#1e1610", "lit": True}
+HIDE = {**LEATHER, "name": "hide", "colour": "#651415", "under": "#1e1610"}
 LEATHERS = ((LEATHER, 10), (HIDE, 11.5))
 
 
@@ -100,17 +99,20 @@ def cut(layout, tall, samples, proof, stuff=None):
     fade = np.clip(np.minimum(rows + reach, height + reach - rows) / (0.6 * reach), 0, 1) ** 1.5
     name = f"tabcut-{layout}-{str(tall).replace('.', '_')}" + ("" if stuff is None else f"-{stuff['name']}")
     entry = {"src": f"/objects/{name}.avif", "x": frame[0], "y": frame[1], "width": frame[2], "height": frame[3]}
-    if stuff is not None and stuff["lit"]:
+    if stuff is not None:
         # Leather's lit edge is brighter leather, not paler: a colour-dodge layer of its own, which brightens what is
         # under it by the ratio (on the page's sRGB, ratio ** (1 / 2.2)) and keeps its colour, as studio/edgecast
-        # lights the hide's own edge, so the two meet at the tab's joins as one edge.
+        # lights the mat's own edge, so the two meet at the tab's joins as one edge.
         # Only on the leather: off it, nothing lies under the layer to brighten, and the grey would show.
         grey = (1 - 1 / np.maximum(ratio, 1) ** (1 / 2.2)) * (cover > 0.5)
-        layer = np.dstack([grey, grey, grey, (cover > 0.5) * fade[:, None]])
+        # The tab's leather covers the strip's edge, and the strip's lit rim with it, from one join to the other, so
+        # its own rim runs at full there and stops square where the strip's takes over: faded in as the shadow is,
+        # the rim went dark along the joins.
+        joins = (rows >= -reach) & (rows <= height + reach)
+        layer = np.dstack([grey, grey, grey, (cover > 0.5) * joins[:, None]])
         write(layer, f"{name}-light", proof)
         entry["light"] = f"/objects/{name}-light.avif"
         print(name + "-light", "brightest", round(float(1 / (1 - grey.max())), 3))
-    if stuff is not None:
         light = np.zeros_like(light)
     alpha = (dark + light) * fade[:, None]
     colour = np.where(light > dark, 1.0, 0.0)

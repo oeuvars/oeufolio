@@ -203,7 +203,7 @@ const pageTones: Tone[] = [
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: { wide: '/objects/likes-edge-wide.png', phone: '/objects/likes-edge-phone.png' }, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.png', phone: '/objects/poster-cast-phone.png', length: TEAR_LENGTH }, tab: '/objects/tab-teenage.avif' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1 }, tab: '/objects/tab-proraso.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1, light: '/objects/mat-cast-light.png' }, tab: '/objects/tab-proraso.avif' },
   // The contact strip's hide is a leather mat too, cut straight and burnished as the green one is, lying on the walnut.
   { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, cut: true, surface: '/objects/leather.avif', edgecast: { wide: '/objects/contact-cast.png', phone: '/objects/contact-cast.png', length: 1, light: '/objects/contact-cast-light.png' }, tab: '/objects/tab-tagheuer.avif' },
 ]
@@ -368,6 +368,11 @@ const Tab = ({ label, shape, to, search, current, src, footless, leather, surfac
             className="absolute inset-0 bg-no-repeat opacity-84 mix-blend-plus-lighter"
             style={{ backgroundImage: 'var(--light-past)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
           />
+          {/* The light the cut's edge catches brightens the leather and keeps its colour (colour-dodge), here inside
+              its cut, where the leather lies under it to brighten. */}
+          {edge?.light && (
+            <img aria-hidden alt="" src={edge.light} draggable={false} className="tab-cut mix-blend-color-dodge" style={{ left: edge.left, top: edge.top + reach, width: edge.width, height: edge.height }} />
+          )}
         </div>
       ) : (
         <svg
@@ -585,13 +590,16 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     const steps = [0, 0.25, 0.5, 0.75, 1]
     const into = steps.map((t) => `rgb(0 0 0 / ${(1 - t ** 1.5).toFixed(3)}) ${(top - reach + t * ramp).toFixed(1)}px`)
     const out = steps.map((t) => `rgb(0 0 0 / ${(1 - (1 - t) ** 1.5).toFixed(3)}) ${(top + shape.height + reach - ramp + t * ramp).toFixed(1)}px`)
+    // The lit rim stops square at the tab's joins, where the tab's leather covers the strip's edge and its own rim
+    // runs on at full (studio/tabcut): faded as the shadow is, neither showed along the joins.
+    const square = `linear-gradient(#000 ${(top - reach).toFixed(1)}px, transparent 0 ${(top + shape.height + reach).toFixed(1)}px, #000 0)`
     return {
       left: `calc(100% + ${EDGECAST_FROM}px)`,
       width: EDGECAST_SPAN,
       backgroundImage: `url(${src})`,
       backgroundSize: `${EDGECAST_SPAN}px ${cast.length}px`,
       backgroundRepeat: 'repeat-y',
-      maskImage: `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
+      maskImage: src === cast.light ? square : `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
     }
   }
   const fixed = mobile ? 0 : spine + end
