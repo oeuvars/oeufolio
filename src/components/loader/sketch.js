@@ -1,8 +1,8 @@
 // The loader, run inline at the top of the body so it is drawn before the bundle, the fonts or a single picture
 // arrive. It is drawn and moved the way Dan Yaccarino's Oswald is: flat shapes in clear colours with no outlines, each
-// turned a shade darker along one edge, dot eyes and a thin smile, soft shadows on the grass, rolling hills under a
-// pale sky, Big City's buildings made in the shapes of things, odd neighbours, and slow, eased movement that settles.
-// In a park in front of the city, Anurag stands at a pulley clothesline hanging the site's pages out to dry as their
+// turned a shade darker along one edge, dot eyes and a thin smile, soft shadows on the grass, a cyan sky, Big City's
+// street of framed windows with something odd about each building, odd neighbours, and slow, eased movement that
+// settles. In a yard across the street from them, Anurag stands at a pulley clothesline hanging the site's pages out to dry as their
 // pictures come in, the badge, the letter, the poster, the mat and the ticket, while Dilly, his cat, watches, a
 // sunflower on noodle legs waves and a butterfly flits about. Once everything is in, they hop for joy, a gust comes,
 // and the sheet blows off the page. A classic script, not a module: no imports, nothing left on window.
@@ -12,13 +12,13 @@
 
   const SVG = 'http://www.w3.org/2000/svg'
   // The sky and the grass, and the shade every shape takes along its lower right edge.
-  const SKY = '#d3e8f1'
+  const SKY = '#a6e7ea'
   const CLOUD = '#ffffff'
   const SUN = '#ffd83a'
   const GRASS = '#6dbd4b'
   const BLADE = '#4f9d36'
-  const LEAF = '#46a547'
-  const BARK = '#8b5a36'
+  const LEAF = '#3fae4a'
+  const BARK = '#c27330'
   const SHADE = 'rgba(22,26,70,.17)'
   const SHADOW = 'rgba(28,70,20,.2)'
   const DARK = '#23263f'
@@ -158,14 +158,14 @@
     eye: [222, 249],
   }
 
-  // What he stands in: the pole with its wheel, a bird on it, and a Big City tree with the other wheel, a thin trunk
-  // forking up into one round-edged crown, its branches showing through.
-  const POST = { pole: 'M99 172H109V472H99Z', bracket: 'M96 158H112V164H96ZM99 164H103V174H99ZM105 164H109V174H105Z', wheel: [104, 184] }
+  // What he stands in: a curly Big City street lamp with the line's wheel on it, its lantern and a bird on top, and a
+  // Big City tree with the other wheel, a crown of two greens with its orange branches drawn over it.
+  const LAMP = { post: 'M104 472V190C104 164 132 158 140 176 144 188 134 196 128 190', wire: 'M128 190V194', lantern: 'M121 194H135L132 210H124Z', cap: 'M120 193H136', wheel: [104, 184] }
   const TREE = {
-    trunk: 'M693 472C696 400 690 300 695 230L700 196H708L713 230C716 300 710 400 711 472Z',
+    trunk: 'M690 472C694 400 690 320 694 240L700 200H708L712 240C716 320 712 400 714 472Z',
     crown: 'M612 128C604 92 636 52 680 50 702 30 748 34 762 62 794 70 800 118 784 140 790 170 756 190 724 178 700 196 660 192 642 170 616 166 604 146 612 128Z',
-    light: 'M640 100C650 76 680 66 700 70 690 84 664 92 656 112 650 118 640 114 640 100Z',
-    branches: 'M703 232C690 200 672 180 652 160M705 220C716 190 736 170 756 150M702 200C700 160 704 120 700 84M684 186C672 172 668 150 672 130M738 166C750 150 766 132 772 110',
+    light: 'M630 110C622 80 650 56 684 60 700 46 732 50 740 70 716 74 700 84 690 100 668 96 650 106 630 110Z',
+    branches: 'M702 236C690 200 668 176 644 150M706 222C718 190 738 164 760 138M704 200C702 160 706 120 700 80M664 170L650 132M740 156L756 108',
     wheel: [696, 197],
   }
   const BIRD = {
@@ -177,34 +177,30 @@
     eye: [113, 142],
   }
 
-  // Behind the park, Big City: a grey skyline far off, and in front of it buildings made in the shapes of things, as
-  // Big City's are, standing on the line where the lawn starts. Long thin clouds go by over it.
-  const HORIZON = 392
-  const SKYLINE = '#cdc7d9'
-  const LAWN = '#86d662'
-  const PATH = '#b7c6dc'
-  const CLOUDS = [[150, 22, 110], [470, 40, 80], [584, 118, 120], [20, 178, 60]]
-  const SUN_AT = [430, 74]
-  // A small tree on the lawn, a forked stick under a blob.
-  const SAPLINGS = [[352, 410]]
-  // A curly street lamp by the pole.
-  const LAMP = { post: 'M80 472V316C80 292 50 288 46 310', lantern: 'M40 312H52L50 328H42Z', cap: 'M38 310H54' }
+  // Behind the yard, Big City: a warm grey skyline far off, then a street of buildings, each a box with a darker side,
+  // framed windows, a door and a step, and here and there something odd about it, as Big City's are: a cheese house,
+  // a teacup on the café, a cactus up a wall, a baseball house. Puffy clouds and a hot-air balloon go over.
+  const STREET = 390
+  const SKYLINE = '#cbc4c2'
+  const LAWN = '#7bd152'
+  const CLOUDS = [[548, 74, 1], [250, 18, 0.6], [24, 112, 0.55]]
+  const BALLOON = [462, 66]
   const GROUND = 'M24 474C140 469 260 477 400 472S640 476 784 470'
-  const BLADES = [[40, 488], [180, 496], [290, 484], [520, 492], [660, 486], [740, 500], [120, 412], [230, 420], [610, 410], [450, 446]]
+  const BLADES = [[40, 488], [180, 496], [290, 484], [520, 492], [660, 486], [740, 500], [150, 452], [272, 446], [604, 450], [452, 446]]
   const DAISIES = [[64, 494], [146, 506], [252, 490], [432, 504], [556, 500], [646, 492], [700, 508], [772, 496]]
-  // On the grass, a flowering bush by the pole, his mug by the basket, and a watering can by the tree.
-  const BUSH = { shape: 'M28 472C22 460 28 446 40 448 40 436 56 432 62 442 68 432 84 436 84 448 94 450 96 466 92 472Z', flowers: [[46, 452, RED], [66, 444, YELLOW], [80, 460, RED]] }
+  // On the grass, a flowering bush by the lamp, his mug by the basket, and a watering can by the tree.
+  const BUSH = { shape: 'M28 472C22 460 28 446 40 448 40 436 56 432 62 442 68 432 84 436 84 448 94 450 96 466 92 472Z', twigs: 'M50 452L45 438M70 448L75 434M84 456L90 446', flowers: [[46, 452, RED], [66, 444, YELLOW], [80, 460, RED]] }
   const BASKET = { rim: 'M316 430H404V437H316Z', body: 'M320 437H400L392 472H328Z', weave: 'M324 449H396M326 461H394M340 437L344 472M360 437V472M380 437L376 472' }
   const MUG = { body: 'M410 456H426V472H410Z', handle: 'M426 460C433 460 433 468 426 468', steam: 'M415 450C412 446 418 443 415 438M421 450C418 446 424 443 421 438' }
   const CAN = { body: 'M728 452Q728 448 732 448H752Q756 448 756 452V472H728Z', spout: 'M754 462L772 444', rose: [774, 442], handle: 'M732 448C730 434 754 434 752 448' }
   // The shadows on the grass: where, and how wide each way. His, Dilly's and the sunflower's shrink as they hop.
-  const SHADOWS = [[62, 473, 38, 4], [80, 473, 8, 2], [104, 473, 14, 3], [360, 474, 50, 5], [418, 473, 11, 2.5], [702, 473, 30, 5], [744, 473, 22, 3.5]]
-  const FEET = [[208, 474, 54, 6], [474, 474, 38, 5], [612, 474, 18, 3]]
+  const SHADOWS = [[62, 473, 38, 4], [104, 473, 12, 3], [360, 474, 50, 5], [418, 473, 11, 2.5], [702, 473, 30, 5], [744, 473, 22, 3.5]]
+  const FEET = [[208, 474, 54, 6], [474, 474, 38, 5], [566, 474, 18, 3]]
 
-  // A sunflower from the bed by the tree, one of Big City's odd neighbours: she stands about on two green noodles of
+  // A sunflower from the bed by the baseball house, one of Big City's odd neighbours: she stands about on two green noodles of
   // legs with her hands on her hips, sways, and waves when a page goes up. Drawn about the ground under her.
   const SUNFLOWER = {
-    at: [612, 472],
+    at: [566, 472],
     legs: 'M-6 0C-8-20-4-36-2-52M6 0C8-20 4-36 2-52',
     feet: 'M-6 0H-14M6 0H14',
     stem: 'M0-50C-1-72 1-96 0-124',
@@ -664,25 +660,30 @@
       const back = element('g', {}, svg)
       // The sky and the grass run on past the drawing to the edges of the screen, whatever its shape.
       element('path', { d: 'M-4000-4000H4800V600H-4000Z', fill: SKY }, back)
-      const [sx, sy] = SUN_AT
-      this.sun = element('path', { d: circle(sx, sy, 30), fill: '#fff3b0', opacity: 0.6 }, back)
-      solid(circle(sx, sy, 20), SUN, back, 2.4)
-      this.clouds = CLOUDS.map(([x, y, w]) => {
+      this.city(back, rand)
+      this.clouds = CLOUDS.map(([x, y, size]) => {
         const cloud = element('g', {}, back)
-        const pill = (dy) => `M${x + 5} ${y + dy}H${x + w - 5}A5 5 0 0 1 ${x + w - 5} ${y + dy + 10}H${x + 5}A5 5 0 0 1 ${x + 5} ${y + dy}Z`
-        element('path', { d: pill(3), fill: '#f6d5de' }, cloud)
-        element('path', { d: pill(0), fill: CLOUD }, cloud)
+        const puff = element('g', { transform: `translate(${x} ${y}) scale(${size})` }, cloud)
+        solid('M-44 18C-58 18-60 0-44-2-44-18-22-24-12-12-4-28 22-26 26-10 42-14 52 4 40 18Z', CLOUD, puff)
         return { cloud, phase: x / 90 }
       })
+      this.balloon = element('g', {}, back)
+      const lift = element('g', { transform: `translate(${BALLOON.join(' ')})` }, this.balloon)
+      solid('M0-22C14-22 22-12 22 0 22 12 10 20 6 26H-6C-10 20-22 12-22 0-22-12-14-22 0-22Z', RED, lift, 2)
+      element('path', { d: 'M0-22C6-12 7 10 4 26H-4C-7 10-6-12 0-22Z', fill: YELLOW }, lift)
+      stroke('M-6 26L-5 34M6 26L5 34', '#7a5a3a', 1.2, lift)
+      solid('M-6 34H6V42H-6Z', WICKER, lift, 1.2)
 
-      this.city(back, rand)
-      element('path', { d: `M-4000 ${HORIZON}H4800V600H-4000Z`, fill: LAWN }, back)
-      element('path', { d: 'M-4000 414C100 406 300 404 420 412S700 426 4800 416V432C700 444 500 432 420 430S100 424-4000 432Z', fill: PATH }, back)
-      for (const [x, y] of SAPLINGS) {
-        stroke(`M${x} ${y}V${y - 26}L${x - 10} ${y - 44}M${x} ${y - 26}L${x + 12} ${y - 48}`, '#c9772f', 3.5, back)
-        solid(`M${x - 22} ${y - 50}C${x - 26} ${y - 70} ${x - 10} ${y - 82} ${x + 4} ${y - 78} ${x + 16} ${y - 88} ${x + 34} ${y - 76} ${x + 30} ${y - 60} ${x + 38} ${y - 46} ${x + 22} ${y - 34} ${x + 8} ${y - 40} ${x - 6} ${y - 32} ${x - 24} ${y - 38} ${x - 22} ${y - 50}Z`, LEAF, back, 3)
-        stroke(`M${x - 10} ${y - 44}L${x - 14} ${y - 56}M${x + 12} ${y - 48}L${x + 16} ${y - 62}`, '#c9772f', 2.5, back)
+      element('path', { d: `M-4000 ${STREET + 32}H4800V600H-4000Z`, fill: LAWN }, back)
+      // The yard's curly railing, with a flower on every other post.
+      let rails = 'M-400 414H1200M-400 428H1200'
+      let flowers = ''
+      for (let x = -396, i = 0; x < 1200; x += 22, i++) {
+        rails += `M${x} 434V414c0-6 7-6 7 0`
+        if (i % 2) flowers += `M${x + 3.5} 402v8M${x - 0.5} 406h8`
       }
+      stroke(rails, '#2c3a5c', 2, back)
+      stroke(flowers, '#f6d43f', 3, back)
       element('path', { d: `M-4000 474H24${GROUND.slice(GROUND.indexOf('C'))}H4800V4000H-4000Z`, fill: GRASS }, back)
       element('path', { d: BLADES.map(([x, y]) => `M${x - 2.5} ${y}l2.5-7 2.5 7Z`).join(''), fill: BLADE }, back)
       for (const [x, y] of DAISIES) {
@@ -694,28 +695,28 @@
       for (const [x, y, rx, ry] of SHADOWS) element('ellipse', { cx: x, cy: y, rx, ry, fill: SHADOW }, back)
       this.feet = FEET.map(([x, y, rx, ry]) => element('ellipse', { cx: x, cy: y, rx, ry, fill: SHADOW }, back))
 
-      // The lamp, the pole, the tree and the line between them.
-      stroke(LAMP.post, '#2c3160', 4, back)
-      stroke(LAMP.cap, '#2c3160', 3, back)
-      this.lantern = element('path', { d: LAMP.lantern, fill: '#ffe27a' }, back)
-      solid(POST.pole, METAL, back)
-      solid(POST.bracket, METAL, back, 1.6)
+      // The lamp, the tree and the line between them.
       const wheel = ([x, y]) => {
         solid(circle(x, y, 11), '#7d8296', back, 2)
         element('circle', { cx: x, cy: y, r: 3, fill: '#4d5163' }, back)
       }
-      wheel(POST.wheel)
+      stroke(LAMP.post, '#2c3a5c', 7, back)
+      stroke(LAMP.wire, '#2c3a5c', 1.6, back)
+      stroke(LAMP.cap, '#2c3a5c', 3, back)
+      this.lantern = element('path', { d: LAMP.lantern, fill: '#ffe27a' }, back)
+      wheel(LAMP.wheel)
       solid(TREE.trunk, BARK, back, 4)
       this.crown = element('g', {}, back)
       solid(TREE.crown, LEAF, this.crown, 7)
-      element('path', { d: TREE.light, fill: '#6cc35a' }, this.crown)
-      stroke(TREE.branches, BARK, 4, this.crown).setAttribute('opacity', 0.75)
+      element('path', { d: TREE.light, fill: '#5cc75a' }, this.crown)
+      stroke(TREE.branches, BARK, 5, this.crown)
       wheel(TREE.wheel)
       stroke(`M${UPPER[0]} ${UPPER[1]}Q${UPPER.slice(2).join(' ')}M${LOWER[0]} ${LOWER[1]}Q${LOWER.slice(2).join(' ')}`, ROPE, 1.8, back)
       this.caption(back)
 
       // The things on the grass.
       solid(BUSH.shape, LEAF, back, 4)
+      stroke(BUSH.twigs, BARK, 3, back)
       for (const [x, y, colour] of BUSH.flowers) solid(circle(x, y, 3.6), colour, back, 1.2)
       solid(BASKET.rim, '#b97f3e', back, 1.6)
       this.sheets = PAGES.map((_, i) => {
@@ -749,85 +750,133 @@
     }
 
     /**
-     * Big City: the grey skyline block by block across the whole width, and in front of it, left to right, a
-     * baseball with a door, a cello, a brick block with its works and an alarm clock on the roof, a rocket, a table
-     * lamp and a lighthouse.
+     * Big City along the far side of the street: the skyline far off, then the buildings left to right, plain blocks
+     * at the edges, the cheese house, an olive apartment block, a teal one with arched windows, the café with a teacup
+     * on its roof, a green block with a cactus up its wall, the baseball house, and a lilac tower behind the tree.
      */
     city(parent, rand) {
-      let blocks = ''
-      let windows = ''
-      for (let x = -900; x < 1700; ) {
-        const w = 22 + Math.floor(rand() * 30)
-        const top = HORIZON - 40 - Math.floor(rand() * 70)
-        blocks += `M${x} ${top}H${x + w}V${HORIZON}H${x}Z`
-        for (let y = top + 8; y < HORIZON - 8; y += 12) for (let c = x + 5; c + 4 < x + w - 4; c += 9) windows += `M${c} ${y}h4v6h-4z`
-        x += w + 2 + Math.floor(rand() * 6)
-      }
-      element('path', { d: blocks, fill: SKYLINE }, parent)
-      element('path', { d: windows, fill: '#bab3c9' }, parent)
-      const paint = (d, colour, depth = 2.4) => solid(d, colour, parent, depth)
       const flat = (d, colour) => element('path', { d, fill: colour }, parent)
+      const paint = (d, colour, depth = 2.4) => solid(d, colour, parent, depth)
       const line = (d, colour, width) => stroke(d, colour, width, parent)
-
-      paint(circle(46, 368, 24), '#f8f4ea', 3)
-      line('M30 350C37 360 37 376 30 386M62 350C55 360 55 376 62 386', RED, 1.8)
-      line('M31 356h4M33 364h4M33 372h4M31 380h4M61 356h-4M59 364h-4M59 372h-4M61 380h-4', RED, 1.4)
-      flat(circle(46, 357, 4), '#9fd2f0')
-      flat('M40 392V383A6 6 0 0 1 52 383V392Z', '#6b4d8f')
-
-      paint('M285 308V280H295V308Z', '#3fae92', 1.6)
-      paint(circle(290, 272, 9), '#3fae92', 1.6)
-      line('M290 272m-4 0a4 4 0 1 0 4-4', '#2f8f76', 1.6)
-      line('M279 284h-5M301 284h5M279 292h-5M301 292h5', '#2f8f76', 2.4)
-      paint('M290 392C263 392 255 374 262 360 266 351 267 345 263 338 258 325 269 308 290 308S322 325 317 338C313 345 314 351 318 360 325 374 317 392 290 392Z', '#56c6a9', 3)
-      line('M274 344q-4 9 0 18M306 344q4 9 0 18', '#2f8f76', 2.2)
-      line('M287 284V352M290 284V352M293 284V352', '#d8f5ec', 0.8)
-      line('M282 352H298', '#2f8f76', 2.4)
-      flat(circle(276, 324, 4) + circle(304, 324, 4), '#d8f5ec')
-      flat('M283 392V381A7 7 0 0 1 297 381V392Z', '#2f8f76')
-
-      paint('M408 304H446V332H408Z', '#8697bd', 2)
-      for (const [x, y, r] of [[419, 318, 7], [436, 314, 5]]) {
-        line(circle(x, y, r), '#61719b', 3).setAttribute('stroke-dasharray', '2 2')
-        flat(circle(x, y, r - 1.5), '#61719b')
-        flat(circle(x, y, 1.6), '#8697bd')
-      }
-      paint('M392 336H462V392H392Z', '#e0563f', 3)
-      flat('M388 330H466V337H388Z', '#b8402e')
-      let lights = ''
-      for (const y of [344, 360]) for (const x of [400, 416, 432, 448]) lights += `M${x} ${y}h7v9h-7z`
-      lights += 'M400 376h7v9h-7zM448 376h7v9h-7z'
-      flat(lights, '#ffe9c6')
-      flat('M421 392V376H433V392Z', '#7a2e22')
-      line('M398 340h5M440 356h5M410 372h5', '#b8402e', 1.4)
-      line('M419 304l-3 4M435 304l3 4', DARK, 2)
-      paint(circle(417, 279, 4.5) + circle(437, 279, 4.5), '#9db6f0', 1.2)
-      paint(circle(427, 291, 12), '#9db6f0', 2)
-      flat(circle(427, 291, 8.5), WHITE)
-      line('M427 291V285.5M427 291L431 293', DARK, 1.6)
-      line('M427 279V275', DARK, 2)
-
-      paint('M560 300C572 316 576 344 574 392H546C544 344 548 316 560 300Z', '#8fb6f2', 3)
-      flat('M560 300C566 308 569 314 570 318H550C551 314 554 308 560 300Z', RED)
-      paint('M546 360L534 392H548ZM574 360L586 392H572Z', '#5b86d9', 1.6)
-      for (const y of [334, 354, 374]) {
-        flat(circle(560, y, 6), '#5b86d9')
-        flat(circle(560, y, 4), WHITE)
+      const rect = (x, y, w, h) => `M${x} ${y}h${w}v${h}h${-w}z`
+      // A shape in a colour, darker by `dark` (a side in shadow, a cornice).
+      const toned = (d, colour, dark) => {
+        flat(d, colour)
+        element('path', { d, fill: `rgba(22,26,70,${dark})` }, parent)
       }
 
-      paint('M652 392C644 374 652 360 660 350H672C680 360 688 374 680 392Z', '#f6cf5a', 3)
-      flat(circle(666, 372, 4.5), '#fff3c4')
-      flat('M661 392V384A5 5 0 0 1 671 384V392Z', '#c99a2c')
-      line('M666 312V304', DARK, 2)
-      flat(circle(666, 302, 2.6), DARK)
-      paint('M640 350H692L680 312H652Z', '#f39a3c', 3)
-      line('M660 313L656 349M672 313L676 349', '#e07f22', 2)
+      let blocks = ''
+      let dots = ''
+      for (let x = -900; x < 1700; ) {
+        const w = 30 + Math.floor(rand() * 40)
+        const top = STREET - 130 - Math.floor(rand() * 90)
+        blocks += rect(x, top, w, STREET - top)
+        if (rand() < 0.5) blocks += rect(x + 6, top - 10, Math.floor(w / 2), 10)
+        for (let i = 0; i < 3; i++) if (rand() < 0.7) dots += rect(x + 6 + Math.floor(rand() * (w - 14)), top + 12 + Math.floor(rand() * 60), 6, 7)
+        x += w
+      }
+      flat(blocks, SKYLINE)
+      flat(dots, '#b3aba9')
 
-      paint('M752 392L756 300H772L776 392Z', WHITE, 2.4)
-      flat('M754 370H774L774.7 384H753.3ZM755.3 340H772.7L773.3 354H754.7ZM756 310H772L772.5 324H755.5Z', RED)
-      flat('M756 280H772V296H756Z', '#ffe27a')
-      flat('M750 296H778V302H750Z', DARK)
-      flat('M754 280L764 268 774 280Z', RED)
+      /** A building: its front and its darker side, a cornice, rows of framed windows, and a door with a step. */
+      const building = (x, top, w, colour, { cols = 3, arched = false, frame = '#fff4d6', glass = '#8fd8de', door = true, windows = true } = {}) => {
+        toned(`M${x + w} ${top}l9 6V${STREET}h-9Z`, colour, 0.28)
+        flat(rect(x, top, w, STREET - top), colour)
+        toned(rect(x - 3, top - 6, w + 6, 7), colour, 0.2)
+        if (windows) {
+          const gap = w / cols
+          const ww = Math.min(16, gap - 10)
+          let frames = ''
+          let panes = ''
+          let glints = ''
+          for (let y = top + 16; y + 24 < STREET - (door ? 44 : 10); y += 32) {
+            for (let c = 0; c < cols; c++) {
+              const wx = x + gap * c + (gap - ww) / 2
+              frames += rect(wx - 3, y - 3, ww + 6, 26)
+              panes += arched ? `M${wx} ${y + 20}V${y + ww / 2}a${ww / 2} ${ww / 2} 0 0 1 ${ww} 0V${y + 20}Z` : rect(wx, y, ww, 20)
+              glints += `M${wx + 3} ${y + 12}l6-7`
+            }
+          }
+          flat(frames, frame)
+          flat(panes, glass)
+          line(glints, 'rgba(255,255,255,.6)', 1.6)
+        }
+        if (door) {
+          const dx = x + w / 2 - 9
+          flat(rect(dx - 3, STREET - 34, 24, 34), frame)
+          flat(rect(dx, STREET - 31, 18, 31), '#9a5b3a')
+          flat(circle(dx + 14, STREET - 15, 1.6), '#f2d27a')
+          toned(rect(dx - 6, STREET - 4, 30, 4), '#d6dadb', 0.15)
+        }
+      }
+
+      building(-280, 236, 130, '#e9a27b', { cols: 4 })
+      building(-140, 196, 128, '#9fc5e8', { cols: 4, frame: '#eef7ff', glass: '#5d9bd1' })
+
+      // The cheese house, a wedge with holes in it.
+      toned('M110 200l9 6V390h-9Z', '#f6d65c', 0.28)
+      flat('M4 390V226L110 200V390Z', '#f6d65c')
+      for (const [cx, cy, r] of [[22, 246, 7], [52, 262, 10], [88, 236, 6], [92, 290, 9], [26, 310, 8], [66, 318, 5], [20, 362, 6], [96, 352, 7]]) flat(circle(cx, cy, r), '#e5b13c')
+      flat('M48 390V368A10 10 0 0 1 68 368V390Z', '#c4813a')
+      flat(circle(64, 236, 9), '#fff4d6')
+      flat(circle(64, 236, 6.5), '#8fd8de')
+
+      building(120, 168, 100, '#b9ad6c', { cols: 3 })
+      toned(rect(132, 150, 12, 18), '#b9ad6c', 0.2)
+      line('M128 200h6M200 232h6M150 280h6M190 300h6M130 330h6', '#a39859', 1.4)
+      building(230, 236, 92, '#3fbcae', { arched: true, frame: '#c9f2ec', glass: '#2b9a90' })
+
+      // The café: a low yellow front with a striped awning, its window and door, and a giant teacup on the roof.
+      building(330, 330, 140, '#f6e07a', { windows: false, door: false })
+      flat(rect(344, 350, 66, 34), '#e9573f')
+      flat(rect(348, 354, 58, 30), '#cdeff2')
+      line('M356 376l10-14M372 380l10-14', 'rgba(255,255,255,.7)', 1.6)
+      flat(rect(420, 352, 26, 38), '#e9573f')
+      flat(rect(424, 356, 18, 34), '#9a5b3a')
+      let stripes = ''
+      for (let x = 330, i = 0; x < 470; x += 14, i++) stripes += `M${x} 330h14v12a7 7 0 0 1-14 0z`
+      flat(stripes, '#ffffff')
+      let reds = ''
+      for (let x = 330; x < 470; x += 28) reds += `M${x} 330h14v12a7 7 0 0 1-14 0z`
+      flat(reds, '#e9573f')
+      flat('M346 328a52 6 0 1 0 104 0a52 6 0 1 0-104 0Z', '#d9ab32')
+      line('M436 288C460 286 460 314 432 314', '#ebc84f', 7)
+      paint('M356 278H440C440 306 424 326 398 326S356 306 356 278Z', '#ebc84f', 4)
+      flat('M356 278a42 6 0 1 0 84 0a42 6 0 1 0-84 0Z', '#f8e08a')
+      flat('M362 278a36 4 0 1 0 72 0a36 4 0 1 0-72 0Z', '#c9952a')
+
+      // The green block, a cactus growing up its wall.
+      building(478, 248, 72, '#6dcb9c', { cols: 2, frame: '#e6fff2', glass: '#3f9e74' })
+      line('M529 343H521C515 343 515 335 515 329V321M543 329H551C557 329 557 321 557 315V307', '#4fae5a', 8)
+      paint('M529 390V302C529 292 543 292 543 302V390Z', '#4fae5a', 2)
+      line('M532 312l-3-2M540 326l3-2M532 346l-3-2M540 362l3-2M532 378l-3-2', '#2f7d3a', 1.4)
+
+      // The baseball house, with its seams, two framed windows a little askew, and a door.
+      paint(circle(630, 332, 58), '#f8f5ee', 4)
+      line('M588 292C604 316 604 348 588 372M672 292C656 316 656 348 672 372', '#e2867a', 3)
+      line('M590 300l7-2M596 314l7-1M598 330h7M596 346l7 1M590 362l7 2M670 300l-7-2M664 314l-7-1M662 330h-7M664 346l-7 1M670 362l-7 2', '#e2867a', 2)
+      for (const [wx, wy, turn] of [[612, 300, -8], [640, 330, 6]]) {
+        const pane = element('g', { transform: `rotate(${turn} ${wx + 9} ${wy + 9})` }, parent)
+        element('path', { d: rect(wx - 3, wy - 3, 24, 24), fill: '#f2d85a' }, pane)
+        element('path', { d: rect(wx, wy, 18, 18), fill: '#9fd8f0' }, pane)
+        stroke(`M${wx + 3} ${wy + 12}l6-7`, 'rgba(255,255,255,.7)', 1.6, pane)
+      }
+      flat('M620 390V372A10 10 0 0 1 640 372V390Z', '#d06d4f')
+
+      // Behind the tree, a lilac tower with a dome, and plain blocks on past it.
+      flat(circle(767, 196, 30), '#b9a5df')
+      building(722, 196, 90, '#b9a5df', { cols: 3, frame: '#f3eeff', glass: '#8c7cc0' })
+      building(822, 240, 120, '#f0a46b', { cols: 4 })
+      building(952, 210, 110, '#8fc0e8', { cols: 3, frame: '#eef7ff', glass: '#5d9bd1' })
+
+      // A little of the sky's haze over them, so they sit back behind the yard.
+      flat(rect(-4000, 0, 8800, STREET), SKY).setAttribute('opacity', 0.22)
+      // The street in front of them: the pavement in slabs, and the kerb.
+      flat(rect(-4000, STREET, 8800, 28), '#d6dadb')
+      let seams = ''
+      for (let x = -400; x < 1200; x += 46) seams += `M${x} ${STREET}l-8 28`
+      line(seams, '#c2c8cb', 1.4)
+      flat(rect(-4000, STREET + 28, 8800, 4), '#9aa6ae')
     }
 
     /** Writes the caption out letter by letter, each a little off its neighbours' size and line. */
@@ -850,9 +899,9 @@
       }
     }
 
-    /** The bird on the pole, who flies off when the wind gets up. */
+    /** The bird on the lamp, who flies off when the wind gets up. */
     perch(parent) {
-      const group = element('g', {}, parent)
+      const group = element('g', {}, element('g', { transform: 'translate(16 7)' }, parent))
       stroke(BIRD.legs, DARK, 1.6, group)
       element('path', { d: BIRD.tail, fill: '#b9352b' }, group)
       solid(BIRD.body, RED, group, 2)
@@ -956,10 +1005,9 @@
       this.sunflower.tick(time, dt, this.still)
       this.butterfly.tick(time, dt, this.wind, this.still)
       if (this.still) return
-      // The world keeps moving gently: the clouds drifting, the sun and the lamp glowing, the tree swaying.
+      // The world keeps moving gently: the clouds and the balloon drifting, the lamp glowing, the tree swaying.
       for (const { cloud, phase } of this.clouds) cloud.setAttribute('transform', `translate(${(Math.sin(time / 5200 + phase) * 14).toFixed(2)} 0)`)
-      const glow = 1 + Math.sin(time / 800) * 0.06
-      this.sun.setAttribute('transform', `translate(${SUN_AT.join(' ')}) scale(${glow.toFixed(4)}) translate(${-SUN_AT[0]} ${-SUN_AT[1]})`)
+      this.balloon.setAttribute('transform', `translate(${(Math.sin(time / 4100) * 24).toFixed(2)} ${(Math.sin(time / 1700) * 5).toFixed(2)})`)
       this.lantern.setAttribute('opacity', (0.85 + Math.sin(time / 260) * 0.15).toFixed(3))
       this.crown.setAttribute('transform', `rotate(${(Math.sin(time / 1300) * 0.8 + this.wind * 0.6).toFixed(3)} 702 260)`)
       ;[this.hanger, this.dilly, this.sunflower].forEach(({ hopping }, i) => {
