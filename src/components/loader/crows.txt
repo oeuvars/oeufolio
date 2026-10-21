@@ -1,0 +1,1685 @@
+10
+0 0 1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9 10 10 11 11 10 10 9 9 8 8 7 7 6 6 5 5 4 4 3 3 2 2
+#4b91b0,#5c97b2 #4b90af,#719db3 #428faf,#5c98b3 #3d92b4,#5098b4 #47a2c4,#6badc8 #46a3c5,#61aecc #40a0c3,#59abca #45a3c5,#5baac7 #42a1c4,#5baac8 #4ba5c7,#67b0cc #4aa5c8,#66afcc #47a1c4,#5da9c9
+220 99
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                              __
+                                                                            g@@NK           __g@_
+                                                                          _@N@NNK        _@@@NNNN@_
+                                                                         g@NNNNN@_    _@@@NNNNNNNNN@@@_
+                                                                       g@@NNNNNNNNmw@@@@NNNNNNNNNNNNNNNg_
+                                                                      @@@NNNNNNNN@@@NNNNNNNNN/|NNNNNMMMMM
+                                                                     _@NNNNNNNNNNNNNNNNNN/|||--NNNNNN_
+                                                                    _@NNNNNNNNNNNNNNNNNNN|/@NNNNNNNNNm
+                                                                    @NNNNNNNNNNNN.-|NNNNNNNNNNNNNNNNN@
+                                                                   _@NNNNNNNNNNNN|/@NNN/||NNNNNNNNNNN@`
+                                                                   @NNNNNNN-NNN\-NNNNN/||@NNNNNNNNNNNNL
+                                                                  qNNNNN./|NN-/|NNNN/||/NNN@@NNNNNNNNNK
+                                                                  @NNNNN|/NN//|NNNN//@NNNNNNNNNNNNNNNNN`
+                                                                 @NNNNNNNNN./NNNNNN-NNNNNNNNNNNNNNNNNNNL
+                                                                _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNL
+                                                                @NNNNNNNNNNNNNNNNNN/|NNNNNNNNN||NNNNNNNN
+                                                              _@@NNNNNNNNNNNNNNNNNN-NNNN.NNNNN||NNNNNNNN`
+                                                            _g@NNNNNNNNNNNNNNNNNNNNNNNN|||NNNN|\|NNNNNNNm
+                                                          _@@NNNNNNNNNNN||NNNNNNNNNNNNN|||NNNNNNNNNNNNNNN
+                                                       __@@NNNNNNNNNNNNN||NNNNNNMMNNNNNN-NNNNNNNNNNN|NNNN
+                                                       @@NNNNNNNNNNNNNN||NC       `TNNNNNNNNNNNNNNNNN@NNM
+                                                       H@NNNNNNNNNNNNN.||K          `MNNNNNNN|@NNNNNNNNNN
+                                                        "MMMMMMMMNNNNN||N`           `0NNNNNN|@NN.NNNNNNB
+                                                                `0NNN.|@M             `NNNNNNNNNNNNNNNMNB
+                                                                m@NNN||N`              ^NNNNNNNNNNNNNNL^"
+                                                                @NNNN-@M                @NNNNNNNNNNNNNK
+                                                                0M^MMMM`                @NNNNNNNNNNNN@@
+                                                                '`                      mNNNNNNNNNMNNNM
+                                                                                        mNNNNNNNNNK@NNK
+                                                                                         RMNNNNNNN `@NL
+                                                                                          HNNNNNNN  "`
+                                                                                           MNNNNNM
+                                                                                            4N.NM`
+                                                                                            4N.K
+                                                                                             HNK
+                                                                                              `
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                      ___
+                                                                                                                                __@@@@@@Nm,                  _@,
+                                                                                                                           _@@@@@NNNNNN|@@m           _____@@@@@@@@_
+                                                                                                                        _@@@N@NNNNNNNN.|@NM       _@@@@NNNNNNNNNNNNNm_
+                                                                                                                   __@@@NNNNNNNNNNNNNN@NNN@@g___@@@NNNNNNNNNNNNNNNNNNK
+                                                                                                               __@@@@NNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNN|NNNNNNNNNNNNNNN0
+                                                                                                            _@@@@NNNNNNNNNN-/NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN0
+                                                                                                         _@@@NNNNNNNNNNNN-//@NNNNNNNNNNNNNN--@NNNNNNNNNNNNNNNNNNNNNNN0
+                                                                                                        _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                                                      @@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-.NNNNNNNNNNNNNN.NNNNNNNK
+                                                                                                     HNNNNNNNM@NNNNNNNNNNNNNNNNN./@@NNNNNNNN|||NNNNNNNNNNNNNN-.NNNNNM
+                                                                                                     _@@NNNM]@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNNNNNNNN.NNNNNNNM`
+                                                                                                     @NNNM`@@NNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNNNNNNNNNNNNN-|/NNNNM@M`
+                                                                                                    @NNM`_@NNNNNNNNNNNNNNNNNNNNM"`_@NN./NNNNNNNNNNNNNNN///@NNNNM@N`
+                                                                                                   @NM` _@NNNNNNNMNNNMM`#NNMM`   _@NNNNNNNNNNNNNN|NNNN///@NNNM`@M"
+                                                                                                   M`  _@@NNNNNM` ``            _@NNNNNNNNNNNNNNNNNNN//@NNNNM`@M`
+                                                                                                     _@@NNNNNM`                g@NNNNN-.@NNN-.NNNNNN/|NNNNNM_@M`
+                                                                                                     4@NNNNM`                 @@NNN@NN-NNMNNNNNNNM`MNNNM@M`%@M`
+                                                                                                     JNNNM"                 _@N@NNMM````   @MMMNN   `"%@M`  `
+                                                                                                     fM"`                  _@N@NM"        ?M"          `
+                                                                                                                          @@@NM`
+                                                                                                                        @@NM`
+                                                                                                                        MT`
+
+
+
+
+
+                                  %@m
+                                  m@K   __
+                                  `0K   @@M
+                                  `@@`  @NN   __
+                                   HNK  @NN   0K
+                               ,   mNN_ @NN`  0@
+                               0m  `NNm`@NNm  $NL
+                               `@m  MNN``BN@m 4NN
+                               `0@m `MNm ^W@K`4@@w      _
+                                JNN@_ M@@__MN@@NNN_    m@,
+                           `0@g  `WN@g_MNN@NNNNNNNN&_  `@&
+                            `MN@@_ "MNN@@\NNNNNNNNNNN@@_0@_
+                              'MNN@_ ^MN@|.NNNNNNNNNNNN@@Nm
+                                `MNN@_@N.|NNNNNNNNNNNNNNNN@m
+                                  HN@@@@NNNN||@NNNNNNNNNNNNN@_
+                                    TMNNNNNN||NNNNNNNNNN|||NNN@@@____                  `_@@@@@@_
+                                      BNNNNNNNNNNNNNNNN|/|@NNNNNNNNN@@@@@_           _m@NNNNNNN@m_                                       mm_
+                                      @@NNNNNNNNNN|NNNN||NNNNNNNNNNNNNNNN@@@@_     _@@@NNNNNNNNN.@@@__                                   0N@_
+                                      mNNNNNNNNNNN|@NN|/NNNNNNNNNNNNNNNNNNNNNN@@@_@@NNNNNNNNNNN@/@NNNN@_                               _@@NNN,
+                                       ``BNNNNNNN||NN||@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMMMMMM`                              @NNNN@N
+                                         '0NNNNNNN@N.|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM``                                     JNNNNNN
+                                          `MNNNNNNNNN.NN.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNm@@@@@_____                              `@NNN@M
+                                            MNNNNNNNNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@__                     _@NNNNM`
+                                             'NNNNNNNN@.NNNNNNNNNNNNNNNNNNNNNN|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@__               _@NNNMT
+                                               MNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@__ @g__ ____@NNNM`
+                                                'MN@|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@NN@@NNNNNM"`
+                                                  ^MN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMT`
+                                                    `MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNM
+                                                       TMNNN.\.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                         `TMNN-|@NM--|NNNNNNNNNNNNNNNNNNNNNNNNNNNN.-NNNN.NNNNNNNNNNNNNNNN|/\NNMT`
+                                                            `"MMNNNN..@.@@NNNNNNN/@NNNNNNNNNNNNNNM..N.///NNNNNNNNNNNNN-/..MM""
+                                                                `TTMNNNNNNNNNNNN.|NNNNNNNNNNNNNNN@NNN/-NN/-/.NNNNNNN.//.M"
+                                                                  @@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN//@NNNNNNNMMMM`
+                                                                _@NNNNNNNNNNNNNN@`'T"MMNNN-M.--NNNNNNNNNNNNNNNNNNM`
+                                                              _@NNNNNNNNNNNNNNNNN`       ``^MMMNNNNNNNMMMMM""`````
+                                                             g@NNNNNNNNNNNNNNNNNNL
+                                                         _g@@NNNNNNNNNNNNNNNNNNNNL
+                                                        @@@@NNNNNNNNNNNNNNNNNNNNN`
+                                                       `@|--NNNNNNNNNNNNNNNNNNNM`
+                                                        ^%\|||NNNNNNNNNNNNNN/@NNm
+                                                          `TMNN@N@--.NNNNMMMMMM`
+                                                              `TMMMMMMT"``
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                 __gg_
+                                                                                                                                               _@@@@@@@g_
+                                                                                                                                              @@NNNNNNNNN@@mm_
+                                                                                                                                            _@NNNNNNNNNNNNNNNML
+                                                                                                                                           @@NNNNNNNNNNNNNNMM"
+                                                                                                                                          @@NNNNNNNNNNNNM]`
+                                                                                                                                          @NNNNNNNNNNNNNNN@__
+                                                                                                                                        _@@NNNNNNNNNNNNNNNNN@@@_
+                                                                                                                                 __@@@@@@@NNNN|/|NNNNNNNNNNNNNNN@@_
+                                                                                                                             _wm@@@NNNNNNNNNN/|/NNNNNNNNNNNNNNN@-@-@m_
+                                                                                                                        __@@@@NNNNNNNNNNNNN.//|NNNNNNNNNNNNNNNNNN@\\/@@@_
+                                                                                                 m_                  _@@@NNNNNNNNNNNNNNNNNNNNNNNNNN..NNNNNNNNNNNNNN@NNNN-Ng_                   _
+                                                                                                 [@K              _@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNN||NNNNNNNNNNNNNNNNNNN\\\\@_               _@N`   g_
+                                                                                             mm,  MK   %g_     _g@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.@NNNNNNNNNNNNNNNNNNNNN.-@@@m__        _@@NM`  _@@K
+                                                                                              fm_  ^w   `^M@@@@NN-NNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@@@NM    @@NM   _@L
+                                                                                                Hmm__%m_ _@@@NMM@.@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNN||NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@__@@MM`  _@@M`
+                                                                                           `_     `^MMNNNNNMM%@@N@NNNNNNNN/@NN@@N@@NNNNNNNNNNNNNN.|NNNNNNNNNNNNNNNNNNNNNNNNNN-\-NNNNNNNNNNNNNNMM"  _@@NMT
+                                                                                            Mm__       M"__@@@N@@NNNNNNNNNNN.//|NNNNNNNNNNNNNNNNNNNNNNNN.@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@mmmmNNM"m`
+                                                                                             `"MMNm@@@@MM""`0NN@NNNNNNNN@///|/-.NNNNNMNNNNNNNNNNNNNNNNNNNM"""MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@__@mM
+                                                                                                   ````  __@@NNNNNNN.-\///--NNNNNM"`_@NNNNNNNNNNNNNNNNNNNM      T"MMMNNNNNNNNNNNNNNNNNNN``   ``T""MMM"`
+                                                                                                  ___wm@@@-NNNNNNN.///--N@@NMM"`   g@NNNNNNNNNNNNNNNNNNNN@_           ``````MMNNNNNMM"-
+                                                                                              `MWNNMMMM"`T-@/.NNNN@NMMNNMM"`     _@@NNNNNNNNNNNNNNNNNNNNNN@_                    T```
+                                                                                                 `        `Mm.@NNMM`            _@NNNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                                                             ``               _@@NN@NNNNNNNNNNNNNNNN.\NNNNNN`
+                                                                                                                             m@NNNN@NNNNNNNNMMNNNNNNNM`````
+                                                                                                                            _@NNNNMMMNNNMT``` ^MMT``
+                                                                                                                             `"` `  `"``
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                    __@@@g_
+                                                                                  _@NNNNNN@_
+                                                                                _@NNNNNNNNN@           ___
+                                                                               @@NNNNNNNNNNNL      _@@@NNN@_
+                                                                              W@NNNNNNNNN-\NNm  _@@NNNNNNNNNmm@@m@_
+                                                                            _@NNNNNNNNNNNNNNN@@@NNNNNNNNNNNNNN@NMM"
+                                                                           _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                          w@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@L
+                                                                         @@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                        @@MWNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                       @NK@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                     _@NMg@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                    _@N`@@NNNNNNNNNNNNNNNNNN||@NNNNNNNNNNNNNN"
+                                                                   @@M"W@NNNNNNNNNNNNNNNNNNN||NNNN/|NNNNNNNN0
+                                                                  @NM_@NNNNNNNNNNNNNNNNNNNN||NNNN/@NNNNNNNNNM
+                                                                  ^`_@NNNNNNNNNNNNNNNNNNNNN..NNN||NNNNNNNNNN
+                                                                   _@NNNNNNNNNNNNNNNNNNNNNNNNNNN.NNNNNNNNNNM
+                                                                   @NNNNNN/-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                  @||NNNNN/.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                 @//@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.NK
+                                                                w@-NNNNNNNNNNNNNNNNNNNNMNNNNNNNNNNNNNNN||M"
+                                                               @@MNMNNNNNNNNNNNNNNNNNNM@NNNNNNNNNNNNNM@|.`
+                                                              _@M`^%BNN.NNNNNNNNNNNMT`WNNNNNNNNNNNNNNNN|M
+                                                              MM   4NN||.NNNNNNNNNN`  "MNNNNNNNMNNNNMH@W`
+                                                                    BNNNNNNNNNNNND`   WNNNNNNNM@NNNNM@NM
+                                                                    `NNNNNNNNNNNM`    ?NNNNNNNM@NNNN`0MK
+                                                                     `MNNNNNNNNM`     `@NNNNNMqNNNND`0
+                                                                        `MNNNNM        MNNNNM @M@NK `K
+                                                                          TT`"`        _NNNK _#`"M` `%
+                                                                                       @K0N` 0M
+                                                                                      @K`WM %M
+                                                                                     `M    `#`
+                                                                                            `
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                ____@@@@@@@@@@@______
+                                                                                                         __w@@N--------------.@NNNNNN@@@,              ____
+                                                                                                    __m@@@N@/-//-/------NN@NNN..NNNNNN@N@m         _@@@@@@@@m___
+                                                                                          ___,@@@@@.-----------NN@@NNNNN@NNN@N--NNNNNNN|@B       _@@@NNNNNNNNNN@@@@@,_
+                                                                                       _@m@NNNNNNNN---.----.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNB    _g@NNNNNNNNNNNNNNNNNNNNNw
+                                                                                       MNNN@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@__@@NNNNNNNNNNNNNNNNMT`
+                                                                                      _,@.--|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN..NNm_
+                                                                                     `MMM""MNMMMNNN---.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN./@@NNNNNNNN@@
+                                                                                                BNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-.NNNNNNNNNNNNN_
+                                                                                                PMMMMMMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@&
+                                                                                                        `@NNNNNNNMNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@
+                                                                                                         `````````fMM``"MMMMMMNNNN/|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@
+                                                                                                                            @@NNNNNNNNNNNNNNNNN.-NNNNNNNNNNNNNNNNNNNNNNK
+                                                                                                                          _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                                                                        _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN||NNN0
+                                                                                                                       _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|@NNM
+                                                                                                                     _@NNNNNNNNN-/|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|||.MK
+                                                                                                                   _@@NNNNNNNNN|/NNNNNNNNNNN/.NNNNNNNNNNNNNNNNNNN|N|@MK
+                                                                                                                _@@NNNNNNNNNNNNNNNNNNNNNN.-NNNNNNNNM"MNNNNNNNN||||||K `
+                                                                                                            __@@@NNNNNNNNNNNNNNNNN-|\.NNM/.NNNNNNM"_@@NNNNN%@N|@|||.`
+                                                                                                         g@@@NNNNNNNNN.-NNN..NNNNNNMMMM@@NNNNNNM"  @NNNNMBM@@||N@||M
+                                                                                                         0NN--NNNMNNNN||NNMMNMM"T`  %@@M@NNNNM`   @NNNM"_0`@N|@@||N`
+                                                                                                         `MNNNNM^@NNNNMM"`  `       ^"`@@NNM`    _NNNM` @K@NN|M@./M
+                                                                                                              `  MMM`                 @NM"       $NNM` @NM@NNNM4NN`
+                                                                                                                                     `M`         H@M   @0@NNNM
+                                                                                                                                                       ?"`M@NL
+                                                                                                                                                          `NK
+
+
+
+
+
+
+
+
+                                        @m`
+                                       `@0_    __
+                                       _@@N   HN@m
+                                       @NNN_  @NNM __
+                                       @NNN@  4N@NmNN_
+                                       HNNNN@ 0NNN`M@N
+                                       `NNNN@NHNNNK B@_
+                                        MNNNNNm@NN@ `0N@@_
+                                      __`0NNNN@@NN@@ mNN\.@@_
+                                      0@m^@NNNNNN@NNw @N.\@NNm_
+                                      '0N_0NNNNN|\.NN@@NNNNNNNN@@_
+                                      m@@N@NN@NNNN.NNNNNNNNNNNNNNNN@m_________
+                                       TMMN@|\\NNNNNN..NNNNNNNNNNNNNN@@@@@N@@@@@@_                _@@@@@@_
+                                     _@m_ `MN\\-NNNNN|\\--NNNNNNNNNNNN..@\\@NNNNN@@m_           _@@NNNNN@@@@@@@N@@m
+                                      "W@@___MNNNN.\-NNN..NNNNNNNNNNNNNNNNNNNNNNNNN@@@_        _@N@NNNNNNNNNNNNNNM"
+                                        `MMNNN@NNNN.-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@_    `@NNNN.-NNNNNNNNNM]@@___@mmmm___
+                                           ``@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-NN@@N_  @@NNNNNNNNNNNNM```"NN@NNNNNN@N@@N__            @@`@
+                                             ``TMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@-|@N@@@@@@NNNNNNNNNNNNNN@@@@@NNNNNNNNNNN@@N@@@__      _@M%@M
+                                                  ^MNNNNNNNN.-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@@M"@M`
+                                                    'MNNNNNN.\NN..NNNNNNNNNNNNNNNNNNNNNNN./NNNNNNNNNNNNN/\NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM_@M`
+                                                      `MNNNNNNNN/|NNNNNNNNNNNNNNNNNNNNNNNN\@NNNNNNNNNNNN//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@NM`
+                                                        `"MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-NNNNNNNNNNNNMM"
+                                                           `MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                             `MNNNNNNNNNNNNNNNNNNN/-NN||NNNNNNNNNNNNNN--NNNNNNNNNNNNNNNNNNNNNNNNNNNM"T`
+                                                               [MNNNNNNNNNNNNNNNNNN@N//.NNNNNNNNNNNNNN--@NNNNNNNNNNNNNNNNNNNNNNN@-@@m
+                                                                 `MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|NNNNNNNNNNNNNNNNNNNNNNNMMMMMT"````
+                                                                    ``MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMMMM"` `
+                                                                         `MMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMMT
+                                                                               `@NNNNNNNNNNNN-NNMNNNNMMMMMMM"
+                                                                             _@@NNNNNNNNNNNNNM`    `
+                                                                          __@@NNNNNNNNNNM`0M`
+                                                                      _@@@@@NNNNNNNNNNNN"
+                                                                    _@@NNNNNNNNNNNNNNNN"
+                                                                   m@@NNNNNNNNNNNNNNMM`
+                                                                   `0MTT`````TTMMMNM
+
+
+
+
+
+                                                                                                               _,
+                                                                                                         `@@` m@K
+                                                                                                          M@m m@M  _,
+                                                                                                        %@`BN@m@M mNM
+                                                                                                        4@`[WNm0K mNL
+                                                                                                       _'WK ^NN@@__0@L
+                                                                                                      `@m0@m @NNNNN@0@`
+                                                                                                       %@MNN%@NNNN@@@NN
+                                                                                                       `BmH@@@NNNNNNNNNN
+                                                                                                        J@L@NNNNNNNNNNN@L
+                                                                                                         @NNNNNNNNNNNNNNNm
+                                                                                                       __0N@NNNNNNNNNNNNNNN_
+                                                                                                       JN@NNNNNNNNNNNNNNNNNNm
+                                                                                                        ^0NNNNNNNNNNNNNNNNNN@@@_
+                                                                                                         `MNNNNNNNNNNNNNNNNNNNN@@_
+                                                                                                          `@NNNNNNNNNNNNNNNNNNNNNNNm
+                                                                                                           RNNNNNNNNNNNNNNNNNNNNNNNN@m
+                                                                                                           `BNNNNNNNNNNNNNNNNNNNNNNN@N@.
+                                                                                                            4NNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                                                                                                             MNNNNNNNNNNNNNNNNNNNNNNNNNN@m.                    __
+                                                                                                             `NNNNNNNNNNNNNNNNNNNNNNNNNNNN@_       _@@@N@@@@@NNNNN@,
+                                                                                                              ^NNNNNNNNNNNNNNNNNNNNNNNNNNNN@_  __@@@@NNNNNNNNNNNNNM"
+                                                                                                               ^0NNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@NNNNNNNNNNNNNNMM"
+                                                                                                                JNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                                                 ^NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM^
+                                                                                                                  'MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                                                                   `MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@_
+                                                                                                                      TMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@
+                                                                                                                         ``^NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@g_
+                                                                                                                            ^NNNNNNNM@NNNNNNNNNNNNNNNNNNNNNN@N@@@@__
+                                                                                                                              MMNNNM@NNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@_
+                                                                                                                                   m@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN,
+                                                                                                                                  _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@_
+                                                                                                                               _@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNg_
+                                                                                                                            _@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                                                                                                                         __@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNm
+                                                                                                                       `@@NNNNNNNNNNNNNNNNMMNMMNN.\NNNNNNNNNNNNNNNNNNNNNNN@.NN
+                                                                                                                        ^NNNNNNNNNNNNNNNNM  `  ^NN\\|NNNNNNNNNNNNNNNNNNNNNN\.N,
+                                                                                                                         `MNMNNNNNNNNNNNM       ^NN.\|NNNNNNNNNNNNNNNNNNNNNNNNN_
+                                                                                                                            `MNNNNNNNNNN`        `MNNNNNNNNNNNNNNNNNNNNNNNNNNNN@m
+                                                                                                                              TWNNNNNNNK           TNNNNNNNNNNNNNNNNNNNNNNNNNNNNN,
+                                                                                                                                `MNNNNN              "MNNNNNNNNNNNN.\-NNNNNNNNNNNN_
+                                                                                                                                  '0NNN                'MNNNNNNNNNNN.\|NNNNNNNNNNN@_
+                                                                                                                                    MM"                   TMNNNNNNNNNNNNNNNNNNNNNNN@@
+                                                                                                                                                             ^MN@MWNNNNNNNNNNNNNNNNNNN_
+                                                                                                                                                                `Mw_TMMNNNNNNNNNNNNNN@@@@_
+                                                                                                                                                                       ^NNNNNNNNNNNNNNNNNNm__
+                                                                                                                                                                        `MNMNNNNNNNNNNNNNNNNNN@@@,_
+                                                                                                                                                                          `MHWN@MNNNNN--NNN@__TTMM`
+                                                                                                                                                                             `0NL`MNNNNNNNMMMN@L
+                                                                                                                                                                               M@w `MN@m__    `
+                                                                                                                                                                                `M%,  'MN@m
+                                                                                                                                                                                         ``
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                  __m@@@@@_____
+                                                                                                _@@N@NNNNNNN@NN@@@g
+                                                                                              _@NNNNNNNNNNNNNNNNNNM`
+                                                                                      _@@@@@@@@NNNNNNNN.@NNNMM"``
+                                                                                   _@@@@@@@@NNNNNNNNNNNNNNM`
+                                                                                  @@@N@@NNNNNNNNNNNNNNNNN@@@@_
+                                                                                _@NNNNNNNNNNNNNNNNNNN|NNNNNNN@@
+                                                                               m.|@NNNNNNNNNNNNNNNNNN|@NNNNNNNNm
+                                                                             _@/|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                            _@||NN/NNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                                                           _@@@NN..NNNNNNNNNNNNNNNNNNNNNNNNNNNNN@
+                                                                          _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@
+                                                                        _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                      _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-NK
+                                                                     @@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN||NM
+                                                                   _@NNNNNNNNNNNNNNNNNNN.NNNNNNNNN.NNNNNNNNNN||M
+                                                                  @@NNNNNNNNNNNNNNNNNNNMNNNNNNNNNN.NN-NNNNNNN||M
+                                                               __@NNNNNNNNNNNNNNNNNNNNM `BNNNNNNNNNNN|@NNNNN.|N`
+                                                             `@@@NNNNNNNNNNNNNNNNNNNNNM  'BNNNNNNNNNN|NNNNNN||N`
+                                                              `MMNWMNNNNNNNNNNNNN|NNNN`   `NNNNNNNNNN|NNNNNN|.0
+                                                                  `%@NNNNNNNNNNNN|NM@0     @NNNNNNNNN|NNNNNN|NK
+                                                                   @NNNNNNNNNNNN||M`@M     @NNNNNNNNNNNNNNN||NL
+                                                                  `NNNNNNNNNNNNN||M@N      @NNNNNNNNNNNNNNNN@M
+                                                                  mNMNNNNNNNNNN@|M_@K     qN@NNNNNNNNNNNNNNNNK
+                                                                  @N@K@NNNNNNNNNN`#M      HN@NNNNNNNNNNNNNNNN`
+                                                                  @M0@NNNNNNNNNNK         HNN`@NNNNNNNNNNNHN0
+                                                                  T@R@NNNNNNNNNM          HNNm@NNNNNNNNM@MHNM
+                                                                   0M@-NNNNNNNM`          HNMmNNNNNMNNN%BKJNM
+                                                                  _M_.|NNNNNNNM           `` @N"BNK@NNK@NM`0m
+                                                                 _@`@||NNNNNNK              _@K_NN`@NNK@N`
+                                                                 f"@MM@NNNNNM               4NK@NM@NNN @B
+                                                                  -M`@@NNNNM                   @0`@NNM @M
+                                                                    _@NNNNR                    #MmNNNM
+                                                                   g@M@NM"                       4NNM
+                                                                  `WM@NM                         4NN`
+                                                                    mM`                          `^"
+
+
+
+
+
+
+
+
+                                                                                                                                  ____@@m_
+                                                                                                                             __@@@@@@NNNNN@           _@@@@@@@____@@____
+                                                                                                                         _m@@@@@@@N--/.NNNN@_      _@@NNNNNNNNNNNNNNNNNNK
+                                                                                                                     _@@@@@@@@@NNNNNNNNNNNNN@@_  @@NNNNNNNNNNNNNNNNNNM`
+                                                                                                                  _@@@@@@@@N/@NNNNNNNNNNNN-.NN@@@NNNNNNNNNNNNNNNNM"`
+                                                                                                                _@@@@@@NNNNNNNNNNNNNNNNNNN--NNNNNNNNNNNNNNNNNNNM`
+                                                                                                             _@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                                           _@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN/@NNNNNg_
+                                                                                                         _@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN/@NNNNNNNN@@_
+                                                                                                       _@-/|@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|NNNNNNNNNN_
+                                                                                                     _@@./-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                                                    m@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                                                   @@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                                                  `@NNNNNNNNNNNNNNMMMMMMMMM""`]QNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNL
+                                                                                                  @NNNNNNNNNNNM"``          _@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                                                 `@@NNNNNNMMT`           _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                                                 m@NNNNM"`            m@@NNNNNNNNMNNNNNN.-@NNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                                                w@NNMM                 "WNMMMM"Tm@@NNNNN.-NNNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                                                 `""                 ,_______m@@MM"0MM````MMMMNNNNNNNNNNNNNNNNNNNNNN
+                                                                                                                     ^MMMMMMMM"`             `0N|@N.-NNNNNNNNNNNNNNN
+                                                                                                                                              4N|.NNNNNNNNNNNNNNNNNM
+                                                                                                                                              HNNNNNNNNNNNNNNNNNNNNM
+                                                                                                                                              HNNNN.NNNNNNNNNNNNNNNM
+                                                                                                                                               `TBN|NNNNNNNNN@NNNNM
+                                                                                                                                                 0NNNNNNNNNNM@NM@NM
+                                                                                                                                                 4NNMHNNNNNMHNMWNN`
+                                                                                                                                                 `NN`@NMMNN`@NK'WM
+                                                                                                                                                 m@0`0@%@NM`@@`
+                                                                                                                                                 4NK@@M_@K @N@`
+                                                                                                                                                 4MK0@K@@K 0NM
+                                                                                                                                                   `@M_@M` `T
+                                                                                                                                                   _@K@@M
+                                                                                                                                                   mNMNN`
+                                                                                                                                                      `^
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                        mm_
+                                                                                                     ___@@@@_
+                                                                                                   __"MM@@@NN
+                                                                                                  `MMm__@NNNN
+                                                                                                    _?M@NNNNN
+                                            __         ,___                _____@@@@@@@@@g_        @@@@NNNNNN`
+                                           `M@@@__     N@@@@@@@@_________@@@@@@@@@@@@-/@@@@@_      ^NNNNNNNNN`
+                                            `"MN@@@@m__`BNNNNNNNNNNNNNNNN@NNNNNNNNNNNNNNNNNNN       `BNNNNNNN__
+                                               `""TTMMNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNm       @NNNNNNNN@@@@@@___
+                                     _mmm_____   `m@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN      @NNNNNNNNNNNNNNNNNNN_
+                                     `MMMNNN@@@@@@@NNNNNNNNNNNNNNNNN|-/----|NNNNNNNNNNNNNNNNNNm   _@@NNNNNNNNNNNNNNNNNNNM%
+                                           `TTTTT@MMNNNNNNNN/.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@__@@@NNNNNNNNNNNNNNMMT`
+                                          m@@NNNNNNNNNNNNNNN.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@NNNNNNNNN@@NNMM"
+                                               `@NNNNNNNNNNNN..NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"
+                                               `NNNNNNNNNNNN--\M/-\|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                 ``T`````` ``"TTTMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                      ^NNNNNN|NNNNNNNNNNNNN.NNNNNNNNNNNNNNM`
+                                                                       `MNNNN|.NNNNNNNNNNN||NNNNNNNNNNNNNNK
+                                                                         `NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                          'WNNNNNNNNNNN.NNNNNNNNNNNNNNNNNN`
+                                                                           HNNNNNNNNNNN\\NNNNNNNNNNNNNNNNM
+                                                                            0\.NNNNNNNNN||NNNNNNNNNNNNNNM
+                                                                            @.-NNNNNNNNNN\|NNNNNNNNNNNNM
+                                                                         _@@@NNNNNNNNNNNNNNNNNNNNNNNNN"
+                                                                       _@@NNNNNNNNNNNNNNNNNNNNNNN-NNM`
+                                                                     @@@NNNNNNNNNNNNNNNNNNNNNN///mM`
+                                                                  _@@NNNNNNNNNNNN/-/|\NNNNN|///#"
+                                                              __@@NNNNNNNNNNNNNNN.-.NN@NNMMM^^`
+                                                         g@@@@@NNNNNNNNNNNNNMNMMMMNNMMT`
+                                                        _@@@@N@NNNNNNNNNNMM`      `
+                                                        H@NNNNNNNNNNNNNM`
+                                                         HNNNNNNNNNN@M"
+                                                          `NNNNNM@NMM
+                                                           `MNM` #K
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                     __@@@@@m_@@@@@m               _`
+                                                                                                                                                    @@N@@NNNNNNNNNMM             _@K@m
+                                                                                     @@_     ww_                                                  @@@NNNNNNNNNNMM`             _@@@NM`
+                                                                                     0N@m   m@@@mm_                       __mm@@@@@@mmw_        _@@NNNNNNNNNNNM`____       __m@@NNN"
+                                                                                     MN@@@_ 'MN@@N@@@@@___          ____@@@@@@@@@@@@@@@@@@_    @@NNNNNNNNNNNN.@@@@@@@@@@@@@@@NNNNNK
+                                                                              _mm_    `MN@@m__`^MMMN@N@N@@@@@@@m@@@@@@@NNNNNNNNNNNNNNNNNNN@__g@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"
+                                                                              [N@@@@__   `HNN@m__   ```"`TTMMMM@@NNNNNNNNNNNNNNNNNNNNNNNNNN@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM`
+                                                                              4N@@N@@@@mm__ `MWMN@@@@mm@m@@@@NNNNNNNNNNNNNNNNNNNNNNNN.-NNNNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNN/-|M`
+                                                                                `"MMMM@N@@@@@@@@@Z]@@NNNNNNNNNNNNNNNNNNNNNNNN-.NNNN|-/\.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|/|@N@
+                                                                                        ``"MMMM""@N@@NNNNNNNNNNNNNNNNNNNN/||/|@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                              `@@@@@@@@@@@@@@@@mm-@.-.NNNNNNNNNNNNNNNNN--/-.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"
+                                                                              `0NNNMMNNMMMT``[@\-|@NNNNNNNNNNNNNN@||/.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMTT
+                                                                            ,   ``` `_____@@@@N@@NNNNNNNNNNNNNN||@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                            0@@@@@@@@NNNMMMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"
+                                                                            fMMMMMMMM`            @NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM`
+                                                                                                  @NNNNNNNNNNNN\|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM"
+                                                                                                  ^MNNNNNNNNNNNN.N--.NNNNNNNNNNNNNN.NNNNNNNNNNNNNNNNNNNNNMM`
+                                                                                                    `"MNNNNNNNNNNNNNNNNNNNM@NNNNN..NNNNNNNNNNNNNNNNNNNNM"
+                                                                                                       ``TMMMMMMNNNNNNNNNNNNNNNNN@@NNNNNNNNNNNNNNNNM"`
+                                                                                                                ?MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                                                  `TMMMMMNNNN||NNNM"@@NNNNNMMBNN@@m
+                                                                                                                          ```@NNNM  @NNNNN@@_ `^@N@`
+                                                                                                                           _@NNN"    `TT`"WNM  @NM"
+                                                                                                                         _@@NNN`          0M`  4M
+                                                                                                                        @@NNNM%           '
+                                                                                                                      _@NNNM`
+                                                                                                                     `@NMMM`
+                                                                                                                      %M
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                             `__@@_
+                                                                                                                            `@@NN@N
+                                                                                                                             @NNNNM`
+                                                                                                                          _@@@NNNNNm
+                                                                                                                          @N@NNNNNNM
+                                                                                                                          @NNNNNNNN`
+                                                                                                                          @N||NNNM`
+                                                                                                                         @N@||NNM
+                                                                                                                        @N@@NMM`
+                                                   ,@@                                                              __@@NNMT`
+                                             ,,    ^WNm                                                           _m@@@NMM
+                                             ^W@_   ?@@,                                                        _@@@NNMM
+                                          wm  `MN@_  ^N@m                          ___@@m@,                   _@@NNMM`
+                                          ^NK   fN@@_ `M@@,_           ________@@@@@@N@@@@@@                _@@NMM"
+                                           `M@_  `MNNm_ ^MN@@mmg@@@@@@@@N@@@@@@NN@NNNNNNNNN@@__         _@@@@N@N_
+                                             "M@____"MN@@__TMNNNNNNNNNN@@@@@@@@NNNNNNNNNNNNNN@N@__   _@@@NNNNNNN@@@______
+                                               `@NNNN@@@N@N@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@m@@@@@NNNNNNNNNNNNNNNNN@m_
+                                         M@m__ `@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNNNNNNNN\.NNNNNNNNNMMM"
+                                          `TMMNNNNNNNNNNNN.-MNNNNNNNNNNNNNNNNNNNNNNNNN.NNNNNN///@NNNNNNNNNNNN@@NNNNNNMT`
+                                              ```QNNNNNNNN/|@NNNNNNNNNNNNNNNNNNNNN---/-@NNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                        `MNNNN@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN//@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                ``"^MMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM`
+                                                       `TMNNNNNNNNNNNNNNNNNNNNNN/|NNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                           `^"MMMNNNNNNNNNNNNNNN\\.NNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                 `TTMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                     `MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"
+                                                                         TMMMNNNNNNNNNNNNNNNNNNNNNNN.NNNN`
+                                                                           _g@NNNNNNNNNNNNNNNNNNNNNN/NNM`
+                                                                         _@@NNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                       _@@@NNNNNNNNNNNNNNNNNNNNNNNNNMM
+                                                                     q@NNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                  _@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                                               _@@@NNNNNNNNNNNNNNNNNMMMMNNNNNNMTMNNNN@`
+                                                             _@M@@NNNNNNNMM"``````     TTT``@N@_  @NMM
+                                                          _@@M"_0NNNNMM``                 _@@NM`__@Nm
+                                                        _@NM__@@NNMM"                    mMNNM` 0NNMM
+                                                        `^_@@N@MM`                         '`     `
+                                                       _@@NM@M"
+                                                      @@M^  `
+                                                      ``
+
+
+
+
+
+
+
+                                                                                                                                                            __
+                                                                                                                                                       __@@@@M
+                                                                                                                                              ________@@N@@NM`
+                                                                                                                                           _@@@NNN@@@@@NNNM`
+                                                                                                                                          _@@@NNNNNNNNNNNK
+                                                                                                                                          @@NNNNNNNNNNNM"
+                                                                                                                        __m@@@mm_       _@@NNNNNNNNNNNM`
+                                                                                   @@@__                          ___@@@@@@NNN@@@@____@@@@NNNNNNNNNNNM` _m@@@@@@_
+                                                                                   0N@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@NNNNNNNNNN@NNNNNNNNNNNNNNNNM_@@@@NNNNNN@@_
+                                                                                @m@_]]MMMMNN@NNNNNNNNNN@@@@@@@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@NNNNNNNNNNNNN@
+                                                                                @@@NNN@@@@@NN@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-NNNNNNNNNNNNNNN@@__
+                                                                                @@NNNMMMMMMMMMMM]_@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.NNNNNNNNNNNNNNNNNNN@g`
+                                                                          _______T""_`   @@@@@@@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                      `m@@@@@@@@@@@@@@@m@@NN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN||NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNM`
+                                                                      `@@@NNNNNNNNNN@NNMMMMNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                                                                       `^MMMMMMMMMM""___@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                                                            ___@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.-NNNNNNNNNNNNNNNNNNNN@MMNNNNNNM
+                                                                         `@@@@@@@@NMMWNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNNNN@|/.NNNNNNNNNNNNNNN.@NN@N_ `MNNM
+                                                                          @NNNNM"``  0@NNMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN///.NNNNNNNNNNNNNNNN||NNNNNm_  `
+                                                                                     fM&@@@NNNNNNNNNMMMMNNNNNNNNNNNNNNN/-|NNNNNNNNNNNNNNN|/.NNNNNNNNNNNNNNNNNNNNNNNNNNNw
+                                                                             mwwmmmm@@@NMMMMM^MM"````_@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                            `@@@@NMMMM``            $@@@NNNMMTMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMMMNNNNNNNNNNNNNNN@NNNNm
+                                                                             MMM"`                  ^"````    `MMNMMM@NNNNNNNNN@/NNNNNNNM0@NNMMM` `"``^MMNMNNNNNNNMMMNNM
+                                                                                                                   _@@NNNNNNNNNNNNNNNNN" `0M"            ' "MMMNN@_   `
+                                                                                                                  4N@NNMMQNNNNNNNNNNNNM                        `0@`
+                                                                                                                  `""`__@@NNNNNNNNN||0`                          `
+                                                                                                                   _m@@NNNNNNNNNNNNNN`
+                                                                                                                   'MM"`0NNNNNNNNNNNK
+                                                                                                                       'MMM@NNNNNNNK
+                                                                                                                          `0MNNNNNNM
+                                                                                                                             `NN@T"
+                                                                                                                              MM"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                           _
+                                                  @@       @@@
+                                                  0@m     `@@N@g_                     __@@mmmm__
+                                                 `0@@@    `M@@@@@@_    _@@@@@@@@@@@@@@@NNN@@@@@@@__
+                                                  ^M@@m    `MN@@@@@N___0NNNN@@@NN@@NNNNNNNNNNNN@@@@m_
+                                                   `0@@&_    "MNNNN@@N@@NNNNNN.-NNNNNNNNNNNNNNNNNN@@@@
+                                          __        '0@N@m____ _@MM@NNNNNNNNNNN.NNNNNNNNNNNNNNNNNNNNNN@_
+                                          4@K_@_     'M@@NNNN@@@@NN@NN||NNNNNNNNNNNNNNNNNNNNNNNNNNNN||@N@_       _____@@_
+                                           `MNN@Nm@@@_lMNNNNNNNNNNNNNN/@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@___@@NN@@@@@@__  _____mm@@@@@mm_
+                                              `^MNN@N@@_@MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNNNNNN@@@@@@@@@@@@@@@@N@@@@__
+                                                  ``TMMMNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@@@NNNNNNNNNNN@N@@@m_
+                                     `__             `___`]]`]]@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\\@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@m_
+                                      MW@@@@___@@@@@@@@@@@@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN./.NNNNNNNNNNNNNNN@@@@g__g___,
+                                        ^MM@@@@@@@@@NNN@NMNMMMMMTM@NNN|-|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@M`
+                                            `TTTTTT""""``   _g@@@@@NNN/-.NN-/NNNNNNNNNNNNNNNNNNNNNNNNNNNN.-///@NNN-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM.
+                                                            'MMMMMMMMMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN--.NNNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMMT``
+                                                                          T0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@m
+                                                                           ````"MMMMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                    __@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                                 __@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN./NN/-\NNNNNMMNN`
+                                                                               _@@NNNNNNNNNN/|||-/|NNNNNNNNNNNNNNNNNNNNNNNNNNNN/|NNNNNN|/|NN|||\\NNNN`
+                                                                              _@NNNNNNNNNNNNNNN.@N.@NNNNNNNNM`^TM""""MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                             @@NNNNNNNMMNNNNNNNNNNNNNM@NNNM`          `MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNm
+                                                                            _@NNNNNNNM`@NMMMMTTTM"T@M`@NM`                ``` `TTTMMNNMMNNNNNNNNNNNMT`
+                                                                           _@NNNNNMM   ``         @M` ^"                                 `"""MMM""""
+                                                                          @N@NNNM"             ,_@M`
+                                                                        _@NNNMM`            -m@mMN`
+                                                                       _@NNNM`              fM`mM`
+                                                                      @@@NM`
+                                                                     mN@M"
+                                                                     HM`
+
+
+
+
+
+
+
+                                                                                                                                                _@@@@@@g_
+                                                                                                                                              _@@N@@N@@@@mmg_
+                                                                                                                             ______          @@NNNNNNNNNNNNNK
+                                                                                                                       _g@@@@@@@@N@m_       @@NNNNNNNNNNNNMM`
+                                                                                                                   _@@@@@NNNNNNNNN@@@@_   _@@NNNNNNNNNNNNNK
+                                                                                                                gm@@@@N@NNNNNNNNNNNNNNN@@@@NNNNNNNNNNNNNNM`      ___@_
+                                                                                                            _@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`   __@@@NNN@@_
+                                                                                                        _@@@NNNNNNNNNNNNNNNNNNNNNNNNNN.-.NNNNNNNNNNNNNNM`_m@@@NNNNNNNNN@@_
+                                                                                                    __@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-NNNNNNNNNNNNNNNN@NNNNNNNNNNNNNNNN@@_
+                                                                                                __@@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.\-NNNNNN@@_
+                                                                                             _@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\\|\NNNNNNNN_
+                                                                                          g@@@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\\|NNNNNNN@@_
+                                                                                       q@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNm_
+                                                                                       JN/.NNNNNNNNNNNNNNNNNNNNNNNNNNNNN-/|@NNNNNNNN|/NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@_
+                                                                                     __m@MNNNNNNNNNNNNNNNNNNNNNNNNNNNN||/NNNNNNNNNNN.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@w
+                                                                                  _@@NM"_@@NNNMNNNNNNNNNNNNNNNNNNNNN.--@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@m
+                                                                                  4M"_@@NNNM"`g@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@m
+                                                                                  _@@@NNNM` _@N@MM]@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN..NNNNNNNNNNNNNNNNNNNN.|NNNNNNNNNNNNNNN@@
+                                                                                 @@@@NMT`_@@NNMT_@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN||NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM`
+                                                                                 @N@M`_@@NN@M"_@NNNNNNNNNNNNNNNNNNNNNNNNN-//.NNNNN.//@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNm
+                                                                                 MM%@@NNNMM"@@NNNNNNNNNNNNNNNNNNNNNNNN|/|||.NNNNNN//.NNNNNNNNNNNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                                   @@N@M` %@NNNNNNNNNNNNNNNNNNNNNNNNNN|||//NNNNNN|/NNN..NNNNNNNNNNNNNNNNNM^MNNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                                                                                   0NTT   4MM@@NNMHNNNNMMMMMMMMMMNNNNN|/|NNNNNNNNNNNNN|.NNMMMMMMMMMMMT"     "MNNNNNNNNNNNNNNNNNNNMWNNNN@_
+                                                                                   #`     ` `0NM   TM^`           `"@NNNNNN./NNNNNNNN.|@NM                    `R@NNNNNNNNNNNNNNNNNJNNNNNM
+                                                                                                                 _@@@NNNNN/|.NNNNNNNN||@N`                      T"MNNNNNNNN@`0NNNNKMNNNK
+                                                                                                                gN@@NNNN.//@NNNNNNNNN||NK                          `M '0NNNNK[NNNNNmMM"
+                                                                                                               4N@@NNNN|/.NNNNNNNNNN|||N`                              JNNNNK 'NNNN@_
+                                                                                                               @@@@NNNN@NNNNNNNNNNNN||NK                                `M@NN` `NNNM"
+                                                                                                               0@@NNNNNNNNNNNNNNNNN||@N`                                 mM"`   ^"`
+                                                                                                               `^MMMMNNNNNNNNNNNNNNN@NM
+                                                                                                                     mNNN"MNNNNNNNNNNN`
+                                                                                                                      MNM @@NNNNNNNNNM
+                                                                                                                          "MMNNNNNNNM`
+                                                                                                                             `0NNNNM
+                                                                                                                               ` MM`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                         $@,_                       ___@@@@@N__
+                                                         4@@@@@@m@@@_____     __g@@@@@@@@@@NN@@@mm___                __
+                                               HN__      JNNNNNNNNNNN@@N@@@@@@@@@@@@NNNNNNNNN@@@@@@@@@@@_          _@@@@@_
+                                               JN@@@@m_______`@N..NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@_      @@@@@@@@@N_
+                                                fNN@@@NNNNNN@@NNNNNNNNNNNNNN\|NNNNNNNNNNNNNNNNNNNNNNNNNNNN@@,__@@NN@@@@N@@@@@@
+                                         __       `TM@NNNNNNNNNNNNNNN//.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@NNNNNN.NNNNNN__g@mmm__
+                                         0@mg_____   ^NNNNNNNNNNNNNNN.NNNNNNNNN|--||NNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNN.@NNNNNNN@NNN@@@@m
+                                         "WNN@@N@@@@@@NNNNNNNNNNNNNNNNNNNNNNNNN.--@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@
+                                           ^MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@_
+                                       _,     `MMNNNN---/NNNNNNNNNNNNNNNNNNNNN--/|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@_
+                                      m@@@___  _@@@@@.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                       "MMN@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@
+                                          `^MMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@
+                                               _@NNNNNNNNNN-/|NNNNNNN.-.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                                              HNNNNNMM`T`0NNNMMM`_@@N.\|NNNNNNNNNNNNNNNN.--NNNNNNNNNNNNNNNNNNNN--NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                               ^""T`     4MM"`  HMM"T"MMNNNNNNNNNNNN.NN-|/.NNNNNNNNNNNNNNNNNNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@_
+                                                                         `TMMNNNNNN..NNNNNNNNNNMMM@N|@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@Nm
+                                                                              ``TMMMMMMMMMTT``   `@NNN/.NNNNNNNNNNNNNNNNNNNNNNNNN-NNNNNNNNNNNNNNNNNNN__
+                                                                                                 @NNN@@NNNNNNNNMBMMM?MNNNNNNNNNN.-\NNNNNNNNNNNNNNNNNMMT
+                                                                                                _@NNNNNNNN-NNM`0M     ^MNNNMMMMNNNNNNNNNNNNNN`MN@MMNNm
+                                                                                                @@NNNNNNN|--.@@`        `TMM    `T"MMMMMMMMKMN` `
+                                                                                               @NNNNNNNNMMMMMNM                             `Rm
+                                                                                              @NNNNNNNN"    @M
+                                                                                            _@@NNNNNNN"   m@NK
+                                                                                            @@NNNNMNM`    ^MN"
+                                                                                           @NMMM`` T       '"
+                                                                                          @@M`
+                                                                                        _@NM`        __
+                                                                                       _@@M`,_       @@@_
+                                                                                       @@M``@@@__   `0N@@@@___                                        _
+                                                                                      mNM^  TMNN@mm__BNNN@@N@N@m@@@@@@m@mmmm@@@@@__                @@@@mw@_____
+                                                                                       "       `TMMNNNNNNNNNNNNNNNNNNNNN@NNNNNNN@@@@_           _@@NNNNNNN@@@@R
+                                                                                        `@@mm@_____````MNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_        _@@NNNNNNNNNNNNM`
+                                                                                   __   `@@@@@N@@NN@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_     _@NNNNNNNNNNNNNM
+                                                                                   @@@___T"]"""MM@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@_  @@NNNNNNNNNNNNNM
+                                                                                   0N@@NN@NN@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@NNNNNNN.NNNNN"
+                                                                                   ^MMNNNNMMMMM@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.@N@M`
+                                                                                              `NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@___@@@@_____
+                                                                                        __    qNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNN@@@@@N@@@m_                   ,
+                                                                                       HN@@N@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@__             _@M
+                                                                                       @@@@@@NNNNNNNNNNNMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@m@@_,   _@@NM
+                                                                                       ^MN@NMMM`MMMM"``  ^MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@NNNM
+                                                                                                             `TT"MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"____ww
+                                                                                                                  `MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@m@@@NNM"`
+                                                                                                                     `MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"T
+                                                                                                                        `MNNNNNNNNNNNNNNNNNNN---NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                                                           `MMM.NNNNNNNNNNNNN|\|@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@
+                                                                                                                            _@@NNNNNNNNNNNNNNNN-@NNN\|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMMM`
+                                                                                                                         _@@NNNNNNNNNNNNMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                                                       _@@NNNNNNNNNNNNNNNNNNM``MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@mm_-
+                                                                                                                    g@@@NNNNNNNNNNNNNNNNNNNNL    'M0``TT"MMNNNNNNNNNNNNNNNNNNNNNNNN/.|MMM``
+                                                                                                                 `m@@@@NNNNNNNNNNNNNNNNNNNNK                `TTMMNNNNNNNNMMMNNN@NNMMC`
+                                                                                                                 `NN@@NNNNNNNNNNNNNNNNNNNNM`                     `"""`"""   `` ^^`
+                                                                                                                  4@@NNNNNNNNNNNNNNNNNNNNN`
+                                                                                                                  '"MMMNNNNNNNNNNNNNNNNNNM
+                                                                                                                       `TMMNNNNNNNNNNNNNM`
+                                                                                                                           `NNNNNNNNNNNN`
+                                                                                                                            ``0NMTm@NNM`
+                                                                                                                                   0NNM
+                                                                                                                                   0@M
+                                                                                                                                   ^"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                          0@__      `@@@@,__
+                                          0@NN@mg__ `0@@@@@@@@m_              _____g@g@g_                            _
+                                          4NNNNNNN@@@@@N@NNNNN@@@@__@@@@_@@@@@@@@@NN@NNNN@@@g_               __@@@@@@@@w
+                                           MMMWN@NNNNN@@NNN@.-N.-\NNNN.-/@NNNNNNNNNNNNNNNNNNNNm@          _@@@NNN@@@NN@@@@__
+                                      _        `TN@NN@NNNNNNNNNN@.@NNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@__    _@@NNNNNNNNNNNNNNNNN@@@_
+                                     `@@@m@@@@___``TMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\\N@@@@NNNNNNNNNNNNNNNNNNNNNN]
+                                     `@NN@@@@@@@@@@@@__]ZMMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.--@NNNNNNNNNNNNNNNNNNMM"`````
+                                      4NNNNN@NNNNNNNNNNNN@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"`
+                                       ``"MMMMMNNNNNNNNNN@@@@N.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@______________
+                                       $w______``TTMMMNNN-////||NN..NNNNNNNNNN-NNN.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNN@@@@@@_
+                                       @@@@NNN@@@@@@@@@NN--.NNNNNNNNNNNNNNNNN.-@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@N,
+                                       4NNNNNNNNNNNNNNNNNNMMMMNNM@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.NNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                                       `M^MMMMMMMMMMMMMM"`____@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-@NNNNNNNNNNNNNNNNNNNNNNNNNNN,
+                                                  ___@@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@._
+                                                  @NNN@NNNMMMM"]m@NNNMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|\N
+                                                  `MMMM`"}__@@@@@@NNN@@N@@`TMMNNNNNNNNN.-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@N_
+                                                         0N@@NN@@NNNNNMM"'`    ``'""^MMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@g__
+                                                         0@N@@NN@NM````               _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\NNNNNNNNNNN@@@@_
+                                                         'T``T```                   _@@NNNNNNNNNNNNNNNMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN-@NNNNNNNNNNNNNNN@@@mmm
+                                                                                   @@NNNNNNNNNNNNNNNNM`^MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"`
+                                                                                _@@@@NNNNNNNNNNNNNNNN`    `MMNNNNNNNNNNNNNNNNNNNNNNNNNNN||NNNNNNNNNNNNNM"""
+                                                                               q@NNNNNNNNNNNNNNNNNNNM        ^MMMMMMNNNNM---NNNNNNNNNNNN.\\NNNNNNNNNN@@@_______
+                                                                             _@@NNNNNNNNNNNNNNNNNNM"                  ``TMNNNNNNNNNNNNNNNN|\-.NNNNNNNN@@@@N@@@N@K
+                                                                          _g@NNNNNNNNNNNNNNM"`@NNM`                           ^MNNNNNNNNNNN.-@NNNNNNNNNNNN@NNK`'`
+                                                                         _@@NNNNNNNNN-NNM"   ^MM`                               M`TMNNNNNNNNNNNNNNNNNNN` `"`
+                                                                      _@@NNNNNNNNNNMMNM"                                             `0NNNNNNNNNNNNN]`
+                                                                     m@NNNNNNNNMM`                                                    `T`TMNNNNNNNKT`
+                                                                     `NNNNNMMT`                                                            ``T``______mg,
+                                                                     JMMMM"                                            ______g_              _@@@NN@@@NNM
+                                                                                                                 __@@@@@@@@NNN@@_          _@@NNNNNNNNNM
+                                                                                                           ___@@@@@@N@NNNNNNNNN@@_       _@@NNNNNNNNNN"
+                                                                                                        _@@@@@N@NN.-@NNNNNNNNNNNNN_     _@@NNNNNNNNNM`
+                                                                                                    __@@N--NN@NNNNNNNNNNNNNNNNNNNNN_ __@@@NNNNNNNNNK
+                                                                                                __@@NNN@N--@NNNNNNNNNNNNNNNNNNNNNNN@@NNNNNNNNN.@NNN`
+                                                                                             _@@@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|@NNN`
+                                                                                         _g@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK  _______
+                                                                                     __m@NN@-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@NN@@@@@m_
+                                                                                   _@@NM@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                               _m@@@M]%@NNNNNMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN..NNNNNNNNNNNNNNNNNNNNNm@
+                                                                               @NMMG@@NNN@MM%@NNNNNNNNNNNNNMMMT@@@NNNNNNNNNNNNNNNNNNNNNNN.@NNNNNNNNNNNNNNNNNNNNNM@M
+                                                                               ]_m@@N@NMM`_@@NNNNNNNNNNMMT]@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@N
+                                                                             _@@.//.NM`_@@@@NNNNNNNM""` @@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNm
+                                                                            _@N-//M"`_@MM@@@@NNMM"     @@NNMMM"`0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                            #MNNM"__@M" m@NMM`         M^`      HMMM@.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                             @M^_@@M"   f"`                        _@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                            `" _@M"                               _@NNNNNNNNNNNNNNNN-@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@m
+                                                                               ``                               g@N@NNNNNNNNNNNNNNN/@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@
+                                                                                                              _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNL
+                                                                                                            _@NNNNNNNNNNNNNNNNNNNNNNNMTMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                                                                                                          g@N@NNNNNNNNNNNNNNNNNNNNNNNM  `^MMNNNNNNNNNNNNNNNMNNNNNNNNNNM
+                                                                                                       _@@NNNNNNNNNNNNNNNNNNNNNNNNNNN       `"MNNNNNNNNNNNN|@NNNNNNNNNN`
+                                                                                                      @@NNN@-/NNNNNNNNNNNNNNNNNNNNNN"          MBNNNNNNNNNN.@NNNNNNNNNN@
+                                                                                                     m@@@NN||@NNNN///NNNNNNNNNNNNNNM            `MNNNNNNNNNNNNNNNNNNNNN@_
+                                                                                                     0MN@NN.\NN//||.NNNNNNNNNNNNNNNm              TNNNNNNNNNNNNNNNNNNNNN@`
+                                                                                                     ` `"MMNNNN|||.NNNNNNNNNNNNNNNNM               `MNNNNNNNNNNNNNNNNNNNNK
+                                                                                                           'WN@@@@@NNNNNNNNNNNNNNM^                  MNNNNNNNNNNNNNNNNN@MN_
+                                                                                                            `MNNNNNNNNNNNNNNNNNM"                     `NN@NNNNNNNNNNNNN@`MN_
+                                                                                                              ^NNNNNNNNN@@NNMMM                        JNNNNNNMNNNNNNNN@ '0@_
+                                                                                                                HMK`"MNMM`                              ^@NNNDmNNNNNNNN@` 'W@
+                                                                                                                      `                                  `MNNK`0NMBNNNNNK  0@,
+                                                                                                                                                          `NND 0NK`0NNNNK  ^MN
+                                                                                                                                                           0NL 4NK ^NNNNK
+                                                                                                                                                           0N@_`@@  3NNNK
+                                                                                                                                                           ^M@L`0@` JNNN@
+                                                                                                                                                            `M` 4N_ `NNN@`
+                                                                                                                                                                 ^%  @NNN`
+                                                                                                                                                                     `M@M`
+                                                                                                                                                                      `B@
+                                                                                                                                                                      `0@
+                                                                                                                                                                        T
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                   ____
+                                                                                      __m@@@@m@_               __@@@@NN@_
+                                                                                  __@@@@@@@NNNN@@           __@@NN@@@@@@@@_
+                                                                               _@@@NNNNNNNNNNNNNN@m_    __@@NN@NNNNNNNNNNNNNmg__
+                                                                              @NNNNNNNNNNNNNNNNNNNN@N@@@@NNNNNNNNNNNNNNNNNNNNNNN@@_
+                                                                           _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNND"
+                                                                        _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM"````
+                                                                   __@@@@@|.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM
+                                                            ___@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                         -MMN@@NNNNNNNNNNNNNNNNN|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@@@@@@__
+                                                        __@@@@NNNNNNNNNNNNNNNNNN.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNNNN_
+                                                    __@@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                                            ______@@@@NNNNN./NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                                            MNMMMMMMM"T_@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@
+                                                    __@@N-@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                _@@@NMM%@@NNNNN-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                           mmm@NMMM`  @@NNNNN|.-NNNNNNNN./NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                            ```     _@@NNNNNN.NNNNNNNNNN.MMNNNMTTMM""[@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                                                  _@@NNNNNNNNNNNNNNNNMMT`   `      _@NM@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@
+                                                _@@NNNNNNNNNNNNNNMM"`            _@.//.NNNNNNNNNM`MMN@.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@m_
+                                              m@NNM`H@NNNNNNNNNM"              _@.@/.NNNNNNNNNNNM   `M.@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN_
+                                           __@@MM`  `BNMMNNNM``             _@@|@/@NNNNNNNNNNNNM     ^MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN/|NNNNNNN@`
+                                          m@NMM    _@MM` TM`             _@@@@//NNNNNNNNNNNNNNNK       TMNNNNNNNNN.NNNNNNNNNNNNNNNNN|||NNNNNNNN@_               __@@m
+                                           M"     @@M`                _@@N@NNNNNNNNNNNN.NN-NNNM          `MNNNNNNN/@NNNNNNNNN|NNNNNNNN.-NNNNNNNNN               4@@@@m
+                                                `@@M`              _@@@N@NNNNNNNNNNNN./|N.-.NNK            `MNNNNNNNNNNNNNNN@@NNNNNNNN|||NNNNNNN@M               4@N@@m
+                                                @NM              m@N//@NNNNNNNN//@NNN||NNNNNNM               `NNNNNNNNNNNNNNNN/.NNNNNNN|||NNNNNNNN`              `@NN@N`
+                                               `MM`              `M|||NNNNNNN///@NNNNNNNNNNNM                 `MNNNNNN/|NNNNNNNN-NNNNNN.\||NNNNN-@K           m@__0NNNNm
+                                                                   `^MN@|/|\/|NNNNNNNNNNNNNM`                   JNNNNN--NNNNNNNN-|NNNNNN@\|NNNN|/@@_          [@@NNNNNNm
+                                                                      `MMMN@@NNNNNNNNNNMMNM`             _@@mm_  `^0NNNN-@NNNNNNNNNNNNNNNN\\NNNNNNNK          [@@NNNNNM
+                                                                           ``````  HM"            m@w_   m@@@@@@@  'MNNNNNNNN\\NNNNNNNNNNNN\|@NNNN@K`        `@NNNNNNM
+                                                                                                  `M@@@m@@@---N@N@g__@@|||--NN\@NNNNNNNNNNNNNNNNNNM`         @@NNNNNM`
+                                                                                                   mNN@@@NNN--.NNNNN@NNNM.||-NNNNNNNNNNNNNNNNNNNNM`         g@NNNNNNK
+                                                                                                    `"MMNNNN@NNNNNNNN./@N@N--@NNNNNNNNNNNNNNNNM"`          @@NNNNNNM
+                                                                                                       __`TM@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK_         _@@NNNNNNN`
+                                                                                             @@m@@@@@@@N@N@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@      _@@NNNNNNNNNg
+                                                                                             %@@@@@@@@@@NNNMM@@@NNNNNNNNNNNNNNNNNN.NNNNNNNNNNNNNN@     ]@@NNNNNNNNN@@@_
+                                                                                              ^MMMMMMMMMT]_m@@@NNNNNNNNNNNNNNNNNNN-|NNNNNNNNNNNNNN_   _@NNNNNNNNNNNNNN_
+                                                                                                   m@@@@@N@NM"HNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@NNNNNNNNNNNNNNNNN@
+                                                                                                   `0NNNMM]@m@@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                                                     `    `N@@NMMMNNMM"` `@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMT```
+                                                                                                           ^T`   JM`      `TMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                                                                              `"MNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                                                                                 `BNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                                                                 @@NNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                                                                               _@@NNNNNNNNNNNNNNNNNNNNNNNNK
+                                                                                                                             _@@NNNNN.-@NNNNNNNNNNNNNNNNNM
+                                                                                                                          _@@@NNNNNNN--NNNNNNNNNNNNNNNNNN`
+                                                                                                                       _@@@NNNNN./NNNNNNNNNNNNNNNNNNNNNM
+                                                                                                                   _@@@@NNNNNNNNNNNNN||NNNNNNNNNNNNNMM
+                                                                                                                  _@NNNNNNNNNNNNNNNNNNNNNNNNNMM```M`
+                                                                                                               -@N@@NNNNNNNNNNN./-@NNNMTTTT``
+                                                                                                               m@NNNNNNNNNNNNN//.NNMT
+                                                                                                                "NNNNNNNNNNN.//NNNM`
+                                                                                                                 @@NNNNNNNN@@@NNNM`
+                                                                                                                 ^MMMM||//NNNNNM"
+                                                                                                                      TW--NMMM`
+                                                                                                                      mMM"`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                      @N@@___    @@@,
+                                                      ^N@@NNN, _@N@N@m
+                                                       `W@NNN@m`M@@@@@@_
+                                                    mm_ `MNNNN@g 0@@@@@@@_
+                                                    M@@@_ ^NNNN@@`MN@NN@@@@@
+                                                     ^N@N@_ ^WNNN@@]MNNNNNNNN@@__
+                                                  @@_  ^W@N@_`TNNNN@@@NNNNNNNNNN@L__
+                                                  `MNN_`@NNNNNm@MNNNNNNNNNNNNNNNNNN@@__
+                                                    `TN@@@NNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@_
+                                                      `TNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@@@@,
+                                                     _@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@m_
+                                                    #MMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@_
+                                                       `@@@NNN.-NNNNNN-NNNNNNNNNNNNNNNNNNNNNNNN@@@@N
+                                                        #N@NNNNNNNNNN.-NNNNNNNNNNNNNNNNNNNNNNNNNNN@@m            _@@@@@,_
+                                                        `@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN          _@@@@@N..@m
+                                                         0MMMMMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@        _@N@NNNN@@@N@@@@@@@@_
+                                                               MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_     _@@@NNNNNNNNNNNNNNNNNNM`
+                                                                `MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@    @@NNNNNNNNNNNNNNNNNNNM"
+                                                                 `MNNNNN.NNNNNNNNNN./NNNNNNNNNNNNNNNNNNN_@@@NNNNNNNNNNN.NNNNNNM`
+                                                                   `MNNN-|NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN/@NNNM`
+                                                                     `MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN.NNNM`
+                                                                       TMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|/NN"
+                                                                         MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@__@@@@@@@@@g__
+                                                                          'M@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@w
+                                                                            ^NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@_
+                                                                             `R@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|-NN@NN@     @M _m_
+                                                                              `M@N@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|-@NNNN@L__@@N__@M`
+                                                                                TNNNNMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@NM_@M`
+                                                                                  TM`@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNK@@M
+                                                                                    `@NN/NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                   _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                _@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM]@mM
+                                                                             _@@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM]@@NM`
+                                                                          _w@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@NMM"
+                                                                        q@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMT`
+                                                                     __@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@M"
+                                                                   _m@NNNNNNNNNNNNNNNNNNNNNNNNNM^"``MNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                 m@@NNNNNNNNNNNNNNNNNNNNNNNNNNM`     ``MMMNNNNNNNNNNNNNNNNNNNNMMNNNNNNNNMMM"`
+                                                                 H@NNNM@@NNNNNNNNNNNNNNNNNNNM`             TMMMMMNNNNNNNM"``   ^MMT"``
+                                                                 `NMT m@NNNNNNNNNNNNNNNNNNNN_                   HMMMMM``
+                                                                      `@NN@NNNNNNNNNNNNNNNNND
+                                                                       ""`N@NNNNNNNNNNNNNNNNN`                                                                  @m@__
+                                                                          @@NNNNNNNNNNNNNNNNC                                                             __@@@@@NNN@_
+                                                                          JM"@NNNNNNNNNNNNNK                                                            _m@@@@@NNNNNNNNm,
+                                                                            m@@NNNNNNNNNNNM                                                       _,   @@@@@@NNN@NNNNNNN"                            _
+                                                                             M@N.NNNNNNNNM                                                      _@M" _@@@@@NNNNNM"]____@___                        _@@m_@m
+                                                                              RN.@NNNNNM"                                                     @@MT__@@@@NNNNNNN@NNNNNNNNNNN@@@@@@@@___     __m*__@@@NNNNN"
+                                                                               `MNN`@NM                                                    _@WM]m@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@@@N@NN@@@NNNN@M``
+                                                                                 'M"                                                     _@@|@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN|@NNNNNNNNNNNNNM
+                                                                                                                                       _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\.NNNNNNNNNNNNNNNNNNNNNNNNNN`
+                                                                                                                                     _@./BNNNNNNNNNNNNNNNNNNNNNNNN./-.NNNNNN.---.NNNNNNNNNNNNNNNNNMMM
+                                                                                                                                   _@N//.NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM"
+                                                                                                                                  `@-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                                                                                                                                  _@--NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN/|NNNNNNNNNNNNNNNNM
+                                                                                                                                _@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMM"``
+                                                                                                                               g@NNNNNNNNNNNNNNNNNNNNNNNNNNNN.//.NNNNNNNNNNNNNNNNNNNNNNM`
+                                                                                                                              _@NNNNNNNNNNNNNNNNNNNNNNNNNNN|-/--NNNNNNNNNNNNNMMMMMMMMMM"
+                                                                                                                             _@NNNNNNNNNNNNNNNNNN.NNNNNNNNNNNNNNNNNNNNNNM""M"
+                                                                                                                           _@@NNNNNNNNNNNNNN--|NNNNNNNNNNNNNNNNNMMMMMMM^
+                                                                                                                         _@@NNNNNNNNNNNNNNN.|||NNMT```````T""""
+                                                                                                                       _@NNNNNNNNNNNNNM"` 0|||M``
+                                                                                                                    _@@NNNNNNNNNNNNNM    `B@NW&_
+                                                                                                                  _@@NN@NNNNNNNNNNNN`     "T`0@@Nm_
+                                                                                                               _@@@@NNNNNNNNNNNNNM``          ``MN`
+                                                                                                               mN@NNNNNNNNNNNNMT`
+                                                                                                               mN@NNNMMMMNNNM`
+                                                                                                               '"``     ^M"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+90 41
+
+
+
+
+
+
+
+                               ,g     __
+                             _@NN__@@@NN@@_
+                            _@NNN@@N/-/NNM"
+                           _@NNNN/NN|.NNNK
+                           @N./././/|@NNNN
+                          _@N.N/@N/NNNNNNNM
+                          @NNNNNNN/NNN|.NNL
+                        @@NNN|NNNNN.|N||NNK
+                      m@NNNNN|MTT`MNNNNNN.0
+                       T"MMN|#     4NN.@NN0
+                          @N/M      0NNNNN`
+                          ' `       @NNNMN
+                                    `0NN`M
+                                     ^MM
+                                      T
+
+
+
+
+
+
+
+
+                                                     __,_
+                                                 _@@@NN.K   _@m@@@m,
+                                             _@@@NNNNNNNN@@@NNNNNNN0
+                                          _@@NNNN./NNNNNN.NNNNNNNNN0
+                                         m@NN@NNNNNN.NNNN/.NNNNN.NNM
+                                         @MG@NNNNNNNMMN.NNNNNN/.NMM
+                                        *"g@NM"M`f"`_@NNNNNN.//N&K
+                                         mNM"      ,@NM#M.NMMMW%K
+                                         '`       @N"    `
+                                                 f`
+
+
+              0 _`
+              4_JL`m
+            `,HN4K`K
+             0_M@M@W, `_
+           ^m_Mm@.NNNm@K
+             TN@.@/NNNNN@
+               MNN|NNN|/@@@@@__    @@@@@                ,
+               -MNNN|N/NNNNNNNN@@@@NNNN.NN.            g@N
+                 MNNN|.@NNNNNNNNNNNNNNB____            @NN
+                  ^NNN@NNNNNNNNN.NNNNNNNNNNN@@@@_     _@M^
+                   `M\NNNNNNNNNNNNNNNNNNNNNNNNNNN@W@@NM"
+                     `MNN-NNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                        `MMN.@NNN.NNNNNN.//..NN./0M"
+                          _@NNNNNMMNNN-NNNN-NNM""
+                        _@NNNNNNNM    `TTT``
+                       @.NNNNNNNN`
+                       `mNN.NNMMM
+
+
+
+
+
+
+
+
+
+
+                                                          _@@@__
+                                                         @NNNNNM^
+                                                        @NNNNN@w_
+                                                   _@@@@N./@NNNNN@m_
+                                        ,      _@@@NNNNNN/NN\NNNNN\.@m_       ,
+                                      m_}_>w,@@@NNNNNNNNNNNN|NNNNNNNN..@@@,_@M`wR ,
+                                     \ `mmmmM@@NNN@.@@NNNNN||NNNNNNNNNN\NNNNNmM_w#^
+                                      ^MmmM"@@NN-///.M@NNNNNNNM"MMNNNNNNNNNMMMMww`
+                                       wwmMQ|NNWmMM` w@NNNNNNN@,    ```"M"`
+                                            '"`    _@NNNNNNNNMMM
+                                                   #M"MM``^"`
+
+
+
+
+
+
+
+                                   _
+                                 g@@@,
+                                @NNN-@__@@NN@w,
+                              _@NNNNNNNNNNNN#"
+                             _MNNNNNNNNNNNNN0
+                            ,M@NNNNNN..NNNNN0
+                           @M@NNNNNNN||./NNNK
+                           `@NNNNNNNNNN/NNNN`
+                          _#NN.NNNNNNNNNNNN0
+                          #.NNNNNNNMNNNNNN|^
+                         *`mN|NNNN`@NNNWNNK
+                            MNNNN` QNNMN0["
+                              TM`  _NMJT`]
+                                   /f`C
+
+
+
+
+
+
+
+
+                                          _,wmmM@@@@@mmw     ___
+                                    _w@@@----.@@N@@@@NN.L _w@NNNN@mw
+                                   ,.-NNNNNNNNNNNNNNNNNN@@NNNNNNNN@_
+                                   ` ``#NWNNNNNNNNNNNNNNNNNNNN/NNNN@,
+                                          `MMMMMMMMNN.NNNNNNNNNNNNNNK
+                                                  @NNNNNNNNNNNNNNNNNK
+                                                @@NN.|NNNNNNNNNNNN|.M
+                                             _@@NNNN/..N..NNMBNN.-|M
+                                           @NNNN|NNNMMMWNNM`@NNN|NW
+                                           ^""4M"`    `#M` JN`#@N0C
+                                                           ```^@M
+
+
+
+                ,`
+                @L 0`
+                0@_NU0
+                4NN@N^N@
+               HW0NN\N@\@m_
+               _MW\.NN-NNNN@@mmm@_      ,@w____
+               ^%w@.N\-.NNNNNN.NNN@w  _@N@N@NMM____
+                  fMNNNNNNNNNNNNNN\@@@@NNNNN@@@NNN@@@_  _#W
+                     ^MNN./NNNNNNNNN.|NNNN|.NNNNNNNNNNNNMW`
+                       `MNNNNNNNNNNNNNNNNNNNNNNNNNN@NNNNM
+                         `MNNNNNNN./NNNNN.-NNNNNNNNNNN`
+                            ^MMNNNNNNNNNNNNNNMM"``
+                               _@NNNNNM""""T`
+                            _@@NNNNN``
+                           -MMMMMNM`
+
+
+                                           %_@
+                                          `HN$`K
+                                          w%JNN@_
+                                          4@@NNN@_
+                                          _@NNNNNN_
+                                          ^0NNNNNN@@_
+                                           `NNNNNNNNN@_
+                                            4NNNNNNNNN@@
+                                             0NNNNNNNNNNN  _@m@@@@m
+                                             `0NNNNNNNNNN@@NNNNNM"`
+                                              ^WNNNNNNNNNNNNNNN"
+                                                TMMNNNNNNNNNNNNN_
+                                                   TNMWNNNNNNNNNNN@,
+                                                    _@NNNNNNNNNNNNNN@,
+                                                 _@@@NNNNNNNNNNNNNNNNNN
+                                                 MNNNNNN^'?.\.NNNNNNNN.,
+                                                   MNNNK   `N@NNNNNNNNN@_
+                                                     MN`     ^MNNNN\NNNN@_
+                                                                ^MMMNNNNNNw_
+                                                                    `WNNNNNNNw_,
+                                                                      `M@M.MM%`
+                                                                        ^``^~
+
+
+
+
+
+
+
+                                         __
+                                       w@@N@@@m
+                                  _@@@@NNNNM"`
+                                _@NNNNNNN.NN@,
+                               g/.NNNNNNNNNNNN
+                              @@NNNNNNNNNNNNNN`
+                            _@NNNNNNNNNNNNNN.|`
+                           @@NNNNNNM0NNN@.NN|]
+                         *@NNNNNNNNM^0NNN|NN|K
+                           @NNNNNW@  @NNN.NN|M
+                           IWNNN|RK  @NNNNNN0
+                           @NNNNM    B@NNNNND
+                           ]ZNNN`    "#@NNWMM
+                           WMNN"     `K#@KI
+                           _MN`        %@M
+                           `f           T
+
+
+
+                                                   _@@m@@    _@@,____
+                                               _@@.@@@.NNN_@@NNNNNNM`
+                                             @@@@NNNNNNN.@NNNNNNM"
+                                           w@@NNNNNNNNNNNNNNN/NN@@
+                                         w@/NNNNNNNNNNNNNNNNNNNNNNN
+                                        @@NNNNMMMMMM@NNNNNNNNNNNNNN`
+                                        @NNM"   __@@NNNNNNNNNNNNNNN`
+                                       ^M"      _ZZGmMMMMMNNNNNNNNN
+                                                ````      @|NNNNNNN
+                                                          fNNNNNNN#
+                                                           4N0NM0WD
+                                                           mM#WM]`
+                                                           'NMK^^
+                                                            4MM
+
+
+
+
+
+
+                                         .@@_
+                                        ^%@NK
+                  m,_ m@w@____@@@@@@@w  `NNNK
+               ___ '"@@@NNNN@@NNNNNNNN_  @NNN@@@g
+               `""MMM@NN.NNN---NNNNNNNN_@NNNNNNM"`
+                 'TQNNNNN--.NNNNNNNNNNNNNNNNM`
+                    `````T"^MNNNNNNNNNNNNNNN
+                             `M.NNNNNNNNNNNK
+                              `\NNN.\NNNNNN`
+                              ,.@NNN\NNNNM`
+                           _@@NNN.-NNN/D^
+                       _,@@NNNNNMNMM""`
+                       0NNNNNM`
+                        MNMM`
+
+
+
+
+
+                                                            _@@@@NM     _m`
+                                  `@, @mw__     __@@@@mw_ _@NNNNM@@___@@NM
+                                mw__Mmw_"MMMM@@@@NNNNNNN@@@NNNNNNNNNNNNM`
+                                `^MMNmwA@NNNNNNNN.-/N./.NNNNNNNNNNNN.-#
+                                mmmmmmm@N.NNNN.-.--NNNNNNNNNNNNNNNNNMM`
+                               mmmmmMMMMNNNNN.NNNNNNNNNNNNNNNNNNNNM`
+                                        #NNNN.N.NNNNNNNNNNNNNNNM"
+                                         `"MMMNNNN@NN@NNNNNNM"`
+                                              `"MMM.NM0NNMMm`
+                                                 _@N" ``4%H"
+                                                w@M`
+                                                ?
+
+
+
+
+
+
+
+                                                   g@L
+                                                  w@NK
+                                                 `@|NM
+                     _                          _@NM`
+                  -, ML                       _@M"
+                 m_^%_Mm_   ____,@@@@_     __@M`
+                  ^%@@@@@@@N@@@@@NNNNN@w_@@@NN@@w__
+                 %wW@NNN-NNNNNNNNNN.NN/.NNNNN@NNM"`
+                `mm*0NN..NNNNNNNN./.NNNNNNNNNNM`
+                       "MMNNNNNNN\NNNNNNNNNNM
+                           `?MNNNNNNNNNNNNNM
+                              _@NNNNNNNNN@M
+                            _@NNNNNNNNNNN`
+                         _@@NNNMMMMMMMMMNm
+                       ,#&@M"`      `mMm0-
+                      _mMM`
+                      '
+
+
+                                                               __
+                                                         _,@_@@M`
+                                                        _@NNNNM
+                                  g,__   _______@@@@m__@@NNNNM_@m_
+                                `m@@@NNN@N@@@@@NNNNNNNNNNNNNN@NNNNN_
+                             ____MM"Q@@@@@NNNNNNNNNNNNNNNNNNNNNNNNNNNK
+                             MNNNNNMM@N@NNNNNNNNNNNN.NNNNNNNNNNNNNNNN_
+                              w@mmMNNNNNNNNNNNNNNNNNNNNNN/NNNNNNNNNMM0
+                              '"`__@D0NNMMMNNNNNN-NNNNNN//NNNNNN..N@w
+                               4MM"`     #MM"0NMWNNN.NNNNNNMMMNNNNMNK
+                                              `mMMNNN.N```     ``MK
+                                               w#@NNN.K
+                                                 "MNNK
+                                                   ?K
+
+
+
+
+
+
+
+
+
+
+
+                        ,
+                    4K  0@w  _____,@@@m_
+                    `%m_`MN@@@NN.NNNNNNN@,
+                 4wg__M@@@@@..NNNNNNNNNNN.N_ _,@@_  _____
+                   `"MNWNNNNNNNNNNNNNNNNNN.NNNNNN@@@@@@@@@m_
+               ^mmwmm@@@mWNNN.NNNNNNNNNNNN@NNNNNNNNNN.@NNNNN@@@g,
+                  `TTT```mmMMN./NNNNNNNNNNN--@NNNNNNNNNNNNNNNNMM`
+                              `^MMMMNNNNNNNNNNNNNNNNNNNNNNNNNNM`
+                                _@@NN.--\NNNNNNNNNNN-NN/.\-NNM`
+                               _@NNMNNN.NMNM````TMNNNNNNNNNNN`
+                              _@NM"``` _#`"          ```^MM"`
+                             @@M`     M#`
+                            mM`
+
+
+
+                                                          _@@@w_
+                                                _@m@@m_  @@NNNNM
+                                            _@@@@NNNNNN@@NNNNNM __@m_
+                                        __@@NNNNNNNNNNN.NNNNNN@@NN.NNm_
+                                     _@@@NNNNNNNNNNNNNNNNNNNNNNNNN.\\NNN_
+                                   `MNNNNNNNNNNN./.NNN/.NNNNNNNNNNNNNNNN@w
+                                 `mM@NMNNNNNNNNN/.NNNNNNNNNNNNNNNNNNNNNNNNK
+                                 y@M"w0M@NNNNNNNNNNNN..NNNN@NNNNNNNN.NNNNNNK
+                                 P@@MM@NNNNNNNNN|||NN//NNNNNNNNNNNNNNNNNNN@
+                                  M` MBMMM""""MN//.@NN||MMM"""``MNNNNNNN@NNw
+                                              m@N//NNN|0          ^M0NW0N@M
+                                             J@N..NNN.|K            `BM`0M
+                                              ^"0MWNNNN
+                                                ``MNNNM
+                                                    `^
+
+
+
+
+
+
+
+
+
+
+
+
+                       |__        _,@@_
+                   mw__^MN.N@@@@@@@NNN@@@@w_  _@@m_
+                 _  "MNN@NNN/@N.NNNNNNNN@NN@@@@NN@@K___
+                 MN@m@@NNNNNNNNN|-@NNNNNNNNNNNNNNNNNNN@@,
+               `m_ "@.-.NNNNNNNN-.NNNNNNNNNNNNNNNNNNNNNNNN_
+                `TMMNNNN-NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                   #MM"4MM%MN.NNNNN.-NNNNNNNN.NNNNNNNNNNNNNN_
+                              `^MMMMMM"T@..NNNNNNNNN..NNNNNNN]
+                                       @@NN-0M` ^NMMMNNNNNMMM`
+                                      _@NNM"9`           `"
+                                     _NMNM ^K
+                                    _#
+                                   _#%w_ @N@____    _        _
+                                   '___^MMNNNNNNN@NN@@_   _@@@N@0
+                                  g_}MMN@NNNNNNNNNNNNNNm_,@NNNNM
+                                  MMMMMNNNNNNNNNNNNNNNNN@NNNNNM
+                                   `mw@NNNNNNNNNNNNNNNNNNNNNNNNNN@@@@w_      }
+                                   `MMMMMM"MNNNNNNNNNNNNNNNNNNNNNNNNNNNN@@@@0"
+                                              `"NNNNNNNNNNNNN@NNNNNNNNNNNNN@mM^
+                                                 `MMNNNNNN\NNNNNNNNNNNNNNNNN@_
+                                                 _@NNNNNNMNNNNNNNNNNNNNNNNM_`
+                                              _@@NNNNNNNNM `"`""MNNNNNNNNMM"
+                                              `NNNNNNNNNM
+                                                `"MNNNNM`
+                                                   ^`JN`
+                                                     ``
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                 $_  -@,_
+                 4N@@@@@N@m@@w@@@@N@@@_     _@@@m_
+               %@___MMNNNN.NNNNNNNNNNNN@mw@@NNNNNNNN
+               ^MNNNN@@@@@NNNNNNNNNNNNNNNNNNNNNM"`
+                mm@@Z@@--/N.NNNN.@NNNNNNNNNNNNNNNN@@@@m_
+                fMMMMMMM]@@NNNNNNNNNNNNNNNNN.@NNNNNNNNNNy
+                    HMMMMTWNN@MNNNNNNNNNNNNNNNNNNNNNNNNN.K
+                       4NNNMM`   ``QNNNNNNNNNNNNNNNNNNN.NN@@w__
+                                 _@@NNNNNMTMNNNNNNNNNNNNNNNNNNNM`
+                               _@NNNNNNNM   `"""MMNNNNNN\-NNNNmmm,
+                             _@@NNNNM`f"            TMMNNNNNNK""`
+                            mNNMM`                     T^MMM___
+                            '``              __w@@@@,    @@NNN`
+                                         __m@@@@NNNN@, _@NNNM`
+                                      _@@@@-NNNNNNNNNNNNNN.NM
+                                  _w@@NNNNNNNNNNNNNNNNNNNNN@@m@mw
+                                yWMWNM@NNNNNNMNNNNNNNNNNNNNNNNNNN@L
+                               _m/MCm@NNMMG@NNNNNNNNNNNNNNNNNNNNNNN
+                               QMG#"#M`   ^`  "QNNNNNNNNNNNNNNNNNNN
+                                `"           _@@NNNNN.@NNNNNNNNNNNNK
+                                            @@NNNNNNNNMMNNNNNNNNNNNN
+                                          @@/NNNNNNNNNM  `MNNNN|NNNNL
+                                         VNN||//NNNNNK     ^0NNNNNNN@_
+                                           `M.-NNNNNM`       MNNNNNNNK
+                                             ^WM0M"'          MNMNNNK`K
+                                                               @D0MNN "
+                                                               J#4M@N`
+                                                                ``\JN`
+                                                                    #`
+
+
+
+
+
+
+
+
+
+
+
+
+                                    __         __
+                                 _@@@@@@_  _w@@@@@__
+                              _@@NNNNNNNN@@NNNNNNNNNN~
+                          __@@@NNNNNNNNNNNNNNNNNM"
+                       _@@NNNNNNN.NNNNNNNNNNNNNNN@@m@m
+                  _,wmNN.NNNNNNNNNNNNNNNNNNNNNNNNNNNNN@_
+                  `__w#@NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+                  ^"`_@NN.NNNNMMMMM@NNNNNNNNNNNNNNNNNNNNN
+                   ,#NNNNNMM`   _@/.NNNMMNNNNNNNNNNNNNNNN@
+                 %W" @MMM`    _@/.NNNNN` `MNNNNNNNNNNN/NNNN      ___
+                    m^     _m@NNNN./..K    `MNNNNNN.NNN|NNNK     `0@_
+                   '`      %|.-//NNNNM       ^WN/NNN.NN\|N.._   `m@NK
+                             `"M""M"^`  .__m@m_MN|N.NNNN.\NNK   _NNM`
+                                        `MN@-@@@.\\.NNNNNNMM   _@NN`
+                                      y,@@@@@NNNNNNNNNNNNNN_  w@NNK
+                                      ^MMMMGWNNNNNNNN.NNNNNN_@@NNNNN_
+                                         MM%mNNNMMNNNNNNNNNNNNNNNMMMM
+                                            ` `   `TMNNNNNNNNNNN`
+                                                    _@NNNNNNNNNM
+                                                  _@NNN@NNNNNNK
+                                               w@NNNNN/NNNNMM"
+                                             w@@NNN./NMTT`
+                                              $N.N@.M`
+                                                JWM"
+
+
+
+
+
+
+
+
+
+
+
+
+                      %@m_@@,
+                     w,M@@@@@N_
+                    __MN_M@W@NN@m__
+                     ^W@@@@NNNNNNN@m__
+                     .m0NNNNNNNNNNNNN@@N_
+                       WNN@N.@NNNNNNNNN@@     _ww_
+                       fMMNNNNNNNNNNNNNNN@  _@@@@@m@mw
+                          `NN.NNNN/NNNNNNN_w@NNN.NNM"
+                            ^NNNNNNNNNNNNNNNNNNN.N"
+                              MNNNNNNNNNNNNNNNNNNN@@@@@@m@_
+                               ^0NNNNNNNNNNNNNNNNNNNNNNN|.@w _m,
+                                `MM@NNNNNNNNNNNNNNNNNNNNNNNNNNW^
+                                  @N@NNNNNNNNNNNNNNNNNNNNNNNNM
+                               _@@NNNNNNNNNNNNNNNNNNNNNNNNMD#`
+                            _@@NNNNNNNNNNNNNNNNNNNNNNNNNNNM
+                          `@NNNNNNNNNNM` ^MMNNNNNNMM0NMMM^
+                           M`@NNNNNNNN        """
+                             `0NNNNNNM                         _w@@g_
+                               mNNNNM`                     ,`_@@@NMM#           __,
+                                MWNM                     ,@@@@NNNNNNNN@@@@@@@m@@NM`
+                                                       w@@NNNNNNNN..N.NNNNNNNNNNM
+                                                     _//NNNNNNNNNNNNNN.|NNNNNNN`
+                                                    ,@NNNNNNNNNNN.NNNNN/NNNMM"`
+                                                   _NNNNNNNNNNN.-|NNNMMMM""
+                                                 _@@NNNNN||MMMMMM""T`
+                                               _@NNNNNM 4m@_
+                                             _mNNNNMM`    `"
+                                             `"TTT"
+
+
+
+
+
+
+
+
+
+
+
+
+
