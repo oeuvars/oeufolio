@@ -42,5 +42,21 @@
     "width": 3.0,
     "height": 10.45,
     "light": "/objects/tabcut-phone-10-leather-light.avif"
+  },
+  "wide-11.5-hide": {
+    "src": "/objects/tabcut-wide-11_5-hide.avif",
+    "x": 1.2999999999999998,
+    "y": -1.84,
+    "width": 3.6,
+    "height": 15.18,
+    "light": "/objects/tabcut-wide-11_5-hide-light.avif"
+  },
+  "phone-11.5-hide": {
+    "src": "/objects/tabcut-phone-11_5-hide.avif",
+    "x": 0.7999999999999999,
+    "y": -1.6,
+    "width": 3.0,
+    "height": 11.537500000000001,
+    "light": "/objects/tabcut-phone-11_5-hide-light.avif"
   }
 }

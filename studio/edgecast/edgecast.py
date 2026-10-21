@@ -17,7 +17,9 @@ the edge it shades whatever lies there.
 The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.png. The poster's tear
 runs straight where its tab grows out, and where that is depends on the layout, so there is a length of it for each:
 public/objects/poster-cast-<layout>.png. Each runs FRAME across, in CSS px from the strip's edge, at DENSITY. The
-mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.png (dodge).
+mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.png (dodge). The contact strip's hide
+is a leather mat as well, cut and burnished as the green one is, lying on the walnut desk past the folders:
+contact-cast.png and contact-cast-light.png.
 
 The spine is paper too, printed blue with the traffic signal, torn down its whole length with no tab, lying on the
 linen strip's card in its sleeve: public/objects/spine-cast.png. Its print lying flat catches no more light at its
@@ -52,6 +54,10 @@ LIGHT = 0.6
 # What each is, as it shows on the page: the mat's leather (--color-mat), the contact strip's hide (its panel in
 # SiteShell) and the poster's print at its torn edge, a dark night scene.
 MAT, CONTACT, POSTER = "#236653", "#651415", "#2a2622"
+# The walnut desk past the folders (studio/resume), as it shows beside the contact strip.
+WALNUT = "#1e1610"
+# Each leather mat: its name, its leather and what it lies on.
+LEATHERS = (("mat", MAT, CONTACT), ("contact", CONTACT, WALNUT))
 
 # The spine's tear bites up to REACH * 1.4 in from its edge, so its frame starts further in.
 SPINE_FRAME = (-16.0, 34.0)
@@ -196,19 +202,21 @@ def save(ratio, inward, name, proof, frame=FRAME, coloured=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--only", choices=("mat", "poster", "spine"))
+    parser.add_argument("--only", choices=("mat", "contact", "poster", "spine"))
     parser.add_argument("--samples", type=int, default=1024)
     parser.add_argument("--proof")
     args = parser.parse_args()
     if args.proof:
         os.makedirs(args.proof, exist_ok=True)
 
-    if args.only in (None, "mat"):
+    for name, leather, under in LEATHERS:
+        if args.only not in (None, name):
+            continue
         # Straight, so a short length of it, averaged down, is every row of it.
-        spec = {"kind": "mat", "thick": MAT_THICK, "length": 64, "past": 0, "colour": linear(MAT), "roughness": 0.55, "under": linear(CONTACT)}
+        spec = {"kind": "mat", "thick": MAT_THICK, "length": 64, "past": 0, "colour": linear(leather), "roughness": 0.55, "under": linear(under)}
         ratio, inward = render(spec, args.samples, np.zeros(64 * DENSITY))
         rows = ratio[8:-8].mean(axis=0, keepdims=True)
-        save(np.repeat(rows, DENSITY, axis=0), np.repeat(inward[:1], DENSITY, axis=0), "mat-cast", args.proof, coloured=True)
+        save(np.repeat(rows, DENSITY, axis=0), np.repeat(inward[:1], DENSITY, axis=0), f"{name}-cast", args.proof, coloured=True)
 
     if args.only in (None, "poster"):
         rng = np.random.default_rng(67)

@@ -13,7 +13,9 @@ render, and OUT_DIR/bare.exr, the same frame with nothing on the page, for tabcu
 
 SPEC may make it of other stuff: its thickness, lift, raggedness and the voxels that round its cut in rem, and its
 colour and roughness and the page's colour (linear), as a leather tab cut from a mat is, thick, flat and dark. Then it also writes OUT_DIR/flat.exr, its
-flat top, and OUT_DIR/cover.exr, where it lies.
+flat top, and OUT_DIR/cover.exr, where it lies. SPEC "round" makes its cut leather's, as studio/edgecast cuts the
+mat's own edge: knife-straight down, its top edge burnished round by that much of its thickness, measured square to
+the outline wherever it turns.
 """
 
 import json
@@ -109,6 +111,56 @@ def sheet():
     return obj
 
 
+def leather():
+    """The leather, as a surface over the page: flat on top, rounding over at its cut by ROUND of its thickness, and
+    straight down to the page, its height at each point of a grid finer than the render's, from how far in from the
+    cut the point lies, square to it."""
+    radius = spec["round"] * THICK
+    cut = outline()
+    step = 1 / (1.5 * spec["density"])
+    gx = np.arange(x0 - 0.2, x0 + w + 0.2, step)
+    gy = np.arange(y0 - 0.2, y0 + h + 0.2, step)
+    edge = np.interp(gy, cut[:, 1], cut[:, 0])
+    across = edge[:, None] - gx[None, :]
+    inward = across.copy()
+    # Near the cut, the distance square to it: to the nearest point along it, among those level with the point.
+    near = np.abs(across) < 0.5
+    for r0 in range(0, len(gy), 32):
+        rows = slice(r0, r0 + 32)
+        ys, xs = np.nonzero(near[rows])
+        if not len(ys):
+            continue
+        py, px = gy[rows][ys], gx[xs]
+        pick = (cut[:, 1] > gy[rows][0] - 0.6) & (cut[:, 1] < gy[rows][-1] + 0.6)
+        cx, cy = cut[pick, 0], cut[pick, 1]
+        d = np.sqrt(((px[:, None] - cx[None, :]) ** 2 + (py[:, None] - cy[None, :]) ** 2).min(axis=1))
+        inward[rows][ys, xs] = np.sign(across[rows][ys, xs]) * d
+    rise = np.clip(radius - inward, 0, radius)
+    z = np.where(inward >= 0, THICK - radius + np.sqrt(np.maximum(radius**2 - rise**2, 0)), 0.002)
+    ny, nx = z.shape
+    X, Y = np.meshgrid(gx, gy)
+    verts = np.stack([X.ravel(), -Y.ravel(), z.ravel()], -1)
+    index = np.arange(ny * nx).reshape(ny, nx)
+    quads = np.stack([index[:-1, :-1], index[:-1, 1:], index[1:, 1:], index[1:, :-1]], -1).reshape(-1, 4)
+    on = (inward.ravel()[quads] >= 0).any(axis=1)
+    quads = quads[on]
+    mesh = bpy.data.meshes.new("leather")
+    mesh.vertices.add(len(verts))
+    mesh.vertices.foreach_set("co", verts.astype(np.float32).ravel())
+    mesh.loops.add(quads.size)
+    mesh.loops.foreach_set("vertex_index", quads.astype(np.int32).ravel())
+    mesh.polygons.add(len(quads))
+    mesh.polygons.foreach_set("loop_start", np.arange(0, quads.size, 4, dtype=np.int32))
+    mesh.update()
+    mesh.validate()
+    obj = bpy.data.objects.new("leather", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    # Smooth over its round, hard where the round meets its straight cut.
+    mesh.shade_smooth()
+    mesh.set_sharp_from_angle(angle=math.radians(30))
+    return obj
+
+
 def white(name, colour=(0.8, 0.8, 0.8), roughness=0.9):
     material = bpy.data.materials.new(name)
     material.use_nodes = True
@@ -169,7 +221,7 @@ scene.camera = camera
 
 for name, with_paper in (("bare", False), ("cut", True)):
     if with_paper:
-        paper = sheet()
+        paper = leather() if "round" in spec else sheet()
         paper.data.materials.append(white("paper", spec.get("colour", (0.8, 0.8, 0.8)), spec.get("roughness", 0.9)))
     scene.render.filepath = os.path.join(out_dir, f"{name}.exr")
     bpy.ops.render.render(write_still=True)

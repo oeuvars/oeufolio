@@ -17,9 +17,10 @@ paper, leather or picture, and the tab and its page stay one surface.
 There is one render for each size of tab SiteShell cuts: on a wide screen and on a phone (their band and how far the
 tab stands out differ), at each tab height. Writes public/objects/tabcut-<layout>-<height>.avif, and
 src/components/tabcut.json, where each lies in the tab's own rem and which file is which. The extras strip's tab is
-not paper but its mat's thick leather, so it has one of its own, tabcut-<layout>-10-leather.avif, with the light
-its edge catches apart in tabcut-<layout>-10-leather-light.avif, for the page to lay over it in colour-dodge;
---leather renders only those.
+not paper but its mat's thick leather, cut as the mat's own edge is, so it has one of its own,
+tabcut-<layout>-10-leather.avif, with the light its edge catches apart in tabcut-<layout>-10-leather-light.avif,
+for the page to lay over it in colour-dodge; so has the contact strip's tab, cut from its hide,
+tabcut-<layout>-11_5-hide.avif. --leather renders only those.
 """
 
 import argparse
@@ -48,8 +49,13 @@ LIGHT = 0.6
 # The extras strip's tab is cut from its leather mat (SiteShell's leather tab): 2.5 mm of it at the scale the mat's
 # rulers are printed, 24 CSS px to a cm, lying flat, its cut straight, the mat's green (--color-mat) on the contact
 # strip's red hide, as studio/edgecast renders the strip's own edge. Its tab is the one height.
-LEATHER = {"name": "leather", "thick": 0.375, "lift": 0.0, "ragged": 0.003, "voxel": 0.02, "colour": "#236653", "roughness": 0.55, "under": "#651415"}
-LEATHER_TALL = 10
+# Its cut is the mat's own (studio/edgecast): knife-straight, its top edge burnished round by ROUND of its thickness.
+ROUND = 0.32
+LEATHER = {"name": "leather", "thick": 0.375, "lift": 0.0, "ragged": 0.0, "round": ROUND, "colour": "#236653", "roughness": 0.55, "under": "#651415"}
+# The contact strip's tab is cut from its hide, a leather mat as thick, the hide's red (its panel in SiteShell) on the
+# walnut desk beyond the folders (studio/resume), as it shows past the strip. Its tab is the taller one.
+HIDE = {**LEATHER, "name": "hide", "colour": "#651415", "under": "#1e1610"}
+LEATHERS = ((LEATHER, 10), (HIDE, 11.5))
 
 
 def read(path, channel=slice(0, 3)):
@@ -132,7 +138,8 @@ def main():
         if not args.leather:
             for tall in HEIGHTS:
                 table[f"{layout}-{tall}"] = cut(layout, tall, args.samples, args.proof)
-        table[f"{layout}-{LEATHER_TALL}-{LEATHER['name']}"] = cut(layout, LEATHER_TALL, args.samples, args.proof, LEATHER)
+        for stuff, tall in LEATHERS:
+            table[f"{layout}-{tall}-{stuff['name']}"] = cut(layout, tall, args.samples, args.proof, stuff)
 
     with open(path, "w") as out:
         json.dump(table, out, indent=2)
