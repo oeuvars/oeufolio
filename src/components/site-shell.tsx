@@ -51,10 +51,11 @@ type Tone = {
    * for each layout, as the edge is torn straight in a different place for each one's tab. A leather edge's light has a
    * tile of its own (light), laid over it in colour-dodge, so it brightens the leather and keeps its colour. */
   edgecast?: Record<'wide' | 'phone', string> & { length: number; light?: string }
-  /** The strip is handmade paper, its edge the deckle the pulp stopped at, thinning to loose fibres: this mask of
-   * it (studio/paper/edge.py), in place of a straight cut, for each layout, as the deckle runs on round its tab,
-   * which lies in a different place for each. Paper casts its shadow, as the strip's own does. */
-  deckled?: Record<'wide' | 'phone', string>
+  /** The strip is handmade paper, its edge the deckle the pulp stopped at, thinning to loose fibres, rendered fibre by
+   * fibre (studio/paper/edge.py): the mask of it (edge), in place of a straight cut, and the shadow it leaves on the
+   * strip after it (cast), in place of a drop shadow, for each layout, as the deckle runs on round its tab, which lies
+   * in a different place for each. */
+  deckled?: Record<'wide' | 'phone', { edge: string; cast: string }>
   /** What the page is made of, as a tile that repeats, size CSS pixels square: the poster's wall (studio/poster) or
    * the letter's handmade sheet (studio/paper). The page covers its whole strip, and the strip and its tab are cut
    * from it, so they are the page's own paper and not a flat colour. */
@@ -102,6 +103,8 @@ const SPINE_CAST: CSSProperties = {
 // strip's edge and runs out 9 px past the tab, this wide for each layout (edge_width).
 const DECKLE_IN = 7
 const DECKLE_WIDTH = { wide: 50, phone: 40 }
+// Its shadow runs on this much further out (CAST_PAST).
+const DECKLE_CAST_PAST = 8
 
 type Grain = Array<{ every: number; amount: number }>
 
@@ -200,7 +203,7 @@ const pageTones: Tone[] = [
   // The plate is cut, not torn, and its colours are the linen's middle tone, under the plate before it loads.
   { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.png', cast: '/objects/linen-shadow.png', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
-  { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: { wide: '/objects/likes-edge-wide.png', phone: '/objects/likes-edge-phone.png' }, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
+  { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: { wide: { edge: '/objects/likes-edge-wide.png', cast: '/objects/likes-cast-wide.png' }, phone: { edge: '/objects/likes-edge-phone.png', cast: '/objects/likes-cast-phone.png' } }, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.png', phone: '/objects/poster-cast-phone.png', length: TEAR_LENGTH }, tab: '/objects/tab-teenage.avif' },
   { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1, light: '/objects/mat-cast-light.png' }, tab: '/objects/tab-proraso.avif' },
@@ -499,6 +502,18 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       maskImage: clothTabHandover(true),
     }
   }
+  // A handmade sheet's shadow, under its sheet, from where its deckle mask begins.
+  const deckleCast = (deckled: NonNullable<Tone['deckled']>): CSSProperties => {
+    const layout = mobile ? 'phone' : 'wide'
+    const width = DECKLE_WIDTH[layout] + DECKLE_CAST_PAST
+    return {
+      left: `calc(100% - ${DECKLE_IN}px)`,
+      width,
+      backgroundImage: `url(${deckled[layout].cast})`,
+      backgroundSize: `${width}px ${TEAR_LENGTH}px`,
+      backgroundRepeat: 'repeat-y',
+    }
+  }
   // The tab's cut is leather when the tab is cut from a leather mat: the mat's own, or the hide the page lies on.
   const stuffOf = (tone: Tone) => (tone.fills ? 'leather' : tone.surface ? 'hide' : undefined)
   const hideLight = (i: number) => {
@@ -540,7 +555,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       return {
         right: DECKLE_IN - w,
         ...grained(paper),
-        maskImage: `linear-gradient(#000, #000), url(${deckled[layout]})`,
+        maskImage: `linear-gradient(#000, #000), url(${deckled[layout].edge})`,
         maskSize: `calc(100% - ${w - 1}px) 100%, ${w}px ${TEAR_LENGTH}px`,
         maskPosition: 'left 0 top 0, right 0 top 0',
         maskRepeat: 'no-repeat, repeat-y',
@@ -574,7 +589,8 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     const { reach } = tabOutline(shape)
     const { frayed, deckled } = tones[i]
     if (frayed) return { '--torn-core': `url(${frayed})`, filter: 'none' } as CSSProperties
-    if (deckled) return { '--torn-core': `url(${deckled[mobile ? 'phone' : 'wide']})` } as CSSProperties
+    // A handmade sheet's deckle is rendered lying on the strip after it, so it casts no drop shadow: it leaves its own.
+    if (deckled) return { '--torn-core': `url(${deckled[mobile ? 'phone' : 'wide'].edge})`, filter: 'none' } as CSSProperties
     const edge = torn(31 + 17 * i, [[top - reach, top + shape.height + reach]], edgeOf(tones[i]), reachesOver(i))
     // An edge rendered as it lies on the next strip casts no drop shadow: it leaves its own (edgecast).
     return tones[i].edgecast ? { ...edge, filter: 'none' } : edge
@@ -711,6 +727,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   <div aria-hidden className="pointer-events-none absolute" style={clothTabCast()} />
                 </>
               )}
+              {tones[i].deckled && <div aria-hidden className="pointer-events-none absolute inset-y-0" style={deckleCast(tones[i].deckled)} />}
               <div
                 className={`panel scroll-quiet overflow-x-hidden overflow-y-auto ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
                 style={sheets(tones[i]) ? sheet(i, tones[i]) : undefined}
