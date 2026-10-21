@@ -11,17 +11,17 @@ The loader sets the mountains itself, at whatever grid fits the screen, about fi
 as much of the photograph as type can. From here it gets:
 
 - public/loader/tetons.webp: the photograph (art/tetons.jpg) worked over for type, twice as tall as it is. Its top
-  half is each point's colour, mapped from its tone through teal, azure and ice, bright, since type covers only part
-  of its cell and must still read as the picture does. Its bottom half is each point's tone, which picks
+  half is each point's own colour, brightened, since type covers only part of its cell and must still read as the
+  picture does. Its bottom half is each point's tone, which picks
   the character: the photograph's brightest channel with its local contrast raised, so snow stands off rock. The sky,
   flat and as bright as the snow, is given a tone and colour of its own, lower, so the peaks stand against it.
 - public/loader/tetons.txt: the night the type is set on; the sky's colour; the ramp of characters, bare to full,
   ordered by Menlo's own ink; where the sky ends in each column of the photograph, traced down from the top to where
-  the picture first parts from the sky's colour, so the loader can draw the ridge in strokes the way it runs; and the
+  the picture first parts from the sky's colour, so the loader can draw the ridge in strokes the way it runs (in the photograph's own points, before it was doubled); and the
   birds.
 
-The birds (art/prs-birds.png) are the nine of PRS's bird inlays, turned upright as if seen from below in flight, those
-that look left turned to look right and all leaned a little into their flight. Each is set at a range of heights: in
+The birds (art/prs-birds.png) are the nine of PRS's bird inlays, as inlaid, flying left toward the nut, each set at a
+range of heights, with its height in the set kept so the loader can keep them in proportion: in
 each cell its silhouette is read at 6 by 10 points and the cell gets the printable character whose own ink, Menlo's
 glyph drawn into the same cell, comes closest to it, point for point, with a slow wave of brightness across the bird
 for the figure of the pearl.
@@ -33,7 +33,7 @@ import argparse
 import os
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from scipy import ndimage
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -52,17 +52,16 @@ NIGHT = '#04080e'
 DARK, LIGHT = 34, 168
 CONTRAST = 1.2
 SKY_TONE = 0.45
-# The colours, by tone, bare to full: deep teal in the shadows, through azure in the rock, to ice on the snow; the
-# sky a cobalt of its own. A little of the photograph's own colour is kept in each.
-STOPS = [(0.0, (18, 84, 112)), (0.25, (26, 140, 176)), (0.5, (52, 146, 240)), (0.75, (122, 192, 255)), (1.0, (236, 246, 255))]
-SKY_COLOUR = np.array([74, 124, 232])
-KEEP = 0.2
+# The colours: the photograph's own, each point brightened along a curve that lifts the dark more than the light, so
+# type, which covers only part of its cell, still reads as the picture does; hue kept, saturation raised a touch.
+BRIGHTEN = 1.8
+SATURATE = 1.15
+# The photograph is handed over at twice its size, sharpened a little, so it reads crisply at a point a character.
+UPSCALE = 2
 # The ramp, re-sorted by Menlo's own ink.
 RAMP = " .,:;-~=+*xoe%#&@"
-# The birds: their heights, in rows; which look left and are turned; how far they lean into their flight, in degrees.
-HEIGHTS = (4, 5, 6, 8, 11, 15)
-LEFTWARD = (5, 6, 7)
-LEAN = 14
+# The birds' heights, in rows.
+HEIGHTS = (4, 5, 6, 7, 8, 9, 10, 12, 14, 16)
 
 
 def glyphs():
@@ -116,18 +115,20 @@ def mountains(maps):
     tone = ndimage.gaussian_filter(np.clip((detail - DARK) / (LIGHT - DARK), 0, 1), 0.6)
     tone[sky] = SKY_TONE
 
-    marks = [t for t, _ in STOPS]
-    paint = np.stack([np.interp(tone, marks, [c[i] for _, c in STOPS]) for i in range(3)], -1)
-    # The photograph's own colour, brought up to the same brightness, kept a little.
-    own = rgb * (paint.mean(-1, keepdims=True) / np.maximum(rgb.mean(-1, keepdims=True), 1))
-    paint = paint * (1 - KEEP) + np.clip(own, 0, 255) * KEEP
-    sky_colour = SKY_COLOUR
+    level = rgb.max(-1, keepdims=True) / 255
+    paint = rgb * ((1 - (1 - level) ** BRIGHTEN) / np.maximum(level, 1e-3))
+    luma = (paint @ np.array([0.299, 0.587, 0.114]))[..., None]
+    paint = np.clip(luma + (paint - luma) * SATURATE, 0, 255)
+    sky_colour = paint[sky].mean(0)
     paint[sky] = sky_colour
 
     sheet = np.concatenate([paint, np.repeat(tone[..., None] * 255, 3, 2)], 0)
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, 'tetons.webp')
-    Image.fromarray(np.clip(sheet, 0, 255).astype(np.uint8)).save(path, quality=86, method=6)
+    sheet = Image.fromarray(np.clip(sheet, 0, 255).astype(np.uint8))
+    sheet = sheet.resize((sheet.width * UPSCALE, sheet.height * UPSCALE), Image.Resampling.LANCZOS)
+    sheet = sheet.filter(ImageFilter.UnsharpMask(radius=1.4, percent=60, threshold=1))
+    sheet.save(path, quality=78, method=6)
     print(f'{width} x {height} photograph, {os.path.getsize(path)} bytes -> {os.path.relpath(path, ROOT)}')
 
     ink = {CHARS[i]: maps[i].mean() for i in range(len(CHARS))}
@@ -143,14 +144,12 @@ def birds(maps, proof):
     shapes.sort(key=lambda each: each[0][1].start)
     out = []
     proofs = []
+    natural = []
     for b, (box, label) in enumerate(shapes):
+        # As inlaid, flying toward the nut, to the left.
         mask = Image.fromarray(((found[box] == label) * 255).astype(np.uint8))
-        # Upright, as if seen from below, looking right, and leaning into the flight.
-        mask = mask.rotate(-90, expand=True)
-        if b in LEFTWARD:
-            mask = mask.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        natural.append(mask.height)
         mask = mask.resize((mask.width * 6, mask.height * 6), Image.Resampling.LANCZOS)
-        mask = mask.rotate(-LEAN, expand=True, resample=Image.Resampling.BICUBIC)
         ink = ndimage.gaussian_filter(np.asarray(mask).astype(np.float32) / 255, 2)
         ys, xs = np.nonzero(ink > 0.05)
         ink = ink[ys.min() : ys.max() + 1, xs.min() : xs.max() + 1]
@@ -172,7 +171,7 @@ def birds(maps, proof):
         for bird in proofs:
             lines.extend(bird + [''])
         render(lines, os.path.join(proof, 'birds.png'))
-    return out, len(shapes)
+    return [' '.join(map(str, natural))] + out, len(shapes)
 
 
 def render(lines, path):

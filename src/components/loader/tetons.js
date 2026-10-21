@@ -1,7 +1,7 @@
 // The loader, run inline at the top of the body so it is up before the bundle, the fonts or a single picture arrive.
-// The Tetons at dusk, set in type, with a distant flock of the birds of PRS's fretboard inlays flying left to right
-// over them in a loose V, in mother of pearl. The type is set here, on whatever grid fits the
-// screen at about five pixels a character, from the photograph as studio/tetons/ascii.py worked it over
+// The Tetons at dusk, set in type, with a distant flock of the birds of PRS's fretboard inlays flying right to left
+// over them in a loose V, in mother of pearl, as they fly up the neck. The type is set here, on whatever grid fits the
+// screen at about three and a half pixels a character, from the photograph as studio/tetons/ascii.py worked it over
 // (public/loader/tetons.webp: each point's colour, and the tone that picks its character) and the ridge it traced
 // (public/loader/tetons.txt, with the birds). A hiss of noise lies over it all, and now and then the picture tears for
 // a moment like a weak signal: a line or two of it slips sideways. Once everything is in, the type goes out cell by cell
@@ -17,9 +17,11 @@
   // Menlo's width to its height, which the grids were set at.
   const ADVANCE = 0.602
   // The size of type, in pixels: a share of the screen's width, within bounds.
-  const TYPE = { share: 1 / 280, least: 4.5, most: 7 }
+  const TYPE = { share: 1 / 400, least: 3.5, most: 5 }
   // A cell is a stroke of the ridge where between these shares of it are sky.
   const RIDGE = [0.15, 0.85]
+  // How bright each cell's ground is, as a share of its colour; the character over it is in the full colour.
+  const GROUND = 0.42
   // How much noise is added to each cell's tone, so like tones do not band.
   const DITHER = 0.04
   // The photograph, set as type: its shape, how much of the screen's height it fills at least, and about how far
@@ -32,7 +34,7 @@
   // The flock: how many birds, the nine of the PRS set in turn; how tall each is, in pixels on a screen 1440 wide;
   // how far apart they fly, in birds' widths and heights; where along its crossing it starts; how high, as a share of
   // the sky over the peaks; and how fast, in screen widths a second.
-  const FLOCK = { count: 17, height: 24, apart: [1.1, 0.5], from: 0.3, high: 0.42, speed: 0.024 }
+  const FLOCK = { count: 17, height: 30, apart: [1.7, 0.42], from: 0.45, high: 0.42, speed: 0.024 }
   // How bright the pearl is at the flock's distance.
   const DISTANCE = 0.9
   // Mother of pearl: white with a sheen of pink, green and blue that drifts across each bird.
@@ -75,19 +77,20 @@
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 
-  /** What the loader was given: the night, the sky's colour, the ramp, the ridge, and the birds, each at the
-   * heights it was set at, by rows. */
+  /** What the loader was given: the night, the sky's colour, the ramp, the ridge, each bird's height in the PRS set,
+   * and the birds, each at the heights it was set at, by rows. */
   const read = (text) => {
     const lines = text.split('\n')
     const [night, sky, ramp] = lines
     const ridge = lines[3].split(' ').map(Number)
+    const natural = lines[4].split(' ').map(Number)
     const birds = []
-    for (let i = 4; /^\d+ \d+ \d+$/.test(lines[i] || ''); ) {
+    for (let i = 5; /^\d+ \d+ \d+$/.test(lines[i] || ''); ) {
       const [bird, rows, cols] = lines[i].split(' ').map(Number)
       ;(birds[bird] ||= {})[rows] = { rows, cols, lines: lines.slice(i + 1, i + 1 + rows) }
       i += 1 + rows
     }
-    return { night, sky, ramp, ridge, birds }
+    return { night, sky, ramp, ridge, natural, birds }
   }
 
   /** The noise over the picture, and the moments it tears like a bad signal. */
@@ -192,7 +195,9 @@
       canvas.height = rows
       const context = canvas.getContext('2d', { willReadFrequently: true })
       context.imageSmoothingQuality = 'high'
-      context.drawImage(this.sheet, 0, half * PHOTO.height, PHOTO.width, PHOTO.height, left, top, wide, tall)
+      const sw = this.sheet.naturalWidth
+      const sh = this.sheet.naturalHeight / 2
+      context.drawImage(this.sheet, 0, half * sh, sw, sh, left, top, wide, tall)
       return context.getImageData(0, 0, cols, rows).data
     }
 
@@ -269,29 +274,45 @@
       const descent = metrics.fontBoundingBoxDescent ?? size * 0.236
       // Where CSS would put the baseline at a line height of one, as the birds were set.
       this.baseline = (size - (ascent + descent)) / 2 + ascent
-      base.fillStyle = '#fff'
-      for (let i = 0; i < chars.length; i++) {
-        if (chars[i] !== ' ') base.fillText(chars[i], (i % cols) * cell, Math.floor(i / cols) * size + this.baseline)
-      }
       const tint = document.createElement('canvas')
       tint.width = cols
       tint.height = rows
       tint.getContext('2d').putImageData(colours, 0, 0)
-      base.globalCompositeOperation = 'source-in'
-      base.imageSmoothingEnabled = false
-      base.drawImage(tint, 0, 0, cols * cell, rows * size)
-      base.globalCompositeOperation = 'destination-over'
+      // The ink: each character in white, then its cell's colour laid into it.
+      const ink = document.createElement('canvas')
+      ink.width = this.base.width
+      ink.height = this.base.height
+      const inked = ink.getContext('2d')
+      inked.setTransform(dpr, 0, 0, dpr, 0, 0)
+      inked.font = this.font
+      inked.fillStyle = '#fff'
+      for (let i = 0; i < chars.length; i++) {
+        if (chars[i] !== ' ') inked.fillText(chars[i], (i % cols) * cell, Math.floor(i / cols) * size + this.baseline)
+      }
+      inked.globalCompositeOperation = 'source-in'
+      inked.imageSmoothingEnabled = false
+      inked.drawImage(tint, 0, 0, cols * cell, rows * size)
+      // The ground: each cell its own colour, dimmed, so ground and ink together read as the photograph does.
       base.fillStyle = night
       base.fillRect(0, 0, w, h)
-      base.globalCompositeOperation = 'source-over'
+      base.imageSmoothingEnabled = false
+      base.globalAlpha = GROUND
+      base.drawImage(tint, 0, 0, cols * cell, rows * size)
+      base.globalAlpha = 1
+      base.drawImage(ink, 0, 0, w, h)
       this.order = null
 
-      // The flock: each bird at the height it was set nearest the flock's, a little larger or smaller as birds are,
-      // in a loose V behind the leader, its arms trailing up and down and back, every place a little off true.
+      // The flock: each bird in proportion to the others as the PRS set has them, at the height it was set nearest
+      // that, in a loose V behind the leader, its arms trailing up and down and back, every place a little off true.
       const want = (FLOCK.height * Math.min(1.3, Math.max(0.55, w / 1440))) / size
       const nearest = (sizes, n) => sizes[Object.keys(sizes).map(Number).reduce((best, k) => (Math.abs(k - n) < Math.abs(best - n) ? k : best))]
+      const { natural, birds } = this.art
+      const middle = natural.slice().sort((a, b) => a - b)[natural.length >> 1]
       const flock = random(31)
-      const shapes = Array.from({ length: FLOCK.count }, (_, i) => nearest(this.art.birds[i % this.art.birds.length], want * (0.9 + flock() * 0.2)))
+      const shapes = Array.from({ length: FLOCK.count }, (_, i) => {
+        const b = i % birds.length
+        return nearest(birds[b], ((want * natural[b]) / middle) * (0.92 + flock() * 0.16))
+      })
       // A bird's room in the V, from the birds as they were set.
       const unit = [(shapes.reduce((sum, shape) => sum + shape.cols, 0) / shapes.length) * cell, (shapes.reduce((sum, shape) => sum + shape.rows, 0) / shapes.length) * size]
       this.flock = shapes.map((shape, i) => {
@@ -300,22 +321,22 @@
         return {
           id: i,
           shape,
-          x: -rank * unit[0] * FLOCK.apart[0] * (0.85 + flock() * 0.3),
+          x: rank * unit[0] * FLOCK.apart[0] * (0.85 + flock() * 0.3),
           y: side * rank * unit[1] * FLOCK.apart[1] * (0.8 + flock() * 0.4),
           phase: flock() * Math.PI * 2,
         }
       })
-      const reach = Math.max(...this.flock.map((bird) => -bird.x)) + unit[0]
+      const reach = Math.max(...this.flock.map((bird) => bird.x)) + unit[0]
       this.flock.width = reach
       this.flock.top = Math.max(-Math.min(...this.flock.map((bird) => bird.y)) + size, FLOCK.high * this.sky)
       this.context.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
-    /** Where a bird of the flock is `t` seconds in, in cells: the flock across the screen and round again, each
-     * bird drifting a little about its place in it. */
+    /** Where a bird of the flock is `t` seconds in, in cells: the flock across the screen, right to left, as the
+     * birds face, and round again, each bird drifting a little about its place in it. */
     place(bird, t) {
       const span = this.w + this.flock.width
-      const lead = ((FLOCK.from * span + FLOCK.speed * this.w * t) % span) - this.size
+      const lead = this.w - ((FLOCK.from * span + FLOCK.speed * this.w * t) % span)
       const x = lead + bird.x + Math.sin(t * 0.9 + bird.phase) * this.cell * 1.5
       const y = this.flock.top + bird.y + Math.sin(t * 1.3 + bird.phase * 1.7) * this.size * 0.9
       return [Math.round(x / this.cell), Math.round(y / this.size)]
