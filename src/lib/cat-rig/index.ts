@@ -12,6 +12,8 @@ export class CatRig {
   private readonly behaviour: Behaviour
   private readonly pose
   private frame = 0
+  private readonly width: number
+  private readonly height: number
 
   /** The cat on the canvas, or none where the browser cannot draw it. */
   static create(canvas: HTMLCanvasElement, picture: HTMLImageElement, rig: Rig, seed: number) {
@@ -28,8 +30,10 @@ export class CatRig {
   ) {
     const width = picture.naturalWidth
     const height = picture.naturalHeight
+    this.width = width
+    this.height = height
     this.skin = new Skin(rig, width, height)
-    this.behaviour = new Behaviour(rig, seed)
+    this.behaviour = new Behaviour(rig, seed, () => this.skin.blank())
     this.pose = this.skin.blank()
     painter.load(picture, width, height, this.skin.uv, this.skin.indices)
   }
@@ -38,9 +42,12 @@ export class CatRig {
   start(shown: () => void) {
     let first = true
     const tick = (time: number) => {
-      // Sized to its box at the screen's pixel density every frame, so zooming keeps it sharp.
-      const ratio = window.devicePixelRatio || 1
-      this.painter.fit(Math.round(this.canvas.clientWidth * ratio), Math.round(this.canvas.clientHeight * ratio))
+      // As many pixels as the screen gives its box, zoomed in or pinched in or not, so it stays as sharp as the
+      // still picture; and no more than the picture has, which the browser then scales as it scales the still.
+      const box = this.canvas.getBoundingClientRect()
+      const ratio = (window.devicePixelRatio || 1) * (window.visualViewport?.scale ?? 1)
+      const fit = Math.min(1, (box.width * ratio) / this.width)
+      this.painter.fit(Math.round(this.width * fit), Math.round(this.height * fit))
       this.behaviour.pose(time / 1000, this.pose)
       this.painter.draw(this.skin.deform(this.pose))
       if (first) {

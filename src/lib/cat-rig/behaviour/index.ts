@@ -1,16 +1,23 @@
-import type { Act, Pose, Rig } from '../types'
-import { lasting, play } from './acts'
+import type { Pose, Rig } from '../types'
+import { begin, play, type Playing } from './acts'
+import { Springs } from './springs'
 
-// Breaths a second, and how far the body swells with each: a resting cat's, and a sleeping cat's slower, deeper ones.
-const BREATH = { awake: [0.5, 0.035], asleep: [0.36, 0.045] } as const
-// The seconds a cat rests between one act and the next on the same track, the shortest and the longest.
-const REST = { awake: [1.2, 4.5], asleep: [3, 9] } as const
+// Breaths a minute and how far the ribs widen with each, awake at rest and asleep, as the footage showed: a sleeping
+// cat's back rose by about a sixtieth of its height, slowly, eleven to twenty times a minute.
+const BREATH = { awake: [24, 0.022], asleep: [16, 0.028] } as const
+// The seconds a cat stays still between one act and the next on each track, the shortest and the longest. Most of
+// the time a cat does nothing at all.
+const REST = {
+  awake: { front: [4, 12], back: [5, 16] },
+  asleep: { front: [8, 22], back: [10, 28] },
+} as const
 
 type Track = {
-  acts: Act[]
-  playing: { act: Act; start: number; lasts: number; side: number } | null
+  name: 'front' | 'back'
+  acts: Rig['acts']
+  playing: Playing | null
   next: number
-  last: Act | null
+  last: Rig['acts'][number] | null
 }
 
 /** A small seeded random number generator (mulberry32), so each cat keeps its own habits from one visit to the next. */
@@ -21,90 +28,108 @@ const seeded = (seed: number) => () => {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 }
 
-/** An unhurried wobble between -1 and 1, about `rate` times a second, never quite repeating. */
-const drift = (t: number, rate: number, phase: number) =>
-  0.6 * Math.sin(2 * Math.PI * rate * t + phase) + 0.4 * Math.sin(2 * Math.PI * rate * 1.73 * t + 2.1 * phase)
+const clear = (pose: Pose) => {
+  for (const part of Object.values(pose)) {
+    part.angles.fill(0)
+    part.shift[0] = 0
+    part.shift[1] = 0
+    part.swell = 0
+  }
+}
 
 /**
- * What the cat does from moment to moment. It always breathes, a little unevenly, and an awake cat's head and tail
- * never sit quite still. Now and then it does something: it tilts its head, washes a paw, swishes or flicks its tail,
- * twitches an ear. The head and paws act on one track and the tail and legs on another, so a cat may flick its tail
- * as it grooms, but never does two things at once with the same part.
+ * What the cat does from moment to moment, after footage of real cats. Mostly it lies still and breathes. Now and
+ * then it does something and holds the new pose: it looks somewhere else, lays its tail elsewhere, settles its head.
+ * Or it washes a paw, kneads, stretches a leg, flicks its tail or twitches an ear, and goes back to how it was. Its
+ * parts get where it means them to be on springs, quick to start and slow to settle, never on a timed curve. The head
+ * and paws act on one track and the tail and legs on another, so it may flick its tail as it washes.
  */
 export class Behaviour {
   private readonly random: () => number
   private readonly tracks: Track[]
+  private readonly springs: Springs
+  private readonly held: Pose
+  private readonly target: Pose
+  private readonly pulse: Pose
   private breath = 0
+  private pace = 1
   private then: number | null = null
 
   constructor(
     private readonly rig: Rig,
     seed: number,
+    blank: () => Pose,
   ) {
     this.random = seeded(seed)
+    this.springs = new Springs(rig)
+    this.held = blank()
+    this.target = blank()
+    this.pulse = blank()
     this.tracks = (['front', 'back'] as const)
-      .map((track) => rig.acts.filter((act) => act.track === track))
-      .filter((acts) => acts.length)
-      .map((acts) => ({ acts, playing: null, next: -1, last: null }))
+      .map((name) => ({ name, acts: rig.acts.filter((act) => act.track === name), playing: null, next: -1, last: null }))
+      .filter((track) => track.acts.length)
   }
 
-  /** The pose at `now` seconds, written into `pose` from rest. */
+  /** The pose at `now` seconds, written into `pose`. */
   pose(now: number, pose: Pose) {
-    for (const part of Object.values(pose)) {
-      part.angles.fill(0)
-      part.shift[0] = 0
-      part.shift[1] = 0
-      part.swell = 0
-    }
     // Back from a hidden tab, the cat carries on from where it was, not from where the clock now is.
-    const step = this.then === null ? 0 : Math.min(0.1, Math.max(0, now - this.then))
+    const step = this.then === null ? 0 : Math.min(0.05, Math.max(0, now - this.then))
     this.then = now
-    this.idle(now, step, pose)
-    for (const track of this.tracks) this.act(track, now, pose)
-  }
-
-  private idle(now: number, step: number, pose: Pose) {
-    const { mood, breath, head, tail } = this.rig
-    const [rate, depth] = BREATH[mood]
-    // Each breath a little quicker or slower than the last; in quicker than out, and a pause before the next.
-    this.breath += step * rate * (1 + 0.12 * drift(now, 0.05, 1.3))
-    const cycle = this.breath % 1
-    const lungs = cycle < 0.38 ? 0.5 - 0.5 * Math.cos((Math.PI * cycle) / 0.38) : 0.5 + 0.5 * Math.cos((Math.PI * (cycle - 0.38)) / 0.5)
-    pose[breath].swell += depth * (cycle < 0.88 ? lungs : 0)
-    const awake = mood === 'awake'
-    if (head) pose[head].angles[0] += (awake ? 2.2 : 0.5) * drift(now, awake ? 0.09 : 0.04, 0.4)
-    if (tail) {
-      const angles = pose[tail].angles
-      const sway = (awake ? 3.5 : 1) * drift(now, awake ? 0.17 : 0.06, 2.7)
-      angles[angles.length - 1] += sway
-      if (angles.length > 1) angles[angles.length - 2] += 0.6 * sway
+    for (const [name, part] of Object.entries(this.held)) {
+      const goal = this.target[name]
+      for (let b = 0; b < part.angles.length; b++) goal.angles[b] = part.angles[b]
+      goal.shift[0] = part.shift[0]
+      goal.shift[1] = part.shift[1]
     }
+    clear(this.pulse)
+    for (const track of this.tracks) this.act(track, now)
+    this.springs.step(this.target, step, pose)
+    for (const [name, part] of Object.entries(this.pulse)) {
+      const out = pose[name]
+      for (let b = 0; b < part.angles.length; b++) out.angles[b] += part.angles[b]
+      out.shift[0] += part.shift[0]
+      out.shift[1] += part.shift[1]
+    }
+    pose[this.rig.breath].swell = this.lungs(step)
   }
 
-  private act(track: Track, now: number, pose: Pose) {
-    if (track.next < 0) track.next = now + 0.4 + 2.5 * this.random()
+  /** How far the ribs are widened: in over two fifths of a breath, out over the next half, then a pause. */
+  private lungs(step: number) {
+    const [rate, depth] = BREATH[this.rig.mood]
+    this.breath += (step * rate * this.pace) / 60
+    if (this.breath >= 1) {
+      this.breath -= 1
+      // No two breaths quite alike.
+      this.pace = 0.85 + 0.3 * this.random()
+    }
+    const x = this.breath
+    const fill = x < 0.4 ? 0.5 - 0.5 * Math.cos((Math.PI * x) / 0.4) : x < 0.88 ? 0.5 + 0.5 * Math.cos((Math.PI * (x - 0.4)) / 0.48) : 0
+    return depth * fill
+  }
+
+  private act(track: Track, now: number) {
+    const rest = REST[this.rig.mood][track.name]
+    if (track.next < 0) track.next = now + 0.3 * rest[0] + rest[0] * this.random()
     if (track.playing && now - track.playing.start >= track.playing.lasts) {
-      const [least, most] = REST[this.rig.mood]
       track.playing = null
-      track.next = now + least + (most - least) * this.random()
+      track.next = now + rest[0] + (rest[1] - rest[0]) * this.random()
     }
     if (!track.playing && now >= track.next) {
       const act = this.choose(track)
-      track.playing = { act, start: now, lasts: lasting(act.kind, this.random()), side: act.side ?? (this.random() < 0.5 ? -1 : 1) }
+      track.playing = begin(act, now, this.random, this.held)
       track.last = act
     }
-    const playing = track.playing
-    if (playing) play(playing.act, now - playing.start, playing.lasts, playing.side, pose)
+    if (track.playing) play(track.playing, now - track.playing.start, this.target, this.pulse)
   }
 
-  /** Any of the track's acts by its weight, but not the one it has just done, if it has others. */
+  /** Any of the track's acts by its weight, the one it has just done a third as likely to come again. */
   private choose(track: Track) {
-    const open = track.acts.length > 1 ? track.acts.filter((act) => act !== track.last) : track.acts
-    let pick = this.random() * open.reduce((sum, act) => sum + act.weight, 0)
-    for (const act of open) {
-      pick -= act.weight
+    const weight = (act: Track['acts'][number]) => act.weight * (act === track.last ? 1 / 3 : 1)
+    let pick = this.random() * track.acts.reduce((sum, act) => sum + weight(act), 0)
+    for (const act of track.acts) {
+      pick -= weight(act)
       if (pick <= 0) return act
     }
-    return open[open.length - 1]
+    return track.acts[track.acts.length - 1]
   }
 }

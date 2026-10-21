@@ -22,6 +22,8 @@ type BoundChain = {
 type BoundSwell = {
   name: string
   centre: [number, number]
+  /** The way the ribs widen, as a unit vector. */
+  across: [number, number]
   vertices: Uint32Array
   weights: Float32Array
 }
@@ -138,10 +140,16 @@ export class Skin {
       const grow = pose[swell.name].swell
       if (grow === 0) continue
       const [cx, cy] = swell.centre
+      const [ux, uy] = swell.across
       for (let n = 0; n < swell.vertices.length; n++) {
         const i = swell.vertices[n] * 2
-        out[i] += swell.weights[n] * grow * (rest[i] - cx)
-        out[i + 1] += swell.weights[n] * grow * (rest[i + 1] - cy)
+        const dx = rest[i] - cx
+        const dy = rest[i + 1] - cy
+        // Out along the ribs, and a quarter as much every way.
+        const wide = (dx * ux + dy * uy) * 0.75
+        const k = swell.weights[n] * grow
+        out[i] += k * (wide * ux + 0.25 * dx)
+        out[i + 1] += k * (wide * uy + 0.25 * dy)
       }
     }
     return out
@@ -198,7 +206,14 @@ export class Skin {
         }
       }
       if (part.kind === 'swell') {
-        this.swells.push({ name, centre: part.centre, vertices: Uint32Array.from(kept), weights: Float32Array.from(weights) })
+        const across = (part.across * Math.PI) / 180
+        this.swells.push({
+          name,
+          centre: part.centre,
+          across: [Math.cos(across), Math.sin(across)],
+          vertices: Uint32Array.from(kept),
+          weights: Float32Array.from(weights),
+        })
         return
       }
       const bones = part.joints.length - 1
