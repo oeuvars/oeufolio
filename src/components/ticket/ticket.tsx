@@ -1,7 +1,8 @@
 import { motion } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { profile } from '../../content'
+import { paint } from '../../lib/paint'
 import { slide } from '../house'
 import contact from './contact.json'
 import { Print } from './print'
@@ -40,9 +41,38 @@ type TicketProps = {
 
 // How much nearer the folded strip sees the table than the open page does.
 const NEAR = 1.08
+// The photograph of the set.
+const PHOTO = '/objects/contact-open.avif'
 
 export const Ticket = ({ open }: TicketProps) => {
   const [copied, setCopied] = useState(false)
+  const photo = useRef<HTMLCanvasElement>(null)
+  const [painted, setPainted] = useState(false)
+
+  // The photograph drawn again whenever its box changes size, the last drawing to start the one kept.
+  useEffect(() => {
+    const canvas = photo.current
+    if (!canvas) return
+    let going: AbortController | null = null
+    let drawn = 0
+    const draw = () => {
+      const across = canvas.offsetWidth
+      if (!across || Math.abs(across - drawn) < 1) return
+      drawn = across
+      going?.abort()
+      going = new AbortController()
+      paint(canvas, PHOTO, across, going.signal)
+        .then(() => setPainted(true))
+        .catch(() => {})
+    }
+    const watching = new ResizeObserver(draw)
+    watching.observe(canvas)
+    return () => {
+      watching.disconnect()
+      going?.abort()
+    }
+  }, [])
+
   // A browser that refuses the clipboard leaves the ticket as it is. The address can still be selected.
   const copy = () =>
     navigator.clipboard.writeText(profile.email).then(
@@ -69,14 +99,12 @@ export const Ticket = ({ open }: TicketProps) => {
         animate={{ scale: open ? 1 : NEAR }}
         transition={slide}
       >
-        <img
-          src="/objects/contact-open.avif"
-          alt=""
-          aria-hidden
-          draggable={false}
-          className="pointer-events-none absolute max-w-none"
-          style={over(OX, OY, OW, OH)}
-        />
+        {/* The photograph is drawn on a canvas (paint) as large as the open page shows it, and laid
+            as a picture only until then. */}
+        <canvas ref={photo} aria-hidden className="pointer-events-none absolute" style={over(OX, OY, OW, OH)} />
+        {!painted && (
+          <img src={PHOTO} alt="" aria-hidden draggable={false} className="pointer-events-none absolute max-w-none" style={over(OX, OY, OW, OH)} />
+        )}
         <img
           src="/objects/contact-punch.avif"
           alt=""

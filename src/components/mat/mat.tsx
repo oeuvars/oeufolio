@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
+import { paint } from '../../lib/paint'
 import { cn } from '../../lib/utils'
 import type { PlateId, PropId } from '../../types'
 import { Rulers } from './rulers'
@@ -31,29 +32,6 @@ const LAID = 'pointer-events-none absolute z-1 max-w-none'
 const over = (geometry: Geometry, x: number, y: number, w: number, h: number): React.CSSProperties => {
   const { em } = geometry
   return { left: geometry.x + x * em, top: geometry.y + y * em, width: w * em, height: h * em }
-}
-
-/**
- * Draws a map of the lamp's light on its canvas, `across` CSS pixels wide, at as many pixels as the screen shows it
- * with and no more than its render has. Laid as a picture or a background, each map is decoded whole (3712 x 3840)
- * and the browser lets it go again as soon as its other decoded pictures outgrow what it keeps, as they do while the
- * work page's poster slides; then every repaint of the mat decodes both maps afresh. A canvas is drawn once.
- */
-const paint = async (canvas: HTMLCanvasElement, src: string, across: number, signal: AbortSignal) => {
-  const whole = await createImageBitmap(await (await fetch(src, { signal })).blob())
-  const fine = Math.min(1, (across * (window.devicePixelRatio || 1)) / whole.width)
-  const map =
-    fine < 1
-      ? await createImageBitmap(whole, { resizeWidth: Math.round(whole.width * fine), resizeHeight: Math.round(whole.height * fine), resizeQuality: 'high' })
-      : whole
-  if (!signal.aborted) {
-    canvas.width = map.width
-    canvas.height = map.height
-    canvas.getContext('2d')?.drawImage(map, 0, 0)
-  }
-  whole.close()
-  map.close()
-  if (signal.aborted) throw signal.reason
 }
 
 /**
