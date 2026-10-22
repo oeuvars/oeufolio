@@ -15,17 +15,17 @@
   },
   "phone-10": {
     "src": "/objects/tabcut-phone-10.avif",
-    "x": 0.7999999999999999,
-    "y": -1.6,
-    "width": 3.0,
-    "height": 10.45
+    "x": 0.38,
+    "y": -1.42,
+    "width": 2.55,
+    "height": 7.915000000000001
   },
   "phone-11.5": {
     "src": "/objects/tabcut-phone-11_5.avif",
-    "x": 0.7999999999999999,
-    "y": -1.6,
-    "width": 3.0,
-    "height": 11.537500000000001
+    "x": 0.38,
+    "y": -1.42,
+    "width": 2.55,
+    "height": 8.67625
   },
   "wide-10-leather": {
     "src": "/objects/tabcut-wide-10-leather.avif",
@@ -37,10 +37,10 @@
   },
   "phone-10-leather": {
     "src": "/objects/tabcut-phone-10-leather.avif",
-    "x": 0.7999999999999999,
-    "y": -1.6,
-    "width": 3.0,
-    "height": 10.45,
+    "x": 0.38,
+    "y": -1.42,
+    "width": 2.55,
+    "height": 7.915000000000001,
     "light": "/objects/tabcut-phone-10-leather-light.avif"
   },
   "wide-11.5-hide": {
@@ -53,10 +53,10 @@
   },
   "phone-11.5-hide": {
     "src": "/objects/tabcut-phone-11_5-hide.avif",
-    "x": 0.7999999999999999,
-    "y": -1.6,
-    "width": 3.0,
-    "height": 11.537500000000001,
+    "x": 0.38,
+    "y": -1.42,
+    "width": 2.55,
+    "height": 8.67625,
     "light": "/objects/tabcut-phone-11_5-hide-light.avif"
   }
 }

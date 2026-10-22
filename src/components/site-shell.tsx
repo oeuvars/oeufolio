@@ -1,7 +1,7 @@
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { MotionConfig, motion, useReducedMotion } from 'motion/react'
-import type { CSSProperties } from 'react'
-import { useEffect, useId, useState } from 'react'
+import type { CSSProperties, HTMLAttributes } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 import { profile } from '../content'
 import type { NavItem, VersionSearch } from '../types'
@@ -92,7 +92,7 @@ const CAST_WIDTH = 40
 // The render takes over from the strip's own over CLOTH_TAB_HANDOVER px at either end, where the two are the same.
 const CLOTH_TAB = {
   wide: { edge: '/objects/linen-tab-edge-wide.webp', cast: '/objects/linen-tab-wide.webp', top: 90, height: 268, width: 43, castWidth: 57 },
-  phone: { edge: '/objects/linen-tab-edge-phone.webp', cast: '/objects/linen-tab-phone.webp', top: 94, height: 216, width: 33, castWidth: 47 },
+  phone: { edge: '/objects/linen-tab-edge-phone.webp', cast: '/objects/linen-tab-phone.webp', top: 97, height: 175, width: 26, castWidth: 40 },
 }
 const CLOTH_TAB_HANDOVER = 20
 // Where a strip's rendered edge lies, from its edge, and how wide it runs (studio/edgecast FRAME).
@@ -110,7 +110,7 @@ const SPINE_CAST: CSSProperties = {
 // A handmade sheet's deckle mask runs round its tab too (studio/paper/edge.py): it begins DECKLE_IN px in from the
 // strip's edge and runs out 9 px past the tab, this wide for each layout (edge_width).
 const DECKLE_IN = 7
-const DECKLE_WIDTH = { wide: 50, phone: 40 }
+const DECKLE_WIDTH = { wide: 50, phone: 33 }
 // Its shadow runs on this much further out (CAST_PAST).
 const DECKLE_CAST_PAST = 8
 
@@ -247,6 +247,12 @@ const grained = (paper?: Paper): CSSProperties => ({
 // A page's frame: its margins and type.
 const PAGE = '@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]'
 const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
+// How far of the way a tab pulled on a phone has to be taken for its strip to open when it is let go.
+const PULL_OPENS = 0.3
+// On a phone the résumé's desk runs across the window's top at this much its size, its photograph laid back along it
+// by RESUME_SHIFT rem so the roll and its tag lie past the last folder's tab and in the window.
+const RESUME_ON_PHONE = 0.7
+const RESUME_SHIFT = 6.3
 const instant = { duration: 0 } as const
 
 const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties => {
@@ -289,6 +295,8 @@ type TabProps = {
   /** The tab's cut, rendered (studio/tabcut): where its render lies, in pixels from the tab's top left. A deckled or a
    * frayed tab has none: its edge is its strip's own, deckle or fray, and so is its shadow. */
   cut?: TabCut
+  /** On a phone the tab can be taken and pulled, to open its strip by hand (SiteShell's pull). */
+  pull?: Pick<HTMLAttributes<HTMLElement>, 'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerCancel' | 'onClickCapture'>
 }
 
 /** A rendered cut over a tab: the light and shadow of its edge, and where that lies from the tab's top left. */
@@ -332,7 +340,7 @@ const tabOutline = ({ band, protrude, height }: TabShape, footless = false, over
   return { reach, path: `M${foot} ${-reach} L${band} ${-reach} ${turns.join(' ')} L${band} ${height + reach} L${foot} ${height + reach} Z` }
 }
 
-const Tab = ({ label, shape, to, search, current, src, footless, leather, surface, paper, cut: edge }: TabProps) => {
+const Tab = ({ label, shape, to, search, current, src, footless, leather, surface, paper, cut: edge, pull }: TabProps) => {
   // A leather tab laps a pixel back over its strip, so the two never meet edge to edge, where each would let
   // through a little of what is under both and the seam would show as a line.
   const { reach, path } = tabOutline(shape, footless, leather ? 1 : 0)
@@ -424,7 +432,8 @@ const Tab = ({ label, shape, to, search, current, src, footless, leather, surfac
       aria-label={label}
       aria-current={current ? 'page' : undefined}
       className="tab"
-      style={{ height: shape.height }}
+      style={{ height: shape.height, touchAction: pull ? 'none' : undefined }}
+      {...pull}
     >
       {inside}
     </Link>
@@ -479,7 +488,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       width: `calc(100% + ${shape.protrude}px)`,
       backgroundImage: `url(${pageTones[i].surface})`,
       backgroundSize: `${HIDE} ${HIDE}`,
-      backgroundPosition: '0 0',
+      backgroundPosition: mobile ? `right ${shape.protrude}px top 0` : '0 0',
       maskImage: `url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       maskSize: `${w}px ${h}px`,
       maskPosition: `right 0 top ${tabTops[i + 1] * metrics.rem - reach}px`,
@@ -534,6 +543,12 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       />
     )
   }
+  // On a phone what a strip is made of is laid from its edge, where its tab and its page are pinned (upright), so the
+  // three move as one sheet. Laid from where the strip before covers it, the material would slide under the page each
+  // time a strip opened or folded, as that end moves and the edge does not, or the other way about. layers is how many
+  // background layers the material has, each laid the same.
+  const laidFromEdge = (i: number, layers: number): CSSProperties =>
+    mobile ? { backgroundPosition: Array.from({ length: layers }, () => `right ${overhang(i)}px top 0`).join(', ') } : {}
   // A page of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
   // is cut to the strip, its edge torn or cut as the strip's is, and to the tab's outline, so the tab is the same
   // piece of paper as the page, its tile and grain running on unbroken, with no join between them.
@@ -546,6 +561,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       return {
         right: inset - tab.width,
         ...(plate ? { backgroundImage: `url(${plate})`, backgroundSize: 'max(100vw, 150vh) auto', backgroundPosition: '0 0' } : grained(paper)),
+        ...laidFromEdge(i, plate ? 1 : paper ? 3 : 2),
         maskImage: `linear-gradient(#000, #000), var(--torn-core), url(${tab.edge})`,
         maskSize: `calc(100% - ${tab.width - 1}px) 100%, ${TEAR_WIDTH}px ${TEAR_LENGTH}px, ${tab.width}px ${tab.height}px`,
         maskPosition: `left 0 top 0, right ${tab.width - TEAR_WIDTH}px top 0, right 0 top ${tab.top}px`,
@@ -559,6 +575,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       return {
         right: DECKLE_IN - w,
         ...grained(paper),
+        ...laidFromEdge(i, paper ? 3 : 2),
         maskImage: `linear-gradient(#000, #000), url(${deckled[layout].edge})`,
         maskSize: `calc(100% - ${w - 1}px) 100%, ${w}px ${TEAR_LENGTH}px`,
         maskPosition: 'left 0 top 0, right 0 top 0',
@@ -576,6 +593,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       right: -shape.protrude,
       // The plate is 36 by 24 em (studio/linen.py), 3 by 2.
       ...(plate ? { backgroundImage: `url(${plate})`, backgroundSize: 'max(100vw, 150vh) auto', backgroundPosition: '0 0' } : grained(paper)),
+      ...laidFromEdge(i, plate ? 1 : paper ? 3 : 2),
       maskImage: `linear-gradient(#000, #000), var(--torn-core, linear-gradient(#000, #000)), url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       // The page runs a pixel into its edge's strip, so no hairline opens where they meet.
       maskSize: `calc(100% - ${shape.protrude - out + TEAR_WIDTH - 1}px) 100%, ${TEAR_WIDTH}px ${TEAR_LENGTH}px, ${w}px ${h}px`,
@@ -624,8 +642,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       maskImage: !fades ? undefined : src === cast.light ? square : `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
     }
   }
-  // On a phone the last strip leaves room past it for its tab, which stands out over the window's top.
-  const fixed = mobile ? protrude + overlap / 2 : spine + end
+  // On a phone the last strip leaves room past it for the desk the résumé lies on, at RESUME_ON_PHONE its size, which
+  // the last strip's tab stands out over as it does on a wide screen.
+  const fixed = mobile ? RESUME_ON_PHONE * end : spine + end
   const gaps = mobile ? count - 1 : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
   // strip shows only its roll, so it folds narrower than the rest. On a phone every strip folds to one band, as
@@ -696,6 +715,72 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     lefts.push(cursor)
     cursor += (i === index ? openWidth : folded(i)) - overlap
   }
+  const widths = profile.nav.map((_, i) => (i === index ? openWidth : folded(i)))
+
+  // On a phone a tab can be taken and pulled to open its strip by hand. The stack is laid as it would be with that
+  // strip open, and the pull carries it there as far as the finger has gone, along the strip edge that moves furthest
+  // between the two: pulled past PULL_OPENS of the way, the strip opens, and short of it, the stack falls back. A phone
+  // opens every strip to the room the others leave it, so the stack with a strip open is laid as roomFor says.
+  const stackWith = (k: number) => {
+    const sizes = profile.nav.map((_, i) => (i === k ? roomFor(k) : folds(i)))
+    const at: number[] = []
+    sizes.reduce((left, size) => (at.push(left), left + size - overlap), 0)
+    return { lefts: at, widths: sizes }
+  }
+  const navigate = useNavigate()
+  const [pulling, setPulling] = useState<{ k: number; amount: number } | null>(null)
+  const pullRef = useRef<{ k: number; from: number; travel: number; amount: number; moved: boolean } | null>(null)
+  // A pull let go is not a tap: the click that follows it is swallowed.
+  const pulledOff = useRef(false)
+  const pullOf = (k: number): TabProps['pull'] => {
+    if (!mobile || k === index) return undefined
+    return {
+      onPointerDown: (event) => {
+        if (event.button !== 0) return
+        // Where each strip's edge lies on the window, from its top, now and with this strip open.
+        const target = stackWith(k)
+        const moves = lefts.map((left, i) => left + widths[i] - (target.lefts[i] + target.widths[i]))
+        const travel = moves.reduce((most, move) => (Math.abs(move) > Math.abs(most) ? move : most), 0)
+        pulledOff.current = false
+        if (Math.abs(travel) < 1) return
+        pullRef.current = { k, from: event.clientY, travel, amount: 0, moved: false }
+        event.currentTarget.setPointerCapture(event.pointerId)
+      },
+      onPointerMove: (event) => {
+        const pull = pullRef.current
+        if (!pull) return
+        const gone = event.clientY - pull.from
+        if (!pull.moved && Math.abs(gone) < 6) return
+        pull.moved = true
+        pull.amount = Math.min(1, Math.max(0, gone / pull.travel))
+        setPulling({ k: pull.k, amount: pull.amount })
+      },
+      onPointerUp: () => {
+        const pull = pullRef.current
+        pullRef.current = null
+        if (!pull?.moved) return
+        pulledOff.current = true
+        setPulling(null)
+        if (pull.amount >= PULL_OPENS) {
+          const item = profile.nav[pull.k]
+          navigate({ to: item.to, search: searchOf(item.to) })
+        }
+      },
+      onPointerCancel: () => {
+        pullRef.current = null
+        setPulling(null)
+      },
+      onClickCapture: (event) => {
+        if (!pulledOff.current) return
+        pulledOff.current = false
+        event.preventDefault()
+        event.stopPropagation()
+      },
+    }
+  }
+  // The stack as the pull has it, between where it lies and where it would with the pulled strip open.
+  const pulled = pulling && stackWith(pulling.k)
+  const lerp = (from: number, to: number) => from + (to - from) * (pulling?.amount ?? 0)
 
   return (
     <MotionConfig reducedMotion="user">
@@ -744,6 +829,15 @@ export const SiteShell = ({ children }: SiteShellProps) => {
           className={mobile ? 'absolute top-0 left-0 origin-top-left' : 'contents'}
           style={mobile ? { width: metrics.width, height: metrics.height, transform: `translateY(${metrics.width}px) rotate(-90deg)` } : undefined}
         >
+          {/* The desk past the last folder, with the résumé on it, turned with the stack, so it lies across the top. */}
+          {mobile && (
+            <div
+              className="absolute top-0 right-0 z-0 origin-top-right"
+              style={{ width: end, height: metrics.height / RESUME_ON_PHONE, transform: `scale(${RESUME_ON_PHONE})` }}
+            >
+              <Resume resume={profile.resume} room={metrics.height / RESUME_ON_PHONE / metrics.rem} shift={RESUME_SHIFT} />
+            </div>
+          )}
           {profile.nav.map((item, i) => {
             const open = i === index
 
@@ -752,8 +846,8 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 key={item.to}
                 className={`strip ${reachesOver(i) ? 'strip-reaches' : ''}`}
                 initial={false}
-                animate={{ left: lefts[i], width: open ? openWidth : folded(i) }}
-                transition={transition}
+                animate={pulled ? { left: lerp(lefts[i], pulled.lefts[i]), width: lerp(widths[i], pulled.widths[i]) } : { left: lefts[i], width: widths[i] }}
+                transition={pulled ? instant : transition}
                 style={{ ...stripStyle(tones[i], i + 1, stack - i), ...tears[i] }}
               >
                 {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
@@ -795,6 +889,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         // Under the photograph of the set, which covers it: only a window taller than the photograph shows it.
                         backgroundImage: `url(${tones[i].surface})`,
                         backgroundSize: `${HIDE} ${HIDE}`,
+                        ...laidFromEdge(i, 1),
                       }}
                     />
                   )}
@@ -888,7 +983,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                       ) : null}
                     </>
                   )}
-                  {!open && <Link to={item.to} search={searchOf(item.to)} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" />}
+                  {!open && <Link to={item.to} search={searchOf(item.to)} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" style={mobile ? { touchAction: 'none' } : undefined} {...pullOf(i)} />}
                 </div>
                 {/* The ticket's leather is a photograph that runs to the tear, its own cut edge and wear in it, so it has none laid over it. */}
                 {edgeOf(tones[i]) === 'worn' && !tones[i].surface && (
@@ -905,7 +1000,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 {/* The light a hide tab's cut catches brightens the hide laid over it here, outside the tab, which is
                     a layer of its own with nothing under it to brighten. */}
                 {pageTones[i].surface && hideLight(i)}
-                <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={(mobile && tones[i].turnedTab) || tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tones[i].deckled || tones[i].frayed ? undefined : tabCut(i + 1, stuffOf(tones[i]))} />
+                <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={(mobile && tones[i].turnedTab) || tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tones[i].deckled || tones[i].frayed ? undefined : tabCut(i + 1, stuffOf(tones[i]))} pull={pullOf(i)} />
               </motion.section>
             )
           })}

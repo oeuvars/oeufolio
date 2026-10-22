@@ -59,7 +59,7 @@ PAST = 9  # how far the mask runs past the tab's outline (SiteShell's DECKLE_PAS
 # The letter strip's tab (SiteShell's slot 2): its top and height in rem (tabTops, tabHeights over tabSpan), and each
 # layout's band and how far the tab stands out (useStackMetrics).
 TAB_TOP, TAB_TALL, TAB_SPAN = 4, 10, 4
-LAYOUTS = {"wide": (1.9, 2.1), "phone": (1.4, 1.5)}
+LAYOUTS = {"wide": (1.9, 2.1), "phone": (0.98, 1.05)}
 REM = 16
 # The paper's scale: paper.py's tile is 230 mm across in 1536 pixels, shown at 768 CSS px.
 MM = 768 / 230

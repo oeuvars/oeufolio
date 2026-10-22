@@ -8,6 +8,9 @@ type ResumeProps = {
   resume: ResumeData
   /** The window's height, in rem. */
   room: number
+  /** How far back along the strip the photograph and its roll are laid, in rem, for a strip too short to show the
+   * roll where it lies: a phone's, which runs only the window's width (SiteShell). The cats lie where they would. */
+  shift?: number
 }
 
 // What the photograph's desk falls to at its foot, far from the lamp: the strip under a window taller than it.
@@ -48,7 +51,7 @@ const spread = (room: number) => {
  * about the desk, each with the shadow the desk's lamp gives it (studio/resume/cats.py), so they can be spread over
  * whatever desk the window shows. The rigged ones breathe and move (resume-cat.tsx).
  */
-export const Resume = ({ resume, room }: ResumeProps) => {
+export const Resume = ({ resume, room, shift = 0 }: ResumeProps) => {
   const [width, height] = frame.size
   const [left, top, linkWidth, linkHeight] = frame.link
   const bleed = frame.bleed
@@ -60,7 +63,7 @@ export const Resume = ({ resume, room }: ResumeProps) => {
         src={resume.src}
         draggable={false}
         className="pointer-events-none absolute max-w-none select-none"
-        style={{ left: `${-bleed}rem`, top: `${-bleed}rem`, width: `${width + 2 * bleed}rem`, height: `${height + 2 * bleed}rem` }}
+        style={{ left: `${-bleed}rem`, top: `${-bleed - shift}rem`, width: `${width + 2 * bleed}rem`, height: `${height + 2 * bleed}rem` }}
       />
       {spread(room).map((cat) => (
         <ResumeCat
@@ -78,7 +81,7 @@ export const Resume = ({ resume, room }: ResumeProps) => {
         to="/resume"
         aria-label={resume.alt}
         className="absolute block rounded-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#efe6cb]"
-        style={{ left: `${left}rem`, top: `${top}rem`, width: `${linkWidth}rem`, height: `${linkHeight}rem` }}
+        style={{ left: `${left}rem`, top: `${top - shift}rem`, width: `${linkWidth}rem`, height: `${linkHeight}rem` }}
       />
     </div>
   )

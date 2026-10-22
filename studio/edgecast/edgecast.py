@@ -72,7 +72,7 @@ TEAR_LENGTH, TEAR_WIDTH = 1600, 16
 SEED, REACH = 31 + 17 * 2, 7
 GRAIN = ((60, 0.55), (14, 0.3), (3, 0.55))
 TAB_TOP, TAB_TALL, TAB_SPAN = 6.5, 10, 4
-LAYOUTS = {"wide": (1.9, 2.1), "phone": (1.4, 1.5)}
+LAYOUTS = {"wide": (1.9, 2.1), "phone": (0.98, 1.05)}
 REM = 16
 
 

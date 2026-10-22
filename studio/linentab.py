@@ -38,7 +38,7 @@ OUT = linen.OUT
 # The linen strip's tab (SiteShell's slot 1): its top and height in rem (tabTops, tabHeights over tabSpan), and each
 # layout's band and how far the tab stands out (useStackMetrics).
 TAB_TOP, TAB_TALL, TAB_SPAN = 9, 10, 4
-LAYOUTS = {"wide": (1.9, 2.1), "phone": (1.4, 1.5)}
+LAYOUTS = {"wide": (1.9, 2.1), "phone": (0.98, 1.05)}
 REM = 16
 CUT = EDGE[0] - 9  # the strip's edge, in CSS px from its edge mask's left (SiteShell's FRAY_PAST)
 SPAN = 40  # how far above and below the tab's joins the render runs down the strip's edge, in CSS px

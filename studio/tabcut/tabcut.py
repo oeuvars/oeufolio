@@ -5,7 +5,7 @@
 """The folder tabs' cut paper, rendered: how the light falls on each tab's edge and the shadow it leaves, for the
 page to lay over the tab, whatever its strip is made of.
 
-    uv run studio/tabcut/tabcut.py [--samples 256] [--proof DIR] [--leather]
+    uv run studio/tabcut/tabcut.py [--samples 256] [--proof DIR] [--leather] [--layout wide|phone]
 
 Each tab is drawn by SiteShell as a flat shape cut out of its strip. render.py builds the same shape in Blender as a
 sheet of paper with a ragged cut, its tab lifting a little off the folder, all in white under the copy stand's light,
@@ -37,7 +37,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 # SiteShell's tabs: the band and how far the tab stands out, in rem (useStackMetrics), and the heights its tabs
 # come in (tabHeights over tabSpan, by the tab's width).
-LAYOUTS = {"wide": (1.9, 2.1), "phone": (1.4, 1.5)}
+LAYOUTS = {"wide": (1.9, 2.1), "phone": (0.98, 1.05)}
 HEIGHTS = (10, 11.5)
 TAB_SPAN = 4
 DENSITY = 64  # pixels to a rem: four to each CSS pixel, for a screen at twice its CSS pixels with room to spare
@@ -134,11 +134,14 @@ def main():
     parser.add_argument("--samples", type=int, default=256)
     parser.add_argument("--proof")
     parser.add_argument("--leather", action="store_true", help="only render the mat's leather tab, keeping the rest")
+    parser.add_argument("--layout", choices=tuple(LAYOUTS), help="only render this layout's tabs, keeping the rest")
     args = parser.parse_args()
 
     path = os.path.join(ROOT, "src", "components", "tabcut.json")
-    table = json.load(open(path)) if args.leather else {}
+    table = json.load(open(path)) if args.leather or args.layout else {}
     for layout in LAYOUTS:
+        if args.layout not in (None, layout):
+            continue
         if not args.leather:
             for tall in HEIGHTS:
                 table[f"{layout}-{tall}"] = cut(layout, tall, args.samples, args.proof)
