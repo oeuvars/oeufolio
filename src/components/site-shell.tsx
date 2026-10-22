@@ -9,7 +9,7 @@ import { Art } from './art'
 import { Badge } from './badge'
 import { POSTER } from './house'
 import { Desk } from './mat/desk'
-import { RESUME_ACROSS, Resume } from './resume'
+import { RESUME_ROLL, Resume } from './resume'
 import tabcut from './tabcut.json'
 import { Ticket } from './ticket/ticket'
 import { useStackMetrics } from './use-stack-metrics'
@@ -654,9 +654,15 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     }
   }
   // On a phone the last strip leaves room past it for the desk the résumé lies on, which the last strip's tab stands out
-  // over as it does on a wide screen. The desk is as large as lets a cat lie either side of the roll across the window,
-  // and no larger than RESUME_LARGEST.
-  const resumeScale = Math.min(RESUME_LARGEST, metrics.height / metrics.rem / RESUME_ACROSS)
+  // over as it does on a wide screen. As there the roll lies clear of the tab, past it across the window, and the desk
+  // is as large as lets the roll and its tag fit there, and no larger than RESUME_LARGEST.
+  const lastTab = (() => {
+    const shape = tabShape(count)
+    const { reach } = tabOutline(shape)
+    const from = tops[count] * metrics.rem - reach
+    return [from, from + shape.height + 2 * reach]
+  })()
+  const resumeScale = Math.min(RESUME_LARGEST, (metrics.height - lastTab[1]) / metrics.rem / RESUME_ROLL)
   const fixed = mobile ? spine + end * resumeScale : spine + end
   const gaps = mobile ? count : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
@@ -858,7 +864,12 @@ export const SiteShell = ({ children }: SiteShellProps) => {
               className="absolute top-0 right-0 z-0 origin-top-right"
               style={{ width: end, height: metrics.height / resumeScale, transform: `scale(${resumeScale})` }}
             >
-              <Resume resume={profile.resume} room={metrics.height / metrics.rem / resumeScale} across />
+              <Resume
+                resume={profile.resume}
+                room={metrics.height / metrics.rem / resumeScale}
+                across
+                clear={[lastTab[0] / metrics.rem / resumeScale, lastTab[1] / metrics.rem / resumeScale]}
+              />
             </div>
           )}
           {profile.nav.map((item, i) => {
