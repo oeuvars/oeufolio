@@ -1,7 +1,7 @@
 // The loader, run inline at the top of the body so it is up before the bundle, the fonts or a single picture arrive.
-// The Tetons at dusk, set in type, with a distant flock of the birds of PRS's fretboard inlays flying right to left
-// over them in a loose V, in mother of pearl, as they fly up the neck, and across them in green marker, as on the cover
-// of "ye", "I hate being a loading screen its awesome". The type is set here, on whatever grid fits the
+// The Tetons at dusk, set in type, with "I hate being a loading screen its awesome" across them in green marker, as on
+// the cover of "ye". A distant flock of the birds of PRS's fretboard inlays, in mother of pearl, can fly over them right
+// to left in a loose V, as they fly up the neck; none do now (FLOCK.count). The type is set here, on whatever grid fits the
 // screen at about three and a half pixels a character, from the photograph as studio/tetons/ascii.py worked it over
 // (public/loader/tetons.webp: each point's colour, and the tone that picks its character) and the ridge it traced
 // (public/loader/tetons.txt, with the birds). A hiss of noise lies over it all, and now and then the picture tears for
@@ -34,8 +34,8 @@
   const SKY_ODD = 0.07
   // The flock: how many birds, the nine of the PRS set in turn; how tall each is, in pixels on a screen 1440 wide;
   // how far apart they fly, in birds' widths and heights; where along its crossing it starts; how high, as a share of
-  // the sky over the peaks; and how fast, in screen widths a second.
-  const FLOCK = { count: 17, height: 30, apart: [1.7, 0.42], from: 0.45, high: 0.42, speed: 0.024 }
+  // the sky over the peaks; and how fast, in screen widths a second. None fly now; a count brings them back.
+  const FLOCK = { count: 0, height: 30, apart: [1.7, 0.42], from: 0.45, high: 0.42, speed: 0.024 }
   // The writing over the mountains, as the cover's green marker is over them: its colour; how wide, as a share of the
   // screen's columns, on a wide screen and a narrow one; and where its middle lies, as a share of the screen's height.
   const WRITING = { ink: [140, 236, 112], wide: 0.46, narrow: 0.88, at: 0.42 }
@@ -337,6 +337,9 @@
       base.globalAlpha = 1
       base.drawImage(ink, 0, 0, w, h)
       this.order = null
+      this.context.setTransform(dpr, 0, 0, dpr, 0, 0)
+      this.flock = []
+      if (!FLOCK.count) return
 
       // The flock: each bird in proportion to the others as the PRS set has them, at the height it was set nearest
       // that, in a loose V behind the leader, its arms trailing up and down and back, every place a little off true.
@@ -365,7 +368,6 @@
       const reach = Math.max(...this.flock.map((bird) => bird.x)) + unit[0]
       this.flock.width = reach
       this.flock.top = Math.max(-Math.min(...this.flock.map((bird) => bird.y)) + size, FLOCK.high * this.sky)
-      this.context.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
     /** Where a bird of the flock is `t` seconds in, in cells: the flock across the screen, right to left, as the
