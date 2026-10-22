@@ -366,19 +366,15 @@ const Tab = ({ label, shape, to, search, current, src, footless, leather, surfac
             <rect y={-reach} width={width} height={shape.height + 2 * reach} fill={`url(#${hide})`} />
           </svg>
           {/* The map multiplies on white in its own group, and the whole multiplies the leather. */}
+          {/* The mat copies the part of each map that lies under the tab onto its canvas. */}
           <div data-mat-light className="absolute inset-0 isolate bg-white mix-blend-multiply">
-            <div
-              className="absolute inset-0 bg-no-repeat mix-blend-multiply"
-              style={{ backgroundColor: 'var(--light-rim, white)', backgroundImage: 'var(--light-image)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
-            />
+            <div className="absolute inset-0 mix-blend-multiply" style={{ backgroundColor: 'var(--light-rim, white)' }}>
+              <canvas data-light="light" className="absolute inset-0 size-full" />
+            </div>
           </div>
           {/* Where the lamp lights the leather brighter than it was photographed, the mat adds the rest of its light
               over it, and so does the tab. The ruler's band darkens that light too, so it comes in as dark here. */}
-          <div
-            data-mat-light
-            className="absolute inset-0 bg-no-repeat opacity-84 mix-blend-plus-lighter"
-            style={{ backgroundImage: 'var(--light-past)', backgroundSize: 'var(--light-size)', backgroundPosition: 'var(--light-at)' }}
-          />
+          <canvas data-mat-light data-light="past" className="absolute inset-0 size-full opacity-84 mix-blend-plus-lighter" />
           {/* The light the cut's edge catches brightens the leather and keeps its colour (colour-dodge), here inside
               its cut, where the leather lies under it to brighten. */}
           {edge?.light && (
@@ -806,7 +802,8 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                     // The strip itself, short of its panel's overhang, so what lies on it upright is pinned to its edge.
                     <div className="absolute inset-y-0 left-0" style={{ right: overhang(i) }}>
                       {tones[i].hangs ? (
-                        <div style={uprightOf(i)}>
+                        // The ring runs up out of shot at the strip's edge, under its tab, and not on into the cloth the tab is cut from.
+                        <div className="overflow-hidden" style={uprightOf(i)}>
                           <Badge badge={profile.badge} page={metrics.height} margin={1.5 * metrics.rem} open={open} past={0} />
                         </div>
                       ) : tones[i].fills || tones[i].roll ? null : (
