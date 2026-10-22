@@ -44,6 +44,8 @@ PASSAGES = [(305, 302, 398, 453), (512, 374, 642, 451), (100, 484, 302, 561), (3
 STRIP = (300, 594)
 # A folded phone strip's band, in the reference's pixels (left, top, right, bottom): the top row of windows.
 BAND = (100, 195, 650, 290)
+# How much a folded strip's sign dims the windows behind it.
+BOARD = 0.88
 # How far round its letters, in the reference's pixels, the old sign's glow runs.
 GLOW = 22
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
@@ -111,6 +113,14 @@ def light_sign(picture, title, shape):
     glow = 0.42 * ndimage.gaussian_filter(title, 3 * SCALE) + 0.18 * ndimage.gaussian_filter(title, 12 * SCALE)
     glow = np.clip(glow, 0, 1)[..., None] * SIGN
     return 1 - (1 - picture) * (1 - glow), letters
+
+
+def backed(picture, title):
+    """The wall dark behind a sign that has no wall of its own to hang on, as a lit sign on a building at night has
+    the dark of its board behind it: the windows it lies over go dim round its letters, so they read."""
+    board = ndimage.gaussian_filter(ndimage.grey_dilation(title, size=(7 * SCALE + 1, 7 * SCALE + 1)), 4 * SCALE)
+    board = np.clip(board / (board.max() + 1e-6) * 1.6, 0, 1)
+    return picture * (1 - BOARD * board[..., None])
 
 
 def paper(image):
@@ -219,8 +229,9 @@ def main():
     # The sign in place of the old one, and on the folded strip's column, the sign hung down it.
     title = plate("title.png", size)
     unsigned = lift_sign(picture, title, reach=GLOW)
-    strip, _ = light_sign(unsigned, plate("spine.png", size), shape)
-    band, _ = light_sign(unsigned, plate("band.png", size), shape)
+    spine, band = plate("spine.png", size), plate("band.png", size)
+    strip, _ = light_sign(backed(unsigned, spine), spine, shape)
+    band, _ = light_sign(backed(unsigned, band), band, shape)
     picture, letters = light_sign(lift_sign(picture, title), title, shape)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
