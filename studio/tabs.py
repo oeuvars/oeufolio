@@ -16,10 +16,15 @@ carrying its maker's mark, the way stickers end up on everything a kid owns.
 
 Uses the copy stand in studio/desk. Run from the repository root:
 
-    blender -b --factory-startup -P studio/tabs.py -- [tab ...] [--scale 0.5] [--samples 64] [--proofs DIR]
+    blender -b --factory-startup -P studio/tabs.py -- [tab ...] [--turned] [--scale 0.5] [--samples 64] [--proofs DIR]
 
-Writes public/objects/tab-<name>.avif for each tab named, or for all five. The render is four times as fine as the
-page shows it, for the detail; bring it down to what the page can use after:
+Writes public/objects/tab-<name>.avif for each tab named, or for all five. On a phone the stack is turned on its
+side (SiteShell), a quarter turn back, so a mark that stands upright on the tab lies on its side there. --turned
+sets the marks of the tabs in TURNED a quarter turn forward, so they stand upright on a phone, and writes
+public/objects/tab-<name>-turned.avif. Proraso's name already runs along its tab, and a strap lying across has its
+clasp across too, so neither has a turned piece.
+
+The render is four times as fine as the page shows it, for the detail; bring it down to what the page can use after:
 
     uv run studio/fit.py --width 296 public/objects/tab-<name>.avif
 
@@ -63,6 +68,9 @@ EDGE = 0.13  # the radius its top edge is rounded to
 CROWN, SHOULDER = 0.08, 0.6  # the face is pillowed: it falls this far over this much of the way in from the edge
 MARGIN = 0.3  # room round the paper tab, so the shadow the plastic leaves is never cut off
 INK = "#161512"
+# The tabs that have a piece for the phone's turned stack, and whether this run makes those (--turned).
+TURNED = ("lacoste", "prs", "teenage")
+TURN = False
 
 
 def outline(height):
@@ -488,7 +496,7 @@ def lacoste(name, height):
     # The crocodile, embroidered on a badge of the same knit: raised thread, the satin stitch's lines running
     # across it at a slant, sheened where the thread catches the light.
     _, crocodile = parted(artwork("logos/lacoste"))
-    croc, colour = placed(sheet, crocodile, MIDDLE - 1.0, 1.05, MIDDLE + 1.0, 2.55)
+    croc, colour = placed(sheet, crocodile, MIDDLE - 0.75, 1.2, MIDDLE + 0.75, 3.95, turn=1) if TURN else placed(sheet, crocodile, MIDDLE - 1.0, 1.05, MIDDLE + 1.0, 2.55)
     # The mark's scales and teeth are see-through in the artwork; on the badge they are white thread.
     whole = blur(fill_holes(croc > 0.5).astype(float), 0.8)
     white = np.clip(whole - croc, 0, 1)
@@ -531,11 +539,15 @@ def relief(name, height, x0, y0, w, h, z0, material):
     return clad(STAGE.add(name, mesh), x0, y0, w, h)
 
 
-def badge(name, mark, cx, cy, wide, z0):
+def badge(name, mark, cx, cy, wide, z0, turn=0):
     """Blackstar's badge as it is fixed to the amplifier's grille: the name in raised white letters on a black
-    plate die-cut an even margin round them, standing proud of the cloth."""
+    plate die-cut an even margin round them, standing proud of the cloth. wide is how long the name runs; turned
+    a quarter, it runs down the piece."""
     tall = wide * mark.shape[0] / mark.shape[1]
     pad = 0.07 * tall / 0.3
+    if turn:
+        mark = np.rot90(mark, -turn)
+        wide, tall = tall, wide
     w, h = wide + 2 * pad, tall + 2 * pad
     x0, y0 = cx - w / 2, cy - h / 2
     sheet = Sheet(w, h, "#0d0d0f", rough=0.22, density=5)
@@ -569,6 +581,13 @@ def amp(name, y0, y1, mark):
     per_rem = 305 / wide
     cloth = artwork("blackstar/grille-black")[..., :3]
     rows, cols = round(h * per_rem), round(w * per_rem)
+    if TURN:
+        # Turned, the band runs further down the piece than the photograph's clean cloth does: its foot runs into the
+        # cabinet's tolex. The clean cloth is run on down by whole repeats of its weave, whose rows repeat every 16
+        # pixels, from ten repeats further up.
+        clean = cloth[:285, :430]
+        repeat = 160
+        cloth = np.concatenate([clean, clean[-repeat : -repeat + max(0, rows - len(clean))]])
     r0, c0 = (cloth.shape[0] - rows) // 2, (cloth.shape[1] - cols) // 2
     tone = np.clip(fit(cloth[r0 : r0 + rows, c0 : c0 + cols], *sheet.height.shape), 0, 1)
     sheet.rgb[:] = decoded(tone)
@@ -599,7 +618,7 @@ def amp(name, y0, y1, mark):
     sheet.height = heights
     top = THICK + 0.03
     band = displaced(f"{name}-amp", sheet, outline_, 0.0, fabric, step=steps(sheet), at=(x0, y0), plumb=True)
-    return [band, badge(name, mark, (x0 + x1) / 2, (y0 + y1) / 2, wide, top + 0.006)]
+    return [band, badge(name, mark, (x0 + x1) / 2, (y0 + y1) / 2, wide, top + 0.006, turn=1 if TURN else 0)]
 
 
 def prs(name, height):
@@ -611,10 +630,16 @@ def prs(name, height):
         # strings' spacing in each photograph. Each is mother-of-pearl let into a piece of the neck's
         # rosewood cut to the bird's shape, so the wood shows inside the bird and in a hairline round it.
         # They run down the middle of the piece one under another, as they do down a neck.
+        # Turned, each bird is turned a quarter and they run one beside another, as they will stand on a phone.
         art = strewn(artwork("logos/prs-outline-birds"))
-        top, foot, gap = 0.6, 5.92, 0.1
+        art = [np.rot90(bird, -1) for bird in art] if TURN else art
+        top, foot, gap = (0.75, 5.15, 0.14) if TURN else (0.6, 5.92, 0.1)
         scale = (foot - top - gap * (len(art) - 1)) / sum(bird.shape[0] for bird in art)
         birds, y = [], top
+        if TURN:
+            # Side by side they are kept short of the piece's width, and centred along it.
+            scale = min(scale, 2.2 / max(bird.shape[1] for bird in art))
+            y += (foot - top - gap * (len(art) - 1) - scale * sum(bird.shape[0] for bird in art)) / 2
         for bird in art:
             h, w = bird.shape[0] * scale, bird.shape[1] * scale
             cover, colour = placed(sheet, bird, MIDDLE - w / 2, y, MIDDLE + w / 2, y + h)
@@ -631,7 +656,8 @@ def prs(name, height):
             sheet.paint(wood * np.clip(figure, 0, 1) * 0.5, "#4a2a20")
             sheet.paint(wood * np.clip(-figure, 0, 1) * 0.6, "#140a08")
             nacre(sheet, shell)
-        return amp(name, 6.1, 8.3, artwork("logos/blackstar"))
+        # Turned, the badge runs down the band, so the band is longer.
+        return amp(name, 5.45, 8.75, artwork("logos/blackstar")) if TURN else amp(name, 6.1, 8.3, artwork("logos/blackstar"))
 
     # The birds' outlines are fine, so the sheet is drawn finer than the others.
     # The tolex is the Silver Sky's Sandglow Yellow, the colour of its satin body.
@@ -691,7 +717,10 @@ def teenage(name, height):
     sheet.finish(ramp(-chamfer - 0.012, -chamfer + 0.004, edge), rough=0.05)
     # The badge is enamel, fired in a pocket milled for it. It sets proud and a little domed, and glazed.
     # The mark is teenage engineering's own, cut from the header of teenage.engineering, in their black.
-    badge, colour = placed(sheet, artwork("logos/teenage-engineering"), MIDDLE - 1.05, 1.5, MIDDLE + 1.05, 4.3)
+    if TURN:
+        badge, colour = placed(sheet, artwork("logos/teenage-engineering"), MIDDLE - 0.95, 1.3, MIDDLE + 0.95, 4.45, turn=1)
+    else:
+        badge, colour = placed(sheet, artwork("logos/teenage-engineering"), MIDDLE - 1.05, 1.5, MIDDLE + 1.05, 4.3)
     sheet.rgb += badge[..., None] * (colour - sheet.rgb)
     sheet.finish(badge, rough=0.18, metal=0.0, coat=1.0)
     sheet.height += 0.012 * blur(badge, 6.0) * badge
@@ -917,7 +946,7 @@ def tab(name):
     # A matte piece has no flat shine to keep from the room, so it is lit by the whole studio.
     if shot.pop("ceiling", True):
         ceiling(height)
-    STAGE.shoot(f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=4.0, **shot)
+    STAGE.shoot(f"tab-{name}-turned" if TURN else f"tab-{name}", (0, 0, WIDTH, height), bleed=MARGIN, shadow=0.9, sharp=4.0, **shot)
 
 
 parser = argparse.ArgumentParser()
@@ -925,16 +954,19 @@ parser.add_argument("tabs", nargs="*")
 parser.add_argument("--scale", type=float, default=1.0)
 parser.add_argument("--samples", type=int, default=160)
 parser.add_argument("--proofs")
+parser.add_argument("--turned", action="store_true")
 args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
-unknown = [name for name in args.tabs if name not in TABS]
+TURN = args.turned
+known = TURNED if TURN else TABS
+unknown = [name for name in args.tabs if name not in known]
 if unknown:
-    sys.exit(f"Unknown tabs: {', '.join(unknown)}. Known: {', '.join(TABS)}")
+    sys.exit(f"Unknown tabs: {', '.join(unknown)}. Known: {', '.join(known)}")
 out_dir = os.path.join(ROOT, "public", "objects")
 os.makedirs(out_dir, exist_ok=True)
 if args.proofs:
     os.makedirs(args.proofs, exist_ok=True)
 STAGE = Stage(out_dir, args.proofs, scale=args.scale, samples=args.samples)
 lit_by_the_room(STAGE)
-for name in args.tabs or TABS:
+for name in args.tabs or known:
     STAGE.clear()
     tab(name)

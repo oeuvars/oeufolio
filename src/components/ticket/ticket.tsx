@@ -50,7 +50,7 @@ export const Ticket = ({ open }: TicketProps) => {
     <div
       // The panel has no frame, so the spread takes the page's margins either side, all but a sliver: on the left the
       // room kept for the tab of the strip before, on the right the band, which this panel covers.
-      className="@container -my-[4vh] w-full md:-mr-[calc(clamp(1rem,2.6vw,3rem)+var(--band-w)-12px)] md:-ml-[calc(var(--protrude)+6px)] md:w-auto"
+      className="@container w-full md:-my-[4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+var(--band-w)-12px)] md:-ml-[calc(var(--protrude)+6px)] md:w-auto"
       style={{ maxWidth: `calc(90vh * ${SPREAD_W / FRAME_H})` }}
     >
       {/* The view's move, on the strip's own spring, so the two keep step: folded, the ticket's edge a little nearer;

@@ -55,7 +55,8 @@ export const Mat = ({ children, className }: MatProps) => {
     if (!frame || !board) return
     const compose = () => {
       const width = board.clientWidth
-      const id: PlateId = width >= WIDE_FROM ? 'wide' : 'tall'
+      // On a phone the mat runs down the window however wide the phone is (SiteShell), so it shows the tall plate.
+      const id: PlateId = width >= WIDE_FROM && window.innerWidth >= 768 ? 'wide' : 'tall'
       const plate = PLATES[id]
       const [w, h] = plate.size
       let em: number

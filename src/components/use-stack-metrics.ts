@@ -20,9 +20,10 @@ const fallback: StackMetrics = {
 
 const measure = (): StackMetrics => {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-  const width = window.innerWidth
-  const height = window.innerHeight
-  const mobile = width < 768
+  const mobile = window.innerWidth < 768
+  // On a phone the stack is turned on its side (SiteShell), so it runs the window's height and is as deep as the window is wide.
+  const width = mobile ? window.innerHeight : window.innerWidth
+  const height = mobile ? window.innerWidth : window.innerHeight
 
   return {
     width,

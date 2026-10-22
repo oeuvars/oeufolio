@@ -226,7 +226,9 @@ export type PageMeta = {
 export type PageId = 'basics' | 'letter' | 'work' | 'desk' | 'contact' | 'resume'
 
 export type StackMetrics = {
+  /** How long the stack runs, from its first strip to past its last: the window's width, or its height on a phone, where the stack is turned on its side. */
   width: number
+  /** How deep the stack is, down every strip: the window's height, or its width on a phone. */
   height: number
   rem: number
   mobile: boolean

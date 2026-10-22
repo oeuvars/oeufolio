@@ -28,6 +28,8 @@ MATERIALS = (
     "Rubber004",
     "Clay003",
     "Wood067",
+    # Tolex's pebbled grain, for the PRS tab (studio/tabs.py).
+    "Leather025",
 )
 # ambientCG scans whose relief is built as real geometry, 2K PNG sets for their 16-bit displacement: creased paper,
 # for the folds of a squeezed tube.
