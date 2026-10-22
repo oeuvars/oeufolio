@@ -31,7 +31,7 @@ from scipy import ndimage
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 UP = 3
-PITCH = 6.0  # the screen's ruling, in the picture's pixels
+PITCH = 4.8  # the screen's ruling, in the picture's pixels: fine enough that the sky reads as colour first and dots second
 SENT = 360  # the width the page is sent
 # Each ink as what it lets through of white light, its screen angle and how far it sits out of register.
 INKS = {
