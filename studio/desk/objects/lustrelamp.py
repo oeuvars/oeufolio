@@ -63,7 +63,7 @@ BACK_R = 5.3
 BACK_H = 0.36
 # The bronze housing in the tube: its radius, and the height of its top, where the brass ring is; the opal lens is
 # sunk in it, doming up this much to the ring. A collar round its top reaches out to the glass. The clips stand at these angles round it, as the photograph shows them.
-CAN_R = 2.12
+CAN_R = 1.95
 COLLAR = 2.27
 CAN_TOP = 2.65
 DOME = 0.32
@@ -81,7 +81,7 @@ GOLD = (1.0, 0.8, 0.52)
 COAT = 0.62
 # The lustre was sprayed at the face: it is thickest there, nearly a mirror, and thinner over the funnel and the
 # shoulder, where the light inside shows through it. Its share by the distance out, in shares of R.
-COATS = [(0.0, 0.9), (0.4, 0.9), (0.45, 0.88), (0.58, 0.9), (0.66, 0.985), (0.82, 0.985)]
+COATS = [(0.0, 0.97), (0.4, 0.97), (0.46, 0.9), (0.58, 0.9), (0.66, 0.985), (0.82, 0.985)]
 # Past the face it went on by how squarely the glass faced the spray: by the height of the surface's normal, the
 # shoulder half coated, the side, seen edge on, thinnest, so the light inside gets out there across the desk, and
 # the curl under it, which the spray caught at its back edge on the turning table, a little more.
@@ -101,7 +101,7 @@ LED_COLOUR = (1.0, 0.66, 0.3)
 BAND_R = 5.0
 BAND_Z = 0.4
 BAND_W = 0.25
-BAND_SHARE = 0.025
+BAND_SHARE = 0.25
 LED_R = (2.6, 4.3)
 # Glass that bends light lets a shadow ray through in a render only if told: what each face lets through, in its
 # own colour, and on the outside less what the lustre there throws back.
@@ -300,13 +300,16 @@ def glass(stage):
 
 
 def back(stage):
-    """The steel back the glass is mounted on, painted a warm stone colour under the face and dark bronze out under
-    the shoulder, where the band of LEDs lights it."""
+    """The steel back the glass is mounted on, painted a warm stone colour under the face, dark bronze out under
+    the shoulder, where the band of LEDs lights it, and black round its rolled edge, which the photograph shows
+    through the glass as a thin dark line inside the rim."""
     outline_ = [(0.0, 0.0)] + corner(BACK_R - 0.12, 0.12, 0.12, start=-math.pi / 2, end=0.0) + corner(BACK_R - 0.12, BACK_H - 0.12, 0.12, end=math.pi / 2) + [(0.0, BACK_H)]
     mesh = turned("lustre-back", outline_)
     mesh.materials.append(painted("lustre-back", STONE, 0.6))
     mesh.materials.append(painted("lustre-back-edge", BRONZE, 0.6))
-    mesh.polygons.foreach_set("material_index", [int(math.hypot(p.center.x, p.center.y) > STONE_R) for p in mesh.polygons])
+    mesh.materials.append(painted("lustre-back-rim", "#0c0a08", 0.8))
+    out = [math.hypot(p.center.x, p.center.y) for p in mesh.polygons]
+    mesh.polygons.foreach_set("material_index", [2 if r > BACK_R - 0.25 else int(r > STONE_R) for r in out])
     return stage.add("lustre-back", mesh)
 
 

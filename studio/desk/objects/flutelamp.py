@@ -1,11 +1,12 @@
 """The desk lamp: a round wall light of fluted amber glass under a copper mirror coat, on a white drum.
 
 It is the lamp in the user's two photographs: one square on to its face, one from three quarters. A shallow drum of
-amber glass stands on a white painted back a little narrower than it. Its face is pressed into ribs, fifteen
-across, a smooth wave running straight across; they go right out to the rim, which they notch into a scalloped edge. The outside of the glass is coated with a thin copper mirror, so the ribs throw
-back the room in copper and pink; lit, the light inside shows through it amber. Inside, on the back, an opal disc
-gives the light. The ribs are lenses: each draws that disc out across it, so lit, the face glows in a wide oval of
-bars, and the ribs past the disc show the dark copper walls of the drum, pinched into points.
+amber glass stands on a white painted back a little narrower than it. Its face is pressed into ribs, fifteen across,
+a smooth wave running straight across; they go right out to the rim, which they notch into a scalloped edge. The
+outside of the glass is coated with a thin copper mirror, so the ribs throw back the room in copper; lit, the light
+inside shows through it amber. Inside, an opal disc on a drum close under the face gives white light. The ribs are
+lenses: each draws that disc out across it, so lit, the face glows in a wide oval of bars, and the ribs past the
+disc show the drum's walls, pinched into points.
 
 The lamp lies on the desk on its back, its face up, the ribs across the page, its black braided cord out of the side
 of the back and across the desk.
@@ -43,11 +44,15 @@ WALL = 0.28
 FACE = 0.5
 # The ribs: this many across the face (15: the period of the light bands on the face in the front photograph and of
 # the scallops on its rim in the three-quarter one), the face a sine wave across them, this deep from crest to trough
-# (the scallops' depth in the three-quarter photograph). Each crest is a lens that draws the disc into a bright band,
-# each trough one that spreads it into a dimmer band: two bands to a rib, as in the photograph.
+# (half the scallops' depth in the three-quarter photograph, which drew the eye from the glow). Each crest is a lens
+# that draws the disc into a bright band, each trough one that spreads it into a dimmer band. Pressed glass is not
+# machine-true: each rib is a little deeper or shallower than the next, by up to this share, and wavers along its
+# length by this much, in em.
 RIBS = 15
 PITCH = D / RIBS
-CREST = 0.3 * PITCH
+CREST = 0.15 * PITCH
+UNEVEN = 0.06
+WAVER = 0.015
 # The opal disc inside that gives the light, on a drum on the back that holds it close under the face: its radius,
 # and how high it stands.
 DISC_R = 0.4 * D
@@ -62,12 +67,10 @@ AMBER = (1.0, 0.59, 0.31)
 COPPER = (0.96, 0.6, 0.45)
 COAT = 0.55
 # The drum's wall is ground on the inside, so the side glows a satin orange and does not show the inside; its outside
-# is satin too, under a thinner coat than the face's. The face's underside is lightly frosted, which softens the bars
-# the ribs draw of the disc into one another.
+# is satin too, under a thinner coat than the face's.
 GROUND = 0.45
 SATIN = 0.22
 SIDE_COAT = 0.08
-FROST = 0.1
 # Inside the wall stands a thin sleeve, pale orange where it faces the glass, so the side reads a satin orange in
 # the light round it, and white inside, like the back.
 SLEEVE = ("#e8873a", "#ecebe6")
@@ -78,35 +81,25 @@ FLOOR = "#ecebe6"
 WHITE = "#ecebe6"
 OPAL = "#f3f1ec"
 BULB_WHITE = (1.0, 1.0, 1.0)
-DISC_SHARE = 0.0047
+DISC_SHARE = 0.00705
 FALL = 0.35
 # What comes out of the lamp onto the desk: the white light, through the glass's two faces, this many times the
 # lamp's power in desk.py, most of it up through the face; the satin side glows too, at this share, as it does
 # lit in the photograph.
 BULB_COLOUR = tuple(white * c * c for white, c in zip(BULB_WHITE, AMBER))
-POWER = 0.8
+POWER = 1.2
 SIDE = 0.45
-# The photograph's studio, for the glass alone to reflect: a white wall all round it this far off and this high, and
-# a soft key over the top left, as the photograph's highlights and shadow show, this far up and this large. They
-# light the glass and nothing else on the desk, are out of the lamp's picture, and are on with the lamp, at these
-# shares of its power: lit, the copper face throws back the bright room the lamp was photographed in.
-STUDIO_R = 40.0
-STUDIO_H = 30.0
-KEY_AT = (-30.0, 30.0, 60.0)
-KEY_SIZE = 30.0
-WALL_SHARE = 0.12
-KEY_SHARE = 0.25
 # Glass that bends light lets a shadow ray through in a render only if told: what of the light it lets through at
 # each face, in its own colour, less what the coat throws back, so its shadow is amber and not black.
 SHADOW = tuple(c * (1 - COAT) ** 0.5 for c in AMBER)
-# The cord: black braided textile, this thick, out of the white back through a black rubber grommet, falling to the
+# The cord: black braided textile, this thick (a 7 mm lamp cord, the lamp being about 20 cm across), out of the white back through a black rubber grommet, falling to the
 # desk and lying across it to the right. Its braid is two sets of strands, this many each way round it, crossing
 # one over one under every this many em along it, each strand a few yarns side by side.
-CORD_R = 0.16
-STRANDS = 8
-LAY = 0.17
+CORD_R = 0.2
+STRANDS = 6
+LAY = 0.24
 YARNS = 3
-BRAID = 0.028
+BRAID = 0.045
 CORD_BLACK = "#121212"
 # Where the cord leaves the back, how high, and the points it lies through on the desk after it: x along, y across.
 CORD_Z = 0.62
@@ -126,15 +119,22 @@ def photograph():
     return np.array(MIDDLE) + np.array([0.0, 0.0, DISTANCE]), np.eye(3), None
 
 
-def rib(y):
-    """How high the face stands over its troughs at y: a sine wave, crest to trough, across the ribs."""
-    return CREST * (0.5 + 0.5 * np.cos(2 * math.pi * y / PITCH))
+def rib(x, y):
+    """How high the face stands over its troughs at (x, y): a sine wave, crest to trough, across the ribs, each rib
+    its own depth, wavering along its length."""
+    rng = np.random.default_rng(15)
+    depths = 1 + UNEVEN * rng.uniform(-1, 1, 64)
+    phases = rng.uniform(0, 2 * math.pi, (64, 2))
+    along = y / PITCH + 32.5
+    k = np.clip(np.floor(along).astype(int), 0, 63)
+    waver = WAVER * (np.sin(x * 0.9 + phases[k, 0]) + 0.5 * np.sin(x * 2.3 + phases[k, 1])) / PITCH
+    return CREST * depths[k] * (0.5 + 0.5 * np.cos(2 * math.pi * (y / PITCH + waver)))
 
 
 def profile():
     """The glass's section, from the middle of its face out over the rim, down the side, under its foot, up the
     inside and back across under the face to the middle: radius, height, how far round the rim's corner (1 on the
-    face, 0 down the side), and which surface it is (0 the coated face, 1 frosted inside under the face, 2
+    face, 0 down the side), and which surface it is (0 the coated face, 1 polished inside under the face, 2
     ground inside the wall, 3 the satin side)."""
     rows = []
     for r in np.linspace(0, R - RIM, 300):
@@ -167,7 +167,7 @@ def glass_mesh(name, around=1440):
     z = np.broadcast_to(section[None, :, 1], x.shape).copy()
     face = section[None, :, 2]
     outside = (section[None, :, 3] == 0) | (section[None, :, 3] == 3)
-    rise = np.where(outside, rib(y), 0.0)
+    rise = np.where(outside, rib(x, y), 0.0)
     # Over the corner the rise goes along its normal: up on the face, outward and up round the rim.
     phi = np.arccos(np.clip(face, 0, 1))
     out = rise * face * np.sin(phi)
@@ -324,7 +324,7 @@ def weigh(mesh, weight):
 
 def glass(stage):
     mesh = glass_mesh("flute-glass")
-    for material in (amber("flute-coated", 0.0, COAT), amber("flute-inside", FROST, 0.0), amber("flute-ground", GROUND, 0.0), amber("flute-side", SATIN, SIDE_COAT)):
+    for material in (amber("flute-coated", 0.0, COAT), amber("flute-inside", 0.0, 0.0), amber("flute-ground", GROUND, 0.0), amber("flute-side", SATIN, SIDE_COAT)):
         mesh.materials.append(material)
     return stage.add("flute-glass", mesh)
 
@@ -563,47 +563,13 @@ def cord(stage):
     return [wire, boot]
 
 
-def studio(stage, glass_obj):
-    """The photograph's studio round the glass: the wall and the key, white, seen by the glass's reflections alone."""
-    only = bpy.data.collections.new("flute-only")
-    only.objects.link(glass_obj)
-    made = []
-    around = np.linspace(0, 2 * math.pi, 96, endpoint=False)
-    wall = bpy.data.meshes.new("flute-wall")
-    verts = [(STUDIO_R * math.cos(a), STUDIO_R * math.sin(a), z) for a in around for z in (0.0, STUDIO_H)]
-    faces = [(2 * k, 2 * ((k + 1) % 96), 2 * ((k + 1) % 96) + 1, 2 * k + 1) for k in range(96)]
-    wall.from_pydata(verts, [], faces)
-    key = bpy.data.meshes.new("flute-key")
-    centre = np.array(KEY_AT)
-    facing = -centre / np.linalg.norm(centre)
-    across = np.cross(facing, (0.0, 0.0, 1.0))
-    across /= np.linalg.norm(across)
-    up = np.cross(across, facing)
-    half = KEY_SIZE / 2
-    key.from_pydata([tuple(centre + half * (i * across + j * up)) for i, j in ((-1, -1), (1, -1), (1, 1), (-1, 1))], [], [(0, 1, 2, 3)])
-    for mesh, share in ((wall, WALL_SHARE), (key, KEY_SHARE)):
-        weigh(mesh, np.ones(len(mesh.vertices)))
-        area = sum(polygon.area for polygon in mesh.polygons)
-        mesh.materials.append(glowing(mesh.name, (1.0, 1.0, 1.0), share, area))
-        obj = stage.add(mesh.name, mesh)
-        for flag in ("visible_camera", "visible_diffuse", "visible_transmission", "visible_shadow", "visible_volume_scatter"):
-            setattr(obj, flag, False)
-        obj["bulb"] = True
-        obj["unseen"] = True
-        obj["share"] = share
-        obj["area"] = area
-        obj.light_linking.receiver_collection = only
-        made.append(obj)
-    return made
-
-
 def parts(stage):
     """Every part of the lamp, standing on z = 0 about its axis."""
     shade = glass(stage)
     drum = back(stage)
     opal = disc(stage)
     lining = sleeve(stage)
-    return [shade, drum, opal, lining, luminaire(stage, shade, drum, opal), *studio(stage, shade), *cord(stage)]
+    return [shade, drum, opal, lining, luminaire(stage, shade, drum, opal), *cord(stage)]
 
 
 def build(stage):
