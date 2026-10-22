@@ -61,11 +61,16 @@ export const Mat = ({ children, className }: MatProps) => {
       const [w, h] = plate.size
       let em: number
       let x = 0
+      let y = 0
       if (id === 'wide') {
         board.style.minHeight = ''
-        // The wide plate keeps to the top of the mat.
-        em = Math.min(width / w, board.clientHeight / h, LARGEST)
+        // The wide plate keeps to the top of the mat, but for a phone's, which is the whole page and has it in its middle,
+        // clear of its edges by at least a rem.
+        const phone = window.innerWidth < 768
+        const room = board.clientHeight - (phone ? 2 * parseFloat(getComputedStyle(board).fontSize) : 0)
+        em = Math.min(width / w, room / h, LARGEST)
         x = (width - w * em) / 2
+        if (phone) y = Math.max(0, (board.clientHeight - h * em) / 2)
       } else {
         em = width / w
         board.style.minHeight = `${Math.ceil(h * em)}px`
@@ -78,7 +83,7 @@ export const Mat = ({ children, className }: MatProps) => {
           // A prop seen from its own camera is reached where it shows in its picture, upright, and as large.
           const [left, top, w, h] = seen.body
           el.style.setProperty('--x', (x + (left + w / 2) * em).toFixed(1))
-          el.style.setProperty('--y', ((top + h / 2) * em).toFixed(1))
+          el.style.setProperty('--y', (y + (top + h / 2) * em).toFixed(1))
           el.style.setProperty('--r', '0')
           el.style.setProperty('--w', (w * em).toFixed(1))
           el.style.setProperty('--h', (h * em).toFixed(1))
@@ -87,10 +92,10 @@ export const Mat = ({ children, className }: MatProps) => {
         const at = plate.at[prop]
         if (!at) return
         el.style.setProperty('--x', (x + at[0] * em).toFixed(1))
-        el.style.setProperty('--y', (at[1] * em).toFixed(1))
+        el.style.setProperty('--y', (y + at[1] * em).toFixed(1))
         el.style.setProperty('--r', String(at[2]))
       })
-      setGeometry((was) => (was && was.id === id && was.em === em && was.x === x ? was : { id, em, x, y: 0 }))
+      setGeometry((was) => (was && was.id === id && was.em === em && was.x === x && was.y === y ? was : { id, em, x, y }))
     }
     compose()
     const watching = new ResizeObserver(compose)
@@ -166,27 +171,27 @@ export const Mat = ({ children, className }: MatProps) => {
 
         {geometry && plate && (
           <>
-            {/* The lamp's light on the mat, shadows and all, then the objects in it. */}
-            <div
-              aria-hidden
-              className={`${LAID} inset-0 bg-no-repeat mix-blend-multiply`}
-              style={{
-                backgroundColor: plate.rim,
-                backgroundImage: `url(/objects/mat/desk-${geometry.id}-light.avif)`,
-                backgroundSize: `${(plate.size[0] + 2 * plate.bleed[0]) * geometry.em}px ${(plate.size[1] + 2 * plate.bleed[1]) * geometry.em}px`,
-                backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
-              }}
-            />
+            {/* The lamp's light on the mat, shadows and all, then the objects in it. Both maps of it are pictures
+                laid on the mat, not its backgrounds: a picture is decoded once and kept, where a background is
+                decoded again for every stretch of the mat a sliding strip uncovers. */}
+            <div aria-hidden className={`${LAID} inset-0 overflow-hidden mix-blend-multiply`} style={{ backgroundColor: plate.rim }}>
+              <img
+                src={`/objects/mat/desk-${geometry.id}-light.avif`}
+                alt=""
+                draggable={false}
+                className="absolute max-w-none"
+                style={over(geometry, -plate.bleed[0], -plate.bleed[1], plate.size[0] + 2 * plate.bleed[0], plate.size[1] + 2 * plate.bleed[1])}
+              />
+            </div>
             {/* Where the lamp lights the leather brighter than it was photographed, which multiplying cannot show,
                 the rest of its light is added over it. */}
-            <div
+            <img
               aria-hidden
-              className={`${LAID} inset-0 bg-no-repeat mix-blend-plus-lighter`}
-              style={{
-                backgroundImage: `url(/objects/mat/desk-${geometry.id}-light-past.avif)`,
-                backgroundSize: `${(plate.size[0] + 2 * plate.bleed[0]) * geometry.em}px ${(plate.size[1] + 2 * plate.bleed[1]) * geometry.em}px`,
-                backgroundPosition: `${geometry.x - plate.bleed[0] * geometry.em}px ${geometry.y - plate.bleed[1] * geometry.em}px`,
-              }}
+              src={`/objects/mat/desk-${geometry.id}-light-past.avif`}
+              alt=""
+              draggable={false}
+              className={`${LAID} mix-blend-plus-lighter`}
+              style={over(geometry, -plate.bleed[0], -plate.bleed[1], plate.size[0] + 2 * plate.bleed[0], plate.size[1] + 2 * plate.bleed[1])}
             />
             <img src={`/objects/mat/desk-${geometry.id}.avif`} alt="" draggable={false} className={LAID} style={over(geometry, 0, 0, ...plate.size)} />
             {/* The watch's dial again over the plate's, its hands at the viewer's time. */}

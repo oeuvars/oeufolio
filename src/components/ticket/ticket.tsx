@@ -14,6 +14,10 @@ const FRAME_H = H + 2 * B
 // The stamps' column beside the ticket: the stamps' width and an em (studio/ticket/scene.py's BESIDE).
 const BESIDE_W = ticket.stamps.size[0] + 1
 const SPREAD_W = BESIDE_W + FRAME_W
+// How far above the spread the Leica's top lies in the photograph, in the spread's em. On a phone the page is fitted
+// to the set from there to the ticket's foot, so that the camera is not cut off and the set lies in the page's middle.
+const ABOVE = 3.6
+const SET_H = ABOVE + B + H
 // The photograph of the whole set and the one of the punched hole, each by the box it covers in the spread's em.
 const [OX, OY, OW, OH] = contact.open
 const [PX, PY, PW, PH] = contact.punch
@@ -51,12 +55,13 @@ export const Ticket = ({ open }: TicketProps) => {
       // The panel has no frame, so the spread takes the page's margins either side, all but a sliver: on the left the
       // room kept for the tab of the strip before, on the right the band, which this panel covers.
       className="@container w-full max-md:justify-self-center md:-my-[4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+var(--band-w)-12px)] md:-ml-[calc(var(--protrude)+6px)] md:w-auto"
-      style={{ maxWidth: `calc(min(90vh, var(--page-room, 90vh)) * ${SPREAD_W / FRAME_H})` }}
+      style={{ maxWidth: `min(calc(90vh * ${SPREAD_W / FRAME_H}), calc((var(--page-room, 200vh) - 2rem) * ${SPREAD_W / SET_H}))` }}
     >
       {/* The view's move, on the strip's own spring, so the two keep step: folded, the ticket's edge a little nearer;
           as the strip opens, the view pulls back to the whole table where it lies. */}
       <motion.div
-        className="relative select-none"
+        // On a phone the room above the spread is kept for the camera, and the bleed below the ticket is given up (ABOVE).
+        className="relative select-none max-md:-mb-[1.2em] max-md:mt-[3.6em]"
         // Scaled about the ticket's right edge, which the folded strip shows beside its tab: that edge stays where it
         // is, with the hide between it and the tab, and only the rest grows and shrinks.
         style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em`, transformOrigin: `${((BESIDE_W + B + W) / SPREAD_W) * 100}% 40%` }}
