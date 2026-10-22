@@ -206,7 +206,7 @@ const hangs = (tone: Tone) => Boolean(tone.hangs || tone.bleeds || tone.fills ||
 
 const pageTones: Tone[] = [
   // The plate is cut, not torn, and its colours are the linen's middle tone, under the plate before it loads.
-  { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.png', cast: '/objects/linen-shadow.png', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
+  { band: '#ede3a1', bandInk: '#2e2418', panel: '#ede3a1', panelInk: '#2e2418', hangs: true, cut: true, frayed: '/objects/linen-edge.webp', cast: '/objects/linen-shadow.webp', plate: '/objects/linen.avif', tab: '/objects/tab-lacoste.avif' },
   // The letter's handmade sheet (studio/paper), TILE in paper.py written at twice the size it is shown.
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: { wide: { edge: '/objects/likes-edge-wide.webp', cast: '/objects/likes-cast-wide.webp' }, phone: { edge: '/objects/likes-edge-phone.webp', cast: '/objects/likes-cast-phone.webp' } }, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.

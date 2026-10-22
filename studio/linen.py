@@ -18,7 +18,10 @@ The cloth is a plain weave, one over and one under, of wet-spun flax yarn, dyed 
 All of it is painted here and given to Cycles as the cloth's colour and relief. Nothing repeats.
 
 Writes public/objects/linen.avif, the whole plate; with --edge, linen-edge.png, the mask the page cuts the strip
-with; with --shadow, linen-shadow.png, the shadow the cut cloth leaves on the page beyond it.
+with; with --shadow, linen-shadow.png, the shadow the cut cloth leaves on the page beyond it. Blender writes those two
+as PNG; make them the WebP the page asks for after:
+
+    uv run studio/fit.py public/objects/linen-edge.png public/objects/linen-shadow.png
 """
 
 import argparse
