@@ -486,7 +486,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       width: `calc(100% + ${shape.protrude}px)`,
       backgroundImage: `url(${pageTones[i].surface})`,
       backgroundSize: `${HIDE} ${HIDE}`,
-      backgroundPosition: mobile ? `right ${shape.protrude}px top 0` : '0 0',
+      backgroundPosition: pinnedToEdge(pageTones[i]) ? `right ${shape.protrude}px top 0` : '0 0',
       maskImage: `url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       maskSize: `${w}px ${h}px`,
       maskPosition: `right 0 top ${tabTops[i + 1] * metrics.rem - reach}px`,
@@ -541,12 +541,14 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       />
     )
   }
-  // On a phone what a strip is made of is laid from its edge, where its tab and its page are pinned (upright), so the
-  // three move as one sheet. Laid from where the strip before covers it, the material would slide under the page each
-  // time a strip opened or folded, as that end moves and the edge does not, or the other way about. layers is how many
-  // background layers the material has, each laid the same.
+  // What a strip is made of is laid from the edge its page is pinned to, so the two move as one sheet. Laid from the
+  // other end, the material would slide under the page each time the strip opened or folded, as one end moves and the
+  // other does not. On a phone every page is pinned to its strip's edge, where its tab is (upright); on a wide screen the
+  // badge, the desk and the ticket are (Badge, underTab), and the letter and the poster are laid from the strip's left.
+  // layers is how many background layers the material has, each laid the same.
+  const pinnedToEdge = (tone: Tone) => mobile || Boolean(tone.hangs || tone.fills || tone.roll)
   const laidFromEdge = (i: number, layers: number): CSSProperties =>
-    mobile ? { backgroundPosition: Array.from({ length: layers }, () => `right ${overhang(i)}px top 0`).join(', ') } : {}
+    pinnedToEdge(tones[i]) ? { backgroundPosition: Array.from({ length: layers }, () => `right ${overhang(i)}px top 0`).join(', ') } : {}
   // A page of paper is one sheet with its tab: the panel itself runs out past the strip's edge under the tab, and
   // is cut to the strip, its edge torn or cut as the strip's is, and to the tab's outline, so the tab is the same
   // piece of paper as the page, its tile and grain running on unbroken, with no join between them.
@@ -682,8 +684,8 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const overhang = (i: number) => {
     const tone = tones[i]
     if (!sheets(tone)) return 0
-    if (tone.frayed) return CLOTH_TAB.phone.width - (TEAR_WIDTH - FRAY_PAST)
-    if (tone.deckled) return DECKLE_WIDTH.phone - DECKLE_IN
+    if (tone.frayed) return CLOTH_TAB[mobile ? 'phone' : 'wide'].width - (TEAR_WIDTH - FRAY_PAST)
+    if (tone.deckled) return DECKLE_WIDTH[mobile ? 'phone' : 'wide'] - DECKLE_IN
     return protrude
   }
   // A page upright on its turned strip: as wide as the window and as tall as the strip is open, its top at the strip's
@@ -693,10 +695,12 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // The foot of an open page that the strip before lies over, its edge and its tab, kept clear.
   const under = (i: number) => (i > 0 ? overlap + protrude : overlap)
   // A page's margins on a phone: clear of its own edge's tear at its top, and of the strip before at its foot. The desk
-  // and the ticket lie on a mat cut straight, so they run up to its edge.
+  // and the ticket lie on a mat cut straight, so they run up to its edge. The desk's mat is the strip itself, so it runs
+  // on to the strip's end, under the strip before and its tab, as it does on a wide screen: stopped short of them, it
+  // would leave a band of bare panel between its foot and the strip before.
   const marginsOf = (i: number) => {
     const covers = tones[i].fills || tones[i].roll
-    return { top: covers ? 0 : TEAR_WIDTH + 12, foot: under(i) + (covers ? 0 : 12) }
+    return { top: covers ? 0 : TEAR_WIDTH + 12, foot: tones[i].fills ? 0 : under(i) + (covers ? 0 : 12) }
   }
   const uprightOf = (i: number): CSSProperties => {
     const { top, foot } = marginsOf(i)
@@ -913,9 +917,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                       )}
                       {tones[i].fills || tones[i].roll ? (
                         <div className="overflow-hidden" style={uprightOf(i)} inert={!open} aria-hidden={!open || undefined}>
-                          <div className="grid min-h-full content-center" style={{ paddingBottom: under(i) }}>
+                          <div className="grid min-h-full content-center" style={{ paddingBottom: marginsOf(i).foot }}>
                             {open && children}
-                            {tones[i].fills ? <Desk /> : <Ticket open={open} />}
+                            {tones[i].fills ? <Desk /> : <Ticket />}
                           </div>
                         </div>
                       ) : open ? (
@@ -935,7 +939,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   ) : (
                     <>
                       {tones[i].hangs ? (
-                        <Badge badge={profile.badge} page={openWidth} margin={band + protrude} open={open} past={protrude} />
+                        <Badge badge={profile.badge} page={openWidthOf(i)} margin={band + protrude} open={open} past={protrude} />
                       ) : tones[i].fills || tones[i].roll ? null : (
                         <motion.div
                           aria-hidden
@@ -964,7 +968,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         <div className={PAGE} style={underTab(i)} inert={!open} aria-hidden={!open || undefined}>
                           <div className="grid flex-1 content-center py-[4vh]">
                             {open && children}
-                            {tones[i].fills ? <Desk /> : <Ticket open={open} />}
+                            {tones[i].fills ? <Desk /> : <Ticket />}
                           </div>
                         </div>
                       ) : open ? (

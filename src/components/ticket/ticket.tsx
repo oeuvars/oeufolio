@@ -1,9 +1,7 @@
-import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 
 import { profile } from '../../content'
 import { paint } from '../../lib/paint'
-import { slide } from '../house'
 import contact from './contact.json'
 import { Print } from './print'
 import ticket from './ticket.json'
@@ -23,6 +21,9 @@ const SET_H = ABOVE + B + H
 const [OX, OY, OW, OH] = contact.open
 const [PX, PY, PW, PH] = contact.punch
 
+// The photograph of the set.
+const PHOTO = '/objects/contact-open.avif'
+
 /** Lays an image over the box it was photographed for, in the spread's em. */
 const over = (x: number, y: number, w: number, h: number) => ({ left: `${x}em`, top: `${y}em`, width: `${w}em`, height: `${h}em` })
 
@@ -34,17 +35,7 @@ const over = (x: number, y: number, w: number, h: number) => ({ left: `${x}em`, 
  * the page. It is laid once and stays where it lies, the strip uncovering it as it opens (SiteShell). Copying the
  * email address has the conductor punch the ticket: a photograph of the same set with the hole through it, of the hole alone, is laid over the first.
  */
-type TicketProps = {
-  /** Whether the contact strip is open. Folded, the strip sees the ticket's edge a little nearer. */
-  open: boolean
-}
-
-// How much nearer the folded strip sees the table than the open page does.
-const NEAR = 1.08
-// The photograph of the set.
-const PHOTO = '/objects/contact-open.avif'
-
-export const Ticket = ({ open }: TicketProps) => {
+export const Ticket = () => {
   const [copied, setCopied] = useState(false)
   const photo = useRef<HTMLCanvasElement>(null)
   const [painted, setPainted] = useState(false)
@@ -87,17 +78,12 @@ export const Ticket = ({ open }: TicketProps) => {
       className="@container w-full max-md:justify-self-center md:-my-[4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+var(--band-w)-12px)] md:-ml-[calc(var(--protrude)+6px)] md:w-auto"
       style={{ maxWidth: `min(calc(90vh * ${SPREAD_W / FRAME_H}), calc((var(--page-room, 200vh) - 2rem) * ${SPREAD_W / SET_H}))` }}
     >
-      {/* The view's move, on the strip's own spring, so the two keep step: folded, the ticket's edge a little nearer;
-          as the strip opens, the view pulls back to the whole table where it lies. */}
-      <motion.div
+      {/* The set stays as it lies, open or folded: the strip only uncovers it, so the photographed hide never moves
+          against the hide the strip is laid with. */}
+      <div
         // On a phone the room above the spread is kept for the camera, and the bleed below the ticket is given up (ABOVE).
         className="relative select-none max-md:-mb-[1.2em] max-md:mt-[3.6em]"
-        // Scaled about the ticket's right edge, which the folded strip shows beside its tab: that edge stays where it
-        // is, with the hide between it and the tab, and only the rest grows and shrinks.
-        style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em`, transformOrigin: `${((BESIDE_W + B + W) / SPREAD_W) * 100}% 40%` }}
-        initial={false}
-        animate={{ scale: open ? 1 : NEAR }}
-        transition={slide}
+        style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em` }}
       >
         {/* The photograph is drawn on a canvas (paint) as large as the open page shows it, and laid
             as a picture only until then. */}
@@ -122,7 +108,7 @@ export const Ticket = ({ open }: TicketProps) => {
         >
           <Print onCopy={copy} copied={copied} />
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
