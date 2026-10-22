@@ -1,9 +1,9 @@
-// Photographs the poster's type (type.html, laid out by type.json) for poster.py to print: one plate for the title
-// and one for the passages, white on black, at SCALE times the reference's 736 x 981 pixels.
+// Photographs the poster's type (type.html, laid out by type.json) for poster.py to print: one plate for the title,
+// one for the passages and one for the folded strip's sign, white on black, at SCALE times the reference's 736 x 981 pixels.
 //
 //   node studio/poster/type.mjs
 //
-// Writes studio/poster/art/title.png and studio/poster/art/body.png, with the headless Chromium in studio/browser.mjs,
+// Writes studio/poster/art/title.png, body.png and spine.png, with the headless Chromium in studio/browser.mjs,
 // and src/components/poster.json, where the companies named in the passages fall, for poster.py to run a highlighter
 // over and for the page to lay their links on.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -30,7 +30,7 @@ const marks = await run("window.marks()");
 writeFileSync(join(HERE, "..", "..", "src", "components", "poster.json"), `${JSON.stringify({ size: [WIDTH, HEIGHT], marks }, null, 2)}\n`);
 
 mkdirSync(join(HERE, "art"), { recursive: true });
-for (const plate of ["title", "body"]) {
+for (const plate of ["title", "body", "spine"]) {
   await run(`(() => { document.body.className = ${JSON.stringify(plate)}; return new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(true)))); })()`);
   await sleep(300);
   const shot = await send("Page.captureScreenshot", { format: "png", clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 } });

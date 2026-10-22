@@ -20,8 +20,9 @@ scaled-up picture reads as film again.
 The page is one material: the poster's bare wall, as a tile of paper. Writes public/objects/poster-paper.avif, that
 tile; public/objects/poster.avif, the light printed on it (the windows, the sign and the passages, black where the
 wall was), which the page screens over the paper; and public/objects/poster-strip.avif, the same for the work strip
-folded: the poster's middle column of windows, the full height of it, with the sign's light across it but none of
-the passages, which come with the page when the strip opens.
+folded: the poster's middle column of windows, the full height of it, with none of the passages, which come with the
+page when the strip opens. The sign is too wide for the column, so it hangs down the column's middle in one line
+instead, set and lit as the poster's is (art/spine.png): the strip shows the whole of "human experience".
 """
 
 import argparse
@@ -39,6 +40,8 @@ SCALE = 3
 PASSAGES = [(305, 302, 398, 453), (512, 374, 642, 451), (100, 484, 302, 561), (300, 622, 530, 709)]
 # The folded strip's column, in the reference's pixels: the windows stacked down its middle.
 STRIP = (300, 594)
+# How far round its letters, in the reference's pixels, the old sign's glow runs.
+GLOW = 22
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
 # is shown at, src/components/site-shell.tsx PAPER, the poster being shown about a third of its size).
 PAPER_TAKES = 420
@@ -81,9 +84,10 @@ def lift_type(picture, mask):
     return picture * (1 - mask[..., None]) + bare * mask[..., None]
 
 
-def lift_sign(picture, title):
-    """The wall with the old sign's letters filled in from round them, so none of them shows past the new ones."""
-    under = ndimage.grey_dilation(title, size=(4 * SCALE + 1, 4 * SCALE + 1))
+def lift_sign(picture, title, reach=4):
+    """The wall with the old sign's letters filled in from round them, so none of them shows past the new ones: reach
+    reference pixels round each letter, or as far as its glow runs where no new sign goes over it."""
+    under = ndimage.grey_dilation(title, size=(reach * SCALE + 1, reach * SCALE + 1))
     under = np.clip(1.5 * ndimage.gaussian_filter(under, 0.5 * SCALE), 0, 1)
     keep = 1 - under
     # From close by where there is wall close by, and from further off where the letters crowd it out.
@@ -92,6 +96,17 @@ def lift_sign(picture, title):
 
     fill = np.stack([spread(picture[..., c] * keep) for c in range(3)], -1) / (spread(keep) + 1e-6)[..., None]
     return picture * keep[..., None] + fill * under[..., None]
+
+
+def light_sign(picture, title, shape):
+    """A sign over the wall: its letters a little out of focus and made of dots, then the light they throw."""
+    letters = ndimage.gaussian_filter(title, 1.1 * SCALE)
+    dots = screen_dots(shape, 2.1 * SCALE)
+    face = SIGN * (0.6 + 0.34 * dots)[..., None]
+    picture = picture * (1 - letters[..., None]) + face * letters[..., None]
+    glow = 0.42 * ndimage.gaussian_filter(title, 3 * SCALE) + 0.18 * ndimage.gaussian_filter(title, 12 * SCALE)
+    glow = np.clip(glow, 0, 1)[..., None] * SIGN
+    return 1 - (1 - picture) * (1 - glow), letters
 
 
 def paper(image):
@@ -197,18 +212,10 @@ def main():
     # The old passages come off the wall.
     picture = lift_type(picture, box_mask(shape, PASSAGES, 1.5 * SCALE))
 
-    # The sign: its letters a little out of focus, made of dots, in place of the old ones, then the light they throw.
+    # The sign in place of the old one, and on the folded strip's column, the sign hung down it.
     title = plate("title.png", size)
-    picture = lift_sign(picture, title)
-    letters = ndimage.gaussian_filter(title, 1.1 * SCALE)
-    dots = screen_dots(shape, 2.1 * SCALE)
-    face = SIGN * (0.6 + 0.34 * dots)[..., None]
-    picture = picture * (1 - letters[..., None]) + face * letters[..., None]
-    glow = 0.42 * ndimage.gaussian_filter(title, 3 * SCALE) + 0.18 * ndimage.gaussian_filter(title, 12 * SCALE)
-    glow = np.clip(glow, 0, 1)[..., None] * SIGN
-    picture = 1 - (1 - picture) * (1 - glow)
-
-    strip = picture
+    strip, _ = light_sign(lift_sign(picture, title, reach=GLOW), plate("spine.png", size), shape)
+    picture, letters = light_sign(lift_sign(picture, title), title, shape)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:

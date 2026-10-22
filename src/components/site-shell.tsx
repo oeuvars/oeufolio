@@ -931,8 +931,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         <motion.div
                           aria-hidden
                           style={
+                            // A picture is centred on what shows of the strip, between the strip before and its tab
+                            // and the band the strip's own tab stands on, so the poster's sign hangs clear of both.
                             tones[i].bleeds
-                              ? { position: 'absolute', top: 0, bottom: 0, left: overlap - TEAR_WIDTH, width: strip - overlap + TEAR_WIDTH, ...(workPoster ? { opacity: 1 } : {}) }
+                              ? { position: 'absolute', top: 0, bottom: 0, left: under(i), width: strip - band - under(i), ...(workPoster ? { opacity: 1 } : {}) }
                               : uprightOf(i)
                           }
                           initial={false}
