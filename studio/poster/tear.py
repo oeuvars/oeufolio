@@ -20,11 +20,11 @@ under the copy stand's light (as studio/edgecast renders the strips' edges). The
 grows out (SiteShell's calm span), so the tab's joins meet a straight edge, and that lies in a different place for
 each layout. For each it writes, one TEAR_LENGTH long, repeating:
 
-- public/objects/poster-edge-<layout>.png: the print's mask, TEAR_WIDTH px from the strip's edge out, at
+- public/objects/poster-edge-<layout>.webp: the print's mask, TEAR_WIDTH px from the strip's edge out, at
   EDGE_DENSITY: SiteShell cuts the poster with it in place of its drawn tear;
-- poster-core-<layout>.png: the bared paper and its fibres in their own colour and light, FRAME across, at DENSITY,
+- poster-core-<layout>.webp: the bared paper and its fibres in their own colour and light, FRAME across, at DENSITY,
   for SiteShell to lay under the print;
-- poster-cast-<layout>.png: the shadow on the mat, as studio/edgecast writes it, which SiteShell lays as before.
+- poster-cast-<layout>.webp: the shadow on the mat, as studio/edgecast writes it, which SiteShell lays as before.
 """
 
 import argparse
@@ -193,7 +193,7 @@ def tear(layout, samples, proof):
     pixels = np.zeros(edge.shape + (4,), np.uint8)
     pixels[..., :3] = 255
     pixels[..., 3] = np.clip(edge * 255 + 0.5, 0, 255).astype(np.uint8)
-    Image.fromarray(pixels).save(os.path.join(target, f"poster-edge-{layout}.png"), optimize=True)
+    Image.fromarray(pixels).save(os.path.join(target, f"poster-edge-{layout}.webp"), lossless=True, quality=100, method=6)
 
     # The bared paper in its own light: what it sends back over what the same paper lying flat does, times that
     # paper's colour, so it is as white as paper is on the page, and shaded only where it is.
@@ -202,12 +202,12 @@ def tear(layout, samples, proof):
     colour = np.clip(colour, 0, 1)
     srgb = np.where(colour <= 0.0031308, colour * 12.92, 1.055 * colour ** (1 / 2.4) - 0.055)
     rgba = np.dstack([srgb, alpha])
-    Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").save(os.path.join(target, f"poster-core-{layout}.png"), optimize=True)
+    Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").save(os.path.join(target, f"poster-core-{layout}.webp"), lossless=True, quality=100, method=6)
 
     dark = np.clip(1 - cast / np.maximum(bare, 1e-5), 0, 1)
     shadow = np.zeros(dark.shape + (4,), np.uint8)
     shadow[..., 3] = (dark * 255 + 0.5).astype(np.uint8)
-    Image.fromarray(shadow).save(os.path.join(target, f"poster-cast-{layout}.png"), optimize=True)
+    Image.fromarray(shadow).save(os.path.join(target, f"poster-cast-{layout}.webp"), lossless=True, quality=100, method=6)
     print(f"TEAR {layout} edge {edge.shape[::-1]}, core {alpha.shape[::-1]}, darkest {dark.max():.3f}")
 
 

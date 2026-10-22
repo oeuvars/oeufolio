@@ -16,7 +16,7 @@ the edge it shades whatever lies there.
 
 The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.png, FRAME across, in
 CSS px from the strip's edge, at DENSITY. The poster's tear is rendered with the paper it bares and its fibres by
-studio/poster/tear.py, which writes its shadow, public/objects/poster-cast-<layout>.png, in the same frame; it uses
+studio/poster/tear.py, which writes its shadow, public/objects/poster-cast-<layout>.webp, in the same frame; it uses
 the work strip's tab span (calm_of) and curl from here. The
 mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.png (dodge). The contact strip's hide
 is a leather mat as well, cut and burnished as the green one is, lying on the walnut desk past the folders:

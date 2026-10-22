@@ -27,9 +27,9 @@ tab, out round the tab's outline (SiteShell's tabOutline) and back, and the pulp
 turns. The tab lies in a different place for each layout and stands out a different way, so there is a mask and a
 shadow for each.
 
-Writes public/objects/likes-edge-<layout>.png, edge_width(layout) by EDGE_LENGTH CSS px at EDGE_DENSITY pixels to the
+Writes public/objects/likes-edge-<layout>.webp, edge_width(layout) by EDGE_LENGTH CSS px at EDGE_DENSITY pixels to the
 CSS px, the strip's edge CUT px from its left: its right lies past the tab's outline as far as DECKLE_PAST lies past
-a strip's edge (SiteShell), 9 CSS px. And likes-cast-<layout>.png, from the same left CAST_PAST px further, at
+a strip's edge (SiteShell), 9 CSS px. And likes-cast-<layout>.webp, from the same left CAST_PAST px further, at
 CAST_DENSITY: black, as dark as the sheet makes the page under and beside it, for SiteShell to lay under the sheet.
 """
 
@@ -229,13 +229,13 @@ def deckle(layout, samples, proof):
     pixels = np.empty(mask.shape + (4,), np.uint8)
     pixels[..., :3] = 255
     pixels[..., 3] = np.clip(mask * 255 + 0.5, 0, 255).astype(np.uint8)
-    Image.fromarray(pixels).save(os.path.join(proof or OUT, f"likes-edge-{layout}.png"), optimize=True)
+    Image.fromarray(pixels).save(os.path.join(proof or OUT, f"likes-edge-{layout}.webp"), lossless=True, quality=100, method=6)
 
     ratio = (cast / np.maximum(bare, 1e-5))[MARGIN * CAST_DENSITY : (MARGIN + EDGE_LENGTH) * CAST_DENSITY]
     dark = np.clip(1 - ratio, 0, 1)
     shadow = np.zeros(dark.shape + (4,), np.uint8)
     shadow[..., 3] = (dark * 255 + 0.5).astype(np.uint8)
-    Image.fromarray(shadow).save(os.path.join(proof or OUT, f"likes-cast-{layout}.png"), optimize=True)
+    Image.fromarray(shadow).save(os.path.join(proof or OUT, f"likes-cast-{layout}.webp"), lossless=True, quality=100, method=6)
     edge = round((CUT + LINE) * CAST_DENSITY)
     print(f"EDGE {layout} mask {mask.shape[::-1]}, cast {dark.shape[::-1]}, shadow past the line by px:", np.round(dark[:, edge : edge + 8 * CAST_DENSITY : CAST_DENSITY].mean(axis=0), 3))
 
