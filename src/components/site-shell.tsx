@@ -809,17 +809,18 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         <div style={uprightOf(i)}>
                           <Badge badge={profile.badge} page={metrics.height} margin={1.5 * metrics.rem} open={open} past={0} />
                         </div>
-                      ) : tones[i].bleeds ? (
+                      ) : tones[i].fills || tones[i].roll ? null : (
+                        // The folded strip's picture, as on a wide screen, laid along the band it folds to.
                         <motion.div
                           aria-hidden
-                          style={{ ...uprightOf(i), ...(workPoster ? { opacity: 1 } : {}) }}
+                          style={{ ...uprightOf(i), ...(tones[i].bleeds && workPoster ? { opacity: 1 } : {}) }}
                           initial={false}
-                          animate={workPoster ? undefined : { opacity: open ? 0 : 1 }}
-                          transition={{ duration: open ? 0.35 : 0 }}
+                          animate={tones[i].bleeds && workPoster ? undefined : { opacity: open ? 0 : 1 }}
+                          transition={{ duration: tones[i].bleeds && !open ? 0 : 0.35 }}
                         >
-                          <Art index={i} open={open} poster={workPoster} />
+                          <Art index={i} open={open} poster={workPoster} band={strip - overlap} />
                         </motion.div>
-                      ) : null}
+                      )}
                       {tones[i].fills || tones[i].roll ? (
                         <div className="overflow-hidden" style={uprightOf(i)} inert={!open} aria-hidden={!open || undefined}>
                           <div className="grid min-h-full content-center" style={{ paddingBottom: under(i) }}>

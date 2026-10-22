@@ -21,6 +21,8 @@ The ink is the reference's, so the pen is the photograph's and not a likeness of
 
 Writes public/objects/letter.avif, the ink at twice the reference's size and cut close to it;
 public/objects/letter-strip.avif, the same drawings set one under another for the page's folded strip;
+public/objects/letter-band.avif, the same drawings set side by side for the strip folded on a phone, where it lies
+across the window;
 and public/photos/laid.avif, the card's grain as a tile to multiply a page's colour by. LETTER_DEBUG=<dir>
 also writes the sheets the reading of the reference was checked against.
 """
@@ -151,6 +153,9 @@ STRIP = (
     (0.9, ((604, 1088, 712, 1164),)),
 )
 STRIP_WIDTH, STRIP_GAP = 244, 58
+# On a phone the strip folds to a band across the window, and the same drawings are set in a row along it, each in the
+# middle of the row's height, this far apart.
+BAND_GAP = 46
 STRIP_CLEARED = ((584, 360, 608, 396), (376, 586, 394, 600), (576, 586, 592, 600), (329, 1085, 540, 1216))  # ends of things cut through
 SPACE = 16.0  # bare card between two words, and how much it varies
 PAGE = (150, 58, 640, 104)  # bare card, to take paper grain from
@@ -935,6 +940,30 @@ def strip(reading):
     return out
 
 
+def band(reading):
+    """The ink of the strip folded on a phone: the folded strip's drawings, date and signature, side by side in one row."""
+    hand = Hand(reading, (TALL_PAGE * UP, reading.marks.shape[1] * UP))
+    for run in WRITING[:4] + WRITING[-2:]:
+        hand.write(*run)
+    drawings(hand)
+    ink = np.clip((hand.wet - FAINT) / (0.92 - FAINT), 0, 1)
+    for x0, y0, x1, y1 in STRIP_CLEARED:
+        ink[y0 * UP : y1 * UP, x0 * UP : x1 * UP] = 0
+    pieces = [boxes for _, boxes in STRIP]
+    tall = max(max(y1 - y0 for _, y0, _, y1 in boxes) for boxes in pieces)
+    wide = sum(sum(x1 - x0 for x0, _, x1, _ in boxes) for boxes in pieces) + BAND_GAP * (len(pieces) - 1)
+    out = np.zeros((tall * UP, wide * UP))
+    left = 0
+    for boxes in pieces:
+        high = max(y1 - y0 for _, y0, _, y1 in boxes)
+        foot = (tall + high) // 2
+        for x0, y0, x1, y1 in boxes:
+            out[(foot - y1 + y0) * UP : foot * UP, left * UP : (left + x1 - x0) * UP] = ink[y0 * UP : y1 * UP, x0 * UP : x1 * UP]
+            left += x1 - x0
+        left += BAND_GAP
+    return out
+
+
 def laid(ref, reading):
     """The card's grain on its own: how much lighter or darker than itself the bare card is at each point."""
     x0, y0, x1, y1 = SHEET
@@ -1035,6 +1064,15 @@ def main():
     if DEBUG:
         shown = np.array([0.812, 0.808, 0.796]) * (1 - folded[..., 3:]) + folded[..., :3] * folded[..., 3:]
         Image.fromarray((shown * 255 + 0.5).astype(np.uint8)).save(os.path.join(DEBUG, "strip.png"))
+
+    row = band(reading)
+    row = np.dstack((np.broadcast_to(colour, (*row.shape, 3)), row))
+    target = os.path.join(ROOT, "public", "objects", "letter-band.avif")
+    Image.fromarray((row * 255 + 0.5).astype(np.uint8), mode="RGBA").save(target, quality=84, subsampling="4:4:4", speed=2)
+    print(f"band {row.shape[1]}x{row.shape[0]} {os.path.getsize(target) / 1e3:.0f} kB")
+    if DEBUG:
+        shown = np.array([0.812, 0.808, 0.796]) * (1 - row[..., 3:]) + row[..., :3] * row[..., 3:]
+        Image.fromarray((shown * 255 + 0.5).astype(np.uint8)).save(os.path.join(DEBUG, "band.png"))
 
     grain = laid(ref, reading)
     target = os.path.join(ROOT, "public", "photos", "laid.avif")
