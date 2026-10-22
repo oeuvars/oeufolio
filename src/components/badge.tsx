@@ -15,9 +15,13 @@ type BadgeProps = {
   past: number
 }
 
-/** How much of the image's width the holder takes, and the image's width to its height. */
+/** How much of the image's width the holder takes, and the photograph's width to its height. */
 const HOLDER = 515 / 720
 const SHAPE = 720 / 900
+// The image runs on above the photograph to carry the ring out of shot, by this much of the photograph's height.
+const HEAD = 76 / 900
+// Where the ring hangs from, the inside of its arch, in the whole image's width and height.
+const PIVOT = { x: 384.1 / 720, y: 26.8 / 976 }
 // How far the card's middle lies right of the image's, in its width: the card is a little off the holder's middle.
 const CARD_OFF = (162 + 577) / 2 / 720 - 0.5
 // How far either way, in degrees, the card swings on its ring when it is pulled.
@@ -30,7 +34,8 @@ const SETTLE = { type: 'spring', stiffness: 34, damping: 4.5, mass: 1.6 } as con
  * unfolded strip and fixed to the strip's right edge. A folded strip is that sheet slid in under the one
  * before it: what shows is the sheet's own right-hand margin, with the edge of the badge on it, and the
  * strip's tab stands on bare paper. Unfolding slides the sheet out. The badge's frame ends at the top of
- * the sheet, where its ring runs out of shot. Its vinyl is see-through, so the backdrop shows through.
+ * the sheet, where its ring runs out of shot to the point it hangs from. Its vinyl is see-through, so the
+ * backdrop shows through.
  */
 export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
   const rotate = useMotionValue(2.4)
@@ -49,8 +54,10 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
 
   const take = (event: React.PointerEvent) => {
     if (!open || event.button !== 0 || !ring.current) return
+    // The box is as wide as the image, and its top is the photograph's: the image runs on above it.
     const box = ring.current.getBoundingClientRect()
-    const at = { x: box.left + box.width / 2, y: box.top }
+    const tall = box.width / SHAPE
+    const at = { x: box.left + box.width * PIVOT.x, y: box.top - tall * HEAD + tall * (1 + HEAD) * PIVOT.y }
     rotate.stop()
     held.current = { ...at, from: rotate.get() - turn(event.clientX, event.clientY, at) }
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -69,6 +76,8 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
     animate(rotate, 0, { ...SETTLE, velocity: rotate.getVelocity() })
   }
 
+  const photo = `min(100%, ${(page - 2 * margin) / HOLDER / SHAPE}px)`
+
   return (
     <div
       className="absolute inset-y-0 right-0 flex justify-center bg-cover bg-center"
@@ -81,16 +90,22 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
         ref={ring}
         // The card, not the holder, is centred on the page.
         style={{ translate: `${-CARD_OFF * 100}% 0` }}
-        className={`relative z-1 block h-full origin-top ${open ? '' : 'pointer-events-none'}`}
+        className={`relative z-1 block h-full ${open ? '' : 'pointer-events-none'}`}
       >
         <motion.img
           src={badge.src}
           alt={open ? badge.alt : ''}
           aria-hidden={!open}
           draggable={false}
-          className={`w-auto max-w-none origin-top touch-pan-y select-none [filter:drop-shadow(0_10px_14px_rgb(0_0_0/0.3))] ${open ? 'cursor-grab active:cursor-grabbing' : ''}`}
-          // As tall as the sheet, unless that would put the holder under the tabs.
-          style={{ height: `min(100%, ${(page - 2 * margin) / HOLDER / SHAPE}px)`, rotate }}
+          className={`relative block w-auto max-w-none touch-pan-y select-none [filter:drop-shadow(0_10px_14px_rgb(0_0_0/0.3))] ${open ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          // The photograph is as tall as the sheet, unless that would put the holder under the tabs. The ring above it
+          // stands out over the sheet's top, which hides it until the card swings.
+          style={{
+            height: `calc(${photo} * ${1 + HEAD})`,
+            top: `calc(${photo} * ${-HEAD})`,
+            transformOrigin: `${PIVOT.x * 100}% ${PIVOT.y * 100}%`,
+            rotate,
+          }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ ...SETTLE, delay: 0.25 }}

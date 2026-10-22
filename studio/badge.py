@@ -25,7 +25,7 @@ vinyl and the card are the photograph's and not a likeness of them. Three things
 - The mark beside the line under the title, and the three rules, come from studio/assets/overlay.png,
   a capture of studio/plate.html.
 
-Writes public/objects/badge.avif at twice the reference's size. studio/badge_model.py is the earlier
+Writes public/objects/badge.avif at twice the reference's size, with HEAD more of it on top for the ring. studio/badge_model.py is the earlier
 Blender model of the same badge; the page does not use it.
 """
 
@@ -43,6 +43,13 @@ UP = 2  # output pixels to one of the reference's
 # All in the reference's pixels.
 HOLDER = (105, 15, 620, 882, 22)
 RING = (345, 0, 442, 18)  # the part of the ring that stands clear of the holder
+# The ring runs out of the photograph's top. The image carries it on above: its two legs run up from the
+# columns round them in LEGS, copied from the rows in CLEAR where they stand clear of the holder, for REACH,
+# and then close over in an arch. HEAD is how far the image runs on above the photograph to hold it.
+LEGS = ((350, 376), (398, 436))
+CLEAR = (1, 13)
+REACH = 35
+HEAD = 76
 CARD = (162, 195, 577, 850)
 EDGE = (163.5, 191.5, 579, 848.5)  # the card's own cut edge, measured where its shadow starts
 # The corners of the portrait print, clockwise from the top left. It was stuck down by hand.
@@ -612,6 +619,91 @@ def words(card, X, Y, ref):
     return card * (1 - written[..., None]) + MARKER_INK * written[..., None]
 
 
+def above(out):
+    """The ring carried on above the photograph: rows to stand on top of `out`, in output pixels."""
+    rows, cols = HEAD * UP, out.shape[1]
+    first, last = CLEAR[0] * UP, CLEAR[1] * UP
+    alpha = out[..., 3]
+    xs = np.arange(cols, dtype=np.float64)
+
+    # Each leg as a line, its middle where its film is, and its half-width.
+    legs = []
+    for x0, x1 in LEGS:
+        window = slice(x0 * UP, x1 * UP)
+        ys = np.arange(first, last + 1)
+        weight = alpha[ys, window]
+        middles = (weight * xs[window]).sum(axis=1) / weight.sum(axis=1)
+        slope, base = np.polyfit(ys, middles, 1)
+        half = (weight > 0.25).sum(axis=1).mean() / 2
+        legs.append((base, slope, half))
+
+    def source(n):
+        """A clear row to take the n'th row above the photograph from, back and forth through CLEAR."""
+        span = last - first
+        k = int(n) % (2 * span)
+        return first + (k if k < span else 2 * span - k)
+
+    def across(r, x):
+        """Row r of the photograph at the fractional columns x."""
+        x = np.clip(x, 0, cols - 1.001)
+        i = np.floor(x).astype(int)
+        f = (x - i)[..., None]
+        return out[r, i] * (1 - f) + out[r, i + 1] * f
+
+    def leg(r, k, offset):
+        """Leg k's film at `offset` out from its middle (outwards is away from the other leg), from row r."""
+        base, slope, half = legs[k]
+        x = base + slope * r + (offset if k else -offset)
+        film = across(r, x)
+        film[..., 3] *= np.clip((half + 3 - np.abs(offset)) / 3, 0, 1)
+        return film
+
+    head = np.zeros((rows, cols, 4))
+    top = REACH * UP  # where the straight legs end, counted up from the photograph's top
+    (lb, ls, lh), (rb, rs, rh) = legs
+    # The arch over the legs' ends, round the point between them.
+    cx = (lb - ls * top + rb - rs * top) / 2
+    radius = (rb - rs * top - (lb - ls * top)) / 2
+    for n in range(1, rows + 1):
+        y = rows - n  # the row of `head` that lies n rows above the photograph
+        r = source(n)
+        if n <= top:
+            for k, (base, slope, half) in enumerate(legs):
+                middle = base - slope * n
+                offset = (xs - middle) * (1 if k else -1)
+                near = np.abs(offset) < half + 3
+                head[y, near] = leg(r, k, offset[near])
+            continue
+        dx, dy = xs - cx, n - top
+        dist = np.hypot(dx, dy)
+        turn = np.arctan2(dy, dx) / np.pi  # 0 over the right leg, 1 over the left
+        half = rh + (lh - rh) * turn
+        u = (dist - radius) / half
+        near = np.abs(u) < 1 + 3 / half
+        if not near.any():
+            continue
+        # Taken from further along the legs as the arch goes round, so its grain runs on from theirs.
+        r = source(top + np.mean(np.abs(np.arctan2(dy, dx[near]))) * radius)
+        mix = np.clip((turn[near] - 0.35) / 0.3, 0, 1)
+        mix = (mix * mix * (3 - 2 * mix))[:, None]
+        head[y, near] = leg(r, 1, u[near] * rh) * (1 - mix) + leg(r, 0, u[near] * lh) * mix
+    # Over the photograph's top rows, down to where the legs reach the holder, only the legs are kept: the page's
+    # grain round them would stop in a hard line where the rows above begin. The very top rows, which the
+    # enlarging frays, are taken from the clear rows below them.
+    for y in range(last + 1):
+        r = source(first - y) if y < first else y
+        film = np.zeros((cols, 4))
+        for k, (base, slope, half) in enumerate(legs):
+            offset = (xs - (base + slope * y)) * (1 if k else -1)
+            near = np.abs(offset) < half + 3
+            film[near] = leg(r, k, offset[near])
+        x0, x1 = RING[0] * UP, RING[2] * UP
+        out[y, x0:x1] = film[x0:x1]
+    pivot = (cx / UP, HEAD - (top + radius - lh) / UP)
+    print(f"ring hangs from {pivot[0]:.1f}, {pivot[1]:.1f} of {cols // UP}x{(out.shape[0] + rows) // UP}")
+    return head
+
+
 def main():
     ref = np.asarray(Image.open(os.path.join(HERE, "assets", "reference.jpg")).convert("RGB"), dtype=np.float64) / 255
     rows, cols = ref.shape[0] * UP, ref.shape[1] * UP
@@ -631,9 +723,10 @@ def main():
     colour = (card * solid[..., None] + white[..., None] * ((1 - solid) * amount)[..., None]) / np.maximum(alpha, 1e-4)[..., None]
 
     out = np.dstack((np.clip(colour, 0, 1), np.clip(alpha, 0, 1)))
+    out = np.vstack((above(out), out))
     target = os.path.join(ROOT, "public", "objects", "badge.avif")
     Image.fromarray((out * 255 + 0.5).astype(np.uint8), mode="RGBA").save(target, quality=95, subsampling="4:4:4", speed=2)
-    print(f"badge {cols}x{rows} {os.path.getsize(target) / 1e3:.0f} kB")
+    print(f"badge {out.shape[1]}x{out.shape[0]} {os.path.getsize(target) / 1e3:.0f} kB")
 
 
 main()
