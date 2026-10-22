@@ -1004,8 +1004,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           )}
                         </motion.div>
                       ) : tones[i].bleeds && workPoster ? (
-                        <motion.div aria-hidden className="pointer-events-none" style={foldBand(i, 0.5)} initial={false} animate={{ opacity: open ? 0 : 1 }} transition={{ duration: 0.35 }}>
-                          <img src="/objects/poster-band.avif" alt="" draggable={false} className="block w-full mix-blend-screen select-none" />
+                        <motion.div aria-hidden className="pointer-events-none mix-blend-screen" style={foldBand(i, 0.5)} initial={false} animate={{ opacity: open ? 0 : 1 }} transition={{ duration: 0.35 }}>
+                          {/* The poster's sign in one line, small enough to lie between the tabs above and below it. */}
+                          <img src="/objects/poster-band.avif" alt="" draggable={false} className="mx-auto block w-4/5 select-none" />
                         </motion.div>
                       ) : (
                         <motion.div
