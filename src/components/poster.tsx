@@ -58,10 +58,13 @@ export const Poster = () => {
   return (
     <div className="absolute inset-0 overflow-hidden mix-blend-screen [container-type:size] max-md:top-(--page-top) max-md:bottom-(--page-foot)">
       <h2 className="sr-only">Experience</h2>
-      {/* The poster as the page lays it: across the strip on a phone, else covering it, and centred. */}
+      {/* The poster as the page lays it, centred: covering the strip on a wide screen, and on a phone as large as
+          keeps its lit windows and passages on the page, half a rem in from its sides, top and foot. They lie between
+          px 284 and 1912 across and 368 and 2559 down, and round them it is dark. The dark is a little lighter than the
+          paper, so on a phone it fades out to every side short of them, and no edge of the sheet shows. */}
       <div
         ref={sheet}
-        className="absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,#000_6%,#000_94%,transparent)] max-md:w-[min(100cqw,calc(100cqh*2208/2943))] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]"
+        className="absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,#000_10%,#000_90%,transparent),linear-gradient(to_right,transparent,#000_10%,#000_90%,transparent)] [mask-composite:intersect] max-md:w-[min(calc((100cqw_-_1rem)*2208/1628),calc((100cqh_-_1rem)*2208/2191))] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]"
         style={{ aspectRatio: `${POSTER.width} / ${POSTER.height}` }}
       >
         <img
