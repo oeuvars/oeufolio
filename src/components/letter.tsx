@@ -21,7 +21,7 @@ export const Letter = ({ letter }: LetterProps) => {
       target="_blank"
       rel="noreferrer"
       aria-label="Open the letter at full size"
-      className="-my-[4vh] flex cursor-zoom-in justify-center"
+      className="flex cursor-zoom-in justify-center md:-my-[4vh]"
     >
       <img
         src={letter.src}
@@ -29,7 +29,7 @@ export const Letter = ({ letter }: LetterProps) => {
         width={WIDTH}
         height={HEIGHT}
         draggable={false}
-        className="h-auto max-h-[88.8vh] w-auto max-w-full select-none"
+        className="h-auto max-h-(--page-room) w-auto max-w-full select-none md:max-h-[88.8vh]"
       />
     </a>
   )

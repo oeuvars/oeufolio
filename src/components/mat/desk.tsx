@@ -20,7 +20,7 @@ export const Desk = () => {
   const { name, likes, playlist } = profile.extras
 
   return (
-    <Mat className="min-h-full md:-mt-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem] md:min-h-screen">
+    <Mat className="h-(--page-room) md:-mt-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem] md:h-auto md:min-h-screen">
       <KeyBunch name={name} car={likes.key} />
       <BusinessCard name={name} />
       <RecordSleeve like={likes.record} playlist={playlist} />

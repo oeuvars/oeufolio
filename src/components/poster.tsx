@@ -56,12 +56,12 @@ export const Poster = () => {
   }, [still])
 
   return (
-    <div className="absolute inset-0 overflow-hidden mix-blend-screen [container-type:size]">
+    <div className="absolute inset-0 overflow-hidden mix-blend-screen [container-type:size] max-md:top-(--page-top) max-md:bottom-(--page-foot)">
       <h2 className="sr-only">Experience</h2>
       {/* The poster as the page lays it: across the strip on a phone, else covering it, and centred. */}
       <div
         ref={sheet}
-        className="absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,#000_6%,#000_94%,transparent)] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]"
+        className="absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,#000_6%,#000_94%,transparent)] max-md:w-[min(100cqw,calc(100cqh*2208/2943))] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]"
         style={{ aspectRatio: `${POSTER.width} / ${POSTER.height}` }}
       >
         <img

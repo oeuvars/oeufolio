@@ -673,15 +673,25 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   }
   // A page upright on its turned strip: as wide as the window and as tall as the strip is open, its top at the strip's
   // edge, so the strip opening uncovers it downward and folding covers it again from below, and nothing on it moves.
+  // A phone page is never scrolled: it is laid to fit between its margins, the room it is given (--page-room).
   const upright: CSSProperties = { position: 'absolute', top: 0, left: '100%', width: metrics.height, transformOrigin: '0 0', transform: 'rotate(90deg)' }
-  const uprightOf = (i: number): CSSProperties => ({ ...upright, height: openWidthOf(i) })
   // The foot of an open page that the strip before lies over, its edge and its tab, kept clear.
   const under = (i: number) => (i > 0 ? overlap + protrude : 0)
+  // A page's margins on a phone: clear of its own edge's tear at its top, and of the strip before at its foot. The desk
+  // and the ticket lie on a mat cut straight, so they run up to its edge.
+  const marginsOf = (i: number) => {
+    const covers = tones[i].fills || tones[i].roll
+    return { top: covers ? 0 : TEAR_WIDTH + 12, foot: under(i) + (covers ? 0 : 12) }
+  }
+  const uprightOf = (i: number): CSSProperties => {
+    const { top, foot } = marginsOf(i)
+    return { ...upright, height: openWidthOf(i), '--page-top': `${top}px`, '--page-foot': `${foot}px`, '--page-room': `${openWidthOf(i) - top - foot}px` } as CSSProperties
+  }
   const turnedPage = (i: number): CSSProperties => ({
     paddingLeft: '1rem',
     paddingRight: '1rem',
-    paddingTop: `calc(2.4vh + ${TEAR_WIDTH}px)`,
-    paddingBottom: `calc(2.4vh + ${under(i)}px)`,
+    paddingTop: marginsOf(i).top,
+    paddingBottom: marginsOf(i).foot,
   })
 
   const lefts: number[] = []
@@ -811,14 +821,14 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         </motion.div>
                       ) : null}
                       {tones[i].fills || tones[i].roll ? (
-                        <div className="scroll-quiet overflow-x-hidden overflow-y-auto" style={uprightOf(i)} inert={!open} aria-hidden={!open || undefined}>
-                          <div className="grid min-h-full" style={{ alignContent: tones[i].fills ? 'start' : 'safe center', paddingBottom: under(i) }}>
+                        <div className="overflow-hidden" style={uprightOf(i)} inert={!open} aria-hidden={!open || undefined}>
+                          <div className="grid min-h-full content-center" style={{ paddingBottom: under(i) }}>
                             {open && children}
                             {tones[i].fills ? <Desk /> : <Ticket open={open} />}
                           </div>
                         </div>
                       ) : open ? (
-                        <div className="scroll-quiet overflow-x-hidden overflow-y-auto" style={uprightOf(i)}>
+                        <div className="overflow-hidden" style={uprightOf(i)}>
                           <motion.div
                             className={PAGE}
                             style={turnedPage(i)}
@@ -826,7 +836,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
                           >
-                            <div className="grid flex-1 content-center py-[4vh]">{children}</div>
+                            <div className="grid flex-1 content-center">{children}</div>
                           </motion.div>
                         </div>
                       ) : null}
