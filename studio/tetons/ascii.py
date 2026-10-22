@@ -40,6 +40,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 PHOTO = os.path.join(HERE, 'art', 'tetons.jpg')
 BIRDS = os.path.join(HERE, 'art', 'prs-birds.png')
+HAND = os.path.join(HERE, 'art', 'ReenieBeanie.ttf')
 OUT = os.path.join(ROOT, 'public', 'loader')
 FONT = '/System/Library/Fonts/Menlo.ttc'
 
@@ -62,6 +63,12 @@ UPSCALE = 2
 RAMP = " .,:;-~=+*xoe%#&@"
 # The birds' heights, in rows.
 HEIGHTS = (4, 5, 6, 7, 8, 9, 10, 12, 14, 16)
+# The writing, as the cover's is, line by line: each line's words, how far in it starts and how far it runs off level,
+# as shares of the widest line and in degrees.
+WRITING = (('I hate being', 0.06, -1.2), ('a loading screen', 0.0, 0.6), ('its awesome', 0.1, -0.8))
+# How thick the marker is, as a share of the hand's em; and the widths, in columns, it is set at.
+MARKER = 0.012
+WIDTHS = (150, 200, 260, 330)
 
 
 def glyphs():
@@ -174,6 +181,39 @@ def birds(maps, proof):
     return [' '.join(map(str, natural))] + out, len(shapes)
 
 
+def writing(maps, proof):
+    """The words in the hand, thickened to the marker's stroke, set at each of WIDTHS."""
+    em = 240
+    font = ImageFont.truetype(HAND, em)
+    lines = []
+    for words, _, tilt in WRITING:
+        left, top, right, bottom = font.getbbox(words)
+        image = Image.new('L', (right + em, round(em * 1.6)), 0)
+        ImageDraw.Draw(image).text((em // 2, em // 3), words, font=font, fill=255)
+        lines.append(image.rotate(tilt, resample=Image.Resampling.BICUBIC, expand=True))
+    widest = max(line.width for line in lines)
+    page = Image.new('L', (round(widest * 1.15), round(sum(line.height for line in lines) * 0.62)), 0)
+    y = 0
+    for line, (_, indent, _) in zip(lines, WRITING):
+        page.paste(line, (round(indent * widest), y), line)
+        y += round(line.height * 0.58)
+    page = page.filter(ImageFilter.MaxFilter(2 * round(MARKER * em / 2) + 1))
+    ink = ndimage.gaussian_filter(np.asarray(page).astype(np.float32) / 255, 2)
+    ys, xs = np.nonzero(ink > 0.05)
+    ink = ink[ys.min() : ys.max() + 1, xs.min() : xs.max() + 1]
+    out = []
+    for cols in WIDTHS:
+        rows = max(1, round(ink.shape[0] / ink.shape[1] * cols * ADVANCE))
+        sub = cells(ink, cols, rows)
+        pick = match(sub, maps)
+        set_ = [''.join(CHARS[i] if sub[y, x].mean() > 0.1 else ' ' for x, i in enumerate(row)).rstrip() for y, row in enumerate(pick)]
+        out.append(f'w {rows} {cols}')
+        out.extend(set_)
+        if proof and cols == WIDTHS[-1]:
+            render(set_, os.path.join(proof, 'writing.png'))
+    return out
+
+
 def render(lines, path):
     size = 14
     font = ImageFont.truetype(FONT, size)
@@ -196,9 +236,10 @@ def main():
     maps = glyphs()
     head = mountains(maps)
     flock, count = birds(maps, args.proof)
+    words = writing(maps, args.proof)
     path = os.path.join(OUT, 'tetons.txt')
     with open(path, 'w') as f:
-        f.write('\n'.join(head + flock) + '\n')
+        f.write('\n'.join(head + flock + words) + '\n')
     print(f'{count} birds at {", ".join(map(str, HEIGHTS))} rows, {os.path.getsize(path)} bytes -> {os.path.relpath(path, ROOT)}')
 
 

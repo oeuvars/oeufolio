@@ -6,3 +6,6 @@
   Elderly Instruments' blog post "The Word on the PRS Birds"
   (https://www.elderly.com/blogs/all-strings-considered/the-word-on-the-prs-birds), image
   http://jlopez49478.ipage.com/elderlyblog/wp-content/uploads/2017/09/birds.png.
+- `ReenieBeanie.ttf`: Reenie Beanie by James Grieshaber (Typeco), SIL Open Font License, from Google Fonts
+  (https://github.com/google/fonts/tree/main/ofl/reeniebeanie). The writing over the mountains is in it, as the
+  green marker is over the cover.

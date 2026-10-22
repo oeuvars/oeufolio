@@ -1,6 +1,7 @@
 // The loader, run inline at the top of the body so it is up before the bundle, the fonts or a single picture arrive.
 // The Tetons at dusk, set in type, with a distant flock of the birds of PRS's fretboard inlays flying right to left
-// over them in a loose V, in mother of pearl, as they fly up the neck. The type is set here, on whatever grid fits the
+// over them in a loose V, in mother of pearl, as they fly up the neck, and across them in green marker, as on the cover
+// of "ye", "I hate being a loading screen its awesome". The type is set here, on whatever grid fits the
 // screen at about three and a half pixels a character, from the photograph as studio/tetons/ascii.py worked it over
 // (public/loader/tetons.webp: each point's colour, and the tone that picks its character) and the ridge it traced
 // (public/loader/tetons.txt, with the birds). A hiss of noise lies over it all, and now and then the picture tears for
@@ -35,6 +36,9 @@
   // how far apart they fly, in birds' widths and heights; where along its crossing it starts; how high, as a share of
   // the sky over the peaks; and how fast, in screen widths a second.
   const FLOCK = { count: 17, height: 30, apart: [1.7, 0.42], from: 0.45, high: 0.42, speed: 0.024 }
+  // The writing over the mountains, as the cover's green marker is over them: its colour; how wide, as a share of the
+  // screen's columns, on a wide screen and a narrow one; and where its middle lies, as a share of the screen's height.
+  const WRITING = { ink: [140, 236, 112], wide: 0.46, narrow: 0.88, at: 0.42 }
   // How bright the pearl is at the flock's distance.
   const DISTANCE = 0.9
   // Mother of pearl: white with a sheen of pink, green and blue that drifts across each bird.
@@ -78,7 +82,7 @@
   }
 
   /** What the loader was given: the night, the sky's colour, the ramp, the ridge, each bird's height in the PRS set,
-   * and the birds, each at the heights it was set at, by rows. */
+   * the birds, each at the heights it was set at, by rows, and the writing, at the widths it was set at. */
   const read = (text) => {
     const lines = text.split('\n')
     const [night, sky, ramp] = lines
@@ -90,7 +94,13 @@
       ;(birds[bird] ||= {})[rows] = { rows, cols, lines: lines.slice(i + 1, i + 1 + rows) }
       i += 1 + rows
     }
-    return { night, sky, ramp, ridge, natural, birds }
+    const writing = []
+    for (let i = lines.findIndex((line) => line.startsWith('w ')); /^w \d+ \d+$/.test(lines[i] || ''); ) {
+      const [rows, cols] = lines[i].slice(2).split(' ').map(Number)
+      writing.push({ rows, cols, lines: lines.slice(i + 1, i + 1 + rows) })
+      i += 1 + rows
+    }
+    return { night, sky, ramp, ridge, natural, birds, writing }
   }
 
   /** The noise over the picture, and the moments it tears like a bad signal. */
@@ -257,6 +267,28 @@
           colours.data.set([...rgb, 255], i * 4)
         }
       }
+      // The writing, laid over the mountains in place of their type, with a cell of bare ground round each stroke.
+      const fit = (w < 700 ? WRITING.narrow : WRITING.wide) * cols
+      const words = this.art.writing.reduce((best, set) => (Math.abs(set.cols - fit) < Math.abs(best.cols - fit) ? set : best))
+      const wl = Math.round((cols - words.cols) / 2)
+      const wt = Math.round(rows * WRITING.at - words.rows / 2)
+      const inked = colours.data.slice()
+      // The cells the writing takes, strokes and bare ground, which the birds pass behind.
+      this.writing = new Uint8Array(cols * rows)
+      const written = (r, c) => (words.lines[r - wt] || '')[c - wl] > ' '
+      for (let r = Math.max(0, wt - 1); r < Math.min(rows, wt + words.rows + 1); r++) {
+        for (let c = Math.max(0, wl - 1); c < Math.min(cols, wl + words.cols + 1); c++) {
+          const i = r * cols + c
+          if (written(r, c)) {
+            chars[i] = words.lines[r - wt][c - wl]
+            inked.set(WRITING.ink, i * 4)
+            this.writing[i] = 1
+          } else if (written(r - 1, c) || written(r + 1, c) || written(r, c - 1) || written(r, c + 1)) {
+            chars[i] = ' '
+            this.writing[i] = 1
+          }
+        }
+      }
       this.chars = chars
 
       for (const canvas of [this.canvas, this.base]) {
@@ -277,27 +309,31 @@
       const tint = document.createElement('canvas')
       tint.width = cols
       tint.height = rows
-      tint.getContext('2d').putImageData(colours, 0, 0)
+      tint.getContext('2d').putImageData(new ImageData(inked, cols, rows), 0, 0)
+      const ground = document.createElement('canvas')
+      ground.width = cols
+      ground.height = rows
+      ground.getContext('2d').putImageData(colours, 0, 0)
       // The ink: each character in white, then its cell's colour laid into it.
       const ink = document.createElement('canvas')
       ink.width = this.base.width
       ink.height = this.base.height
-      const inked = ink.getContext('2d')
-      inked.setTransform(dpr, 0, 0, dpr, 0, 0)
-      inked.font = this.font
-      inked.fillStyle = '#fff'
+      const type = ink.getContext('2d')
+      type.setTransform(dpr, 0, 0, dpr, 0, 0)
+      type.font = this.font
+      type.fillStyle = '#fff'
       for (let i = 0; i < chars.length; i++) {
-        if (chars[i] !== ' ') inked.fillText(chars[i], (i % cols) * cell, Math.floor(i / cols) * size + this.baseline)
+        if (chars[i] !== ' ') type.fillText(chars[i], (i % cols) * cell, Math.floor(i / cols) * size + this.baseline)
       }
-      inked.globalCompositeOperation = 'source-in'
-      inked.imageSmoothingEnabled = false
-      inked.drawImage(tint, 0, 0, cols * cell, rows * size)
+      type.globalCompositeOperation = 'source-in'
+      type.imageSmoothingEnabled = false
+      type.drawImage(tint, 0, 0, cols * cell, rows * size)
       // The ground: each cell its own colour, dimmed, so ground and ink together read as the photograph does.
       base.fillStyle = night
       base.fillRect(0, 0, w, h)
       base.imageSmoothingEnabled = false
       base.globalAlpha = GROUND
-      base.drawImage(tint, 0, 0, cols * cell, rows * size)
+      base.drawImage(ground, 0, 0, cols * cell, rows * size)
       base.globalAlpha = 1
       base.drawImage(ink, 0, 0, w, h)
       this.order = null
@@ -364,6 +400,7 @@
             if (char === ' ') continue
             const x = (c0 + c) * cell
             if (x < -cell || x > w) continue
+            if (this.writing[(r0 + r) * this.cols + c0 + c] && c0 + c >= 0 && c0 + c < this.cols) continue
             if (gone) {
               const step = gone(bird, r, c)
               if (step >= DECAY.length - 1) continue
