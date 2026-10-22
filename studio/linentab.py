@@ -12,9 +12,11 @@ eases back into the strip's own cut where the tab's joins meet it, so the strip'
 
 It is rendered as linen.py's shadow() renders the strip's edge, over the tab and SPAN px of the strip's edge above
 and below it, with the strip's own fray there too, so its render hands over to the strip's without a seam. Writes,
-for each layout, public/objects/linen-tab-edge-<layout>.png, the mask the page cuts the tab with, and
-linen-tab-<layout>.png, the yarns over the shadow, both in CSS px from the strip's edge mask's left (linen.py's
-EDGE) and from FRAME's top.
+for each layout, public/objects/linen-tab-edge-<layout>.webp, the mask the page cuts the tab with, and
+linen-tab-<layout>.webp, the yarns over the shadow, both in CSS px from the strip's edge mask's left (linen.py's
+EDGE) and from FRAME's top. Blender writes them as PNG; make them the WebP the page asks for after:
+
+    uv run studio/fit.py public/objects/linen-tab-*.png
 """
 
 import argparse

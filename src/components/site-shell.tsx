@@ -88,8 +88,8 @@ const CAST_WIDTH = 40
 // with and the render of its yarn ends and shadow, from the frayed mask's left and from the strip's top, in CSS px.
 // The render takes over from the strip's own over CLOTH_TAB_HANDOVER px at either end, where the two are the same.
 const CLOTH_TAB = {
-  wide: { edge: '/objects/linen-tab-edge-wide.png', cast: '/objects/linen-tab-wide.png', top: 90, height: 268, width: 43, castWidth: 57 },
-  phone: { edge: '/objects/linen-tab-edge-phone.png', cast: '/objects/linen-tab-phone.png', top: 94, height: 216, width: 33, castWidth: 47 },
+  wide: { edge: '/objects/linen-tab-edge-wide.webp', cast: '/objects/linen-tab-wide.webp', top: 90, height: 268, width: 43, castWidth: 57 },
+  phone: { edge: '/objects/linen-tab-edge-phone.webp', cast: '/objects/linen-tab-phone.webp', top: 94, height: 216, width: 33, castWidth: 47 },
 }
 const CLOTH_TAB_HANDOVER = 20
 // Where a strip's rendered edge lies, from its edge, and how wide it runs (studio/edgecast FRAME).
@@ -100,7 +100,7 @@ const EDGECAST_SPAN = 40
 const SPINE_CAST: CSSProperties = {
   left: 'calc(100% - 16px)',
   width: 50,
-  backgroundImage: 'url(/objects/spine-cast.png)',
+  backgroundImage: 'url(/objects/spine-cast.webp)',
   backgroundSize: `50px ${TEAR_LENGTH}px`,
   backgroundRepeat: 'repeat-y',
 }
@@ -211,9 +211,9 @@ const pageTones: Tone[] = [
   { band: '#ebe7e1', bandInk: '#24242a', panel: '#ebe7e1', panelInk: '#24242a', cut: true, deckled: { wide: { edge: '/objects/likes-edge-wide.webp', cast: '/objects/likes-cast-wide.webp' }, phone: { edge: '/objects/likes-edge-phone.webp', cast: '/objects/likes-cast-phone.webp' } }, paper: { src: '/objects/likes-paper.avif', size: 768 }, tab: '/objects/tab-prs.avif' },
   // The poster is paper torn down its edge, lying on the mat; the mat is leather 2.5 mm thick, lying on the contact hide.
   { band: '#1e2740', bandInk: '#f1e3c4', panel: '#1e2740', panelInk: '#f1e3c4', bleeds: true, edgecast: { wide: '/objects/poster-cast-wide.webp', phone: '/objects/poster-cast-phone.webp', length: TEAR_LENGTH }, tear: { wide: { edge: '/objects/poster-edge-wide.webp', core: '/objects/poster-core-wide.webp' }, phone: { edge: '/objects/poster-edge-phone.webp', core: '/objects/poster-core-phone.webp' } }, tab: '/objects/tab-teenage.avif' },
-  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.png', phone: '/objects/mat-cast.png', length: 1, light: '/objects/mat-cast-light.png' }, tab: '/objects/tab-proraso.avif' },
+  { band: '#d9d4c2', bandInk: '#1e1d19', panel: '#236653', panelInk: '#0b1a15', fills: true, edgecast: { wide: '/objects/mat-cast.webp', phone: '/objects/mat-cast.webp', length: 1, light: '/objects/mat-cast-light.webp' }, tab: '/objects/tab-proraso.avif' },
   // The contact strip's hide is a leather mat too, cut straight and burnished as the green one is, lying on the walnut.
-  { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, cut: true, surface: '/objects/leather.avif', edgecast: { wide: '/objects/contact-cast.png', phone: '/objects/contact-cast.png', length: 1, light: '/objects/contact-cast-light.png' }, tab: '/objects/tab-tagheuer.avif' },
+  { band: '#8a8b78', bandInk: '#20241a', panel: '#651415', panelInk: '#efe6cb', roll: true, cut: true, surface: '/objects/leather.avif', edgecast: { wide: '/objects/contact-cast.webp', phone: '/objects/contact-cast.webp', length: 1, light: '/objects/contact-cast-light.webp' }, tab: '/objects/tab-tagheuer.avif' },
 ]
 // The hide's tile: the contact page's leather (studio/ticket/leather.py), the one texture its strip and tab are. It is
 // TILE (8) em of the ticket's spread across, and the spread is 90vh tall for its 29.85 em (ticket/ticket.tsx), so the

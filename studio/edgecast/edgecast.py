@@ -14,16 +14,16 @@ strip does to the light: dark where it shuts the room off the page beside it, an
 from the light, light where its edge catches it. That is written as black and white over a clear ground, so laid over
 the edge it shades whatever lies there.
 
-The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.png, FRAME across, in
+The mat is cut straight, so one CSS px of it serves its whole length: public/objects/mat-cast.webp, FRAME across, in
 CSS px from the strip's edge, at DENSITY. The poster's tear is rendered with the paper it bares and its fibres by
 studio/poster/tear.py, which writes its shadow, public/objects/poster-cast-<layout>.webp, in the same frame; it uses
 the work strip's tab span (calm_of) and curl from here. The
-mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.png (dodge). The contact strip's hide
+mat's lit edge is leather, so its light is a layer of its own, mat-cast-light.webp (dodge). The contact strip's hide
 is a leather mat as well, cut and burnished as the green one is, lying on the walnut desk past the folders:
-contact-cast.png and contact-cast-light.png.
+contact-cast.webp and contact-cast-light.webp.
 
 The spine is paper too, printed blue with the traffic signal, torn down its whole length with no tab, lying on the
-linen strip's card in its sleeve: public/objects/spine-cast.png. Its print lying flat catches no more light at its
+linen strip's card in its sleeve: public/objects/spine-cast.webp. Its print lying flat catches no more light at its
 edge than on its face, so it has no light layer. Its tear bites in from the strip's edge (SiteShell's tear, not outward), so its
 frame runs SPINE_FRAME, further in.
 """
@@ -166,7 +166,7 @@ def render(spec, samples, edge, frame=FRAME):
 
 
 def dodge(ratio, inward):
-    """The light an edge catches as a colour-dodge layer, <name>-light.png: laid over the leather, it divides it by one
+    """The light an edge catches as a colour-dodge layer, <name>-light.webp: laid over the leather, it divides it by one
     less its grey, so it brightens the leather by the rendered ratio and keeps its colour, as a lit leather edge
     does in the reference photographs. White laid over it, as on paper, washes the green out pale instead. The
     ratio is in linear light, so on the page's sRGB it is ratio ** (1 / 2.2)."""
@@ -190,13 +190,13 @@ def save(ratio, inward, name, proof, frame=FRAME, coloured=False):
         brightest = float(1 / (1 - layer[..., 0].max()))
         # Paper flat on paper catches no more light at its edge than on its face: then there is no layer to lay.
         if brightest > 1.02:
-            Image.fromarray((np.clip(layer, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").save(os.path.join(proof or OUT, f"{name}-light.png"), optimize=True)
+            Image.fromarray((np.clip(layer, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").save(os.path.join(proof or OUT, f"{name}-light.webp"), lossless=True, quality=100, method=6)
         print(name + "-light", "brightest", round(brightest, 3), "" if brightest > 1.02 else "(none written)")
     alpha = dark + light
     colour = np.where(light > dark, 1.0, 0.0)
     rgba = np.dstack([colour, colour, colour, alpha])
     image = Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA")
-    image.save(os.path.join(proof or OUT, f"{name}.png"), optimize=True)
+    image.save(os.path.join(proof or OUT, f"{name}.webp"), lossless=True, quality=100, method=6)
     edge = round(-frame[0] * DENSITY)
     print(name, image.size, "darkest", round(float(dark.max()), 3), "lightest", round(float(light.max()), 3), "past the edge, by px:", np.round(dark[..., edge : edge + 10 * DENSITY : DENSITY].mean(axis=tuple(range(dark.ndim - 1))), 3))
 

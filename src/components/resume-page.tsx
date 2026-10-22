@@ -12,9 +12,9 @@ import { TechIcon } from './resume/tech-icon'
 import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
 
 const LOGOS: Record<string, string> = {
-  'Cybership.io': '/objects/resume/cybership.png',
-  'Ekarth Ventures': '/objects/resume/ekarth.png',
-  'DataVerse India': '/objects/resume/dataverse.png',
+  'Cybership.io': '/objects/resume/cybership.webp',
+  'Ekarth Ventures': '/objects/resume/ekarth.webp',
+  'DataVerse India': '/objects/resume/dataverse.webp',
 }
 
 /** The systems the résumé's points describe, each as a card. Every figure is one resume.pdf gives. */
