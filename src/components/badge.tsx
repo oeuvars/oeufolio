@@ -25,9 +25,13 @@ const PIVOT = { x: 384.1 / 720, y: 26.8 / 976 }
 // How far the card's middle lies right of the image's, in its width: the card is a little off the holder's middle.
 const CARD_OFF = (162 + 577) / 2 / 720 - 0.5
 // How far either way, in degrees, the card swings on its ring when it is pulled.
-const SWING = 20
-// Let go, the card swings back through the middle a few times before it hangs still.
+const SWING = 9
+// The card turns this much of the way the pointer goes round the ring, as if it were heavy and stiff on it.
+const FOLLOW = 0.45
+// Hung up, the card swings through the middle a few times before it hangs still.
 const SETTLE = { type: 'spring', stiffness: 34, damping: 4.5, mass: 1.6 } as const
+// Let go, it swings back past the middle once, a little, and hangs still.
+const RELEASE = { type: 'spring', stiffness: 60, damping: 11, mass: 1.6 } as const
 
 /**
  * The ID badge (studio/badge.py) hanging in the middle of its page. The page is a sheet as wide as the
@@ -59,21 +63,24 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
     const tall = box.width / SHAPE
     const at = { x: box.left + box.width * PIVOT.x, y: box.top - tall * HEAD + tall * (1 + HEAD) * PIVOT.y }
     rotate.stop()
-    held.current = { ...at, from: rotate.get() - turn(event.clientX, event.clientY, at) }
+    // Taken mid-swing, it stays where it is: `from` is its turn as the pull that would put it there.
+    const pulled = SWING * Math.atanh(Math.max(-0.99, Math.min(0.99, rotate.get() / SWING)))
+    held.current = { ...at, from: pulled - FOLLOW * turn(event.clientX, event.clientY, at) }
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
   const pull = (event: React.PointerEvent) => {
     const hold = held.current
     if (!hold) return
-    const angle = hold.from + turn(event.clientX, event.clientY, hold)
-    rotate.set(Math.max(-SWING, Math.min(SWING, angle)))
+    // It gives less the further it is pulled, up to SWING.
+    const angle = hold.from + FOLLOW * turn(event.clientX, event.clientY, hold)
+    rotate.set(SWING * Math.tanh(angle / SWING))
   }
 
   const release = () => {
     if (!held.current) return
     held.current = null
-    animate(rotate, 0, { ...SETTLE, velocity: rotate.getVelocity() })
+    animate(rotate, 0, { ...RELEASE, velocity: rotate.getVelocity() })
   }
 
   const photo = `min(100%, ${(page - 2 * margin) / HOLDER / SHAPE}px)`
