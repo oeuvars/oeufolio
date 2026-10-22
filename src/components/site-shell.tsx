@@ -92,7 +92,7 @@ const CAST_WIDTH = 40
 // The render takes over from the strip's own over CLOTH_TAB_HANDOVER px at either end, where the two are the same.
 const CLOTH_TAB = {
   wide: { edge: '/objects/linen-tab-edge-wide.webp', cast: '/objects/linen-tab-wide.webp', top: 90, height: 268, width: 43, castWidth: 57 },
-  phone: { edge: '/objects/linen-tab-edge-phone.webp', cast: '/objects/linen-tab-phone.webp', top: 97, height: 175, width: 26, castWidth: 40 },
+  phone: { edge: '/objects/linen-tab-edge-phone.webp', cast: '/objects/linen-tab-phone.webp', top: 217, height: 175, width: 26, castWidth: 40 },
 }
 const CLOTH_TAB_HANDOVER = 20
 // Where a strip's rendered edge lies, from its edge, and how wide it runs (studio/edgecast FRAME).
@@ -223,6 +223,8 @@ const pageTones: Tone[] = [
 // hide's grain is the size it was beside the ticket in the scene's photograph.
 const HIDE = `calc(90vh * ${8 / 29.85})`
 const tabTops = [5, 9, 4, 6.5, 8.5, 4.5]
+// On a phone the badge's ring rises to the strip's edge its tab stands on (Badge), so the tab stands past the ring.
+const phoneTabTops = [5, 16.5, 4, 6.5, 8.5, 4.5]
 const tabHeights = [11, 10, 10, 10, 10, 11.5]
 // A tab's width on a wide screen and the room a render of its piece keeps round the tab, in rem: WIDTH
 // and MARGIN in studio/tabs.py. The heights above are for a tab of this width.
@@ -253,7 +255,7 @@ const PULL_OPENS = 0.3
 const RESUME_LARGEST = 0.7
 const instant = { duration: 0 } as const
 
-const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties => {
+const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}, tops = tabTops): CSSProperties => {
   return {
     '--band': tone.band,
     '--band-ink': tone.bandInk,
@@ -261,7 +263,7 @@ const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Rec
     '--panel-ink': tone.panelInk,
     '--paper': tone.panel,
     '--ink': tone.panelInk,
-    '--tab-top': `${tabTops[slot]}rem`,
+    '--tab-top': `${tops[slot]}rem`,
     zIndex: z,
     ...extra,
   } as CSSProperties
@@ -464,6 +466,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const transition = ready && !reduced ? slide : instant
 
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
+  const tops = mobile ? phoneTabTops : tabTops
   const tabShape = (slot: number): TabShape => ({ band, protrude, height: (tabHeights[slot] * (band + protrude)) / tabSpan })
   // The render of a tab's cut for this layout and the tab's height, in pixels.
   // The mat's tab is its thick leather, and the contact strip's its hide, each of which has a render of its own.
@@ -489,7 +492,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       backgroundPosition: pinnedToEdge(pageTones[i]) ? `right ${shape.protrude}px top 0` : '0 0',
       maskImage: `url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       maskSize: `${w}px ${h}px`,
-      maskPosition: `right 0 top ${tabTops[i + 1] * metrics.rem - reach}px`,
+      maskPosition: `right 0 top ${tops[i + 1] * metrics.rem - reach}px`,
       maskRepeat: 'no-repeat',
     }
   }
@@ -537,7 +540,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
         src={light}
         draggable={false}
         className="pointer-events-none absolute z-2 max-w-none mix-blend-color-dodge select-none"
-        style={{ left: `calc(100% - ${band}px + ${left}px)`, top: tabTops[i + 1] * metrics.rem + top, width, height }}
+        style={{ left: `calc(100% - ${band}px + ${left}px)`, top: tops[i + 1] * metrics.rem + top, width, height }}
       />
     )
   }
@@ -597,7 +600,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       maskImage: `linear-gradient(#000, #000), var(--torn-core, linear-gradient(#000, #000)), url("data:image/svg+xml,${encodeURIComponent(outline)}")`,
       // The page runs a pixel into its edge's strip, so no hairline opens where they meet.
       maskSize: `calc(100% - ${shape.protrude - out + TEAR_WIDTH - 1}px) 100%, ${TEAR_WIDTH}px ${TEAR_LENGTH}px, ${w}px ${h}px`,
-      maskPosition: `left 0 top 0, right ${shape.protrude - out}px top 0, right 0 top ${tabTops[i + 1] * metrics.rem - reach}px`,
+      maskPosition: `left 0 top 0, right ${shape.protrude - out}px top 0, right 0 top ${tops[i + 1] * metrics.rem - reach}px`,
       maskRepeat: 'no-repeat, repeat-y, no-repeat',
     }
   }
@@ -607,7 +610,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const reachesOver = (i: number) => Boolean(tones[i + 1]?.fills)
   const tears = tones.map((_, i) => {
     const shape = tabShape(i + 1)
-    const top = tabTops[i + 1] * metrics.rem
+    const top = tops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
     const { frayed, deckled, tear: tearOf } = tones[i]
     // A torn print's edge is rendered, and lies on the strip after it with its own shadow.
@@ -624,7 +627,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // over 0.6 of their reach, so the strip's own fades in there as much.
   const edgecastOf = (i: number, cast: NonNullable<Tone['edgecast']>, src = cast[mobile ? 'phone' : 'wide'], fades = true): CSSProperties => {
     const shape = tabShape(i + 1)
-    const top = tabTops[i + 1] * metrics.rem
+    const top = tops[i + 1] * metrics.rem
     const { reach } = tabOutline(shape)
     const ramp = 0.6 * reach
     const steps = [0, 0.25, 0.5, 0.75, 1]
@@ -850,7 +853,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 initial={false}
                 animate={pulled ? { left: lerp(lefts[i], pulled.lefts[i]), width: lerp(widths[i], pulled.widths[i]) } : { left: lefts[i], width: widths[i] }}
                 transition={pulled ? instant : transition}
-                style={{ ...stripStyle(tones[i], i + 1, stack - i), ...tears[i] }}
+                style={{ ...stripStyle(tones[i], i + 1, stack - i, {}, tops), ...tears[i] }}
               >
                 {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
                 {!hangs(tones[i]) && <div aria-hidden className="torn" />}

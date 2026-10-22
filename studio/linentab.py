@@ -35,9 +35,11 @@ import linen  # noqa: E402
 from linen import COLOURS, EDGE, EDGE_PITCH, GAIN, LAYERS, OPEN, PALE, PAPER, RADIUS, SHADOW_DENSITY, THICK, WARP_PITCH, Fray, linear, shoulder, yarn_material  # noqa: E402
 
 OUT = linen.OUT
-# The linen strip's tab (SiteShell's slot 1): its top and height in rem (tabTops, tabHeights over tabSpan), and each
-# layout's band and how far the tab stands out (useStackMetrics).
-TAB_TOP, TAB_TALL, TAB_SPAN = 9, 10, 4
+# The linen strip's tab (SiteShell's slot 1): its height in rem (tabHeights over tabSpan), its top in rem for each
+# layout (tabTops, and phoneTabTops, where it stands past the badge's ring), and each layout's band and how far the
+# tab stands out (useStackMetrics).
+TAB_TALL, TAB_SPAN = 10, 4
+TAB_TOP = {"wide": 9, "phone": 16.5}
 LAYOUTS = {"wide": (1.9, 2.1), "phone": (0.98, 1.05)}
 REM = 16
 CUT = EDGE[0] - 9  # the strip's edge, in CSS px from its edge mask's left (SiteShell's FRAY_PAST)
@@ -51,7 +53,7 @@ def outline(layout):
     curves: SiteShell's tabOutline, run on above and below its joins slanting back in under the strip's own cut, so
     that wherever the strip's cut lies the two meet without a step."""
     band, protrude = (v * REM for v in LAYOUTS[layout])
-    top = TAB_TOP * REM
+    top = TAB_TOP[layout] * REM
     height = TAB_TALL * (band + protrude) / TAB_SPAN
     rise, ease = protrude * 0.33, protrude * 0.2
     reach = 2 * ease
