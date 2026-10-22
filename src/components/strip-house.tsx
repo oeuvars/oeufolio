@@ -6,6 +6,8 @@ import { PAGE, RAISE, STRIP, slide } from './house'
 type StripHouseProps = {
   /** Whether the strip is unfolded, with the page's own picture over this one. */
   open: boolean
+  /** On a phone the picture lies turned with its strip, under the upright page, so it does not shrink out of it. */
+  turned?: boolean
 }
 
 /**
@@ -14,7 +16,7 @@ type StripHouseProps = {
  * strip's edge. When the strip folds, this picture starts where the page's stood, at its size, and shrinks
  * to its own place as the strip narrows: the page's picture growing out of this one, played backwards.
  */
-export const StripHouse = ({ open }: StripHouseProps) => {
+export const StripHouse = ({ open, turned }: StripHouseProps) => {
   const picture = useRef<HTMLImageElement>(null)
   const was = useRef(open)
   const still = useReducedMotion()
@@ -24,7 +26,7 @@ export const StripHouse = ({ open }: StripHouseProps) => {
     was.current = open
     const image = picture.current
     const strip = image?.closest<HTMLElement>('.strip')
-    if (!folding || !image || !strip || still) return
+    if (!folding || !image || !strip || still || turned) return
 
     // The strip is still unfolded when this lays out, and the page's picture was sized off it (Dollhouse).
     const unfolded = strip.getBoundingClientRect().width
@@ -34,7 +36,7 @@ export const StripHouse = ({ open }: StripHouseProps) => {
     const shrinking = animate(image, { scale: [large / metre, 1], x: [across, 0], y: [RAISE * large, 0] }, slide)
 
     return () => shrinking.stop()
-  }, [open, still])
+  }, [open, still, turned])
 
   return (
     <img

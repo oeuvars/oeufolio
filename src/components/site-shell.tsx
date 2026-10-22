@@ -253,6 +253,9 @@ const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 const PULL_OPENS = 0.3
 // On a phone the résumé's desk runs across the window's top, at most this much its size.
 const RESUME_LARGEST = 0.7
+// A folded phone strip shows its page as a wide screen lays it, on a sheet this much as wide as the strip is long, as
+// a page open on a 1440 by 900 window is, so the strip's depth shows as much of its edge as a folded strip's width does there.
+const TURNED_PAGE = 2 / 3
 const instant = { duration: 0 } as const
 
 const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}, tops = tabTops): CSSProperties => {
@@ -901,30 +904,64 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   {mobile ? (
                     // The strip itself, short of its panel's overhang, so what lies on it upright is pinned to its edge.
                     <div className="absolute inset-y-0 left-0" style={{ right: overhang(i) }}>
-                      {tones[i].hangs ? (
-                        // The ring runs up out of shot at the strip's edge, under its tab, and not on into the cloth the tab is cut from.
-                        <div className="overflow-hidden" style={uprightOf(i)}>
-                          <Badge badge={profile.badge} page={metrics.height} margin={1.5 * metrics.rem} open={open} past={0} />
-                        </div>
-                      ) : tones[i].fills || tones[i].roll ? null : (
-                        // The folded strip's picture, as on a wide screen, laid along the band it folds to.
+                      {/* Folded, a strip shows what it shows on a wide screen, the edge of its page beside the tab, laid as
+                          it is there and turned with the stack, so it runs along the strip. Open, its page is turned upright
+                          (uprightOf) and comes up over it. The letter's drawings are laid upright along it as a band. */}
+                      {tones[i].hangs || tones[i].fills || tones[i].roll ? (
                         <motion.div
                           aria-hidden
-                          style={{ ...uprightOf(i), ...(tones[i].bleeds && workPoster ? { opacity: 1 } : {}) }}
+                          inert
+                          className="pointer-events-none absolute inset-y-0 right-0"
+                          style={{ width: TURNED_PAGE * metrics.height, '--page-room': `${metrics.height}px` } as CSSProperties}
+                          initial={false}
+                          animate={{ opacity: open ? 0 : 1 }}
+                          transition={{ duration: 0.35 }}
+                        >
+                          {tones[i].hangs ? (
+                            <Badge badge={profile.badge} page={TURNED_PAGE * metrics.height} margin={1.5 * metrics.rem} open={false} past={0} />
+                          ) : tones[i].fills ? (
+                            <Desk still />
+                          ) : (
+                            <div className="flex h-full items-center">
+                              <Ticket />
+                            </div>
+                          )}
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          aria-hidden
+                          style={
+                            tones[i].bleeds
+                              ? { position: 'absolute', top: 0, bottom: 0, left: overlap - TEAR_WIDTH, width: strip - overlap + TEAR_WIDTH, ...(workPoster ? { opacity: 1 } : {}) }
+                              : uprightOf(i)
+                          }
                           initial={false}
                           animate={tones[i].bleeds && workPoster ? undefined : { opacity: open ? 0 : 1 }}
                           transition={{ duration: tones[i].bleeds && !open ? 0 : 0.35 }}
                         >
-                          <Art index={i} open={open} poster={workPoster} band={strip - overlap} />
+                          <Art index={i} open={open} poster={workPoster} band={strip - overlap} turned={tones[i].bleeds} />
                         </motion.div>
                       )}
-                      {tones[i].fills || tones[i].roll ? (
-                        <div className="overflow-hidden" style={uprightOf(i)} inert={!open} aria-hidden={!open || undefined}>
+                      {tones[i].hangs ? (
+                        // The ring runs up out of shot at the strip's edge, under its tab, and not on into the cloth the tab is cut from.
+                        <motion.div className="overflow-hidden" style={uprightOf(i)} initial={false} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: 0.35 }}>
+                          <Badge badge={profile.badge} page={metrics.height} margin={1.5 * metrics.rem} open={open} past={0} />
+                        </motion.div>
+                      ) : tones[i].fills || tones[i].roll ? (
+                        <motion.div
+                          className="overflow-hidden"
+                          style={uprightOf(i)}
+                          inert={!open}
+                          aria-hidden={!open || undefined}
+                          initial={false}
+                          animate={{ opacity: open ? 1 : 0 }}
+                          transition={{ duration: 0.35 }}
+                        >
                           <div className="grid min-h-full content-center" style={{ paddingBottom: marginsOf(i).foot }}>
                             {open && children}
                             {tones[i].fills ? <Desk /> : <Ticket />}
                           </div>
-                        </div>
+                        </motion.div>
                       ) : open ? (
                         <div className="overflow-hidden" style={uprightOf(i)}>
                           <motion.div

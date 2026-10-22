@@ -6,6 +6,8 @@ import { POSTER, POSTER_COLUMN, moveFrom, posterFold, slide } from './house'
 type StripPosterProps = {
   /** Whether the strip is unfolded, with the page's own poster over this one. */
   open: boolean
+  /** On a phone the column lies turned with its strip, under the upright page, so neither moves into the other. */
+  turned?: boolean
 }
 
 /**
@@ -17,7 +19,7 @@ type StripPosterProps = {
  * When the strip folds, the column starts where the page's stood (Poster), with the whole poster over it fading
  * away, and moves to its own place as the strip narrows: the page's poster growing out of it, played backwards.
  */
-export const StripPoster = ({ open }: StripPosterProps) => {
+export const StripPoster = ({ open, turned }: StripPosterProps) => {
   const column = useRef<HTMLDivElement>(null)
   const light = useRef<HTMLImageElement>(null)
   const was = useRef(open)
@@ -33,7 +35,7 @@ export const StripPoster = ({ open }: StripPosterProps) => {
     posterFold.column = null
     const own = column.current
     const full = light.current
-    if (!folding || !place || !own || !full || still) return
+    if (!folding || !place || !own || !full || still || turned) return
 
     own.style.transform = ''
     full.style.opacity = '1'
@@ -48,10 +50,10 @@ export const StripPoster = ({ open }: StripPosterProps) => {
       own.style.transform = ''
       full.style.opacity = ''
     }
-  }, [open, still])
+  }, [open, still, turned])
 
   return (
-    <div aria-hidden className="absolute inset-0 mix-blend-screen [container-type:size]">
+    <div aria-hidden data-turned={turned || undefined} className="absolute inset-0 mix-blend-screen [container-type:size]">
       {/* The column as a picture covering the strip, centred, and the whole poster round it where it stands. */}
       <div
         ref={column}

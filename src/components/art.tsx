@@ -9,11 +9,13 @@ type ArtProps = {
   poster?: boolean
   /** On a phone, where the strip lies across the window, how deep the band it folds to shows, in px from its edge. */
   band?: number
+  /** On a phone, the picture lies as on a wide screen, turned with the strip it is on, and it does not move as the strip folds. */
+  turned?: boolean
 }
 
 /** Cropped decorative fragments shown on a folded strip. The first page has none: it shows its badge. The desk's
  * and the ticket's strips show the desk and the ticket themselves (SiteShell). */
-export const Art = ({ index, open, poster, band }: ArtProps) => {
+export const Art = ({ index, open, poster, band, turned }: ArtProps) => {
   if (index === 1 && band) {
     // The same drawings set side by side along the band (studio/letter.py), clear of the frayed linen lying over its foot.
     return (
@@ -39,7 +41,7 @@ export const Art = ({ index, open, poster, band }: ArtProps) => {
     )
   }
 
-  if (index === 2) return poster ? <StripPoster open={open} /> : <StripHouse open={open} />
+  if (index === 2) return poster ? <StripPoster open={open} turned={turned} /> : <StripHouse open={open} turned={turned} />
 
   return null
 }

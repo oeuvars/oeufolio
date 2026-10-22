@@ -38,7 +38,8 @@ export const Poster = () => {
     page.style.transform = ''
     // The strip is still folded when the page first lays out, if it is unfolding: narrower than the page.
     const folded = strip.querySelector<HTMLElement>('[data-poster-column]')
-    const unfolding = folded && strip.getBoundingClientRect().width < page.parentElement!.getBoundingClientRect().width - 40
+    // A column turned with its phone strip is not grown out of: the page fades in over it.
+    const unfolding = folded && !folded.closest('[data-turned]') && strip.getBoundingClientRect().width < page.parentElement!.getBoundingClientRect().width - 40
     const place = folded?.getBoundingClientRect()
     if (folded) folded.style.visibility = 'hidden'
     const motions: AnimationPlaybackControls[] = []

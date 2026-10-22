@@ -14,10 +14,13 @@ import { Wallet } from './wallet'
  * strip. The page's own margins are given over to it: the ones undone here are SiteShell's padding round a
  * page, up to where the strip before this one lies over it, and the band beside it. The sports cars like has no object of its
  * own: it is the car key on the bunch that carries the name. SiteShell keeps the desk in its strip, open or
- * folded, so it is laid once and the strip only uncovers and covers it.
+ * folded, so it is laid once and the strip only uncovers and covers it. Still, it is only the picture of the mat, with
+ * nothing on it to take, as a folded phone strip shows it.
  */
-export const Desk = () => {
+export const Desk = ({ still }: { still?: boolean }) => {
   const { name, likes, playlist } = profile.extras
+
+  if (still) return <Mat still className="h-full" />
 
   return (
     <Mat className="h-(--page-room) md:-mt-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem] md:h-auto md:min-h-screen">

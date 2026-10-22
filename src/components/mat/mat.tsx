@@ -9,8 +9,10 @@ import { WatchHands } from './watch-hands'
 
 type MatProps = {
   /** What on the mat the page needs to reach: links and the parts that move. Each marks its root with data-prop. */
-  children: React.ReactNode
+  children?: React.ReactNode
   className?: string
+  /** Only a picture of the mat, as a folded phone strip shows it (SiteShell): the tabs take their light from the page's own. */
+  still?: boolean
 }
 
 /** Which plate is showing, how many pixels an em of it is, and where its top left lies on the mat. */
@@ -43,7 +45,7 @@ const over = (geometry: Geometry, x: number, y: number, w: number, h: number): R
  * Where the lamp lights the leather brighter than it was photographed, a second map adds the rest. A prop the
  * plate's camera does not show, seen from a camera of its own (PORTRAITS), lies over the plate as its picture.
  */
-export const Mat = ({ children, className }: MatProps) => {
+export const Mat = ({ children, className, still }: MatProps) => {
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
@@ -127,7 +129,7 @@ export const Mat = ({ children, className }: MatProps) => {
     const board = sheet.current
     const tabs = [...document.querySelectorAll<HTMLElement>('[data-mat-light]')]
     const copies = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-light]')]
-    if (!frame || !board || !tabs.length || !geometry || !lit) return
+    if (still || !frame || !board || !tabs.length || !geometry || !lit) return
     const plate = PLATES[geometry.id]
     const [w] = plate.size
     const [bx, by] = plate.bleed
@@ -170,7 +172,7 @@ export const Mat = ({ children, className }: MatProps) => {
         delete copy.dataset.at
       }
     }
-  }, [geometry, lit])
+  }, [geometry, lit, still])
 
   const plate = geometry && PLATES[geometry.id]
 
