@@ -18,7 +18,10 @@ Uses the copy stand in studio/desk. Run from the repository root:
 
     blender -b --factory-startup -P studio/tabs.py -- [tab ...] [--scale 0.5] [--samples 64] [--proofs DIR]
 
-Writes public/objects/tab-<name>.avif for each tab named, or for all five.
+Writes public/objects/tab-<name>.avif for each tab named, or for all five. The render is four times as fine as the
+page shows it, for the detail; bring it down to what the page can use after:
+
+    uv run studio/fit.py --width 296 public/objects/tab-<name>.avif
 
 The frame is the paper tab SiteShell cuts, in the page's own rem, so the render lies straight over it. A
 piece is smaller than the paper, with paper left showing all round it, and it was stuck down by hand, so
