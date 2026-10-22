@@ -1,13 +1,15 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { MotionConfig, motion, useReducedMotion } from 'motion/react'
+import { MotionConfig, animate, motion, useReducedMotion } from 'motion/react'
 import type { CSSProperties, HTMLAttributes } from 'react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 
 import { profile } from '../content'
 import type { NavItem, VersionSearch } from '../types'
 import { Art } from './art'
 import { Badge } from './badge'
-import { POSTER } from './house'
+import { POSTER, moveFrom } from './house'
+import { Letter } from './letter'
+import { PosterPicture } from './poster'
 import { Desk } from './mat/desk'
 import { RESUME_ROLL, Resume } from './resume'
 import tabcut from './tabcut.json'
@@ -259,6 +261,8 @@ const FOLD_AT = { badge: 0.27, desk: 0.57, ticket: 0.67 }
 // How long the page laid for a folded phone strip is, for one that fills its box, as a part of how wide it is: long
 // enough that the page is as wide as the strip is long.
 const FOLD_TALL = 1.7
+// The letter's strip, whose band is its drawings (Art).
+const LETTER = 1
 // The card is laid for its strip at most this wide, in rem, so its name stays within the band on a wide phone.
 const FOLD_CARD = 22.5
 const instant = { duration: 0 } as const
@@ -472,6 +476,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const { metrics, ready } = useStackMetrics()
   const reduced = useReducedMotion()
   const transition = ready && !reduced ? slide : instant
+  // On a phone, the strip folding back: its page stays until it has gone back into the strip's band (morph).
+  const [folding, setFolding] = useState<number | null>(null)
+  const turned = useRef<HTMLDivElement>(null)
+  const last = useRef(index)
 
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tops = mobile ? phoneTabTops : tabTops
@@ -733,6 +741,46 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       '--page-room': '200vh',
       transform: `rotate(90deg) translateY(calc(${(strip + band - under(i)) / 2}px - ${at * 100}%))`,
     }) as CSSProperties
+  // On a phone a strip's page and its band are the same picture laid twice, the band larger and slid (foldBand). The
+  // strip opening, its page starts where the band shows it, over it, and grows to its own place as the strip opens;
+  // the strip folding, its page goes back to where the band shows it as the strip folds, and then the band takes over.
+  // The letter's and the poster's bands are pictures of their own, so their pages only cross over them as they go.
+  useLayoutEffect(() => {
+    const before = last.current
+    last.current = index
+    const stack = turned.current
+    if (!mobile || before === index || !stack || reduced) return
+    const parts = (k: number) => {
+      const section = stack.querySelector<HTMLElement>(`section[data-strip="${k}"]`)
+      const band = section?.querySelector<HTMLElement>('[data-fold] [data-morph]')
+      const page = section?.querySelector<HTMLElement>('[data-page]')
+      const at = page?.querySelector<HTMLElement>('[data-morph]')
+      return band && page && at ? { band: band.getBoundingClientRect(), page, at: at.getBoundingClientRect() } : null
+    }
+    const motions: ReturnType<typeof animate>[] = []
+    const opening = parts(index)
+    if (opening) motions.push(animate(opening.page, moveFrom(opening.band, opening.page, opening.at), slide))
+    setFolding(before)
+    const closing = parts(before)
+    if (closing) {
+      const to = moveFrom(closing.band, closing.page, closing.at)
+      closing.page.style.transform = ''
+      const going = animate(closing.page, { x: [0, to.x[0]], y: [0, to.y[0]], scale: [1, to.scale[0]] }, slide)
+      going.then(() => {
+        closing.page.style.transform = ''
+        setFolding((was) => (was === before ? null : was))
+      })
+      motions.push(going)
+    } else {
+      const done = setTimeout(() => setFolding((was) => (was === before ? null : was)), 400)
+      motions.push({ stop: () => clearTimeout(done) } as ReturnType<typeof animate>)
+    }
+    return () => {
+      for (const motion of motions) motion.stop()
+      // The mat lays its tabs' light off where it lies on the screen, so it is laid again once its page has settled.
+      window.dispatchEvent(new Event('scroll'))
+    }
+  }, [index, mobile, reduced])
   const turnedPage = (i: number): CSSProperties => ({
     paddingLeft: '1rem',
     paddingRight: '1rem',
@@ -841,6 +889,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       >
         {/* On a phone the stack, turned on its side: its start at the window's foot, its depth across the window. */}
         <div
+          ref={turned}
           className={mobile ? 'absolute top-0 left-0 origin-top-left' : 'contents'}
           style={mobile ? { width: metrics.width, height: metrics.height, transform: `translateY(${metrics.width}px) rotate(-90deg)` } : undefined}
         >
@@ -878,6 +927,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
             return (
               <motion.section
                 key={item.to}
+                data-strip={i}
                 className={`strip ${reachesOver(i) ? 'strip-reaches' : ''}`}
                 initial={false}
                 animate={pulled ? { left: lerp(lefts[i], pulled.lefts[i]), width: lerp(widths[i], pulled.widths[i]) } : { left: lefts[i], width: widths[i] }}
@@ -938,11 +988,12 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         <motion.div
                           aria-hidden
                           inert
+                          data-fold
                           className="pointer-events-none"
                           style={foldBand(i, tones[i].hangs ? FOLD_AT.badge : tones[i].fills ? FOLD_AT.desk : FOLD_AT.ticket, tones[i].roll ? undefined : FOLD_TALL * (tones[i].hangs ? foldCard : metrics.height))}
                           initial={false}
-                          animate={{ opacity: open ? 0 : 1 }}
-                          transition={{ duration: 0.35 }}
+                          animate={{ opacity: open || folding === i ? 0 : 1 }}
+                          transition={instant}
                         >
                           {tones[i].hangs ? (
                             <Badge badge={profile.badge} page={foldCard} margin={1.5 * metrics.rem} open={false} past={(metrics.height - foldCard) / 2} />
@@ -971,10 +1022,26 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           <Art index={i} open={open} poster={workPoster} band={strip - overlap} turned={tones[i].bleeds} />
                         </motion.div>
                       )}
+                      {/* The letter's or the poster's page going as its strip folds, as its band comes back. */}
+                      {folding === i && !open && (tones[i].bleeds ? workPoster : i === LETTER) && (
+                        <motion.div aria-hidden inert className="pointer-events-none overflow-hidden" style={uprightOf(i)} initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+                          {tones[i].bleeds ? (
+                            <PosterPicture />
+                          ) : (
+                            <div className={PAGE} style={turnedPage(i)}>
+                              <div className="grid flex-1 content-center">
+                                <Letter letter={profile.letter} />
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
                       {tones[i].hangs ? (
                         // The ring runs up out of shot at the strip's edge, under its tab, and not on into the cloth the tab is cut from.
-                        <motion.div className="overflow-hidden" style={uprightOf(i)} initial={false} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: 0.35 }}>
-                          <Badge badge={profile.badge} page={metrics.height} margin={1.5 * metrics.rem} open={open} past={0} />
+                        <motion.div className="overflow-hidden" style={uprightOf(i)} initial={false} animate={{ opacity: open || folding === i ? 1 : 0 }} transition={instant}>
+                          <div data-page className="absolute inset-0 origin-top-left">
+                            <Badge badge={profile.badge} page={metrics.height} margin={1.5 * metrics.rem} open={open} past={0} />
+                          </div>
                         </motion.div>
                       ) : tones[i].fills || tones[i].roll ? (
                         <motion.div
@@ -983,10 +1050,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           inert={!open}
                           aria-hidden={!open || undefined}
                           initial={false}
-                          animate={{ opacity: open ? 1 : 0 }}
-                          transition={{ duration: 0.35 }}
+                          animate={{ opacity: open || folding === i ? 1 : 0 }}
+                          transition={instant}
                         >
-                          <div className="grid min-h-full content-center" style={{ paddingBottom: marginsOf(i).foot }}>
+                          <div data-page className="grid min-h-full origin-top-left content-center" style={{ paddingBottom: marginsOf(i).foot }}>
                             {open && children}
                             {tones[i].fills ? <Desk /> : <Ticket />}
                           </div>
@@ -996,9 +1063,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           <motion.div
                             className={PAGE}
                             style={turnedPage(i)}
-                            initial={tones[i].bleeds ? false : { opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
+                            // It comes up over its strip's band as the band goes, at once, so the two hand over.
+                            initial={tones[i].bleeds ? false : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.35, ease: [0.215, 0.61, 0.355, 1] }}
                           >
                             <div className="grid flex-1 content-center">{children}</div>
                           </motion.div>

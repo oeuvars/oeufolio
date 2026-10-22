@@ -217,7 +217,8 @@ export const Mat = ({ children, className, still }: MatProps) => {
               className={`${LAID} mix-blend-plus-lighter`}
               style={over(geometry, -plate.bleed[0], -plate.bleed[1], plate.size[0] + 2 * plate.bleed[0], plate.size[1] + 2 * plate.bleed[1])}
             />
-            <img src={`/objects/mat/desk-${geometry.id}.avif`} alt="" draggable={false} className={LAID} style={over(geometry, 0, 0, ...plate.size)} />
+            {/* The plate is what a folded phone strip's picture of the mat and the open page are matched by (SiteShell). */}
+            <img data-morph src={`/objects/mat/desk-${geometry.id}.avif`} alt="" draggable={false} className={LAID} style={over(geometry, 0, 0, ...plate.size)} />
             {/* The watch's dial again over the plate's, its hands at the viewer's time. */}
             {DIALS[geometry.id] && <WatchHands plate={geometry.id} className={LAID} style={over(geometry, ...DIALS[geometry.id]!.dial)} />}
             {/* The props seen from a camera of their own, over the plate where they stand on it. */}

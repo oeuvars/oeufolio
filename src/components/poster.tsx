@@ -22,6 +22,11 @@ const { size: REFERENCE, marks: MARKS } = posterMarks as PosterMarks
  * the poster starts with that column where the strip's stood, and moves to its place on the strip's spring as the rest
  * of the poster comes up over it. As it goes it leaves where its column was, for the folded strip to start from.
  */
+// The page the poster lies on, and the poster as the page lays it.
+const FRAME = 'absolute inset-0 overflow-hidden mix-blend-screen [container-type:size] max-md:top-(--page-top) max-md:bottom-(--page-foot)'
+const SHEET =
+  'absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,#000_10%,#000_90%,transparent),linear-gradient(to_right,transparent,#000_10%,#000_90%,transparent)] [mask-composite:intersect] max-md:w-[min(calc((100cqw_-_1rem)*2208/1628),calc((100cqh_-_1rem)*2208/2191))] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]'
+
 export const Poster = () => {
   const sheet = useRef<HTMLDivElement>(null)
   const column = useRef<HTMLImageElement>(null)
@@ -46,7 +51,9 @@ export const Poster = () => {
     if (still) full.style.opacity = '1'
     else {
       if (unfolding && place) motions.push(animate(page, moveFrom(place, page, own.getBoundingClientRect()), slide))
-      motions.push(animate(full, { opacity: [0, 1] }, { duration: unfolding ? 0.45 : 0.6, delay: unfolding ? 0 : 0.3, ease: [0.215, 0.61, 0.355, 1] }))
+      // On a phone it comes up over its folded strip's band as the band goes, at once, so the two hand over.
+      const phone = window.innerWidth < 768
+      motions.push(animate(full, { opacity: [0, 1] }, { duration: unfolding ? 0.45 : phone ? 0.35 : 0.6, delay: unfolding || phone ? 0 : 0.3, ease: [0.215, 0.61, 0.355, 1] }))
     }
 
     return () => {
@@ -57,7 +64,7 @@ export const Poster = () => {
   }, [still])
 
   return (
-    <div className="absolute inset-0 overflow-hidden mix-blend-screen [container-type:size] max-md:top-(--page-top) max-md:bottom-(--page-foot)">
+    <div className={FRAME}>
       <h2 className="sr-only">Experience</h2>
       {/* The poster as the page lays it, centred: covering the strip on a wide screen, and on a phone as large as
           keeps its lit windows and passages on the page, half a rem in from its sides, top and foot. They lie between
@@ -65,7 +72,7 @@ export const Poster = () => {
           paper, so on a phone it fades out to every side short of them, and no edge of the sheet shows. */}
       <div
         ref={sheet}
-        className="absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,#000_10%,#000_90%,transparent),linear-gradient(to_right,transparent,#000_10%,#000_90%,transparent)] [mask-composite:intersect] max-md:w-[min(calc((100cqw_-_1rem)*2208/1628),calc((100cqh_-_1rem)*2208/2191))] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]"
+        className={SHEET}
         style={{ aspectRatio: `${POSTER.width} / ${POSTER.height}` }}
       >
         <img
@@ -107,3 +114,12 @@ export const Poster = () => {
     </div>
   )
 }
+
+/** The poster as its page lays it, only the picture: what a folding phone strip shows going as its band comes back (SiteShell). */
+export const PosterPicture = () => (
+  <div className={FRAME}>
+    <div className={SHEET} style={{ aspectRatio: `${POSTER.width} / ${POSTER.height}` }}>
+      <img src="/objects/poster.avif" alt="" draggable={false} className="absolute inset-0 size-full select-none" />
+    </div>
+  </div>
+)
