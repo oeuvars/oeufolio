@@ -36,7 +36,7 @@ import numpy as np  # noqa: E402
 
 from mathutils import Quaternion  # noqa: E402
 from paint import blur, cloud, linear, ramp, streaks  # noqa: E402
-from stage import ASSETS, BOX_IN_ROOM, BOX_ON_STAND, ROOM, ROOM_ROLL, Stage  # noqa: E402
+from stage import ASSETS, BOX_IN_ROOM, BOX_ON_STAND, GAIN, ROOM, ROOM_ROLL, Stage, shoulder  # noqa: E402
 
 OUT = os.path.join(ROOT, "public", "objects")
 WIDTH, HEIGHT = 36.0, 24.0  # the plate the page shows, in em
@@ -348,90 +348,204 @@ def lay(stage, proof=None):
 EDGE = (16, 1600)  # the cut edge's mask, in CSS px: TEAR_WIDTH and TEAR_LENGTH in SiteShell, down which it repeats
 EDGE_DENSITY = 2  # pixels of the mask to the CSS px
 EDGE_PITCH = 2.6  # how far apart the weft yarns are where the page shows the cloth, in CSS px
+WARP_PITCH = 2.5  # how far apart the warp yarns are, across the cloth, in CSS px
+RADIUS = 1.0  # a yarn's radius, in CSS px
+TWIST = 7.0  # how far along a yarn its plies take to go once round it, in CSS px
+THICK = 1.6  # how thick the cloth is, in CSS px: 0.35 mm, at EDGE_PITCH to a weft yarn of 0.5 mm
+LAYERS = 6  # sheets of the cloth stacked through its thickness, so its cut stands as tall as the cloth
+OPEN = 0.12  # how much light the weave lets straight through its gaps
+SCATTER = 0.25  # how much of the light its yarns take they pass on through, scattered
+PEEL = 26.0  # how far in from the cut the cloth starts to lift off the page where it curls, in CSS px
+SHADOW_FRAME = (-4.0, 40.0)  # the render across the edge's mask, in CSS px from its left: in under the cloth, out over the page
+SHADOW_PAST = 120.0  # how far the render runs on past either end of the mask's length, for what crosses its ends
+SHADOW_DENSITY = 4  # pixels of the render to the CSS px
+# The plate paints each yarn's tone straight; built ply by ply, the plies light each other and deepen it. Their dye is
+# taken this much paler (as a power of each channel), measured so the fringe matches the plate on the page.
+PALE = 0.7
+PAPER = (234.7, 231.8, 224.2)  # the letter's handmade sheet (likes-paper.avif) on average, which the linen lies over
 
 
-def cut():
-    """The strip's edge as scissors leave linen, as a mask: solid to the left, clear to the right, repeating down
-    the strip without a seam. The blades cut in snips, each a little off the last, so the line runs in short straight
-    lengths that turn where one snip met the next. Past the line the weft yarns the blades cut stick out, some
-    hardly at all and some a good way, frayed thin at their ends and bent a little; a stray fibre or two curls off
-    them; and here and there the last warp yarn has come loose and lies just past the line, held by the wefts."""
-    over = 4  # drawn finer, then averaged down, for its edges
-    density = EDGE_DENSITY * over
-    width, length = EDGE
-    cols, rows = width * density, length * density
-    X = (np.arange(cols)[None, :] + 0.5) / density
-    Y = (np.arange(rows)[:, None] + 0.5) / density
-    rng = np.random.default_rng(71)
+class Fray:
+    """The strip's edge as scissors and handling leave linen, drawn once for the mask the page cuts the cloth with
+    (edge) and for the render of what lies past it (shadow), so the two meet. Lengths in CSS px, x across the mask
+    from its left, y down it, z up off the page. It repeats down the strip without a seam.
 
-    # The snips: corners every 40 to 90 px, wandering in and out, and the last back where the first began.
-    ys = np.concatenate(([0.0], np.cumsum(rng.uniform(40, 90, round(length / 65)))))
-    ys = ys * length / ys[-1]
-    xs = rng.normal(0, 0.7, len(ys)) + np.cumsum(rng.normal(0, 0.5, len(ys)))
-    xs = xs - np.linspace(0, xs[-1] - xs[0], len(ys))
-    line = width - 9.0 + np.clip(xs - xs.mean(), -2.2, 2.2)
-    cut = np.interp(Y[:, 0], ys, line)
-    mask = (X < cut[:, None]).astype(np.float32)
+    - The blades cut in snips, each a little off the last, so the cut runs in short straight lengths that turn where
+      one snip met the next.
+    - Along some stretches handling has shaken the outermost warp yarn, or two, out of the weave. There the woven
+      cloth ends that much further in, and the weft yarns those warps held run on free to the cut: a fringe, each
+      yarn still waved from going over and under, its plies untwisting and its fibres splaying at the cut end.
+    - Elsewhere the wefts were cut just past the last warp, and only their ends tuft out.
+    - Here and there a shaken-out warp lies loose over its fringe, and stray fibres lie on the page along the edge."""
 
-    # The weft ends past the line.
-    count = round(length / EDGE_PITCH)
-    pitch = length / count
-    for j in range(count):
-        y0 = (j + 0.5) * pitch + rng.normal(0, 0.15 * pitch)
-        x0 = np.interp(y0 % length, ys, line) - 0.5
-        reach = min(rng.exponential(1.6) + (rng.uniform(1.5, 4) if rng.random() < 0.1 else 0), width - x0 - 0.3)
-        if reach < 0.4:
-            continue
-        lean, bend = rng.normal(0, 0.12), rng.normal(0, 0.25)
-        thick = rng.uniform(0.75, 1.0) * pitch * 0.42
-        for dy in (-length, 0, length):
-            near = np.abs(Y[:, 0] - y0 - dy) < thick + reach * 0.6 + 2
-            if not near.any():
+    def __init__(self, seed=71):
+        rng = np.random.default_rng(seed)
+        width, self.length = EDGE
+        length = self.length
+        ys = np.concatenate(([0.0], np.cumsum(rng.uniform(40, 90, round(length / 65)))))
+        self.ys = ys * length / ys[-1]
+        xs = rng.normal(0, 0.7, len(ys)) + np.cumsum(rng.normal(0, 0.5, len(ys)))
+        xs = xs - np.linspace(0, xs[-1] - xs[0], len(ys))
+        self.line = width - 9.0 + np.clip(xs - xs.mean(), -2.2, 2.2)
+        self.gaps = []
+        at = rng.uniform(0, 60)
+        while at < length - 30:
+            span = rng.uniform(15, 90)
+            if rng.random() < 0.45:
+                self.gaps.append((at, min(span, length - at - 10), 2 if rng.random() < 0.15 else 1))
+            at += span + rng.uniform(10, 60)
+        # Where the cut edge curls up off the page, along much of its length and by as much as a millimetre.
+        self.curls = [(rng.uniform(0, length), rng.uniform(25, 90), rng.gamma(2.0, 0.9)) for _ in range(24)]
+        self.rng = rng
+
+    def cut(self, y):
+        return np.interp(np.asarray(y) % self.length, self.ys, self.line)
+
+    def lost(self, y):
+        """How many warp yarns have come out of the weave at y, easing from one count to the next over a yarn."""
+        y = np.asarray(y, dtype=np.float64)
+        out = np.zeros_like(y)
+        for at, span, count in self.gaps:
+            s = (y - at) % self.length
+            inside = np.clip(np.minimum(s, span - s) / 2.0, 0, 1)
+            out = np.maximum(out, count * inside * inside * (3 - 2 * inside))
+        return out
+
+    def body(self, y):
+        """Where the woven cloth ends: at the cut, or as many warps in from it as have come out."""
+        return self.cut(y) - WARP_PITCH * self.lost(y)
+
+    def lift(self, x, y):
+        """How far the cloth's underside stands off the page: a little everywhere, as washed linen rests on its yarns'
+        crowns and its cockle, and more where it curls."""
+        y = np.asarray(y, dtype=np.float64)
+        rise = np.full_like(y, 0.4)
+        for at, spread, height in self.curls:
+            away = (y - at + self.length / 2) % self.length - self.length / 2
+            rise = rise + height * np.exp(-((away / spread) ** 2))
+        inward = np.clip((np.asarray(x) - (self.body(y) - PEEL)) / PEEL, 0, 1)
+        return rise * inward * inward * (3 - 2 * inward)
+
+    def mask(self):
+        """The woven cloth, solid to the left of its edge and clear past it, at EDGE_DENSITY."""
+        over = 4
+        density = EDGE_DENSITY * over
+        width, length = EDGE
+        X = (np.arange(width * density)[None, :] + 0.5) / density
+        Y = (np.arange(length * density) + 0.5) / density
+        mask = np.clip(0.5 + (self.body(Y)[:, None] - X) * density, 0, 1).astype(np.float32)
+        return mask.reshape(length * EDGE_DENSITY, over, width * EDGE_DENSITY, over).mean(axis=(1, 3))
+
+    def strands(self):
+        """Every ply and fibre past the woven cloth, as (points, radii, tone): the fringe's wefts and the tufted
+        ends, the loose warps and the stray fibres. Points run from the root, which lies in under the cloth."""
+        rng = np.random.default_rng(171)
+        out = []
+        rows = round(self.length / EDGE_PITCH)
+        pitch = self.length / rows
+        for j in range(rows):
+            y = (j + 0.5) * pitch + rng.normal(0, 0.12 * pitch)
+            root, tip = float(self.body(y)), float(self.cut(y))
+            if tip - root > 0.8:
+                tip += rng.normal(0, 0.35) + (rng.uniform(1.5, 5) if rng.random() < 0.06 else 0)
+                splay = min(rng.uniform(0.8, 1.8), 0.7 * (tip - root))
+            elif rng.random() < 0.55:
+                tip += rng.uniform(0.1, 0.7)
+                splay = tip - root + 0.6
+            else:
                 continue
-            t = np.clip((X - x0) / reach, 0, 1)
-            along = Y[near] - (y0 + dy) - (lean * t + bend * t * t) * reach
-            # Cut blunt, but fraying a little thinner toward its end.
-            half = thick * (1 - 0.4 * t**2)
-            yarn = np.clip(0.5 + (half - np.abs(along)) * density, 0, 1) * ((X >= x0) & (X <= x0 + reach))
-            mask[near] = np.maximum(mask[near], yarn)
+            s = np.arange(root - 1.5, tip + 1.2, 0.2)
+            free = np.clip(s - root, 0, None)
+            lean, bend = rng.normal(0, 0.08), rng.normal(0, 0.12)
+            phase = rng.uniform(0, 2 * math.pi)
+            # It rises out of the cloth's middle and comes down onto the page within a yarn or two, waved.
+            top = float(self.lift(root, y)) + THICK / 2
+            z = RADIUS + (top - RADIUS) * np.exp(-free / 1.5) + 0.22 * np.sin(math.pi * free / WARP_PITCH + phase) * np.clip(free, 0, 1)
+            centre = np.column_stack((s, y + lean * free + bend * free**2 / 4 + 0.12 * np.sin(math.pi * free / WARP_PITCH), z))
+            tone = int(rng.integers(len(COLOURS)))
+            out += [(p, r, tone) for p, r in self.yarn(centre, tip - (root - 1.5), splay, rng)]
+        # The warps shaken out, lying loose over their fringe for a length.
+        for at, span, count in self.gaps:
+            if rng.random() > 0.45:
+                continue
+            y0 = at + rng.uniform(0, 0.3) * span
+            y1 = y0 + rng.uniform(0.4, 0.9) * (at + span - y0)
+            t = np.arange(y0, y1, 0.2)
+            x = self.cut(t) - WARP_PITCH * (count - 0.5) + 0.5 * np.sin((t - y0) / rng.uniform(9, 20)) + rng.normal(0, 0.3)
+            z = 1.9 * RADIUS + 0.2 * np.sin(math.pi * (t - y0) / EDGE_PITCH)
+            centre = np.column_stack((x, t, z))
+            tone = int(rng.integers(len(COLOURS)))
+            out += [(p, r, tone) for p, r in self.yarn(centre, y1 - y0, rng.uniform(1.0, 2.0), rng)]
+        # Stray fibres, out from under the cloth's edge and lying on the page.
+        for _ in range(round(self.length / 7)):
+            y = rng.uniform(0, self.length)
+            x0 = float(self.body(y)) - rng.uniform(0.3, 1.5)
+            steps = np.linspace(0, 1, 30)
+            angle = rng.normal(0, 0.7) + rng.normal(0, 1.2) * steps + np.cumsum(rng.normal(0, 0.08, 30))
+            reach = rng.uniform(1.5, 6)
+            px = x0 + np.cumsum(np.cos(angle)) * reach / 30
+            py = y + np.cumsum(np.sin(angle)) * reach / 30
+            pz = 0.08 + (THICK * 0.6) * np.exp(-np.clip(px - x0, 0, None) / 0.8)
+            radius = rng.uniform(0.04, 0.08)
+            out.append((np.column_stack((px, py, pz)), np.full(30, radius) * (1 - 0.5 * steps), int(rng.integers(len(COLOURS)))))
+        # The ends near the top and foot of the length again past the other end, so the repeat has no seam.
+        shifted = []
+        for points, radii, tone in out:
+            for dy in (-self.length, self.length):
+                moved = points + (0, dy, 0)
+                if (moved[:, 1] > -SHADOW_PAST - 10).any() and (moved[:, 1] < self.length + SHADOW_PAST + 10).any():
+                    shifted.append((moved, radii, tone))
+        return out + shifted
 
-    # Stray fibres curling off the yarn ends.
-    for _ in range(round(length / 22)):
-        y0 = rng.uniform(0, length)
-        x0 = np.interp(y0, ys, line) + rng.uniform(0, 1)
-        reach, heading, curl = rng.uniform(2, 5), rng.normal(0, 0.5), rng.normal(0, 0.6)
-        steps = np.linspace(0, 1, 24)
-        angle = heading + curl * steps
-        px = x0 + np.cumsum(np.cos(angle)) * reach / 24
-        py = y0 + np.cumsum(np.sin(angle)) * reach / 24
-        for qx, qy in zip(px, py):
-            if qx >= width - 0.2:
-                break
-            for dy in (-length, 0, length):
-                r0, r1 = max(int((qy + dy - 1) * density), 0), min(int((qy + dy + 1) * density) + 1, rows)
-                if r1 <= r0:
+    @staticmethod
+    def yarn(centre, nominal, splay, rng):
+        """A yarn along a line, as its plies twisted round it: a core and six round it, each turning once a TWIST.
+        Toward the end, over splay, the twist lets go, the plies part and end raggedly, and fibres come off them.
+        nominal is how far along the line the yarn runs; the line goes on a little past, for fibres to run out on."""
+        step = np.linalg.norm(np.diff(centre, axis=0), axis=1)
+        run = np.concatenate(([0.0], np.cumsum(step)))
+        tangent = np.gradient(centre, axis=0)
+        tangent /= np.linalg.norm(tangent, axis=1, keepdims=True)
+        side = np.cross(tangent, (0.0, 0.0, 1.0))
+        side /= np.maximum(np.linalg.norm(side, axis=1, keepdims=True), 1e-6)
+        up = np.cross(side, tangent)
+        loose = np.clip((run - (nominal - splay)) / splay, 0, 1)
+        turn = 2 * math.pi * np.concatenate(([0.0], np.cumsum((1 - loose[1:]) * step))) / TWIST
+        out = []
+        for i in range(7):
+            ring = 0.0 if i == 0 else 0.62 * RADIUS
+            angle = turn + i * 2 * math.pi / 6 + rng.normal(0, 0.1)
+            drift = rng.normal(0, 1, 2) * rng.uniform(0.4, 1.2)
+            spread = ring * (1 + 0.9 * loose**1.5)
+            across = spread * np.cos(angle) + drift[0] * loose**2
+            over = spread * np.sin(angle) + 0.5 * drift[1] * loose**2
+            points = centre + side * across[:, None] + up * over[:, None]
+            end = nominal - rng.uniform(0, 0.45 * splay)
+            thin = np.clip((run - (end - 0.4 * splay)) / (0.4 * splay), 0, 1)
+            radius = 0.36 * RADIUS * (1 - 0.6 * thin)
+            points[:, 2] = np.maximum(points[:, 2], radius)
+            keep = run <= end
+            if keep.sum() > 1:
+                out.append((points[keep], radius[keep]))
+            # Fibres working loose off it where it is free, running on past its end.
+            for _ in range(rng.integers(1, 4)):
+                start = nominal - splay * rng.uniform(0.3, 1.0)
+                stop = min(end + rng.uniform(0.2, 1.1), run[-1])
+                pick = (run >= start) & (run <= stop)
+                if pick.sum() < 2:
                     continue
-                d = np.hypot(X - qx, Y[r0:r1] - qy - dy)
-                mask[r0:r1] = np.maximum(mask[r0:r1], 0.6 * np.clip(0.5 + (0.2 - d) * density, 0, 1))
-
-    # Loose warp yarns, lying just past the line for a length.
-    for _ in range(rng.poisson(length / 500)):
-        y0, span = rng.uniform(0, length), rng.uniform(30, 160)
-        off, thick = rng.uniform(0.6, 2.4), rng.uniform(0.8, 1.1)
-        for dy in (-length, 0, length):
-            near = (Y[:, 0] > y0 + dy) & (Y[:, 0] < y0 + dy + span)
-            if not near.any():
-                continue
-            s = (Y[near] - y0 - dy) / span
-            centre = np.interp(Y[near][:, 0] % length, ys, line)[:, None] + off * np.sin(math.pi * s) ** 0.5 + 0.4 * np.sin(s * rng.uniform(8, 14))
-            mask[near] = np.maximum(mask[near], np.clip(0.5 + (thick - np.abs(X - centre)) * density, 0, 1))
-
-    return mask.reshape(length * EDGE_DENSITY, over, width * EDGE_DENSITY, over).mean(axis=(1, 3))
+                away = run[pick] - start
+                wander = rng.normal(0, 1, 3) * 0.35
+                fibre = points[pick] + np.outer(away, wander) + np.outer(np.sin(away * rng.uniform(2, 5)), rng.normal(0, 0.08, 3))
+                thick = rng.uniform(0.05, 0.1)
+                fibre[:, 2] = np.maximum(fibre[:, 2], thick)
+                out.append((fibre, np.full(len(fibre), thick)))
+        return out
 
 
 def edge():
-    """Writes the cut's mask, for the page to cut the strip with."""
-    mask = cut()
+    """Writes the mask the page cuts the cloth with: the woven cloth only, as everything past it is rendered."""
+    mask = Fray().mask()
     rows, cols = mask.shape
     img = bpy.data.images.new("linen-edge", cols, rows, alpha=True)
     img.colorspace_settings.name = "Non-Color"
@@ -444,38 +558,40 @@ def edge():
     print(f"EDGE {cols}x{rows}")
 
 
-SHADOW_FRAME = (-24.0, 40.0)  # the shadow's render across the edge's mask, in CSS px from its left: under the cloth, and out over the page
-SHADOW_PAST = 120.0  # how far the render runs on past either end of the mask's length, for the shadows cast across its ends
-SHADOW_DENSITY = 3  # pixels of the shadow to the CSS px
-THICK = 1.6  # how thick the cloth is, in CSS px: 0.35 mm, at EDGE_PITCH to a weft yarn of 0.5 mm
-LAYERS = 6  # sheets of the cut stacked through the cloth's thickness, so the cut stands as tall as the cloth
-PEEL = 26.0  # how far in from the cut the cloth starts to lift off the page, in CSS px
-DROOP = 7.0  # how far past the cut the weft ends take to come down onto the page, in CSS px
-
-
-def peel(Y, length, rng):
-    """How far the cloth stands off the page at its cut, Y px down the mask: a cut edge of washed linen lies down
-    in most places and curls up off the page in others, a little or as far as a couple of times its thickness.
-    It wraps round the mask's length, as the mask does."""
-    lift = np.full_like(Y, 0.25)
-    for _ in range(14):
-        at, spread, rise = rng.uniform(0, length), rng.uniform(15, 70), rng.gamma(1.6, 1.1)
-        away = (Y - at + length / 2) % length - length / 2
-        lift += rise * np.exp(-((away / spread) ** 2))
-    return lift
+def yarn_material(name, colour):
+    """A yarn of the cloth: its dye, the flax's soft lustre, and some light let through, as thin flax does."""
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    shader = nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (*colour, 1)
+    shader.inputs["Roughness"].default_value = 0.8
+    shader.inputs["Sheen Weight"].default_value = 0.35
+    shader.inputs["Sheen Roughness"].default_value = 0.45
+    shader.inputs["Specular IOR Level"].default_value = 0.3
+    through = nodes.new("ShaderNodeBsdfTranslucent")
+    through.inputs["Color"].default_value = (*colour, 1)
+    mix = nodes.new("ShaderNodeMixShader")
+    mix.inputs["Fac"].default_value = SCATTER
+    links.new(shader.outputs["BSDF"], mix.inputs[1])
+    links.new(through.outputs["BSDF"], mix.inputs[2])
+    links.new(mix.outputs["Shader"], nodes["Material Output"].inputs["Surface"])
+    return material, mix
 
 
 def shadow(samples, proof=None):
-    """The shadow the cut cloth leaves on the page it lies over, as black over a clear ground, for the page to lay
-    under the strip's linen and out over the strip beyond. The cloth is THICK thick, cut by the very mask the page
-    cuts it with (cut), weft ends and fibres and all, and lifts off the page toward the cut where it curls. All of it
-    is white, under the copy stand's studio light (stage.py's room and octabox, as studio/tabcut uses), rendered
-    with the cloth and without it, and the one divided by the other is only the shadow. Writes
-    public/objects/linen-shadow.png, SHADOW_FRAME's right part from the mask's left, the mask's length long."""
-    mask = cut()
+    """What lies past the woven cloth's edge and the shadow it all leaves on the letter's paper, for the page to lay
+    under the strip's linen and out over the strip beyond. The cloth is THICK thick, lets OPEN of the light through
+    its gaps and scatters SCATTER of the rest through its yarns, so its shadow is light and warm. It lies flat on the
+    page in most places and curls off it in a few. Past it the fringe and loose yarns are built ply by ply (Fray).
+    All of it is under the copy stand's studio light (stage.py's room and octabox, as studio/tabcut uses). Three
+    renders: the page bare, the page under the cloth (the two divided give the shadow, colour by colour), and the
+    yarns alone, developed as the plate is. Writes public/objects/linen-shadow.png: the yarns over the shadow,
+    laid for PAPER, SHADOW_FRAME's right part from the mask's left, the mask's length long."""
+    fray = Fray()
     width, length = EDGE
+    mask = fray.mask()
     rows, cols = mask.shape
-    rng = np.random.default_rng(73)
     scene = Stage(OUT, samples=samples).clear()
     scene.render.film_transparent = False
     scene.cycles.transparent_max_bounces = 4 * LAYERS
@@ -493,21 +609,21 @@ def shadow(samples, proof=None):
     links.new(turn.outputs["Vector"], room.inputs["Vector"])
     links.new(room.outputs["Color"], nodes["Background"].inputs["Color"])
 
-    def white(name):
-        material = bpy.data.materials.new(name)
-        material.use_nodes = True
-        shader = material.node_tree.nodes["Principled BSDF"]
-        shader.inputs["Base Color"].default_value = (0.8, 0.8, 0.8, 1)
-        shader.inputs["Roughness"].default_value = 0.9
-        shader.inputs["Specular IOR Level"].default_value = 0.2
-        return material
-
     page = bpy.data.meshes.new("page")
     page.from_pydata([(-200, 200, 0), (200, 200, 0), (200, -length - 400, 0), (-200, -length - 400, 0)], [], [(0, 1, 2, 3)])
-    page.materials.append(white("page"))
-    scene.collection.objects.link(bpy.data.objects.new("page", page))
+    sheet = bpy.data.materials.new("page")
+    sheet.use_nodes = True
+    paper = sheet.node_tree.nodes["Principled BSDF"]
+    paper.inputs["Base Color"].default_value = (0.8, 0.8, 0.8, 1)
+    paper.inputs["Roughness"].default_value = 0.9
+    paper.inputs["Specular IOR Level"].default_value = 0.2
+    page.materials.append(sheet)
+    page_obj = bpy.data.objects.new("page", page)
+    scene.collection.objects.link(page_obj)
 
-    # The cloth: the mask on each sheet, solid to its left, its length repeating down the strip.
+    # The woven cloth: the mask on each sheet, solid to its left, its length repeating down the strip. Each sheet
+    # lets through what the weave's gaps do, shared out over the sheets, and less the more steeply light crosses it,
+    # as a ray at a low angle runs through that much more cloth.
     img = bpy.data.images.new("linen-cut", cols, rows, alpha=True)
     img.colorspace_settings.name = "Non-Color"
     img.alpha_mode = "CHANNEL_PACKED"
@@ -515,15 +631,16 @@ def shadow(samples, proof=None):
     pixels[..., 3] = mask
     img.pixels.foreach_set(pixels[::-1].ravel())
     img.pack()
-    cloth = white("cloth")
+    tone = np.mean([linear(c) for c in COLOURS], axis=0) ** PALE
+    cloth, woven = yarn_material("cloth", tone)
     nodes, links = cloth.node_tree.nodes, cloth.node_tree.links
     where = nodes.new("ShaderNodeTexCoord")
     split = nodes.new("ShaderNodeSeparateXYZ")
     across = nodes.new("ShaderNodeMath")
     across.operation = "DIVIDE"
     across.inputs[1].default_value = width
-    held = nodes.new("ShaderNodeClamp")
     # Held off the mask's outer columns, where the length's repeat would wrap the solid left onto the clear right.
+    held = nodes.new("ShaderNodeClamp")
     held.inputs["Min"].default_value = 1.5 / cols
     held.inputs["Max"].default_value = 1 - 1.5 / cols
     down = nodes.new("ShaderNodeMath")
@@ -534,6 +651,30 @@ def shadow(samples, proof=None):
     texture.image = img
     texture.interpolation = "Linear"
     texture.extension = "REPEAT"
+    facing = nodes.new("ShaderNodeLayerWeight")
+    cosine = nodes.new("ShaderNodeMath")
+    cosine.operation = "SUBTRACT"
+    cosine.inputs[0].default_value = 1.0
+    least = nodes.new("ShaderNodeMath")
+    least.operation = "MAXIMUM"
+    least.inputs[1].default_value = 0.02
+    path = nodes.new("ShaderNodeMath")
+    path.operation = "DIVIDE"
+    path.inputs[0].default_value = 1.0
+    passed = nodes.new("ShaderNodeMath")
+    passed.operation = "POWER"
+    passed.inputs[0].default_value = OPEN ** (1 / LAYERS)
+    stopped = nodes.new("ShaderNodeMath")
+    stopped.operation = "SUBTRACT"
+    stopped.inputs[0].default_value = 1.0
+    solid = nodes.new("ShaderNodeMath")
+    solid.operation = "MULTIPLY"
+    links.new(facing.outputs["Facing"], cosine.inputs[1])
+    links.new(cosine.outputs[0], least.inputs[0])
+    links.new(least.outputs[0], path.inputs[1])
+    links.new(path.outputs[0], passed.inputs[1])
+    links.new(passed.outputs[0], stopped.inputs[1])
+    links.new(stopped.outputs[0], solid.inputs[1])
     clear = nodes.new("ShaderNodeBsdfTransparent")
     mix = nodes.new("ShaderNodeMixShader")
     links.new(where.outputs["Object"], split.inputs["Vector"])
@@ -543,23 +684,20 @@ def shadow(samples, proof=None):
     links.new(split.outputs["Y"], down.inputs[0])
     links.new(down.outputs[0], uv.inputs["Y"])
     links.new(uv.outputs["Vector"], texture.inputs["Vector"])
-    links.new(texture.outputs["Alpha"], mix.inputs["Fac"])
+    links.new(texture.outputs["Alpha"], solid.inputs[0])
+    links.new(solid.outputs[0], mix.inputs["Fac"])
     links.new(clear.outputs["BSDF"], mix.inputs[1])
-    links.new(nodes["Principled BSDF"].outputs["BSDF"], mix.inputs[2])
+    links.new(woven.outputs["Shader"], mix.inputs[2])
     links.new(mix.outputs["Shader"], nodes["Material Output"].inputs["Surface"])
 
-    # Where the cloth stands: flat on the page well in from the cut, peeling up toward it, and past it the weft ends
-    # coming back down onto the page.
-    gx = np.arange(SHADOW_FRAME[0] - 40, width + 0.5, 0.5)
+    gx = np.arange(SHADOW_FRAME[0] - 60, width + 0.5, 0.5)
     gy = np.arange(-SHADOW_PAST - 40, length + SHADOW_PAST + 40, 2.0)
     X, Y = np.meshgrid(gx, gy)
-    line = width - 9.0
-    inward = np.clip((X - (line - PEEL)) / PEEL, 0, 1)
-    past = np.clip(1 - (X - line) / DROOP, 0, 1)
-    bottom = peel(Y, length, rng) * inward * inward * (3 - 2 * inward) * past * past
+    bottom = fray.lift(X, Y)
     rows_g, cols_g = X.shape
     index = np.arange(rows_g * cols_g).reshape(rows_g, cols_g)
     faces = np.column_stack((index[:-1, :-1].ravel(), index[:-1, 1:].ravel(), index[1:, 1:].ravel(), index[1:, :-1].ravel()))
+    hidden = []
     for layer in range(LAYERS):
         verts = np.column_stack((X.ravel(), -Y.ravel(), (bottom + THICK * (layer + 0.5) / LAYERS).ravel()))
         mesh = bpy.data.meshes.new(f"cloth-{layer}")
@@ -574,51 +712,99 @@ def shadow(samples, proof=None):
         obj = bpy.data.objects.new(f"cloth-{layer}", mesh)
         obj.visible_camera = False
         scene.collection.objects.link(obj)
+        hidden.append(obj)
+
+    # The yarns past it, each ply a round strand.
+    strands = bpy.data.curves.new("fray", "CURVE")
+    strands.dimensions = "3D"
+    strands.bevel_depth = 1.0
+    strands.bevel_resolution = 2
+    strands.use_fill_caps = True
+    for i, colour in enumerate(COLOURS):
+        strands.materials.append(yarn_material(f"yarn-{i}", linear(colour) ** PALE)[0])
+    count = 0
+    for points, radii, shade in fray.strands():
+        spline = strands.splines.new("POLY")
+        spline.points.add(len(points) - 1)
+        co = np.column_stack((points[:, 0], -points[:, 1], points[:, 2], np.ones(len(points))))
+        spline.points.foreach_set("co", co.astype(np.float32).ravel())
+        spline.points.foreach_set("radius", np.asarray(radii, dtype=np.float32))
+        spline.material_index = shade
+        spline.use_smooth = True
+        count += 1
+    yarns = bpy.data.objects.new("fray", strands)
+    scene.collection.objects.link(yarns)
+    print(f"STRANDS {count}")
 
     x0, x1 = SHADOW_FRAME
     y0, y1 = -SHADOW_PAST, length + SHADOW_PAST
     optics = bpy.data.cameras.new("overhead")
     optics.type = "ORTHO"
     optics.ortho_scale = max(x1 - x0, y1 - y0)
+    optics.clip_end = 1000
     camera = bpy.data.objects.new("overhead", optics)
     camera.location = ((x0 + x1) / 2, -(y0 + y1) / 2, 300)
-    optics.clip_end = 1000
     scene.collection.objects.link(camera)
     scene.camera = camera
     scene.render.resolution_x = round((x1 - x0) * SHADOW_DENSITY)
     scene.render.resolution_y = round((y1 - y0) * SHADOW_DENSITY)
     scene.render.resolution_percentage = 100
 
-    luma = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
     raw = os.path.join(tempfile.gettempdir(), "linen-shadow.exr")
-    shots = {}
-    for name, with_cloth in (("bare", False), ("cloth", True)):
-        for layer in range(LAYERS):
-            bpy.data.objects[f"cloth-{layer}"].hide_render = not with_cloth
+
+    def expose():
         scene.render.filepath = raw
         bpy.ops.render.render(write_still=True)
         image = bpy.data.images.load(raw)
         out = np.empty(image.size[0] * image.size[1] * 4, dtype=np.float32)
         image.pixels.foreach_get(out)
-        shots[name] = out.reshape(image.size[1], image.size[0], 4)[::-1, :, :3] @ luma
+        shape = (image.size[1], image.size[0], 4)
         bpy.data.images.remove(image)
         os.remove(raw)
+        return out.reshape(shape)[::-1]
 
-    dark = np.clip(1 - shots["cloth"] / np.maximum(shots["bare"], 1e-4), 0, 1)
-    # The mask's length, from its left out: the page lays it from there, under the strip's linen.
+    for obj in hidden + [yarns]:
+        obj.hide_render = True
+    bare = expose()[..., :3]
+    for obj in hidden + [yarns]:
+        obj.hide_render = False
+    yarns.visible_camera = False
+    shade = expose()[..., :3]
+    # The yarns alone, over the letter's paper, which lights them from below as it would.
+    yarns.visible_camera = True
+    page_obj.visible_camera = False
+    paper.inputs["Base Color"].default_value = (*linear("#%02x%02x%02x" % tuple(round(c) for c in PAPER)), 1)
+    scene.render.film_transparent = True
+    lit = expose()
+
+    # The shadow, colour by colour, as the colour and cover that give it over PAPER.
+    ratio = np.clip(shade / np.maximum(bare, 1e-4), 0, 1)
+    under = np.array(PAPER, dtype=np.float32) / 255
+    under_linear = np.where(under <= 0.04045, under / 12.92, ((under + 0.055) / 1.055) ** 2.4)
+    dimmed = under_linear * ratio
+    target = np.where(dimmed <= 0.0031308, dimmed * 12.92, 1.055 * dimmed ** (1 / 2.4) - 0.055)
+    dark = np.clip(((under - target) / under).max(axis=-1), 0, 1)
+    tint = np.clip((target - under * (1 - dark[..., None])) / np.maximum(dark, 1e-4)[..., None], 0, 1)
+    # The yarns, developed as the plate is (stage.py's develop), laid over it.
+    cover = np.clip(lit[..., 3], 0, 1)
+    light = lit[..., :3] * GAIN * 2.0**EXPOSURE
+    colour = shoulder(light / np.maximum(cover, 1e-6)[..., None])
+    colour = np.where(colour <= 0.0031308, colour * 12.92, 1.055 * np.clip(colour, 0, None) ** (1 / 2.4) - 0.055)
+    total = cover + dark * (1 - cover)
+    rgb = (colour * cover[..., None] + tint * (dark * (1 - cover))[..., None]) / np.maximum(total, 1e-6)[..., None]
+
     top, left = round(SHADOW_PAST * SHADOW_DENSITY), round(-x0 * SHADOW_DENSITY)
-    dark = dark[top : top + length * SHADOW_DENSITY, left:]
-    dark = dark + (rng.random(dark.shape, dtype=np.float32) - 0.5) / 255
-    tile = np.zeros(dark.shape + (4,), dtype=np.float32)
-    tile[..., 3] = np.clip(dark, 0, 1)
-    rows, cols = dark.shape
+    tile = np.dstack((rgb, total))[top : top + length * SHADOW_DENSITY, left:]
+    tile = np.clip(tile + (np.random.default_rng(0).random(tile.shape, dtype=np.float32) - 0.5) / 255, 0, 1)
+    rows, cols = tile.shape[:2]
     img = bpy.data.images.new("linen-shadow", cols, rows, alpha=True)
-    img.colorspace_settings.name = "Non-Color"
-    img.pixels.foreach_set(tile[::-1].ravel())
+    img.alpha_mode = "STRAIGHT"
+    img.pixels.foreach_set(tile[::-1].astype(np.float32).ravel())
     img.filepath_raw = os.path.join(proof or OUT, "linen-shadow.png")
     img.file_format = "PNG"
     img.save()
-    print(f"SHADOW {cols}x{rows} darkest {float(dark.max()):.3f}")
+    beside = tile[:, round((width - 8) * SHADOW_DENSITY) : round((width - 4) * SHADOW_DENSITY), 3]
+    print(f"SHADOW {cols}x{rows}, cover one to five px past the cut: mean {float(beside.mean()):.3f}")
 
 
 def main():
