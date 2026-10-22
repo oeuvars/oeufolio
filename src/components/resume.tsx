@@ -8,11 +8,9 @@ type ResumeProps = {
   resume: ResumeData
   /** The window's height, in rem. */
   room: number
-  /** How far back along the strip the photograph and its roll are laid, in rem, for a strip too short to show the
-   * roll where it lies: a phone's, which runs only the window's width (SiteShell). The cats lie where they would. */
-  shift?: number
-  /** Whether the cats lie about the desk. A phone's strip has room for the roll alone. */
-  cats?: boolean
+  /** The strip is a phone's, which runs only the window's width (SiteShell): the roll is laid among the cats, with a
+   * cat before it and as many after its tag as there is room for (along). */
+  across?: boolean
 }
 
 // What the photograph's desk falls to at its foot, far from the lamp: the strip under a window taller than it.
@@ -46,6 +44,35 @@ const spread = (room: number) => {
 }
 
 /**
+ * On a phone's strip, which is only the window's width: a cat, the roll and its tag, and as many of the other cats as
+ * the strip has room for after the tag, in order, with the desk left over shared out evenly before, between and after
+ * them. Returns the cats' tops and how far back the photograph is laid for the roll to lie where it falls, in rem.
+ */
+const along = (room: number) => {
+  const [first, ...rest] = frame.cats.laid
+  const roll = frame.link[3]
+  const shown: typeof rest = []
+  let used = first.size[1] + roll
+  for (const cat of rest) {
+    if (used + cat.size[1] + (shown.length + 3) * APART > room) break
+    shown.push(cat)
+    used += cat.size[1]
+  }
+  const gap = (room - used) / (shown.length + 3)
+  const rollTop = gap + first.size[1] + gap
+  let top = rollTop + roll + gap
+  const laid = shown.map((cat) => {
+    const at = top
+    top += cat.size[1] + gap
+    return { ...cat, top: at }
+  })
+  return { cats: [{ ...first, top: gap }, ...laid], shift: frame.link[1] - rollTop }
+}
+
+/** How much of a cat and the roll's length a phone's strip has to fit: the first cat, the roll and the next cat. */
+export const RESUME_ACROSS = frame.cats.laid[0].size[1] + frame.link[3] + frame.cats.laid[1].size[1] + 4 * APART
+
+/**
  * The strip of desk to the right of the folders, photographed (studio/resume): walnut under a satin lacquer, from
  * the top of the window down, with the resume lying on it, printed, rolled up and tied to a stamped tag. The roll and
  * the tag open the résumé page (/resume). The photograph runs a bleed past the strip on every side, out under the last folder, which
@@ -53,10 +80,11 @@ const spread = (room: number) => {
  * about the desk, each with the shadow the desk's lamp gives it (studio/resume/cats.py), so they can be spread over
  * whatever desk the window shows. The rigged ones breathe and move (resume-cat.tsx).
  */
-export const Resume = ({ resume, room, shift = 0, cats = true }: ResumeProps) => {
+export const Resume = ({ resume, room, across = false }: ResumeProps) => {
   const [width, height] = frame.size
   const [left, top, linkWidth, linkHeight] = frame.link
   const bleed = frame.bleed
+  const { cats, shift } = across ? along(room) : { cats: spread(room), shift: 0 }
 
   return (
     <div className="absolute inset-y-0 right-0 z-0" style={{ width: `${width}rem`, backgroundColor: FOOT }}>
@@ -67,7 +95,7 @@ export const Resume = ({ resume, room, shift = 0, cats = true }: ResumeProps) =>
         className="pointer-events-none absolute max-w-none select-none"
         style={{ left: `${-bleed}rem`, top: `${-bleed - shift}rem`, width: `${width + 2 * bleed}rem`, height: `${height + 2 * bleed}rem` }}
       />
-      {cats && spread(room).map((cat) => (
+      {cats.map((cat) => (
         <ResumeCat
           key={cat.src}
           src={cat.src}
