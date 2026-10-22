@@ -2,7 +2,7 @@
 one lamp, so each thing shades the others and the hide under them as it would on a real table. Run from the
 repository root, after the art the pieces print (see ticket.py):
 
-    blender -b --factory-startup -P studio/ticket/scene.py -- [open | punch] [--scale 0.5] [--samples 64] [--proofs DIR]
+    blender -b --factory-startup -P studio/ticket/scene.py -- [open | punch | band] [--scale 0.5] [--samples 64] [--proofs DIR]
 
 The hide is in the set, so it lights what lies on it and catches the shadows, but it is not in the photograph: the
 page lays the hide itself, one texture across the strip and its tab (leather.py's square), and the photograph over it
@@ -10,7 +10,11 @@ holds only the pieces and their shadows.
 
 open is the open page: the ticket on the hide, the strip of stamps beside it and the Leica lying
 on its back at the top, over the ticket's corner. punch is the same set with the conductor's punch through the
-ticket, photographed only round the hole, for the page to lay over open once the address is copied.
+ticket, photographed only round the hole, for the page to lay over open once the address is copied. band is the set
+for a phone's folded contact strip, which runs across the window and is only a few rem deep: the Leica, the stamps and
+the ticket put down in a row along it, each whole, the strip of stamps and the ticket turned a quarter on their side,
+so their tops are to the right. It is laid out in the strip's rem (BAND_REM), so its pieces fall clear of the tabs
+that stand over the strip at the same place on any phone: the Leica and the stamps before them, the ticket past them.
 
 Every piece is the one its own script builds (leather.py, ticket.py, leica.py), laid where the page has it, in the
 spread's em (ticket.tsx: the stamps' column from 0 to BESIDE across, the ticket's frame after it, FRAME_H down). The light is the stand's room and
@@ -23,6 +27,7 @@ the page that places it.
 
 import argparse
 import json
+import math
 import os
 import sys
 
@@ -63,6 +68,32 @@ CAMERA_AT = (3.7, 1.7)
 OPEN = (-14.0, -8.0, 52.0, 46.0)
 PUNCH = 1.6  # em either side of the punch's middle, for the photograph of the hole
 
+# The band, in its own em, and how many of the strip's rem an em of it is laid at (SiteShell's contact band): the
+# picture runs from the strip's start, 20 rem along it, and 3.2 rem deep, from the band its tab stands on.
+BAND_REM = 0.1875
+BAND = (0.0, 0.0, 20 / BAND_REM, 17.0)
+# Where each piece lies in the band, in its em: the Leica's middle, the stamps' and the ticket's top left as they lie
+# turned.
+BAND_CAMERA = (8.0, 8.5)
+BAND_STAMPS = (18.0, 8.5 - STAMP_W / 2)
+BAND_TICKET = (76.0, 1.0)
+
+
+def turned(lay, h, at):
+    """What lay puts down at the stage's origin, turned a quarter clockwise, its top to the right, with its top left as
+    it lies then at at (in the page's em). h is how tall it was laid, which it is wide once turned."""
+    before = set(bpy.data.objects)
+    lay((0.0, 0.0))
+    pivot = bpy.data.objects.new("turned", None)
+    bpy.context.scene.collection.objects.link(pivot)
+    for obj in set(bpy.data.objects) - before - {pivot}:
+        if obj.parent is None:
+            obj.parent = pivot
+    pivot.rotation_euler.z = -math.pi / 2
+    pivot.location = (at[0] + h, -at[1], 0.0)
+    bpy.context.view_layer.update()
+
+
 def catcher(x0, y0, w, h):
     """The hide as the photograph needs it when the page lays the hide itself: flat and of the hide's own red, so it
     lights what is on it red from below and catches the shadows cast on it, and nothing of its own grain, which the
@@ -75,6 +106,16 @@ def catcher(x0, y0, w, h):
 
 def set_down(plate):
     """Everything for the plate on the stage. Returns the frame to photograph, in the plate's em."""
+    if plate == "band":
+        x0, y0, w, h = BAND
+        catcher(x0 - 6, y0 - 6, w + 12, h + 12).is_shadow_catcher = True
+        turned(lambda at: ticket.lay_stamps("stamps", at), STAMP_H * len(ticket.TICKET["stamps"]["views"]), BAND_STAMPS)
+        turned(lambda at: ticket.lay_ticket(False, at), ticket.H, BAND_TICKET)
+        # The Leica lies level, along the band.
+        leica.AT, leica.TURN = BAND_CAMERA, 0
+        leica.softbox(leica.camera())
+        key.add((x0 + w / 2, -(y0 + h / 2)))
+        return BAND
     x0, y0, w, h = OPEN
     floor = leather.hide(STAGE, x0 - 6, y0 - 6, w + 12, h + 12) if plate == "punch" else catcher(x0 - 6, y0 - 6, w + 12, h + 12)
     ticket.lay_ticket(plate == "punch", TICKET_AT)
@@ -96,7 +137,7 @@ def set_down(plate):
 def main():
     global STAGE
     parser = argparse.ArgumentParser()
-    parser.add_argument("plates", nargs="*", choices=("open", "punch"))
+    parser.add_argument("plates", nargs="*", choices=("open", "punch", "band"))
     parser.add_argument("--scale", type=float, default=1.0)
     parser.add_argument("--samples", type=int, default=160)
     parser.add_argument("--proofs")

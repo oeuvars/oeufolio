@@ -82,8 +82,6 @@ export const Ticket = () => {
           against the hide the strip is laid with. */}
       <div
         // On a phone the room above the spread is kept for the camera, and the bleed below the ticket is given up (ABOVE).
-        // A folded phone strip's picture of the set and the open page are matched by it (SiteShell).
-        data-morph
         className="relative select-none max-md:-mb-[1.2em] max-md:mt-[3.6em]"
         style={{ fontSize: `calc(100cqw / ${SPREAD_W})`, width: `${SPREAD_W}em`, height: `${FRAME_H}em` }}
       >

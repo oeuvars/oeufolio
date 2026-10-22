@@ -256,8 +256,10 @@ const PULL_OPENS = 0.3
 // On a phone the résumé's desk runs across the window's top, at most this much its size.
 const RESUME_LARGEST = 0.7
 // The row of each page a folded phone strip shows, as a part of the way down the page laid for it: the card's name
-// and photograph, the desk's row of the ticket, the picks and the watch, and the ticket's name.
-const FOLD_AT = { badge: 0.27, desk: 0.57, ticket: 0.67 }
+// and the desk's row of the ticket, the picks and the watch.
+const FOLD_AT = { badge: 0.27, desk: 0.57 }
+// The contact strip's folded band (studio/ticket/scene.py BAND): 20 rem along the strip and 3.2 deep, its em 0.1875 rem.
+const CONTACT_BAND = { long: '20rem', deep: '3.1875rem' }
 // How long the page laid for a folded phone strip is, for one that fills its box, as a part of how wide it is: long
 // enough that the page is as wide as the strip is long.
 const FOLD_TALL = 1.7
@@ -984,23 +986,34 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           and slid so the row of it that says most lies in the middle of what the strip shows (FOLD_AT).
                           Open, the page itself comes up over it. The letter's drawings and the poster's top row of
                           windows, its sign in one line across them, are pictures made for the band. */}
-                      {tones[i].hangs || tones[i].fills || tones[i].roll ? (
+                      {tones[i].roll ? (
+                        // The set put down in a row along the strip for it (studio/ticket/scene.py band), laid in the
+                        // strip's rem from its start, so its pieces fall clear of the tabs over it.
+                        <motion.div
+                          aria-hidden
+                          className="pointer-events-none"
+                          style={{ ...upright, height: CONTACT_BAND.deep, transform: `rotate(90deg) translateY(${band}px)` }}
+                          initial={false}
+                          animate={{ opacity: open ? 0 : 1 }}
+                          transition={{ duration: 0.35 }}
+                        >
+                          <img src="/objects/contact-band.avif" alt="" draggable={false} className="absolute top-0 left-0 max-w-none select-none" style={{ width: CONTACT_BAND.long, height: CONTACT_BAND.deep }} />
+                        </motion.div>
+                      ) : tones[i].hangs || tones[i].fills ? (
                         <motion.div
                           aria-hidden
                           inert
                           data-fold
                           className="pointer-events-none"
-                          style={foldBand(i, tones[i].hangs ? FOLD_AT.badge : tones[i].fills ? FOLD_AT.desk : FOLD_AT.ticket, tones[i].roll ? undefined : FOLD_TALL * (tones[i].hangs ? foldCard : metrics.height))}
+                          style={foldBand(i, tones[i].hangs ? FOLD_AT.badge : FOLD_AT.desk, FOLD_TALL * (tones[i].hangs ? foldCard : metrics.height))}
                           initial={false}
                           animate={{ opacity: open || folding === i ? 0 : 1 }}
                           transition={instant}
                         >
                           {tones[i].hangs ? (
                             <Badge badge={profile.badge} page={foldCard} margin={1.5 * metrics.rem} open={false} past={(metrics.height - foldCard) / 2} />
-                          ) : tones[i].fills ? (
-                            <Desk still />
                           ) : (
-                            <Ticket />
+                            <Desk still />
                           )}
                         </motion.div>
                       ) : tones[i].bleeds && workPoster ? (
@@ -1051,8 +1064,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           inert={!open}
                           aria-hidden={!open || undefined}
                           initial={false}
-                          animate={{ opacity: open || folding === i ? 1 : 0 }}
-                          transition={instant}
+                          // The desk grows out of its band (morph); the ticket's band is a picture of its own, so the
+                          // ticket only crosses over it.
+                          animate={{ opacity: open || (folding === i && tones[i].fills) ? 1 : 0 }}
+                          transition={tones[i].fills ? instant : { duration: 0.35 }}
                         >
                           <div data-page className="grid min-h-full origin-top-left content-center" style={{ paddingBottom: marginsOf(i).foot }}>
                             {open && children}
