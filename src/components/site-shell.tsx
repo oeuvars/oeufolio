@@ -10,6 +10,7 @@ import { Badge } from './badge'
 import { POSTER } from './house'
 import { Desk } from './mat/desk'
 import { Resume } from './resume'
+import resumeFrame from './resume.json'
 import tabcut from './tabcut.json'
 import { Ticket } from './ticket/ticket'
 import { useStackMetrics } from './use-stack-metrics'
@@ -249,10 +250,9 @@ const PAGE = '@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,
 const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 // How far of the way a tab pulled on a phone has to be taken for its strip to open when it is let go.
 const PULL_OPENS = 0.3
-// On a phone the résumé's desk runs across the window's top at this much its size, its photograph laid back along it
-// by RESUME_SHIFT rem so the roll and its tag lie past the last folder's tab and in the window.
-const RESUME_ON_PHONE = 0.7
-const RESUME_SHIFT = 6.3
+// On a phone the résumé's desk runs across the window's top, its photograph laid back along it so the roll and its tag
+// lie across the window's middle, at least this far in from either edge, in rem.
+const RESUME_IN = 0.5
 const instant = { duration: 0 } as const
 
 const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}): CSSProperties => {
@@ -642,9 +642,11 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       maskImage: !fades ? undefined : src === cast.light ? square : `linear-gradient(#000 0, ${[...into, ...out].join(', ')})`,
     }
   }
-  // On a phone the last strip leaves room past it for the desk the résumé lies on, at RESUME_ON_PHONE its size, which
-  // the last strip's tab stands out over as it does on a wide screen.
-  const fixed = mobile ? RESUME_ON_PHONE * end : spine + end
+  // On a phone the last strip leaves room past it for the desk the résumé lies on, which the last strip's tab stands out
+  // over as it does on a wide screen. The desk is as large as there if its roll and tag fit across the window, RESUME_IN
+  // in from either edge, and only as much smaller as they need to.
+  const resumeScale = Math.min(1, (metrics.height / metrics.rem - 2 * RESUME_IN) / resumeFrame.link[3])
+  const fixed = mobile ? end * resumeScale : spine + end
   const gaps = mobile ? count - 1 : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
   // strip shows only its roll, so it folds narrower than the rest. On a phone every strip folds to one band, as
@@ -833,9 +835,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
           {mobile && (
             <div
               className="absolute top-0 right-0 z-0 origin-top-right"
-              style={{ width: end, height: metrics.height / RESUME_ON_PHONE, transform: `scale(${RESUME_ON_PHONE})` }}
+              style={{ width: end, height: metrics.height / resumeScale, transform: `scale(${resumeScale})` }}
             >
-              <Resume resume={profile.resume} room={metrics.height / RESUME_ON_PHONE / metrics.rem} shift={RESUME_SHIFT} />
+              <Resume resume={profile.resume} room={metrics.height / metrics.rem / resumeScale} shift={resumeFrame.link[1] - (metrics.height / metrics.rem / resumeScale - resumeFrame.link[3]) / 2} cats={false} />
             </div>
           )}
           {profile.nav.map((item, i) => {
