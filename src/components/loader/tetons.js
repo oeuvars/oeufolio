@@ -38,7 +38,7 @@
   const FLOCK = { count: 0, height: 30, apart: [1.7, 0.42], from: 0.45, high: 0.42, speed: 0.024 }
   // The writing over the mountains, as the cover's green marker is over them: its colour; how wide, as a share of the
   // screen's columns, on a wide screen and a narrow one; and where its middle lies, as a share of the screen's height.
-  const WRITING = { ink: [140, 236, 112], wide: 0.46, narrow: 0.88, at: 0.42 }
+  const WRITING = { ink: [140, 236, 112], wide: 0.32, narrow: 0.8, at: 0.42 }
   // How bright the pearl is at the flock's distance.
   const DISTANCE = 0.9
   // Mother of pearl: white with a sheen of pink, green and blue that drifts across each bird.
