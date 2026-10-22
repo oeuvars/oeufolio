@@ -80,9 +80,11 @@ export const Ticket = ({ open }: TicketProps) => {
           className="pointer-events-none absolute max-w-none transition-opacity"
           style={{ ...over(PX, PY, PW, PH), opacity: copied ? 1 : 0 }}
         />
+        {/* Its type is clear, so it goes without the panel's ink filter, which would only be worked out again on every
+            frame the strip slides. */}
         <div
           data-plate="ticket"
-          className="absolute text-transparent select-text [&_.ink-only]:invisible"
+          className="absolute text-transparent select-text [&_*]:filter-none [&_.ink-only]:invisible"
           style={{ left: `${BESIDE_W + B}em`, top: `${B}em`, width: `${W}em`, height: `${H}em` }}
         >
           <Print onCopy={copy} copied={copied} />

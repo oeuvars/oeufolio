@@ -405,13 +405,15 @@
     user-select: none;
   }
 
-  /* What is stuck on the tab. The render brings the shadow it sits in. This is the one the lamp throws. */
+  /* What is stuck on the tab. The render brings the shadow it sits in. This is the one the lamp throws. It is a
+     layer of its own, so the shadow is drawn once and not again on every frame its strip slides. */
   .tab-piece {
     position: absolute;
     max-width: none;
     pointer-events: none;
     user-select: none;
     filter: drop-shadow(1.5px 1px 1.2px rgb(0 0 0 / 0.3));
+    will-change: transform;
   }
 
   .caption {

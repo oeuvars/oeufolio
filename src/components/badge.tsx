@@ -104,9 +104,10 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
           alt={open ? badge.alt : ''}
           aria-hidden={!open}
           draggable={false}
-          className={`relative block w-auto max-w-none touch-pan-y select-none [filter:drop-shadow(0_10px_14px_rgb(0_0_0/0.3))] ${open ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          className={`relative block w-auto max-w-none touch-pan-y select-none will-change-transform [filter:drop-shadow(0_10px_14px_rgb(0_0_0/0.3))] ${open ? 'cursor-grab active:cursor-grabbing' : ''}`}
           // The photograph is as tall as the sheet, unless that would put the holder under the tabs. The ring above it
-          // stands out over the sheet's top, which hides it until the card swings.
+          // stands out over the sheet's top, which hides it until the card swings. It is a layer of its own, so its
+          // shadow is drawn once and not again on every frame the strips slide or the card swings.
           style={{
             height: `calc(${photo} * ${1 + HEAD})`,
             top: `calc(${photo} * ${-HEAD})`,
