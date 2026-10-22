@@ -22,7 +22,9 @@ tile; public/objects/poster.avif, the light printed on it (the windows, the sign
 wall was), which the page screens over the paper; and public/objects/poster-strip.avif, the same for the work strip
 folded: the poster's middle column of windows, the full height of it, with none of the passages, which come with the
 page when the strip opens. The sign is too wide for the column, so it hangs down the column's middle in one line
-instead, set and lit as the poster's is (art/spine.png): the strip shows the whole of "human experience".
+instead, set and lit as the poster's is (art/spine.png): the strip shows the whole of "human experience". And
+public/objects/poster-band.avif, the same for a folded phone strip, which lies across the window: the poster's top row
+of windows, the width of them, with the sign in one line across it (art/band.png).
 """
 
 import argparse
@@ -40,6 +42,8 @@ SCALE = 3
 PASSAGES = [(305, 302, 398, 453), (512, 374, 642, 451), (100, 484, 302, 561), (300, 622, 530, 709)]
 # The folded strip's column, in the reference's pixels: the windows stacked down its middle.
 STRIP = (300, 594)
+# A folded phone strip's band, in the reference's pixels (left, top, right, bottom): the top row of windows.
+BAND = (100, 195, 650, 290)
 # How far round its letters, in the reference's pixels, the old sign's glow runs.
 GLOW = 22
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
@@ -214,7 +218,9 @@ def main():
 
     # The sign in place of the old one, and on the folded strip's column, the sign hung down it.
     title = plate("title.png", size)
-    strip, _ = light_sign(lift_sign(picture, title, reach=GLOW), plate("spine.png", size), shape)
+    unsigned = lift_sign(picture, title, reach=GLOW)
+    strip, _ = light_sign(unsigned, plate("spine.png", size), shape)
+    band, _ = light_sign(unsigned, plate("band.png", size), shape)
     picture, letters = light_sign(lift_sign(picture, title), title, shape)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
@@ -246,12 +252,15 @@ def main():
     # as light (a screen), so the wall it shows is the paper.
     floor = sheet.reshape(-1, 3).mean(0) + FLOOR
     left, right = (x * SCALE for x in STRIP)
-    for name, image in (("poster", picture), ("poster-strip", strip)):
+    for name, image in (("poster", picture), ("poster-strip", strip), ("poster-band", band)):
         light = np.clip(image - floor, 0, None)
         lit = np.clip(light.max(-1) / 0.06, 0, 1)[..., None]
         light = grained(light) * lit + light * (1 - lit)
         if name == "poster-strip":
             light = light[:, left:right]
+        if name == "poster-band":
+            x0, y0, x1, y1 = (v * SCALE for v in BAND)
+            light = light[y0:y1, x0:x1]
         write(Image.fromarray((np.clip(light, 0, 1) * 255 + 0.5).astype(np.uint8)), name, args.proof)
 
 

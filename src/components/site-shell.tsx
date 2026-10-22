@@ -253,9 +253,14 @@ const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
 const PULL_OPENS = 0.3
 // On a phone the résumé's desk runs across the window's top, at most this much its size.
 const RESUME_LARGEST = 0.7
-// A folded phone strip shows its page as a wide screen lays it, on a sheet this much as wide as the strip is long, as
-// a page open on a 1440 by 900 window is, so the strip's depth shows as much of its edge as a folded strip's width does there.
-const TURNED_PAGE = 2 / 3
+// The row of each page a folded phone strip shows, as a part of the way down the page laid for it: the card's name
+// and photograph, the desk's row of the ticket, the picks and the watch, and the ticket's name.
+const FOLD_AT = { badge: 0.27, desk: 0.57, ticket: 0.67 }
+// How long the page laid for a folded phone strip is, for one that fills its box, as a part of how wide it is: long
+// enough that the page is as wide as the strip is long.
+const FOLD_TALL = 1.7
+// The card is laid for its strip at most this wide, in rem, so its name stays within the band on a wide phone.
+const FOLD_CARD = 22.5
 const instant = { duration: 0 } as const
 
 const stripStyle = (tone: Omit<Tone, 'tab'>, slot: number, z: number, extra: Record<string, string | number> = {}, tops = tabTops): CSSProperties => {
@@ -712,6 +717,16 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     const { top, foot } = marginsOf(i)
     return { ...upright, height: openWidthOf(i), '--page-top': `${top}px`, '--page-foot': `${foot}px`, '--page-room': `${openWidthOf(i) - top - foot}px` } as CSSProperties
   }
+  // A page laid upright along a folded phone strip, slid so its row `at` (a part of the way down it) lies in the middle
+  // of what shows of the strip: past the strip before and its tab, and short of the band the strip's own tab stands on.
+  const foldCard = Math.min(metrics.height, FOLD_CARD * metrics.rem)
+  const foldBand = (i: number, at: number, height?: number): CSSProperties =>
+    ({
+      ...upright,
+      height,
+      '--page-room': '200vh',
+      transform: `rotate(90deg) translateY(calc(${(strip + band - under(i)) / 2}px - ${at * 100}%))`,
+    }) as CSSProperties
   const turnedPage = (i: number): CSSProperties => ({
     paddingLeft: '1rem',
     paddingRight: '1rem',
@@ -904,41 +919,42 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   {mobile ? (
                     // The strip itself, short of its panel's overhang, so what lies on it upright is pinned to its edge.
                     <div className="absolute inset-y-0 left-0" style={{ right: overhang(i) }}>
-                      {/* Folded, a strip shows what it shows on a wide screen, the edge of its page beside the tab, laid as
-                          it is there and turned with the stack, so it runs along the strip. Open, its page is turned upright
-                          (uprightOf) and comes up over it. The letter's drawings are laid upright along it as a band. */}
+                      {/* Folded, a strip shows a band of its own page, upright and along it: the page laid again, still,
+                          and slid so the row of it that says most lies in the middle of what the strip shows (FOLD_AT).
+                          Open, the page itself comes up over it. The letter's drawings and the poster's top row of
+                          windows, its sign in one line across them, are pictures made for the band. */}
                       {tones[i].hangs || tones[i].fills || tones[i].roll ? (
                         <motion.div
                           aria-hidden
                           inert
-                          className="pointer-events-none absolute inset-y-0 right-0"
-                          style={{ width: TURNED_PAGE * metrics.height, '--page-room': `${metrics.height}px` } as CSSProperties}
+                          className="pointer-events-none"
+                          style={foldBand(i, tones[i].hangs ? FOLD_AT.badge : tones[i].fills ? FOLD_AT.desk : FOLD_AT.ticket, tones[i].roll ? undefined : FOLD_TALL * (tones[i].hangs ? foldCard : metrics.height))}
                           initial={false}
                           animate={{ opacity: open ? 0 : 1 }}
                           transition={{ duration: 0.35 }}
                         >
                           {tones[i].hangs ? (
-                            <Badge badge={profile.badge} page={TURNED_PAGE * metrics.height} margin={1.5 * metrics.rem} open={false} past={0} />
+                            <Badge badge={profile.badge} page={foldCard} margin={1.5 * metrics.rem} open={false} past={(metrics.height - foldCard) / 2} />
                           ) : tones[i].fills ? (
                             <Desk still />
                           ) : (
-                            <div className="flex h-full items-center">
-                              <Ticket />
-                            </div>
+                            <Ticket />
                           )}
+                        </motion.div>
+                      ) : tones[i].bleeds && workPoster ? (
+                        <motion.div aria-hidden className="pointer-events-none" style={foldBand(i, 0.5)} initial={false} animate={{ opacity: open ? 0 : 1 }} transition={{ duration: 0.35 }}>
+                          <img src="/objects/poster-band.avif" alt="" draggable={false} className="block w-full mix-blend-screen select-none" />
                         </motion.div>
                       ) : (
                         <motion.div
                           aria-hidden
                           style={
-                            // A picture is centred on what shows of the strip, between the strip before and its tab
-                            // and the band the strip's own tab stands on, so the poster's sign hangs clear of both.
-                            tones[i].bleeds
-                              ? { position: 'absolute', top: 0, bottom: 0, left: under(i), width: strip - band - under(i), ...(workPoster ? { opacity: 1 } : {}) }
-                              : uprightOf(i)
+                            // The building is laid as on a wide screen, turned with the strip, on what shows of it between
+                            // the strip before and its tab and the band the strip's own tab stands on.
+                            tones[i].bleeds ? { position: 'absolute', top: 0, bottom: 0, left: under(i), width: strip - band - under(i) } : uprightOf(i)
                           }
                           initial={false}
-                          animate={tones[i].bleeds && workPoster ? undefined : { opacity: open ? 0 : 1 }}
+                          animate={{ opacity: open ? 0 : 1 }}
                           transition={{ duration: tones[i].bleeds && !open ? 0 : 0.35 }}
                         >
                           <Art index={i} open={open} poster={workPoster} band={strip - overlap} turned={tones[i].bleeds} />

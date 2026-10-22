@@ -1,9 +1,9 @@
 <!doctype html>
 <!--
   The poster's type, set where the reference poster sets it, in its 736 x 981 pixels: type.mjs photographs it at
-  three times that for poster.py to print. Three plates, shown one at a time by the class on <body>: the glowing
-  title ("title"), the four italic passages ("body"), and the title again as the folded strip's sign ("spine"), all
-  white on black. Each company is named once, in the run of
+  three times that for poster.py to print. Four plates, shown one at a time by the class on <body>: the glowing
+  title ("title"), the four italic passages ("body"), the title again as the folded strip's sign ("spine"), and in
+  one line across the top row of windows, as a folded phone strip's sign ("band"), all white on black. Each company is named once, in the run of
   its passage, as a link (a.mark): type.mjs measures where each one falls, for poster.py to run a highlighter over it
   and for the page to lay the link there.
 -->
@@ -28,14 +28,16 @@
       }
       .title,
       .body,
-      .spine {
+      .spine,
+      .band {
         position: absolute;
         inset: 0;
         visibility: hidden;
       }
       body.title .title,
       body.body .body,
-      body.spine .spine {
+      body.spine .spine,
+      body.band .band {
         visibility: visible;
       }
       /* Each word sits on its baseline at (left, top). */
@@ -56,6 +58,13 @@
         top: 490px;
         line-height: 1;
         transform: translate(-50%, -50%) rotate(90deg);
+      }
+      /* A folded phone strip's sign: the title in one line across the middle of the top row of windows (poster.py BAND). */
+      #band {
+        left: 375px;
+        top: 242px;
+        line-height: 1;
+        transform: translate(-50%, -50%);
       }
       /* Each passage is set line for line, every line but the last pulled out to the measure, the breaks chosen so
          each is nearly full before it is, so the spaces stay even. Its top is its first baseline. */
@@ -95,6 +104,9 @@
     </div>
     <div class="spine">
       <div class="word" id="spine" style="--size: 84px; --track: -0.05em">human experience</div>
+    </div>
+    <div class="band">
+      <div class="word" id="band" style="--size: 50px; --track: -0.05em">human experience</div>
     </div>
     <div class="body">
       <div class="passage" id="parcel">
