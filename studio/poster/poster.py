@@ -53,17 +53,12 @@ WORD_SPACE = 22
 SAX, SITTER, CANDLE, CURTAIN = (308, 163, 390, 293), (405, 122, 500, 238), (520, 228, 636, 372), (415, 710, 527, 855)
 # How tall a pair of them is set above and below the column's sign, and how far apart the two are, in the
 # reference's pixels.
-COLUMN_WINDOWS, PAIR_GAP = 128, 8
+COLUMN_WINDOWS, PAIR_GAP = 104, 8
 # The dark wall left round a folded strip's sign, for its glow, in the reference's pixels.
-GLOW_ROOM = 30
-# How many times smaller than the open page shows the poster a phone shows its folded band's sign, which runs the
-# band's width; and the haze the reference's sign leaves on the wall round the poster's, which a sign on a bare wall
-# has to be given, round each folded strip's sign as (spread, amount).
-BAND_SEEN = 1.62
-BAND_HAZE = ((5, 0.7), (14, 0.45))
-COLUMN_HAZE = ((6, 0.45),)
-# The dark wall left round the band's sign, for its haze, in the reference's pixels.
-BAND_ROOM = 45
+GLOW_ROOM = 16
+# How far round each word of the sign a folded strip takes the poster's light with it, and the room left round the
+# word for that, in the reference's pixels.
+WORD_REACH, WORD_PAD = 6, 24
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
 # is shown at, src/components/site-shell.tsx PAPER, the poster being shown about a third of its size).
 PAPER_TAKES = 420
@@ -119,28 +114,34 @@ def lift_sign(picture, title):
     return picture * keep[..., None] + fill * under[..., None]
 
 
-def light_sign(picture, title, shape, seen=1.0, haze=(), screen=None):
-    """A sign over the wall: its letters a little out of focus and made of dots, then the light they throw. Seen
-    times as large a blur and glow keep the poster's look on a picture shown seen times smaller, and its screen screen
-    times as coarse (seen times, unless given), so its dots still show there. A sign with no
-    photographed wall under it has none of the haze the reference's sign left on the wall round it (lift_sign), so it
-    is given haze: (spread, amount) pairs of light round its letters, spread in the reference's pixels."""
-    letters = ndimage.gaussian_filter(title, 1.1 * seen * SCALE)
-    dots = screen_dots(shape, 2.1 * (screen or seen) * SCALE)
+def light_sign(picture, title, shape):
+    """A sign over the wall: its letters a little out of focus and made of dots, then the light they throw."""
+    letters = ndimage.gaussian_filter(title, 1.1 * SCALE)
+    dots = screen_dots(shape, 2.1 * SCALE)
     face = SIGN * (0.6 + 0.34 * dots)[..., None]
     picture = picture * (1 - letters[..., None]) + face * letters[..., None]
-    glow = 0.42 * ndimage.gaussian_filter(title, 3 * seen * SCALE) + 0.18 * ndimage.gaussian_filter(title, 12 * seen * SCALE)
-    for spread, amount in haze:
-        glow += amount * ndimage.gaussian_filter(title, spread * seen * SCALE)
+    glow = 0.42 * ndimage.gaussian_filter(title, 3 * SCALE) + 0.18 * ndimage.gaussian_filter(title, 12 * SCALE)
     glow = np.clip(glow, 0, 1)[..., None] * SIGN
     return 1 - (1 - picture) * (1 - glow), letters
 
 
-def one_line(title):
-    """The poster's sign in one line: its two words cut from its plate as they are set there, "experience" a word space
-    on from "human", on the same baseline."""
-    human, experience = (title[(base - RISE) * SCALE : (base + FALL) * SCALE, x0 * SCALE : x1 * SCALE] for x0, x1, base in WORDS)
-    return np.concatenate([human, np.zeros((human.shape[0], WORD_SPACE * SCALE), np.float32), experience], 1)
+def one_line(lit, title):
+    """The poster's sign in one line, as the poster shows it: each of its two words cut from the lit poster with the
+    light round it, as far as its glow runs (WORD_REACH), and "experience" set a word space on from "human", on the
+    same baseline. What lies under the glow on the poster, the window it crosses, comes with it."""
+    pad, reach = WORD_PAD * SCALE, WORD_REACH * SCALE
+    cut = []
+    for x0, x1, base in WORDS:
+        rows = slice((base - RISE) * SCALE - pad, (base + FALL) * SCALE + pad)
+        cols = slice(x0 * SCALE - pad, x1 * SCALE + pad)
+        glow = ndimage.gaussian_filter(ndimage.grey_dilation(title[rows, cols], size=(reach, reach)), reach / 2)
+        cut.append(lit[rows, cols] * np.clip(1.4 * glow / glow.max(), 0, 1)[..., None])
+    human, experience = cut
+    line = np.zeros((human.shape[0], human.shape[1] + WORD_SPACE * SCALE - 2 * pad + experience.shape[1], 3), np.float32)
+    put(line, human, 0, 0)
+    at = line.shape[1] - experience.shape[1]
+    line[:, at:] = np.maximum(line[:, at:], experience)
+    return line
 
 
 def pair(picture, boxes, tall):
@@ -157,30 +158,25 @@ def put(canvas, image, left, top):
     canvas[top : top + image.shape[0], left : left + image.shape[1]] = image
 
 
-def folded_band(title):
-    """A folded phone strip's picture: the poster's sign in one line on the dark wall, as wide as the band. The phone
-    shows it smaller than the open page shows the poster (BAND_SEEN), so its light is drawn at the size it shows there."""
-    sign = one_line(title)
-    room = BAND_ROOM * SCALE
-    plate = np.zeros((sign.shape[0] + 2 * room, sign.shape[1] + 2 * room), np.float32)
-    put(plate, sign, room, room)
-    return light_sign(np.zeros(plate.shape + (3,), np.float32), plate, plate.shape, BAND_SEEN, BAND_HAZE, BAND_SEEN)[0]
+def folded_band(lit, title):
+    """A folded phone strip's picture: the poster's sign in one line on the dark wall, as the poster shows it."""
+    return one_line(lit, title)
 
 
-def folded_column(picture, title):
+def folded_column(picture, lit, title):
     """The folded strip's picture: the sign in one line down the dark wall, turned to read downwards as a sign hangs
     down a building, a pair of windows above it and a pair below it. A phone turns the strip back, so there it reads
     across."""
-    sign = np.rot90(one_line(title), -1)
+    sign = np.rot90(one_line(lit, title), -1)
     above, below = pair(picture, (SAX, SITTER), COLUMN_WINDOWS), pair(picture, (CANDLE, CURTAIN), COLUMN_WINDOWS)
     room = GLOW_ROOM * SCALE
     tall, wide = picture.shape[0], (STRIP[1] - STRIP[0]) * SCALE
-    wall, plate = np.zeros((tall, wide, 3), np.float32), np.zeros((tall, wide), np.float32)
+    wall = np.zeros((tall, wide, 3), np.float32)
     top = (tall - sign.shape[0]) // 2
-    put(plate, sign, (wide - sign.shape[1]) // 2, top)
+    put(wall, sign, (wide - sign.shape[1]) // 2, top)
     put(wall, above, (wide - above.shape[1]) // 2, top - room - above.shape[0])
     put(wall, below, (wide - below.shape[1]) // 2, top + sign.shape[0] + room)
-    return light_sign(wall, plate, plate.shape, haze=COLUMN_HAZE)[0]
+    return wall
 
 
 def paper(image):
@@ -286,10 +282,11 @@ def main():
     # The old passages come off the wall.
     picture = lift_type(picture, box_mask(shape, PASSAGES, 1.5 * SCALE))
 
-    # The sign in place of the old one, and in one line on the folded strips.
+    # The sign in place of the old one, and in one line on the folded strips, cut from the poster as it is lit.
     title = plate("title.png", size)
-    strip, band = folded_column(picture, title), folded_band(title)
+    unlit = picture
     picture, letters = light_sign(lift_sign(picture, title), title, shape)
+    strip, band = folded_column(unlit, picture, title), folded_band(picture, title)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:
