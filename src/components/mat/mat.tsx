@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { cn } from '../../lib/utils'
 import type { PlateId, PropId } from '../../types'
@@ -34,6 +34,29 @@ const over = (geometry: Geometry, x: number, y: number, w: number, h: number): R
 }
 
 /**
+ * Draws a map of the lamp's light on its canvas, `across` CSS pixels wide, at as many pixels as the screen shows it
+ * with and no more than its render has. Laid as a picture or a background, each map is decoded whole (3712 x 3840)
+ * and the browser lets it go again as soon as its other decoded pictures outgrow what it keeps, as they do while the
+ * work page's poster slides; then every repaint of the mat decodes both maps afresh. A canvas is drawn once.
+ */
+const paint = async (canvas: HTMLCanvasElement, src: string, across: number, signal: AbortSignal) => {
+  const whole = await createImageBitmap(await (await fetch(src, { signal })).blob())
+  const fine = Math.min(1, (across * (window.devicePixelRatio || 1)) / whole.width)
+  const map =
+    fine < 1
+      ? await createImageBitmap(whole, { resizeWidth: Math.round(whole.width * fine), resizeHeight: Math.round(whole.height * fine), resizeQuality: 'high' })
+      : whole
+  if (!signal.aborted) {
+    canvas.width = map.width
+    canvas.height = map.height
+    canvas.getContext('2d')?.drawImage(map, 0, 0)
+  }
+  whole.close()
+  map.close()
+  if (signal.aborted) throw signal.reason
+}
+
+/**
  * A cutting mat in teal leather, seen from overhead, with the things left on it as on a desk in use. All of
  * it is one photograph of one set, rendered in the studio under one light, so every object shades the others
  * and throws its own shadow. The page lays the plate over its own leather, as large as lets all of it show.
@@ -46,6 +69,9 @@ export const Mat = ({ children, className }: MatProps) => {
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
+  const light = useRef<HTMLCanvasElement>(null)
+  const past = useRef<HTMLCanvasElement>(null)
+  const [lit, setLit] = useState(0)
 
   // The plate fits the mat, and the objects' boxes follow it. It is laid before it is first painted, so the
   // strip never uncovers a bare mat.
@@ -103,30 +129,53 @@ export const Mat = ({ children, className }: MatProps) => {
     return () => watching.disconnect()
   }, [])
 
+  // The maps of the lamp's light, drawn once for the mat's size, and how many times they have been.
+  useEffect(() => {
+    const maps = { light: light.current, 'light-past': past.current }
+    if (!geometry || !maps.light || !maps['light-past']) return
+    const plate = PLATES[geometry.id]
+    const across = (plate.size[0] + 2 * plate.bleed[0]) * geometry.em
+    const going = new AbortController()
+    Promise.all(Object.entries(maps).map(([name, canvas]) => paint(canvas!, `/objects/mat/desk-${geometry.id}-${name}.avif`, across, going.signal)))
+      .then(() => setLit((times) => times + 1))
+      .catch(() => {})
+    return () => going.abort()
+  }, [geometry])
+
   // The folder tab the page hangs from is cut from this leather (SiteShell's Tab), so it takes the same light: the
-  // map of it, laid where it lies over the mat.
+  // part of the mat's maps that lies under it, copied onto its own canvases.
   useLayoutEffect(() => {
     const frame = root.current
     const board = sheet.current
     const tabs = [...document.querySelectorAll<HTMLElement>('[data-mat-light]')]
-    if (!frame || !board || !tabs.length || !geometry) return
+    const copies = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-light]')]
+    if (!frame || !board || !tabs.length || !geometry || !lit) return
     const plate = PLATES[geometry.id]
-    const [w, h] = plate.size
+    const [w] = plate.size
     const [bx, by] = plate.bleed
     const { em } = geometry
     const place = () => {
       const mat = board.getBoundingClientRect()
-      for (const tab of tabs) {
-        const at = tab.getBoundingClientRect()
-        tab.style.setProperty('--light-at', `${mat.left - at.left + geometry.x - bx * em}px ${mat.top - at.top + geometry.y - by * em}px`)
+      const left = mat.left + geometry.x - bx * em
+      const top = mat.top + geometry.y - by * em
+      for (const copy of copies) {
+        const map = copy.dataset.light === 'past' ? past.current : light.current
+        if (!map) continue
+        const at = copy.getBoundingClientRect()
+        const ratio = window.devicePixelRatio || 1
+        const width = Math.round(at.width * ratio)
+        const height = Math.round(at.height * ratio)
+        const where = `${at.left - left} ${at.top - top} ${width} ${height}`
+        if (copy.dataset.at === where) continue
+        copy.dataset.at = where
+        copy.width = width
+        copy.height = height
+        // The map's pixels to the page's.
+        const fine = map.width / ((w + 2 * bx) * em)
+        copy.getContext('2d')?.drawImage(map, (at.left - left) * fine, (at.top - top) * fine, at.width * fine, at.height * fine, 0, 0, width, height)
       }
     }
-    for (const tab of tabs) {
-      tab.style.setProperty('--light-rim', plate.rim)
-      tab.style.setProperty('--light-image', `url(/objects/mat/desk-${geometry.id}-light.avif)`)
-      tab.style.setProperty('--light-past', `url(/objects/mat/desk-${geometry.id}-light-past.avif)`)
-      tab.style.setProperty('--light-size', `${(w + 2 * bx) * em}px ${(h + 2 * by) * em}px`)
-    }
+    for (const tab of tabs) tab.style.setProperty('--light-rim', plate.rim)
     place()
     // The strip slides open after the mat is laid, and the page scrolls under the tab.
     const moving = new ResizeObserver(place)
@@ -137,9 +186,13 @@ export const Mat = ({ children, className }: MatProps) => {
     return () => {
       moving.disconnect()
       window.removeEventListener('scroll', place, true)
-      for (const tab of tabs) for (const name of ['--light-rim', '--light-image', '--light-past', '--light-size', '--light-at']) tab.style.removeProperty(name)
+      for (const tab of tabs) tab.style.removeProperty('--light-rim')
+      for (const copy of copies) {
+        copy.width = 0
+        delete copy.dataset.at
+      }
     }
-  }, [geometry])
+  }, [geometry, lit])
 
   const plate = geometry && PLATES[geometry.id]
 
@@ -171,25 +224,16 @@ export const Mat = ({ children, className }: MatProps) => {
 
         {geometry && plate && (
           <>
-            {/* The lamp's light on the mat, shadows and all, then the objects in it. Both maps of it are pictures
-                laid on the mat, not its backgrounds: a picture is decoded once and kept, where a background is
-                decoded again for every stretch of the mat a sliding strip uncovers. */}
+            {/* The lamp's light on the mat, shadows and all, then the objects in it. Both maps of it are drawn on
+                canvases (paint), not laid as pictures. */}
             <div aria-hidden className={`${LAID} inset-0 overflow-hidden mix-blend-multiply`} style={{ backgroundColor: plate.rim }}>
-              <img
-                src={`/objects/mat/desk-${geometry.id}-light.avif`}
-                alt=""
-                draggable={false}
-                className="absolute max-w-none"
-                style={over(geometry, -plate.bleed[0], -plate.bleed[1], plate.size[0] + 2 * plate.bleed[0], plate.size[1] + 2 * plate.bleed[1])}
-              />
+              <canvas ref={light} className="absolute" style={over(geometry, -plate.bleed[0], -plate.bleed[1], plate.size[0] + 2 * plate.bleed[0], plate.size[1] + 2 * plate.bleed[1])} />
             </div>
             {/* Where the lamp lights the leather brighter than it was photographed, which multiplying cannot show,
                 the rest of its light is added over it. */}
-            <img
+            <canvas
+              ref={past}
               aria-hidden
-              src={`/objects/mat/desk-${geometry.id}-light-past.avif`}
-              alt=""
-              draggable={false}
               className={`${LAID} mix-blend-plus-lighter`}
               style={over(geometry, -plate.bleed[0], -plate.bleed[1], plate.size[0] + 2 * plate.bleed[0], plate.size[1] + 2 * plate.bleed[1])}
             />
