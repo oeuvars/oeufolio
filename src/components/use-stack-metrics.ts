@@ -33,7 +33,7 @@ const measure = (): StackMetrics => {
     overlap: rem,
     band: (mobile ? 0.98 : 1.9) * rem,
     protrude: (mobile ? 1.05 : 2.1) * rem,
-    strip: mobile ? 3.6 * rem : clamp(8 * rem, 0.12 * width, 13 * rem),
+    strip: mobile ? 5.4 * rem : clamp(8 * rem, 0.12 * width, 13 * rem),
     // On a phone the spine lies across the window's foot, shallow enough that the whole post and its cats show.
     spine: mobile ? 3 * rem : clamp(6.5 * rem, 0.17 * height, 10 * rem),
     contact: clamp(7 * rem, 0.09 * width, 10 * rem),
