@@ -16,12 +16,14 @@ const PIECES = fold as unknown as Record<Exclude<FoldKind, 'badge'> | 'letter-wi
 const PAGE_SRC: Partial<Record<FoldKind, string>> = { letter: '/objects/letter.avif', poster: '/objects/poster.avif', desk: '/objects/mat/desk-wide.avif' }
 // How far open the strip is when a piece takes on the page's picture of itself, from and to: only once it is all but
 // at rest in its place, so it is the band's own piece that travels there, and not one dissolving into another already
-// there. And when the rest of the page comes in round the pieces, once they are well on their way, leaving their
-// places empty until they arrive.
+// there.
 const TAKES_ON = [0.9, 1]
-const REST_IN = [0.25, 0.9]
-// The desk's band is its mat in the band's light, which goes over to the page's mat in its own by then.
-const LIGHT_GOES = 0.7
+// The rest of the page lies where it lies, its pieces' places empty until they arrive, and the strip opening uncovers
+// it; only where the band showed, which the strip already had open, does it come in, by the time the strip is this far
+// open, as the band goes from under the pieces. On the desk the band's mat goes too, in the band's light.
+const BAND_GOES = 0.35
+// How far past the band its going reaches, in px, so it has no edge.
+const BAND_SOFT = 48
 // The page's light has the things' shadows and the dark under them in it, so it takes over from the light without them
 // (bare_light in studio/fold.py) only as they settle onto the mat.
 const SHADOWS_IN = [0.88, 1]
@@ -180,7 +182,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
       }
       if (moving && ((!laid && !badge) || waiting) && !measure(band, page)) return
       root.style.visibility = moving && kind !== 'badge' ? 'visible' : 'hidden'
-      const restIn = ramp(REST_IN, p)
+      const bandGoes = ramp([0, BAND_GOES], p)
 
       if (kind === 'badge') {
         if (band) band.style.visibility = state === 'band' ? 'visible' : 'hidden'
@@ -204,7 +206,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
         // mat goes, and its things are the pieces.
         if (band) {
           band.style.visibility = state === 'page' ? 'hidden' : 'visible'
-          band.style.opacity = moving ? String(1 - ramp([0, LIGHT_GOES], p)) : ''
+          band.style.opacity = moving ? String(1 - bandGoes) : ''
           band.style.zIndex = moving ? '1' : ''
           // Its things have left it, so it is lit as it is without them.
           band.style.setProperty('--fold-takes', moving ? '0' : '1')
@@ -213,7 +215,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
         }
         if (page) {
           page.style.visibility = state === 'band' ? 'hidden' : 'visible'
-          page.style.setProperty('--fold-rest', moving ? restIn.toFixed(3) : '1')
+          page.style.setProperty('--fold-rest', '1')
           page.style.setProperty('--fold-holes', moving ? desk : 'none')
           // The lamp's light on the mat is the light without the pieces until they land (bare_light in studio/fold.py).
           page.style.setProperty('--fold-takes', moving ? ramp(SHADOWS_IN, p).toFixed(3) : '1')
@@ -222,7 +224,10 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
         if (band) band.style.visibility = state === 'band' ? 'visible' : 'hidden'
         if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
       }
-      if (rest) rest.style.opacity = restIn.toFixed(3)
+      if (rest) {
+        const a = moving ? bandGoes.toFixed(3) : '1'
+        rest.style.maskImage = `linear-gradient(to ${wide ? 'right' : 'bottom'}, rgb(0 0 0 / ${a}) 0, rgb(0 0 0 / ${a}) ${folded}px, #000 ${folded + BAND_SOFT}px)`
+      }
 
       if (!moving || !laid) return
       const takes = ramp(TAKES_ON, p)
@@ -251,7 +256,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
     const watching = new ResizeObserver(apply)
     watching.observe(strip)
     return () => watching.disconnect()
-  }, [kind, open, folded, opened, pieces])
+  }, [kind, open, folded, opened, pieces, wide])
 
   return (
     // The poster's layer is light as a whole, screened over the paper under it: a layer of its own, its pieces screened

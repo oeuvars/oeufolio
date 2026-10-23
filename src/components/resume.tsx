@@ -100,6 +100,18 @@ export const Resume = ({ resume, room, across = false, clear = [0, 0] }: ResumeP
         className="pointer-events-none absolute max-w-none select-none"
         style={{ left: `${-bleed}rem`, top: `${-bleed - shift}rem`, width: `${width + 2 * bleed}rem`, height: `${height + 2 * bleed}rem` }}
       />
+      {/* On a phone the photograph is laid back for the roll to lie where it falls, which leaves the strip's start, where
+          the first cat lies, past its top: the walnut runs on there as the photograph's own top, turned over, which is
+          bare desk lit as evenly as the rest of it. */}
+      {shift < -bleed && (
+        <img
+          alt=""
+          src={resume.src}
+          draggable={false}
+          className="pointer-events-none absolute max-w-none -scale-y-100 select-none"
+          style={{ left: `${-bleed}rem`, top: `${-bleed - shift - (height + 2 * bleed)}rem`, width: `${width + 2 * bleed}rem`, height: `${height + 2 * bleed}rem` }}
+        />
+      )}
       {cats.map((cat) => (
         <ResumeCat
           key={cat.src}

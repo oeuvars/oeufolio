@@ -27,7 +27,7 @@ const RootLayout = () => {
 
 const RootDocument = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang="en" className="bg-black">
       <head>
         <HeadContent />
       </head>
@@ -51,6 +51,8 @@ export const Route = createRootRoute({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
+      // The phone's status bar and the browser's chrome round the page are black, as the desk at the window's top is.
+      { name: 'theme-color', content: '#000000' },
       // What a page without a head of its own (the 404) is called. Every page sets its own.
       {
         title: site.name,
