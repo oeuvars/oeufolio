@@ -14,10 +14,10 @@ const SIZES = fold.sizes as unknown as Record<string, [number, number]>
 const PIECES = fold as unknown as Record<Exclude<FoldKind, 'badge'> | 'letter-wide' | 'poster-wide', FoldPiece[]>
 // The page's picture under the pieces, which keeps a hole where each piece lands until it is there.
 const PAGE_SRC: Partial<Record<FoldKind, string>> = { letter: '/objects/letter.avif', poster: '/objects/poster.avif', desk: '/objects/mat/desk-wide.avif' }
-// How far open the strip is when a piece takes on the page's picture of itself, from and to: only once it is all but
-// at rest in its place, so it is the band's own piece that travels there, and not one dissolving into another already
-// there.
-const TAKES_ON = [0.9, 1]
+// How far open the strip is when a piece goes over from the band's picture of itself to the page's, at once and in
+// mid-flight, where it moves fastest. The two are often two photographs of the thing (the desk's, the contact set's),
+// from cameras a little apart, so faded one into the other they would show it twice, a little apart.
+const TAKES_ON = 0.5
 // The rest of the page lies where it lies, its pieces' places empty until they arrive, and the strip opening uncovers
 // it; only where the band showed, which the strip already had open, does it come in, by the time the strip is this far
 // open, as the band goes from under the pieces. On the desk the band's mat goes too, in the band's light.
@@ -68,11 +68,10 @@ type FoldProps = {
 }
 
 /**
- * A folded phone strip growing into its page and back. Folded, the strip shows its band ([data-fold-band]), a picture
- * of its own made of pieces of its page set in a row (studio/fold.py); open, its page ([data-fold-page]). In between,
- * as far as the strip is open, each piece travels from where the band has it to where the page has it, turning and
- * growing on the way, and takes on the page's picture of itself as it nears it, while the rest of the page comes in
- * round it. It goes as the strip goes, whether a spring or a finger moves it, and back the same way. The card's band is
+ * A folded strip growing into its page and back. Folded, the strip shows its band ([data-fold-band]), a picture of
+ * its own made of pieces of its page (studio/fold.py); open, its page ([data-fold-page]). In between, as far as the
+ * strip is open, each piece travels from where the band has it to where the page has it, turning and growing on the
+ * way, over the rest of the page, which the strip uncovers as it opens, with each piece's place left empty. It goes as the strip goes, whether a spring or a finger moves it, and back the same way. The card's band is
  * its own page laid smaller, so the page itself goes there and back.
  */
 export const Fold = ({ kind, open, folded, opened, style, children, wide }: FoldProps) => {
@@ -230,7 +229,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
       }
 
       if (!moving || !laid) return
-      const takes = ramp(TAKES_ON, p)
+      const takes = p >= TAKES_ON
       laid.forEach(({ from, to, grow, turn }, n) => {
         const face = faces[n]
         const x = from[0] + (to[0] - from[0]) * p
@@ -239,8 +238,8 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
         const bandFace = face.children[0] as HTMLElement
         const turning = face.children[1] as HTMLElement
         // The page's picture of the piece is laid over the band's as it settles, and the band's goes once it is covered.
-        bandFace.style.opacity = takes >= 1 ? '0' : '1'
-        turning.style.opacity = String(takes)
+        bandFace.style.opacity = takes ? '0' : '1'
+        turning.style.opacity = takes ? '1' : '0'
       })
     }
 
