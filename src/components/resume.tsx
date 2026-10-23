@@ -73,8 +73,9 @@ const along = (room: number, [from, to]: [number, number]) => {
   return { cats: [{ ...first, top: (from - first.size[1]) / 2 }, ...laid], shift: frame.link[1] - rollTop }
 }
 
-/** How much of the strip past the last folder's tab a phone's roll needs: the roll and its tag, with desk either side. */
-export const RESUME_ROLL = frame.link[3] + 2 * APART
+/** How much of the strip past the last folder's tab a phone's row needs: the roll and its tag and the two cats after
+ * it, with desk between them and either side, and a hair over so along never finds it a hair short. */
+export const RESUME_ROW = frame.link[3] + frame.cats.laid[1].size[1] + frame.cats.laid[2].size[1] + 4 * APART + 0.01
 
 /**
  * The strip of desk to the right of the folders, photographed (studio/resume): walnut under a satin lacquer, from

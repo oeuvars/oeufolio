@@ -11,7 +11,7 @@ import { POSTER, moveFrom } from './house'
 import { Letter } from './letter'
 import { PosterPicture } from './poster'
 import { Desk } from './mat/desk'
-import { RESUME_ROLL, Resume } from './resume'
+import { RESUME_ROW, Resume } from './resume'
 import tabcut from './tabcut.json'
 import { Ticket } from './ticket/ticket'
 import { useStackMetrics } from './use-stack-metrics'
@@ -669,14 +669,14 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   }
   // On a phone the last strip leaves room past it for the desk the résumé lies on, which the last strip's tab stands out
   // over as it does on a wide screen. As there the roll lies clear of the tab, past it across the window, and the desk
-  // is as large as lets the roll and its tag fit there, and no larger than RESUME_LARGEST.
+  // is as large as lets the roll, its tag and two cats after it fit there, and no larger than RESUME_LARGEST.
   const lastTab = (() => {
     const shape = tabShape(count)
     const { reach } = tabOutline(shape)
     const from = tops[count] * metrics.rem - reach
     return [from, from + shape.height + 2 * reach]
   })()
-  const resumeScale = Math.min(RESUME_LARGEST, (metrics.height - lastTab[1]) / metrics.rem / RESUME_ROLL)
+  const resumeScale = Math.min(RESUME_LARGEST, (metrics.height - lastTab[1]) / metrics.rem / RESUME_ROW)
   const fixed = mobile ? spine + end * resumeScale : spine + end
   const gaps = mobile ? count : count + 1
   // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
