@@ -689,8 +689,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const openWidth = poster && !mobile ? Math.min(room, (metrics.height * POSTER.width) / POSTER.height + overlap) : room
   const spare = (room - openWidth) / (count - 1)
   const folded = (i: number) => folds(i) + spare
-  // How wide a strip is when its page is open, whichever page is open now.
-  const openWidthOf = (i: number) => (i === index ? openWidth : roomFor(i))
+  // How wide a strip is when its page is open, whichever page is open now: the poster's no wider than the poster.
+  const openWidthOf = (i: number) =>
+    i === index ? openWidth : !mobile && tones[i].bleeds && workPoster ? Math.min(roomFor(i), (metrics.height * POSTER.width) / POSTER.height + overlap) : roomFor(i)
   // A page laid out as it is when open, at the width it is then, and as wide as its panel: the whole strip when the
   // page covers it, out to the torn edge and over the tear's reach past it, so what the page lays out to its edges
   // is what the tear cuts; and short of the band when the page sits framed on it.
@@ -744,10 +745,14 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       '--page-room': '200vh',
       transform: `rotate(90deg) translateY(calc(${(strip + band - under(i)) / 2}px - ${at * 100}%))`,
     }) as CSSProperties
-  // Which way a folded phone strip's band grows into its page (Fold): the building, the work page's other version,
-  // has no band of pieces, and only crosses over its strip's picture.
+  // Which way a folded strip's picture grows into its page (Fold): the building, the work page's other version, has no
+  // picture of pieces, and only crosses over its strip's. On a wide screen the card, the desk and the ticket lie under
+  // their strips, open or folded, so opening one only uncovers its page.
   const foldOf = (i: number): FoldKind | null =>
-    tones[i].hangs ? 'badge' : i === LETTER ? 'letter' : tones[i].bleeds ? (workPoster ? 'poster' : null) : tones[i].fills ? 'desk' : tones[i].roll ? 'contact' : null
+    tones[i].hangs ? (mobile ? 'badge' : null) : i === LETTER ? 'letter' : tones[i].bleeds ? (workPoster ? 'poster' : null) : !mobile ? null : tones[i].fills ? 'desk' : tones[i].roll ? 'contact' : null
+  // The page's picture as the page lays it, for the pieces of the letter's or the poster's strip to land in: their pages
+  // are only there while they are open.
+  const pictureOf = (i: number) => (foldOf(i) === 'letter' ? <Letter letter={profile.letter} /> : foldOf(i) === 'poster' ? <PosterPicture /> : null)
   const turnedPage = (i: number): CSSProperties => ({
     paddingLeft: '1rem',
     paddingRight: '1rem',
@@ -1035,23 +1040,11 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                       ) : null}
                       {foldOf(i) && (
                         <Fold kind={foldOf(i)!} open={open} folded={folds(i)} opened={roomFor(i)} style={uprightOf(i)}>
-                          {/* The letter's and the poster's pages are only here while they are open, so their pictures are
-                              laid here as their pages lay them, for the pieces to land in. */}
-                          {foldOf(i) === 'letter' ? (
+                          {pictureOf(i) && (
                             <div className={PAGE} style={turnedPage(i)}>
-                              <div className="grid flex-1 content-center">
-                                <div>
-                                  <Letter letter={profile.letter} />
-                                </div>
-                              </div>
+                              <div className="grid flex-1 content-center">{pictureOf(i)}</div>
                             </div>
-                          ) : foldOf(i) === 'poster' ? (
-                            <div className={PAGE} style={turnedPage(i)}>
-                              <div className="grid flex-1 content-center">
-                                <PosterPicture />
-                              </div>
-                            </div>
-                          ) : null}
+                          )}
                         </Fold>
                       )}
                     </div>
@@ -1059,22 +1052,26 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                     <>
                       {tones[i].hangs ? (
                         <Badge badge={profile.badge} page={openWidthOf(i)} margin={band + protrude} open={open} past={protrude} />
-                      ) : tones[i].fills || tones[i].roll ? null : (
+                      ) : tones[i].fills || tones[i].roll ? null : foldOf(i) ? (
+                        // A picture runs on under the strip before it as far as that strip's tear can bite, and out to its
+                        // panel's edge past its own tear's reach, as the open page does, so no tear uncovers bare panel.
+                        <div
+                          data-fold-band
+                          aria-hidden
+                          className="absolute inset-y-0"
+                          style={tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) } : { left: overlap, width: folded(i) - band - overlap }}
+                        >
+                          <Art index={i} open={open} poster={workPoster} />
+                        </div>
+                      ) : (
                         <motion.div
                           aria-hidden
                           className="absolute inset-y-0"
-                          // A picture runs on under the strip before it as far as that strip's tear can bite, and out to its
-                          // panel's edge past its own tear's reach, as the open page does, so no tear uncovers bare panel.
-                          // The poster hands over to its page and back in the same frame, the two lying on each other, and its
-                          // page hides and shows it (Poster, StripPoster), so it is always here, not faded.
-                          style={{
-                            ...(tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) } : { left: overlap, width: folded(i) - band - overlap }),
-                            ...(tones[i].bleeds && workPoster ? { opacity: 1 } : {}),
-                          }}
+                          style={{ left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) }}
                           initial={false}
-                          animate={tones[i].bleeds && workPoster ? undefined : { opacity: open ? 0 : 1 }}
-                          // A picture page folds back into its strip's picture, which has to be there at once to take over.
-                          transition={{ duration: tones[i].bleeds && !open ? 0 : 0.35 }}
+                          animate={{ opacity: open ? 0 : 1 }}
+                          // The building folds back into its strip's picture, which has to be there at once to take over.
+                          transition={{ duration: open ? 0.35 : 0 }}
                         >
                           <Art index={i} open={open} poster={workPoster} />
                         </motion.div>
@@ -1091,17 +1088,26 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           </div>
                         </div>
                       ) : open ? (
-                        <motion.div
-                          className={PAGE}
-                          style={page(i)}
-                          // A page that is a picture grows out of its strip's own picture, so it is there from the start.
-                          initial={tones[i].bleeds ? false : { opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.45, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
-                        >
+                        <div data-fold-page className={PAGE} style={page(i)}>
                           <div className="grid flex-1 content-center py-[4vh]">{children}</div>
-                        </motion.div>
+                        </div>
                       ) : null}
+                      {foldOf(i) && (
+                        <Fold
+                          kind={foldOf(i)!}
+                          wide
+                          open={open}
+                          folded={open ? folds(i) : folded(i)}
+                          opened={openWidthOf(i)}
+                          style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: page(i).width }}
+                        >
+                          {pictureOf(i) && (
+                            <div className={PAGE} style={page(i)}>
+                              <div className="grid flex-1 content-center py-[4vh]">{pictureOf(i)}</div>
+                            </div>
+                          )}
+                        </Fold>
+                      )}
                     </>
                   )}
                   {!open && <Link to={item.to} search={searchOf(item.to)} tabIndex={-1} aria-hidden className="absolute inset-0 z-10" style={mobile ? { touchAction: 'none' } : undefined} {...pullOf(i)} />}

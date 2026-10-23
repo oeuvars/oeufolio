@@ -1,8 +1,8 @@
-import { type AnimationPlaybackControls, animate, useReducedMotion } from 'motion/react'
+import { animate, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef } from 'react'
 
 import type { PosterMarks } from '../types'
-import { POSTER, POSTER_COLUMN, moveFrom, posterFold, slide } from './house'
+import { POSTER } from './house'
 import posterMarks from './poster.json'
 
 /** The companies the passages name, each under a stroke of highlighter: studio/poster/type.mjs measures them. */
@@ -18,9 +18,8 @@ const { size: REFERENCE, marks: MARKS } = posterMarks as PosterMarks
  * poster is at the window's height (SiteShell), so almost none of it is cropped. On a phone the strip is far narrower
  * than the poster, so it runs the strip's width instead, with the paper above and below it.
  *
- * It grows out of its folded strip (StripPoster): under it lies the strip's own column, and when the strip unfolds
- * the poster starts with that column where the strip's stood, and moves to its place on the strip's spring as the rest
- * of the poster comes up over it. As it goes it leaves where its column was, for the folded strip to start from.
+ * It grows out of its folded strip's picture, the strip's sign and windows going to their places on it as the strip
+ * opens (Fold), so it shows whole once the strip is open. Only when the window opens on it does it come up.
  */
 // The page the poster lies on, and the poster as the page lays it.
 const FRAME = 'absolute inset-0 overflow-hidden mix-blend-screen [container-type:size] max-md:top-(--page-top) max-md:bottom-(--page-foot)'
@@ -29,38 +28,22 @@ const SHEET =
 
 export const Poster = () => {
   const sheet = useRef<HTMLDivElement>(null)
-  const column = useRef<HTMLImageElement>(null)
   const light = useRef<HTMLImageElement>(null)
   const still = useReducedMotion()
 
   useLayoutEffect(() => {
     const page = sheet.current
-    const own = column.current
     const full = light.current
     const strip = page?.closest<HTMLElement>('.strip')
-    if (!page || !own || !full || !strip) return
-
-    page.style.transform = ''
-    // The strip is still folded when the page first lays out, if it is unfolding: narrower than the page.
-    const folded = strip.querySelector<HTMLElement>('[data-poster-column]')
-    // A column turned with its phone strip is not grown out of: the page fades in over it.
-    const unfolding = folded && !folded.closest('[data-turned]') && strip.getBoundingClientRect().width < page.parentElement!.getBoundingClientRect().width - 40
-    const place = folded?.getBoundingClientRect()
-    if (folded) folded.style.visibility = 'hidden'
-    const motions: AnimationPlaybackControls[] = []
-    // On a phone the poster has already grown out of its folded strip's band by the time its page shows (Fold), so it
-    // is all there at once.
-    if (still || window.innerWidth < 768) full.style.opacity = '1'
-    else {
-      if (unfolding && place) motions.push(animate(page, moveFrom(place, page, own.getBoundingClientRect()), slide))
-      motions.push(animate(full, { opacity: [0, 1] }, { duration: unfolding ? 0.45 : 0.6, delay: unfolding ? 0 : 0.3, ease: [0.215, 0.61, 0.355, 1] }))
+    if (!page || !full || !strip) return
+    // The strip is still folded when the page first lays out if it is opening: narrower than the page.
+    const opening = strip.getBoundingClientRect().width < page.parentElement!.getBoundingClientRect().width - 40
+    if (still || opening || window.innerWidth < 768) {
+      full.style.opacity = '1'
+      return
     }
-
-    return () => {
-      posterFold.column = own.getBoundingClientRect()
-      if (folded) folded.style.visibility = ''
-      for (const motion of motions) motion.stop()
-    }
+    const coming = animate(full, { opacity: [0, 1] }, { duration: 0.6, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] })
+    return () => coming.stop()
   }, [still])
 
   return (
@@ -75,15 +58,6 @@ export const Poster = () => {
         className={SHEET}
         style={{ aspectRatio: `${POSTER.width} / ${POSTER.height}` }}
       >
-        <img
-          ref={column}
-          aria-hidden
-          src="/objects/poster-strip.avif"
-          alt=""
-          draggable={false}
-          className="absolute top-0 h-full max-w-none select-none"
-          style={{ left: `${(100 * POSTER_COLUMN.left) / POSTER.width}%`, width: `${(100 * POSTER_COLUMN.width) / POSTER.width}%` }}
-        />
         <img
           ref={light}
           src="/objects/poster.avif"

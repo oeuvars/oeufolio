@@ -2,12 +2,13 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow>=11.3", "scipy"]
 # ///
-"""Where each piece of a folded phone strip's band goes on its open page (SiteShell's fold).
+"""Where each piece of a folded strip's picture goes on its open page (Fold).
 
     uv run studio/fold.py [--proof DIR]
 
 On a phone each folded strip shows a band of its own, made of pieces of its page set in a row: the letter's drawings,
-the poster's sign and windows, a few of the desk's things, the whole contact set. As the strip opens, each piece
+the poster's sign and windows, a few of the desk's things, the whole contact set. On a wide screen the letter's and the
+poster's strips show the same drawings and a sign and windows set down them (letter-wide, poster-wide). As the strip opens, each piece
 travels from where the band has it to where the page has it, turning and growing on the way, and as it folds, back.
 For each piece this writes, for the band's picture and the page's: which picture it is in (the src the page lays it
 with), the outline it is cut out by, in that picture's pixels, and the point it turns about, the same point of the
@@ -134,10 +135,22 @@ def piece(band_src, band_clip, band_at, page_src, page_clip, page_at, turn=0.0, 
 
 def letter():
     """The letter's drawings, date and signature: each box of the folded strip's (letter.py STRIP), set in a row in the
-    band (letter.py band) and where the page's ink has it, cut from the sheet at an offset found by matching."""
+    phone's band (letter.py band) and one under another down the wide screen's strip (letter.py strip), and where the
+    page's ink has it, cut from the sheet at an offset found by matching. Returns the phone's pieces and the wide
+    screen's."""
     import letter as made
 
     up = made.UP
+    # Down the wide screen's strip: each row of boxes side by side, their feet level, where across it the row says.
+    down = []
+    top = made.STRIP_GAP * 3 // 4
+    for across, boxes in made.STRIP:
+        foot = top + max(y1 - y0 for _, y0, _, y1 in boxes)
+        left = round(across * (made.STRIP_WIDTH - sum(x1 - x0 for x0, _, x1, _ in boxes)))
+        for x0, y0, x1, y1 in boxes:
+            down.append((left, foot - (y1 - y0)))
+            left += x1 - x0
+        top = foot + made.STRIP_GAP
     groups = [boxes for _, boxes in made.STRIP]
     tall = max(max(y1 - y0 for _, y0, _, y1 in boxes) for boxes in groups)
     placed = []
@@ -160,12 +173,13 @@ def letter():
     top, lft = np.unravel_index(np.argmax(score), score.shape)
     off = (x0 * up - lft, y0 * up - top)
     print(f"letter cut at {off}")
-    pieces = []
-    for (x0, y0, x1, y1), (bx, by) in placed:
+    pieces, wide = [], []
+    for ((x0, y0, x1, y1), (bx, by)), (sx, sy) in zip(placed, down):
         w, h = (x1 - x0) * up, (y1 - y0) * up
         px, py = x0 * up - off[0], y0 * up - off[1]
         pieces.append(piece(band_src, [rect(bx * up, by * up, w, h)], (bx * up + w / 2, by * up + h / 2), page_src, [rect(px, py, w, h)], (px + w / 2, py + h / 2)))
-    return pieces
+        wide.append(piece("/objects/letter-strip.avif", [rect(sx * up, sy * up, w, h)], (sx * up + w / 2, sy * up + h / 2), page_src, [rect(px, py, w, h)], (px + w / 2, py + h / 2)))
+    return pieces, wide
 
 
 def poster():
@@ -180,7 +194,7 @@ def poster():
     page_src = "/objects/poster.avif"
     pad = made.WORD_PAD * k
     words = [((x0 - made.WORD_PAD) * k, (base - made.RISE) * k - pad, (x1 - x0) * k + 2 * pad, (made.RISE + made.FALL) * k + 2 * pad) for x0, x1, base in made.WORDS]
-    windows = {name: (x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k) for name, (x0, y0, x1, y1) in (("yellow", made.YELLOW), ("red", made.RED), ("balcony", made.BALCONY), ("sax", made.SAX), ("candle", made.CANDLE), ("curtain", made.CURTAIN))}
+    windows = {name: (x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k) for name, (x0, y0, x1, y1) in (("yellow", made.YELLOW), ("red", made.RED), ("balcony", made.BALCONY), ("sax", made.SAX), ("sitter", made.SITTER), ("candle", made.CANDLE), ("curtain", made.CURTAIN))}
     # What a word's box shares with a window stays with the window, so no two pieces lay the same light twice where
     # they land: the word's outline has each of those cut out of it. What it shares with a passage goes with the word,
     # whose letters run into the passages' boxes.
@@ -231,6 +245,25 @@ def poster():
         for name, (bx, by, bw, bh) in zip(names, paired([windows[n] for n in names], made.BAND_WINDOWS)):
             x, y, w, h = windows[name]
             pieces.append(piece(src, [rect(bx, by, bw, bh)], (bx + bw / 2, by + bh / 2), page_src, [rect(x, y, w, h)], (x + w / 2, y + h / 2), scale=h / bh))
+    # The wide screen's folded strip (folded_column): the sign's line turned a quarter clockwise down the middle of a
+    # column as tall as the poster, a pair of windows above it and a pair below. Its two words overlap only in their
+    # glow, which is shared between them halfway.
+    column_w, column_h = (made.STRIP[1] - made.STRIP[0]) * k, Image.open(os.path.join(OBJECTS, "poster.avif")).size[1]
+    deep = words[0][3]
+    sign_left, sign_top = (column_w - deep) // 2, (column_h - line_w) // 2
+    halfway = (human_w + line_w - words[1][2]) / 2
+    wide = []
+    for name, (x, y, w, h), (start, end) in zip(("human", "experience"), words, ((0, halfway), (halfway, line_w))):
+        across = 0 if name == "human" else line_w - w
+        at = (sign_left + deep / 2, sign_top + across + w / 2)
+        wide.append(piece("/objects/poster-strip.avif", [rect(sign_left, sign_top + start, deep, end - start)], at, page_src, less((x, y, w, h), list(windows.values())), (x + w / 2, y + h / 2), turn=-90))
+    room = made.GLOW_ROOM * k
+    for names, top in ((("sax", "sitter"), sign_top - room - made.COLUMN_WINDOWS * k), (("candle", "curtain"), sign_top + line_w + room)):
+        placed = paired([windows[n] for n in names], made.COLUMN_WINDOWS)
+        left = (column_w - (placed[-1][0] + placed[-1][2])) // 2
+        for name, (bx, by, bw, bh) in zip(names, placed):
+            x, y, w, h = windows[name]
+            wide.append(piece("/objects/poster-strip.avif", [rect(left + bx, top + by, bw, bh)], (left + bx + bw / 2, top + by + bh / 2), page_src, [rect(x, y, w, h)], (x + w / 2, y + h / 2), scale=h / bh))
     # Where the band's layers lie in its middle, as parts of it, for the page to lay them together.
     layers = {
         "size": [middle[0], middle[1]],
@@ -238,7 +271,7 @@ def poster():
         "human": [(middle[0] - line_w) // 2, (middle[1] - words[0][3]) // 2, words[0][2], words[0][3]],
         "experience": [(middle[0] - line_w) // 2 + line_w - words[1][2], (middle[1] - words[1][3]) // 2, words[1][2], words[1][3]],
     }
-    return pieces, layers
+    return pieces, wide, layers
 
 
 def desk():
@@ -432,8 +465,9 @@ def main():
     import sys
 
     sys.path.insert(0, HERE)
-    poster_pieces, layers = poster()
-    folds = {"letter": letter(), "poster": poster_pieces, "desk": desk(), "contact": contact()}
+    poster_pieces, poster_wide, layers = poster()
+    letter_pieces, letter_wide = letter()
+    folds = {"letter": letter_pieces, "poster": poster_pieces, "desk": desk(), "contact": contact(), "letter-wide": letter_wide, "poster-wide": poster_wide}
     for side in ("band", "page"):
         bare_light(folds["desk"], side, args.proof)
     bare_light(folds["desk"], "page", args.proof, everything=True)

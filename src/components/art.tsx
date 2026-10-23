@@ -41,7 +41,7 @@ export const Art = ({ index, open, poster, band, turned }: ArtProps) => {
     )
   }
 
-  if (index === 2) return poster ? <StripPoster open={open} turned={turned} /> : <StripHouse open={open} turned={turned} />
+  if (index === 2) return poster ? <StripPoster /> : <StripHouse open={open} turned={turned} />
 
   return null
 }

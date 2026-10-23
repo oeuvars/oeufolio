@@ -9,12 +9,9 @@ import fold from './fold.json'
 export const POSTER_SIGN = fold.layers.poster as unknown as Record<'size', [number, number]> & Record<'behind' | 'human' | 'experience', [number, number, number, number]>
 
 const SIZES = fold.sizes as unknown as Record<string, [number, number]>
-const PIECES = {
-  letter: fold.letter,
-  poster: fold.poster,
-  desk: fold.desk,
-  contact: fold.contact,
-} as unknown as Record<Exclude<FoldKind, 'badge'>, FoldPiece[]>
+// Each strip's pieces as a phone's band has them, and as a wide screen's folded strip does, for the letter and the
+// poster, whose strips there show pictures of their own (the others lie under their strips, open or folded).
+const PIECES = fold as unknown as Record<Exclude<FoldKind, 'badge'> | 'letter-wide' | 'poster-wide', FoldPiece[]>
 // The page's picture under the pieces, which keeps a hole where each piece lands until it is there.
 const PAGE_SRC: Partial<Record<FoldKind, string>> = { letter: '/objects/letter.avif', poster: '/objects/poster.avif', desk: '/objects/mat/desk-wide.avif' }
 // How far open the strip is when a piece has taken on the page's picture of itself, from and to, and when the rest of
@@ -62,6 +59,8 @@ type FoldProps = {
   /** The page's picture, laid as the page lays it, for the pieces to land in: the letter's and the poster's, whose
    * pages are only there while they are open. */
   children?: ReactNode
+  /** The strip is a wide screen's, whose folded picture is its own, down the strip. */
+  wide?: boolean
 }
 
 /**
@@ -72,9 +71,9 @@ type FoldProps = {
  * round it. It goes as the strip goes, whether a spring or a finger moves it, and back the same way. The card's band is
  * its own page laid smaller, so the page itself goes there and back.
  */
-export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps) => {
+export const Fold = ({ kind, open, folded, opened, style, children, wide }: FoldProps) => {
   const layer = useRef<HTMLDivElement>(null)
-  const pieces = kind === 'badge' ? [] : PIECES[kind]
+  const pieces = kind === 'badge' ? [] : PIECES[wide && (kind === 'letter' || kind === 'poster') ? (`${kind}-wide` as const) : kind]
   // The poster's pieces are light, screened over the paper and over each other. The letter's are ink with nothing
   // round it, so the band's picture of each goes as the page's comes; the others' pictures are opaque, and the page's
   // lies over the band's until it covers it.
@@ -94,6 +93,14 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
     const desk = kind === 'desk' ? holes(PAGE_SRC.desk!, pieces) : ''
 
     const find = (inside: Element | null | undefined, src: string) => inside?.querySelector<HTMLElement>(`[src="${src}"], [data-src="${src}"]`)
+    // Where a picture is drawn on the screen: its box, or within it, for one fitted into its box whole.
+    const drawn = (element: HTMLElement, src: string) => {
+      const box = element.getBoundingClientRect()
+      if (getComputedStyle(element).objectFit !== 'contain') return { left: box.left, top: box.top, width: box.width }
+      const [w, h] = SIZES[src]
+      const k = Math.min(box.width / w, box.height / h)
+      return { left: box.left + (box.width - w * k) / 2, top: box.top + (box.height - h * k) / 2, width: w * k }
+    }
 
     // Where everything lies, measured once the strip starts to move: the band and the page both lie still on the
     // strip as it opens, from its edge, so they stay where they were measured.
@@ -118,8 +125,8 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
         const bandImage = find(band, piece.band.src)
         const pageImage = find(kind === 'letter' || kind === 'poster' ? rest : page, piece.page.src)
         if (!bandImage || !pageImage) return false
-        const b = bandImage.getBoundingClientRect()
-        const p = pageImage.getBoundingClientRect()
+        const b = drawn(bandImage, piece.band.src)
+        const p = drawn(pageImage, piece.page.src)
         const kb = b.width / SIZES[piece.band.src][0]
         const kp = p.width / SIZES[piece.page.src][0]
         const from: [number, number] = [b.left - frame.left + piece.band.at[0] * kb, b.top - frame.top + piece.band.at[1] * kb]
@@ -246,9 +253,11 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
   }, [kind, open, folded, opened, pieces, crossing])
 
   return (
-    <div ref={layer} aria-hidden inert className="pointer-events-none invisible z-2 overflow-hidden" style={style}>
+    // The poster's layer is light as a whole, screened over the paper under it: a layer of its own, its pieces screened
+    // within it would only be screened over nothing.
+    <div ref={layer} aria-hidden inert className={`pointer-events-none invisible z-2 overflow-hidden ${light ? 'mix-blend-screen' : ''}`} style={style}>
       {children && <div data-fold-rest className="absolute inset-0">{children}</div>}
-      <div className={`absolute inset-0 ${light ? 'mix-blend-screen' : ''}`}>
+      <div className="absolute inset-0">
         {pieces.map((_, n) => (
           // A piece moves as one layer of its own, so it is the piece that is screened, not its pictures.
           <div key={n} data-piece className={`absolute top-0 left-0 origin-top-left will-change-transform ${light ? 'mix-blend-screen' : ''}`}>
