@@ -27,7 +27,10 @@ baseline, and lit as the poster's is. In the column, four of the poster's lit wi
 and two below it. In the band the sign lies over the three windows it crosses on the poster, the man's at the
 yellow window, the red one's and the balcony's, cut out whole and set side by side, dimmed so the sign reads over
 them; and the page sets three of the others at the two ends of the strip round it, the saxophonist's at its start (poster-band-start.avif) and the candle's and the curtain's together at its
-end (poster-band-end.avif), each as tall as the strip shows. The passages come with the page when the strip opens.
+end (poster-band-end.avif), each as tall as the strip shows. The passages come with the page when the strip opens. The
+band's middle is also written in its layers, the two words and the windows behind them (poster-band-human.avif,
+poster-band-experience.avif, poster-band-behind.avif), which the page lays together and parts as the strip opens, each
+going to its own place on the poster (studio/fold.py).
 """
 
 import argparse
@@ -136,10 +139,9 @@ def light_sign(picture, title, shape):
     return 1 - (1 - picture) * (1 - glow), letters
 
 
-def one_line(lit, title):
-    """The poster's sign in one line, as the poster shows it: each of its two words cut from the lit poster with the
-    light round it, as far as its glow runs (WORD_REACH), and "experience" set a word space on from "human", on the
-    same baseline. What lies under the glow on the poster, the window it crosses, comes with it."""
+def sign_words(lit, title):
+    """The poster's sign's two words, each cut from the lit poster with the light round it, as far as its glow runs
+    (WORD_REACH). What lies under the glow on the poster, the window it crosses, comes with it."""
     pad, reach = WORD_PAD * SCALE, WORD_REACH * SCALE
     cut = []
     for x0, x1, base in WORDS:
@@ -147,7 +149,14 @@ def one_line(lit, title):
         cols = slice(x0 * SCALE - pad, x1 * SCALE + pad)
         glow = ndimage.gaussian_filter(ndimage.grey_dilation(title[rows, cols], size=(reach, reach)), reach / 2)
         cut.append(lit[rows, cols] * np.clip(1.4 * glow / glow.max(), 0, 1)[..., None])
-    human, experience = cut
+    return cut
+
+
+def one_line(lit, title):
+    """The poster's sign in one line, as the poster shows it: its two words (sign_words), "experience" set a word space
+    on from "human", on the same baseline."""
+    pad = WORD_PAD * SCALE
+    human, experience = sign_words(lit, title)
     line = np.zeros((human.shape[0], human.shape[1] + WORD_SPACE * SCALE - 2 * pad + experience.shape[1], 3), np.float32)
     put(line, human, 0, 0)
     at = line.shape[1] - experience.shape[1]
@@ -170,11 +179,16 @@ def put(canvas, image, left, top):
     canvas[top : top + image.shape[0], left : left + image.shape[1]] = image
 
 
+def behind_sign(picture):
+    """The windows a folded phone strip's sign lies over, side by side and dimmed."""
+    return pair(picture, (YELLOW, RED, BALCONY), BEHIND_TALL) * BEHIND_LIGHT
+
+
 def folded_band(picture, lit, title):
     """A folded phone strip's picture: the poster's sign in one line, as the poster shows it, over the windows it lies
     between on the poster, side by side and dimmed, its light laid over theirs as light."""
     sign = one_line(lit, title)
-    behind = pair(picture, (YELLOW, RED, BALCONY), BEHIND_TALL) * BEHIND_LIGHT
+    behind = behind_sign(picture)
     band = np.zeros((max(sign.shape[0], behind.shape[0]), max(sign.shape[1], behind.shape[1]), 3), np.float32)
     put(band, behind, (band.shape[1] - behind.shape[1]) // 2, (band.shape[0] - behind.shape[0]) // 2)
     over = np.zeros_like(band)
@@ -312,6 +326,10 @@ def main():
     picture, letters = light_sign(lift_sign(picture, title), title, shape)
     strip, band = folded_column(unlit, picture, title), folded_band(unlit, picture, title)
     start, end = band_windows(unlit)
+    # The same band in its layers, which the page lays together and which part as the strip opens, each going to its
+    # own place on the poster (studio/fold.py).
+    human, experience = sign_words(picture, title)
+    behind = behind_sign(unlit)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:
@@ -344,7 +362,7 @@ def main():
     # wall is the paper's own dark, so what is no brighter than it comes off, and the page lays the rest over the paper
     # as light (a screen), so the wall it shows is the paper.
     floor = sheet.reshape(-1, 3).mean(0) + FLOOR
-    for name, image in (("poster", picture), ("poster-strip", strip), ("poster-band", band), ("poster-band-start", start), ("poster-band-end", end)):
+    for name, image in (("poster", picture), ("poster-strip", strip), ("poster-band", band), ("poster-band-start", start), ("poster-band-end", end), ("poster-band-human", human), ("poster-band-experience", experience), ("poster-band-behind", behind)):
         light = np.clip(image - floor, 0, None)
         lit = np.clip(light.max(-1) / 0.06, 0, 1)[..., None]
         light = grained(light) * lit + light * (1 - lit)

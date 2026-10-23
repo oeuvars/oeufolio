@@ -87,7 +87,7 @@ export const Ticket = () => {
       >
         {/* The photograph is drawn on a canvas (paint) as large as the open page shows it, and laid
             as a picture only until then. */}
-        <canvas ref={photo} aria-hidden className="pointer-events-none absolute" style={over(OX, OY, OW, OH)} />
+        <canvas ref={photo} aria-hidden data-src={PHOTO} className="pointer-events-none absolute" style={over(OX, OY, OW, OH)} />
         {!painted && (
           <img src={PHOTO} alt="" aria-hidden draggable={false} className="pointer-events-none absolute max-w-none" style={over(OX, OY, OW, OH)} />
         )}

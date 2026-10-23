@@ -48,12 +48,12 @@ export const Poster = () => {
     const place = folded?.getBoundingClientRect()
     if (folded) folded.style.visibility = 'hidden'
     const motions: AnimationPlaybackControls[] = []
-    if (still) full.style.opacity = '1'
+    // On a phone the poster has already grown out of its folded strip's band by the time its page shows (Fold), so it
+    // is all there at once.
+    if (still || window.innerWidth < 768) full.style.opacity = '1'
     else {
       if (unfolding && place) motions.push(animate(page, moveFrom(place, page, own.getBoundingClientRect()), slide))
-      // On a phone it comes up over its folded strip's band as the band goes, at once, so the two hand over.
-      const phone = window.innerWidth < 768
-      motions.push(animate(full, { opacity: [0, 1] }, { duration: unfolding ? 0.45 : phone ? 0.35 : 0.6, delay: unfolding || phone ? 0 : 0.3, ease: [0.215, 0.61, 0.355, 1] }))
+      motions.push(animate(full, { opacity: [0, 1] }, { duration: unfolding ? 0.45 : 0.6, delay: unfolding ? 0 : 0.3, ease: [0.215, 0.61, 0.355, 1] }))
     }
 
     return () => {

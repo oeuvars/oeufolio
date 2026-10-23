@@ -95,7 +95,7 @@ export const Badge = ({ badge, page, margin, open, past }: BadgeProps) => {
           over the open page's frame, which SiteShell lays over the strip with nothing on it. */}
       <div
         ref={ring}
-        // A folded phone strip's picture of the badge and the open page are matched by it (SiteShell).
+        // A folded phone strip's picture of the badge and the open page are matched by it (Fold).
         data-morph
         // The card, not the holder, is centred on the page.
         style={{ translate: `${-CARD_OFF * 100}% 0` }}

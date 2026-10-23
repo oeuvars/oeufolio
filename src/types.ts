@@ -266,3 +266,21 @@ export type Chat = {
   reply: string
   placeholder: string
 }
+
+/** Which folded phone strip's band grows into its page and back (src/components/fold.tsx), and how. */
+export type FoldKind = 'badge' | 'letter' | 'poster' | 'desk' | 'contact'
+
+/**
+ * One piece of a folded phone strip's band, as studio/fold.py works it out, in each picture's pixels: the picture it
+ * is in on the band and on the page, the outlines it is cut out of each by, filled even-odd, and the point of it it
+ * turns about in each; how far it turns, clockwise, in degrees, and how many of the page picture's pixels one of the
+ * band's grows to.
+ */
+export type FoldPiece = {
+  band: FoldSide
+  page: FoldSide
+  turn: number
+  scale: number
+}
+
+export type FoldSide = { src: string; clip: [number, number][][]; at: [number, number] }

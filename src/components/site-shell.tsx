@@ -1,13 +1,14 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { MotionConfig, animate, motion, useReducedMotion } from 'motion/react'
+import { MotionConfig, motion, useReducedMotion } from 'motion/react'
 import type { CSSProperties, HTMLAttributes } from 'react'
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 import { profile } from '../content'
-import type { NavItem, VersionSearch } from '../types'
+import type { FoldKind, NavItem, VersionSearch } from '../types'
 import { Art } from './art'
 import { Badge } from './badge'
-import { POSTER, moveFrom } from './house'
+import { Fold, POSTER_SIGN } from './fold'
+import { POSTER } from './house'
 import { Letter } from './letter'
 import { PosterPicture } from './poster'
 import { Desk } from './mat/desk'
@@ -482,10 +483,6 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const { metrics, ready } = useStackMetrics()
   const reduced = useReducedMotion()
   const transition = ready && !reduced ? slide : instant
-  // On a phone, the strip folding back: its page stays until it has gone back into the strip's band (morph).
-  const [folding, setFolding] = useState<number | null>(null)
-  const turned = useRef<HTMLDivElement>(null)
-  const last = useRef(index)
 
   const { overlap, band, protrude, strip, spine, contact, end, mobile } = metrics
   const tops = mobile ? phoneTabTops : tabTops
@@ -747,46 +744,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       '--page-room': '200vh',
       transform: `rotate(90deg) translateY(calc(${(strip + band - under(i)) / 2}px - ${at * 100}%))`,
     }) as CSSProperties
-  // On a phone the card's page and its band are the same picture laid twice, the band larger and slid (foldBand). The
-  // strip opening, its page starts where the band shows it, over it, and grows to its own place as the strip opens;
-  // the strip folding, its page goes back to where the band shows it as the strip folds, and then the band takes over.
-  // The other strips' bands are pictures of their own, so their pages only cross over them as they go.
-  useLayoutEffect(() => {
-    const before = last.current
-    last.current = index
-    const stack = turned.current
-    if (!mobile || before === index || !stack || reduced) return
-    const parts = (k: number) => {
-      const section = stack.querySelector<HTMLElement>(`section[data-strip="${k}"]`)
-      const band = section?.querySelector<HTMLElement>('[data-fold] [data-morph]')
-      const page = section?.querySelector<HTMLElement>('[data-page]')
-      const at = page?.querySelector<HTMLElement>('[data-morph]')
-      return band && page && at ? { band: band.getBoundingClientRect(), page, at: at.getBoundingClientRect() } : null
-    }
-    const motions: ReturnType<typeof animate>[] = []
-    const opening = parts(index)
-    if (opening) motions.push(animate(opening.page, moveFrom(opening.band, opening.page, opening.at), slide))
-    setFolding(before)
-    const closing = parts(before)
-    if (closing) {
-      const to = moveFrom(closing.band, closing.page, closing.at)
-      closing.page.style.transform = ''
-      const going = animate(closing.page, { x: [0, to.x[0]], y: [0, to.y[0]], scale: [1, to.scale[0]] }, slide)
-      going.then(() => {
-        closing.page.style.transform = ''
-        setFolding((was) => (was === before ? null : was))
-      })
-      motions.push(going)
-    } else {
-      const done = setTimeout(() => setFolding((was) => (was === before ? null : was)), 400)
-      motions.push({ stop: () => clearTimeout(done) } as ReturnType<typeof animate>)
-    }
-    return () => {
-      for (const motion of motions) motion.stop()
-      // The mat lays its tabs' light off where it lies on the screen, so it is laid again once its page has settled.
-      window.dispatchEvent(new Event('scroll'))
-    }
-  }, [index, mobile, reduced])
+  // Which way a folded phone strip's band grows into its page (Fold): the building, the work page's other version,
+  // has no band of pieces, and only crosses over its strip's picture.
+  const foldOf = (i: number): FoldKind | null =>
+    tones[i].hangs ? 'badge' : i === LETTER ? 'letter' : tones[i].bleeds ? (workPoster ? 'poster' : null) : tones[i].fills ? 'desk' : tones[i].roll ? 'contact' : null
   const turnedPage = (i: number): CSSProperties => ({
     paddingLeft: '1rem',
     paddingRight: '1rem',
@@ -895,7 +856,6 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       >
         {/* On a phone the stack, turned on its side: its start at the window's foot, its depth across the window. */}
         <div
-          ref={turned}
           className={mobile ? 'absolute top-0 left-0 origin-top-left' : 'contents'}
           style={mobile ? { width: metrics.width, height: metrics.height, transform: `translateY(${metrics.width}px) rotate(-90deg)` } : undefined}
         >
@@ -990,124 +950,110 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           whole and clear of the tabs over it: the contact set and the desk's things put down in a row,
                           the poster's sign between its windows, the letter's drawings. The card's band is its own page
                           laid again, still, and slid so its name lies in the middle of what the strip shows (FOLD_AT).
-                          Open, the page itself comes up over it. */}
+                          Open, it shows its page. Between the two, the band's pieces go to their places on the page
+                          and back as the strip opens and folds (Fold), which shows one or the other once it is still. */}
                       {tones[i].roll ? (
                         // The set put down in a row along the strip for it (studio/ticket/scene.py band), laid in the
                         // strip's rem from its start, so its pieces fall clear of the tabs over it.
-                        <motion.div
-                          aria-hidden
-                          className="pointer-events-none"
-                          style={{ ...upright, height: CONTACT_BAND.deep }}
-                          initial={false}
-                          animate={{ opacity: open ? 0 : 1 }}
-                          transition={{ duration: 0.35 }}
-                        >
+                        <div data-fold-band aria-hidden className="pointer-events-none" style={{ ...upright, height: CONTACT_BAND.deep }}>
                           <img src="/objects/contact-band.avif" alt="" draggable={false} className="absolute top-0 left-0 max-w-none select-none" style={{ width: CONTACT_BAND.long, height: CONTACT_BAND.deep }} />
-                        </motion.div>
+                        </div>
                       ) : tones[i].fills ? (
                         // The desk's band plate, a few of the things on the desk put down in a row along the strip
                         // (studio/desk/desk.py --plate band), on the mat, which runs on under the strip's torn neighbour.
-                        <motion.div
-                          aria-hidden
-                          inert
-                          className="pointer-events-none"
-                          style={{ ...upright, height: DESK_BAND.mat }}
-                          initial={false}
-                          animate={{ opacity: open ? 0 : 1 }}
-                          transition={{ duration: 0.35 }}
-                        >
-                          <Desk band={DESK_BAND.deep * metrics.rem} />
-                        </motion.div>
+                        <div data-fold-band aria-hidden inert className="pointer-events-none" style={{ ...upright, height: DESK_BAND.mat }}>
+                          <Desk band={DESK_BAND.deep * metrics.rem} grows />
+                        </div>
                       ) : tones[i].hangs ? (
-                        <motion.div
-                          aria-hidden
-                          inert
-                          data-fold
-                          className="pointer-events-none"
-                          style={foldBand(i, FOLD_AT.badge, FOLD_TALL * foldCard)}
-                          initial={false}
-                          animate={{ opacity: open || folding === i ? 0 : 1 }}
-                          transition={instant}
-                        >
+                        <div data-fold-band aria-hidden inert className="pointer-events-none" style={foldBand(i, FOLD_AT.badge, FOLD_TALL * foldCard)}>
                           <Badge badge={profile.badge} page={foldCard} margin={1.5 * metrics.rem} open={false} past={(metrics.height - foldCard) / 2} />
-                        </motion.div>
+                        </div>
                       ) : tones[i].bleeds && workPoster ? (
-                        <motion.div aria-hidden className="pointer-events-none mix-blend-screen" style={{ ...upright, height: POSTER_BAND.deep }} initial={false} animate={{ opacity: open ? 0 : 1 }} transition={{ duration: 0.35 }}>
+                        <div data-fold-band aria-hidden className="pointer-events-none mix-blend-screen" style={{ ...upright, height: POSTER_BAND.deep }}>
                           {/* The poster's sign in one line over the windows it crosses on the poster, small enough to
-                              lie between the tabs above and below it, between windows at the strip's two ends. */}
+                              lie between the tabs above and below it, between windows at the strip's two ends. Its
+                              words and the windows behind them are laid apart, as light over light, for each goes to
+                              its own place on the poster. */}
                           <div className="flex h-full items-center justify-between px-1.5">
                             <img src="/objects/poster-band-start.avif" alt="" draggable={false} className="w-auto max-w-none select-none" style={{ height: POSTER_BAND.windows }} />
-                            <img src="/objects/poster-band.avif" alt="" draggable={false} className="h-auto max-w-none select-none" style={{ width: POSTER_BAND.sign }} />
+                            <div className="relative" style={{ width: POSTER_BAND.sign, aspectRatio: `${POSTER_SIGN.size[0]} / ${POSTER_SIGN.size[1]}` }}>
+                              {(['behind', 'human', 'experience'] as const).map((layer) => {
+                                const [x, y, w, h] = POSTER_SIGN[layer]
+                                const [across, down] = POSTER_SIGN.size
+                                return (
+                                  <img
+                                    key={layer}
+                                    src={`/objects/poster-band-${layer}.avif`}
+                                    alt=""
+                                    draggable={false}
+                                    className="absolute max-w-none mix-blend-screen select-none"
+                                    style={{ left: `${(100 * x) / across}%`, top: `${(100 * y) / down}%`, width: `${(100 * w) / across}%`, height: `${(100 * h) / down}%` }}
+                                  />
+                                )
+                              })}
+                            </div>
                             <img src="/objects/poster-band-end.avif" alt="" draggable={false} className="w-auto max-w-none select-none" style={{ height: POSTER_BAND.windows }} />
                           </div>
-                        </motion.div>
+                        </div>
+                      ) : i === LETTER ? (
+                        <div data-fold-band aria-hidden style={uprightOf(i)}>
+                          <Art index={i} open={open} band={strip - overlap} />
+                        </div>
                       ) : (
+                        // The building is laid as on a wide screen, turned with the strip, on what shows of it between
+                        // the strip before and its tab and the band the strip's own tab stands on.
                         <motion.div
                           aria-hidden
-                          style={
-                            // The building is laid as on a wide screen, turned with the strip, on what shows of it between
-                            // the strip before and its tab and the band the strip's own tab stands on.
-                            tones[i].bleeds ? { position: 'absolute', top: 0, bottom: 0, left: under(i), width: strip - band - under(i) } : uprightOf(i)
-                          }
+                          style={{ position: 'absolute', top: 0, bottom: 0, left: under(i), width: strip - band - under(i) }}
                           initial={false}
                           animate={{ opacity: open ? 0 : 1 }}
-                          transition={{ duration: tones[i].bleeds && !open ? 0 : 0.35 }}
+                          transition={{ duration: open ? 0.35 : 0 }}
                         >
-                          <Art index={i} open={open} poster={workPoster} band={strip - overlap} turned={tones[i].bleeds} />
-                        </motion.div>
-                      )}
-                      {/* The letter's or the poster's page going as its strip folds, as its band comes back. */}
-                      {folding === i && !open && (tones[i].bleeds ? workPoster : i === LETTER) && (
-                        <motion.div aria-hidden inert className="pointer-events-none overflow-hidden" style={uprightOf(i)} initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-                          {tones[i].bleeds ? (
-                            <PosterPicture />
-                          ) : (
-                            <div className={PAGE} style={turnedPage(i)}>
-                              <div className="grid flex-1 content-center">
-                                <Letter letter={profile.letter} />
-                              </div>
-                            </div>
-                          )}
+                          <Art index={i} open={open} poster={workPoster} band={strip - overlap} turned />
                         </motion.div>
                       )}
                       {tones[i].hangs ? (
                         // The ring runs up out of shot at the strip's edge, under its tab, and not on into the cloth the tab is cut from.
-                        <motion.div className="overflow-hidden" style={uprightOf(i)} initial={false} animate={{ opacity: open || folding === i ? 1 : 0 }} transition={instant}>
+                        <div data-fold-page className="overflow-hidden" style={uprightOf(i)}>
                           <div data-page className="absolute inset-0 origin-top-left">
                             <Badge badge={profile.badge} page={metrics.height} margin={1.5 * metrics.rem} open={open} past={0} />
                           </div>
-                        </motion.div>
+                        </div>
                       ) : tones[i].fills || tones[i].roll ? (
-                        <motion.div
-                          className="overflow-hidden"
-                          style={uprightOf(i)}
-                          inert={!open}
-                          aria-hidden={!open || undefined}
-                          initial={false}
-                          // The desk's and the ticket's bands are pictures of their own, so each page only crosses
-                          // over its band.
-                          animate={{ opacity: open ? 1 : 0 }}
-                          transition={{ duration: 0.35 }}
-                        >
-                          <div data-page className="grid min-h-full origin-top-left content-center" style={{ paddingBottom: marginsOf(i).foot }}>
+                        <div data-fold-page className="overflow-hidden" style={uprightOf(i)} inert={!open} aria-hidden={!open || undefined}>
+                          <div className="grid min-h-full content-center" style={{ paddingBottom: marginsOf(i).foot }}>
                             {open && children}
-                            {tones[i].fills ? <Desk /> : <Ticket />}
+                            {tones[i].fills ? <Desk grows /> : <Ticket />}
                           </div>
-                        </motion.div>
+                        </div>
                       ) : open ? (
-                        <div className="overflow-hidden" style={uprightOf(i)}>
-                          <motion.div
-                            className={PAGE}
-                            style={turnedPage(i)}
-                            // It comes up over its strip's band as the band goes, at once, so the two hand over.
-                            initial={tones[i].bleeds ? false : { opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.35, ease: [0.215, 0.61, 0.355, 1] }}
-                          >
+                        <div data-fold-page className="overflow-hidden" style={uprightOf(i)}>
+                          <div className={PAGE} style={turnedPage(i)}>
                             <div className="grid flex-1 content-center">{children}</div>
-                          </motion.div>
+                          </div>
                         </div>
                       ) : null}
+                      {foldOf(i) && (
+                        <Fold kind={foldOf(i)!} open={open} folded={folds(i)} opened={roomFor(i)} style={uprightOf(i)}>
+                          {/* The letter's and the poster's pages are only here while they are open, so their pictures are
+                              laid here as their pages lay them, for the pieces to land in. */}
+                          {foldOf(i) === 'letter' ? (
+                            <div className={PAGE} style={turnedPage(i)}>
+                              <div className="grid flex-1 content-center">
+                                <div>
+                                  <Letter letter={profile.letter} />
+                                </div>
+                              </div>
+                            </div>
+                          ) : foldOf(i) === 'poster' ? (
+                            <div className={PAGE} style={turnedPage(i)}>
+                              <div className="grid flex-1 content-center">
+                                <PosterPicture />
+                              </div>
+                            </div>
+                          ) : null}
+                        </Fold>
+                      )}
                     </div>
                   ) : (
                     <>

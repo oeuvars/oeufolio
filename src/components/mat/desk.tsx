@@ -16,14 +16,15 @@ import { Wallet } from './wallet'
  * own: it is the car key on the bunch that carries the name. SiteShell keeps the desk in its strip, open or
  * folded, so it is laid once and the strip only uncovers and covers it. Given a band, it is only the band plate, a
  * few of the things on the desk in a row along a folded phone strip, that many pixels deep, with nothing on it to take.
+ * On a phone the page grows out of that band (Fold).
  */
-export const Desk = ({ band }: { band?: number }) => {
+export const Desk = ({ band, grows }: { band?: number; grows?: boolean }) => {
   const { name, likes, playlist } = profile.extras
 
-  if (band) return <Mat band={band} className="h-full" />
+  if (band) return <Mat band={band} grows={grows} className="h-full" />
 
   return (
-    <Mat className="h-(--page-room) md:-mt-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem] md:h-auto md:min-h-screen">
+    <Mat grows={grows} className="h-(--page-room) md:-mt-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem] md:h-auto md:min-h-screen">
       <KeyBunch name={name} car={likes.key} />
       <BusinessCard name={name} />
       <RecordSleeve like={likes.record} playlist={playlist} />
