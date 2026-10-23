@@ -146,7 +146,7 @@ export const cv: Cv = {
     { label: 'Languages', value: 'TypeScript, Swift, Python, Golang' },
     { label: 'Tools', value: 'T3 Code, Claude Code, Zed, Ghostty' },
     { label: 'Frameworks', value: 'Next.js, Django, Express.js, SolidStart, Electron, AppKit, SwiftUI' },
-    { label: 'Cloud and databases', value: 'PostgreSQL, MySQL, RDS, S3, EC2, Lambda, Lightsail, Digital Ocean Droplet, VPS servers' },
+    { label: 'Cloud and databases', value: 'PostgreSQL, MySQL, RDS, S3, EC2, Lambda, Railway, Redis, ClickHouse' },
     { label: 'Books I read', value: 'Algorithms, Network Security, Computer Networks, System Design and Database Optimization' },
     { label: 'Areas of interest', value: 'Web design, serverless architectures, cryptography, typography, low-latency back ends' },
     { label: 'Soft skills', value: 'Product support, product presentation, public speaking, self-learning, adaptability' },
