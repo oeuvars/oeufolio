@@ -251,7 +251,7 @@ const grained = (paper?: Paper): CSSProperties => ({
 
 // A page's frame: its margins and type.
 const PAGE = '@container relative flex min-h-full flex-col pr-[clamp(1rem,2.6vw,3rem)] py-[2.4vh] text-[clamp(14px,0.35vw+1.1vh,19px)] leading-[1.5]'
-const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
+const slide = { type: 'spring', stiffness: 60, damping: 13.5, mass: 1 } as const
 // How far of the way a tab pulled on a phone has to be taken for its strip to open when it is let go.
 const PULL_OPENS = 0.3
 // On a phone the résumé's desk runs across the window's top, at most this much its size.

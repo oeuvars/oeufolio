@@ -8,7 +8,7 @@ export const STRIP = 16.3
 export const RAISE = 1
 
 /** The spring SiteShell opens and folds a strip on. The house moves on the same one, so the two keep step. */
-export const slide = { type: 'spring', stiffness: 150, damping: 21, mass: 1 } as const
+export const slide = { type: 'spring', stiffness: 60, damping: 13.5, mass: 1 } as const
 
 /** The poster that is the work page (studio/poster), in pixels. Its strip opens no wider than it. */
 export const POSTER = { width: 2208, height: 2943 } as const

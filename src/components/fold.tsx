@@ -14,10 +14,12 @@ const SIZES = fold.sizes as unknown as Record<string, [number, number]>
 const PIECES = fold as unknown as Record<Exclude<FoldKind, 'badge'> | 'letter-wide' | 'poster-wide', FoldPiece[]>
 // The page's picture under the pieces, which keeps a hole where each piece lands until it is there.
 const PAGE_SRC: Partial<Record<FoldKind, string>> = { letter: '/objects/letter.avif', poster: '/objects/poster.avif', desk: '/objects/mat/desk-wide.avif' }
-// How far open the strip is when a piece has taken on the page's picture of itself, from and to, and when the rest of
-// the page has come in. A piece keeps the band's look until it is most of the way to its place.
-const TAKES_ON = [0.45, 0.92]
-const REST_IN = [0.12, 0.8]
+// How far open the strip is when a piece takes on the page's picture of itself, from and to: only once it is all but
+// at rest in its place, so it is the band's own piece that travels there, and not one dissolving into another already
+// there. And when the rest of the page comes in round the pieces, once they are well on their way, leaving their
+// places empty until they arrive.
+const TAKES_ON = [0.9, 1]
+const REST_IN = [0.25, 0.9]
 // The desk's band is its mat in the band's light, which goes over to the page's mat in its own by then.
 const LIGHT_GOES = 0.7
 // The page's light has the things' shadows and the dark under them in it, so it takes over from the light without them
@@ -74,11 +76,8 @@ type FoldProps = {
 export const Fold = ({ kind, open, folded, opened, style, children, wide }: FoldProps) => {
   const layer = useRef<HTMLDivElement>(null)
   const pieces = kind === 'badge' ? [] : PIECES[wide && (kind === 'letter' || kind === 'poster') ? (`${kind}-wide` as const) : kind]
-  // The poster's pieces are light, screened over the paper and over each other. The letter's are ink with nothing
-  // round it, so the band's picture of each goes as the page's comes; the others' pictures are opaque, and the page's
-  // lies over the band's until it covers it.
+  // The poster's pieces are light, screened over the paper and over each other.
   const light = kind === 'poster'
-  const crossing = kind === 'letter'
 
   useLayoutEffect(() => {
     const root = layer.current
@@ -136,11 +135,12 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
         const turning = faces[n].children[1] as HTMLElement
         const pageFace = turning.children[0] as HTMLCanvasElement
         // Each face is drawn on a canvas, cut from the picture as the strip already shows it, at the screen's own
-        // pixels: a large picture laid again as a background would be decoded afresh on every frame (paint).
-        const lay = (face: HTMLCanvasElement, side: FoldPiece['band'], k: number, source: HTMLElement) => {
+        // pixels as large as it grows on its way, or as many as the picture has: a large picture laid again as a
+        // background would be decoded afresh on every frame (paint).
+        const lay = (face: HTMLCanvasElement, side: FoldPiece['band'], k: number, source: HTMLElement, largest: number) => {
           const [x0, y0, x1, y1] = bounds(side.clip)
           const drawn = source instanceof HTMLImageElement ? source.naturalWidth : (source as HTMLCanvasElement).width
-          const ratio = window.devicePixelRatio || 1
+          const ratio = Math.min((window.devicePixelRatio || 1) * largest, (drawn || 1) / (SIZES[side.src][0] * k))
           Object.assign(face.style, {
             left: `${(x0 - side.at[0]) * k}px`,
             top: `${(y0 - side.at[1]) * k}px`,
@@ -156,7 +156,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
           return true
         }
         // A picture not yet loaded is drawn again on the next frame.
-        if (!lay(bandFace, piece.band, kb, bandImage) || !lay(pageFace, piece.page, kp, pageImage)) waiting = true
+        if (!lay(bandFace, piece.band, kb, bandImage, Math.max(1, grow)) || !lay(pageFace, piece.page, kp, pageImage, 1)) waiting = true
         // The page's picture of the piece is carried back by the piece's turn and growth, so the two meet where it lands.
         turning.style.transform = `rotate(${-piece.turn}deg) scale(${1 / grow})`
         next.push({ from, to, grow, turn: piece.turn })
@@ -233,7 +233,8 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
         face.style.transform = `translate(${x}px, ${y}px) rotate(${turn * p}deg) scale(${grow ** p})`
         const bandFace = face.children[0] as HTMLElement
         const turning = face.children[1] as HTMLElement
-        bandFace.style.opacity = crossing ? String(1 - takes) : takes >= 1 ? '0' : '1'
+        // The page's picture of the piece is laid over the band's as it settles, and the band's goes once it is covered.
+        bandFace.style.opacity = takes >= 1 ? '0' : '1'
         turning.style.opacity = String(takes)
       })
     }
@@ -250,7 +251,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
     const watching = new ResizeObserver(apply)
     watching.observe(strip)
     return () => watching.disconnect()
-  }, [kind, open, folded, opened, pieces, crossing])
+  }, [kind, open, folded, opened, pieces])
 
   return (
     // The poster's layer is light as a whole, screened over the paper under it: a layer of its own, its pieces screened
