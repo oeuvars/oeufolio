@@ -186,7 +186,7 @@ export const chat: Chat = {
     { side: 'me', kind: 'text', text: 'And Dilly, my cat, who likes to fall asleep on my keyboard' },
     { side: 'you', kind: 'text', text: 'Can I get your résumé as a PDF?' },
     { side: 'me', kind: 'text', text: 'Here you go' },
-    { side: 'me', kind: 'file', href: '/resume.pdf', name: 'Anurag Das, résumé.pdf', detail: 'PDF Document · 33 KB' },
+    { side: 'me', kind: 'file', href: '/resume.pdf', name: 'Anurag Das, résumé.pdf', detail: 'PDF Document · 43 KB' },
   ],
   subject: 'Hi Anurag',
   reply: "Gmail should be open now. Hit send there and I'll get it",
