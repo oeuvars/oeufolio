@@ -145,7 +145,7 @@ export const cv: Cv = {
   skills: [
     { label: 'Languages', value: 'TypeScript, Swift, Python, Golang' },
     { label: 'Tools', value: 'T3 Code, Claude Code, Zed, Ghostty' },
-    { label: 'Frameworks', value: 'Next.js, Django, SolidStart, Electron, AppKit, SwiftUI' },
+    { label: 'Frameworks', value: 'Next.js, Django, Express.js, SolidStart, Electron, AppKit, SwiftUI' },
     { label: 'Cloud and databases', value: 'PostgreSQL, MySQL, RDS, S3, EC2, Lambda, Lightsail, Digital Ocean Droplet, VPS servers' },
     { label: 'Books I read', value: 'Algorithms, Network Security, Computer Networks, System Design and Database Optimization' },
     { label: 'Areas of interest', value: 'Web design, serverless architectures, cryptography, typography, low-latency back ends' },
