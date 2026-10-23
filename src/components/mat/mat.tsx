@@ -11,8 +11,9 @@ type MatProps = {
   /** What on the mat the page needs to reach: links and the parts that move. Each marks its root with data-prop. */
   children?: React.ReactNode
   className?: string
-  /** Only a picture of the mat, as a folded phone strip shows it (SiteShell): the tabs take their light from the page's own. */
-  still?: boolean
+  /** Only the band plate, as a folded phone strip shows it (SiteShell), this many pixels deep from the mat's top left,
+   * with no rulers round it: the tabs take their light from the page's own. */
+  band?: number
 }
 
 /** Which plate is showing, how many pixels an em of it is, and where its top left lies on the mat. */
@@ -45,7 +46,7 @@ const over = (geometry: Geometry, x: number, y: number, w: number, h: number): R
  * Where the lamp lights the leather brighter than it was photographed, a second map adds the rest. A prop the
  * plate's camera does not show, seen from a camera of its own (PORTRAITS), lies over the plate as its picture.
  */
-export const Mat = ({ children, className, still }: MatProps) => {
+export const Mat = ({ children, className, band }: MatProps) => {
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
@@ -62,13 +63,16 @@ export const Mat = ({ children, className, still }: MatProps) => {
     const compose = () => {
       const width = board.clientWidth
       // On a phone the page is never scrolled (SiteShell), so the whole of the wide plate is fitted to it.
-      const id: PlateId = width >= WIDE_FROM || window.innerWidth < 768 ? 'wide' : 'tall'
+      const id: PlateId = band ? 'band' : width >= WIDE_FROM || window.innerWidth < 768 ? 'wide' : 'tall'
       const plate = PLATES[id]
       const [w, h] = plate.size
       let em: number
       let x = 0
       let y = 0
-      if (id === 'wide') {
+      if (band) {
+        board.style.minHeight = ''
+        em = band / h
+      } else if (id === 'wide') {
         board.style.minHeight = ''
         // The wide plate keeps to the top of the mat, but for a phone's, which is the whole page and has it in its middle,
         // clear of its edges by at least a rem.
@@ -107,7 +111,7 @@ export const Mat = ({ children, className, still }: MatProps) => {
     const watching = new ResizeObserver(compose)
     watching.observe(board)
     return () => watching.disconnect()
-  }, [])
+  }, [band])
 
   // The maps of the lamp's light, drawn once for the mat's size, and how many times they have been.
   useEffect(() => {
@@ -129,7 +133,7 @@ export const Mat = ({ children, className, still }: MatProps) => {
     const board = sheet.current
     const tabs = [...document.querySelectorAll<HTMLElement>('[data-mat-light]')]
     const copies = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-light]')]
-    if (still || !frame || !board || !tabs.length || !geometry || !lit) return
+    if (band || !frame || !board || !tabs.length || !geometry || !lit) return
     const plate = PLATES[geometry.id]
     const [w] = plate.size
     const [bx, by] = plate.bleed
@@ -172,7 +176,7 @@ export const Mat = ({ children, className, still }: MatProps) => {
         delete copy.dataset.at
       }
     }
-  }, [geometry, lit, still])
+  }, [geometry, lit, band])
 
   const plate = geometry && PLATES[geometry.id]
 
@@ -189,12 +193,12 @@ export const Mat = ({ children, className, still }: MatProps) => {
         ref={sheet}
         className="relative flex-1 overflow-hidden select-none before:pointer-events-none before:absolute before:inset-0 before:bg-mat-grain before:bg-size-[220px_220px] before:opacity-20 before:mix-blend-multiply"
       >
-        <div aria-hidden className="mat-rules pointer-events-none absolute inset-[22px]" />
-        <Rulers />
+        <div aria-hidden className={cn('mat-rules pointer-events-none absolute', band ? 'inset-0' : 'inset-[22px]')} />
+        {!band && <Rulers />}
         <svg
           aria-hidden
           viewBox="0 0 400 400"
-          className="pointer-events-none absolute bottom-[22px] left-[22px] w-[min(46cqw,520px)] overflow-visible fill-ink/55 font-mono text-[9px]/[normal] font-medium group-data-[plate=tall]/mat:hidden"
+          className="pointer-events-none absolute bottom-[22px] left-[22px] w-[min(46cqw,520px)] overflow-visible fill-ink/55 font-mono text-[9px]/[normal] font-medium group-data-[plate=band]/mat:hidden group-data-[plate=tall]/mat:hidden"
         >
           <path className="fill-none stroke-ink/26 stroke-1 [vector-effect:non-scaling-stroke]" d="M0 400 L400 169 M0 400 L400 0 M0 400 L231 0" />
           <text x="330" y="196">30°</text>
@@ -217,8 +221,7 @@ export const Mat = ({ children, className, still }: MatProps) => {
               className={`${LAID} mix-blend-plus-lighter`}
               style={over(geometry, -plate.bleed[0], -plate.bleed[1], plate.size[0] + 2 * plate.bleed[0], plate.size[1] + 2 * plate.bleed[1])}
             />
-            {/* The plate is what a folded phone strip's picture of the mat and the open page are matched by (SiteShell). */}
-            <img data-morph src={`/objects/mat/desk-${geometry.id}.avif`} alt="" draggable={false} className={LAID} style={over(geometry, 0, 0, ...plate.size)} />
+            <img src={`/objects/mat/desk-${geometry.id}.avif`} alt="" draggable={false} className={LAID} style={over(geometry, 0, 0, ...plate.size)} />
             {/* The watch's dial again over the plate's, its hands at the viewer's time. */}
             {DIALS[geometry.id] && <WatchHands plate={geometry.id} className={LAID} style={over(geometry, ...DIALS[geometry.id]!.dial)} />}
             {/* The props seen from a camera of their own, over the plate where they stand on it. */}

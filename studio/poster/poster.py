@@ -24,7 +24,9 @@ folded, as a column as wide as the poster's middle; and public/objects/poster-ba
 strip, which lies across the window. Each shows the whole of "human experience" in one line on the dark wall, down the
 column and across the band: the poster's own sign, its two words cut from its plate and set a word space apart on one
 baseline, and lit as the poster's is. In the column, four of the poster's lit windows are set round it, two above it
-and two below it; the band is the sign alone, as wide as it. The passages come with the page when the strip opens.
+and two below it. The band is the sign alone, and the page sets three of those windows at the two ends of the strip
+round it, the saxophonist's at its start (poster-band-start.avif) and the candle's and the curtain's together at its
+end (poster-band-end.avif), each as tall as the strip shows. The passages come with the page when the strip opens.
 """
 
 import argparse
@@ -54,6 +56,8 @@ SAX, SITTER, CANDLE, CURTAIN = (308, 163, 390, 293), (405, 122, 500, 238), (520,
 # How tall a pair of them is set above and below the column's sign, and how far apart the two are, in the
 # reference's pixels.
 COLUMN_WINDOWS, PAIR_GAP = 104, 8
+# How tall the windows at a folded phone strip's ends are cut, in the reference's pixels: the page shows them smaller.
+BAND_WINDOWS = 64
 # The dark wall left round a folded strip's sign, for its glow, in the reference's pixels.
 GLOW_ROOM = 16
 # How far round each word of the sign a folded strip takes the poster's light with it, and the room left round the
@@ -145,13 +149,14 @@ def one_line(lit, title):
 
 
 def pair(picture, boxes, tall):
-    """Two of the poster's lit windows cut out side by side, each set tall reference pixels tall, PAIR_GAP apart."""
+    """The poster's lit windows cut out side by side, each set tall reference pixels tall, PAIR_GAP apart."""
     cut = []
     for x0, y0, x1, y1 in boxes:
         window = Image.fromarray((np.clip(picture[y0 * SCALE : y1 * SCALE, x0 * SCALE : x1 * SCALE], 0, 1) * 255 + 0.5).astype(np.uint8))
         window = window.resize((round(window.width * tall / window.height) * SCALE, tall * SCALE), Image.LANCZOS)
         cut.append(np.asarray(window).astype(np.float32) / 255)
-    return np.concatenate([cut[0], np.zeros((tall * SCALE, PAIR_GAP * SCALE, 3), np.float32), cut[1]], 1)
+    gap = np.zeros((tall * SCALE, PAIR_GAP * SCALE, 3), np.float32)
+    return np.concatenate([part for window in cut for part in (gap, window)][1:], 1)
 
 
 def put(canvas, image, left, top):
@@ -161,6 +166,11 @@ def put(canvas, image, left, top):
 def folded_band(lit, title):
     """A folded phone strip's picture: the poster's sign in one line on the dark wall, as the poster shows it."""
     return one_line(lit, title)
+
+
+def band_windows(picture):
+    """The windows a folded phone strip sets at its two ends, round its sign: one at its start, a pair at its end."""
+    return pair(picture, (SAX,), BAND_WINDOWS), pair(picture, (CANDLE, CURTAIN), BAND_WINDOWS)
 
 
 def folded_column(picture, lit, title):
@@ -287,6 +297,7 @@ def main():
     unlit = picture
     picture, letters = light_sign(lift_sign(picture, title), title, shape)
     strip, band = folded_column(unlit, picture, title), folded_band(picture, title)
+    start, end = band_windows(unlit)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:
@@ -319,7 +330,7 @@ def main():
     # wall is the paper's own dark, so what is no brighter than it comes off, and the page lays the rest over the paper
     # as light (a screen), so the wall it shows is the paper.
     floor = sheet.reshape(-1, 3).mean(0) + FLOOR
-    for name, image in (("poster", picture), ("poster-strip", strip), ("poster-band", band)):
+    for name, image in (("poster", picture), ("poster-strip", strip), ("poster-band", band), ("poster-band-start", start), ("poster-band-end", end)):
         light = np.clip(image - floor, 0, None)
         lit = np.clip(light.max(-1) / 0.06, 0, 1)[..., None]
         light = grained(light) * lit + light * (1 - lit)

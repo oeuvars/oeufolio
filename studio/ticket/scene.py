@@ -12,9 +12,11 @@ open is the open page: the ticket on the hide, the strip of stamps beside it and
 on its back at the top, over the ticket's corner. punch is the same set with the conductor's punch through the
 ticket, photographed only round the hole, for the page to lay over open once the address is copied. band is the set
 for a phone's folded contact strip, which runs across the window and is only a few rem deep: the Leica, the stamps and
-the ticket put down in a row along it, each whole, the strip of stamps and the ticket turned a quarter on their side,
-so their tops are to the right. It is laid out in the strip's rem (BAND_REM), so its pieces fall clear of the tabs
-that stand over the strip at the same place on any phone: the Leica and the stamps before them, the ticket past them.
+the ticket put down in a row along it, each whole, each a little off square as things put down by hand are, the strip
+of stamps and the ticket turned a quarter on their side, so their tops are to the right. The ticket takes the strip's
+depth; the Leica, a prop at a scale of its own (leica.PROP), is laid 1.75 times its page's size, so it holds its own beside
+it. It is laid out in the strip's rem (BAND_REM), so its pieces fall clear of the tabs that stand over the strip at the
+same place on any phone: the Leica under the contact tab's end, the stamps between the two tabs, the ticket past them.
 
 Every piece is the one its own script builds (leather.py, ticket.py, leica.py), laid where the page has it, in the
 spread's em (ticket.tsx: the stamps' column from 0 to BESIDE across, the ticket's frame after it, FRAME_H down). The light is the stand's room and
@@ -69,28 +71,30 @@ OPEN = (-14.0, -8.0, 52.0, 46.0)
 PUNCH = 1.6  # em either side of the punch's middle, for the photograph of the hole
 
 # The band, in its own em, and how many of the strip's rem an em of it is laid at (SiteShell's contact band): the
-# picture runs from the strip's start, 20 rem along it, and 3.2 rem deep, from the band its tab stands on.
-BAND_REM = 0.1875
-BAND = (0.0, 0.0, 20 / BAND_REM, 17.0)
-# Where each piece lies in the band, in its em: the Leica's middle, the stamps' and the ticket's top left as they lie
-# turned.
-BAND_CAMERA = (8.0, 8.5)
-BAND_STAMPS = (18.0, 8.5 - STAMP_W / 2)
-BAND_TICKET = (76.0, 1.0)
+# picture runs from the strip's start, 22 rem along it, and 4.25 rem deep, the whole of what shows of the strip.
+BAND_REM = 0.265625
+BAND = (0.0, 0.0, 22 / BAND_REM, 4.25 / BAND_REM)
+# Where each piece lies in the band, in its em, and how far it is turned off square, in degrees clockwise: the Leica
+# by its middle, the stamps and the ticket by their middle as they lie turned. The contact tab stands over the band's
+# first 3.75 em from 17 em to 39 along it, and the extras tab over its last 3.75 em from 32 em to 51.
+BAND_CAMERA = (11.2, 9.8, -4.0)
+BAND_STAMPS = (36.0, 8.2, 3.0)
+BAND_TICKET = (67.0, 8.0, -1.0)
+BAND_PROP = 1.75 * leica.PROP
 
 
-def turned(lay, h, at):
-    """What lay puts down at the stage's origin, turned a quarter clockwise, its top to the right, with its top left as
-    it lies then at at (in the page's em). h is how tall it was laid, which it is wide once turned."""
+def turned(lay, w, h, at):
+    """What lay puts down, w by h em, turned a quarter clockwise and then at[2] degrees more, its top to the right,
+    with its middle at at (in the page's em)."""
     before = set(bpy.data.objects)
-    lay((0.0, 0.0))
+    lay((-w / 2, -h / 2))
     pivot = bpy.data.objects.new("turned", None)
     bpy.context.scene.collection.objects.link(pivot)
     for obj in set(bpy.data.objects) - before - {pivot}:
         if obj.parent is None:
             obj.parent = pivot
-    pivot.rotation_euler.z = -math.pi / 2
-    pivot.location = (at[0] + h, -at[1], 0.0)
+    pivot.rotation_euler.z = -math.pi / 2 - math.radians(at[2])
+    pivot.location = (at[0], -at[1], 0.0)
     bpy.context.view_layer.update()
 
 
@@ -109,10 +113,10 @@ def set_down(plate):
     if plate == "band":
         x0, y0, w, h = BAND
         catcher(x0 - 6, y0 - 6, w + 12, h + 12).is_shadow_catcher = True
-        turned(lambda at: ticket.lay_stamps("stamps", at), STAMP_H * len(ticket.TICKET["stamps"]["views"]), BAND_STAMPS)
-        turned(lambda at: ticket.lay_ticket(False, at), ticket.H, BAND_TICKET)
-        # The Leica lies level, along the band.
-        leica.AT, leica.TURN = BAND_CAMERA, 0
+        turned(lambda at: ticket.lay_stamps("stamps", at), STAMP_W, STAMP_H * len(ticket.TICKET["stamps"]["views"]), BAND_STAMPS)
+        turned(lambda at: ticket.lay_ticket(False, at), ticket.W, ticket.H, BAND_TICKET)
+        # The Leica lies all but level, along the band.
+        leica.AT, leica.TURN, leica.PROP = BAND_CAMERA[:2], -BAND_CAMERA[2], BAND_PROP
         leica.softbox(leica.camera())
         key.add((x0 + w / 2, -(y0 + h / 2)))
         return BAND

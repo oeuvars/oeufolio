@@ -103,8 +103,9 @@ export type PropId =
   | 'chrono'
   | 'mug'
 
-/** One rendered picture of the desk: wide for a mat in a window, tall for a phone. */
-export type PlateId = 'wide' | 'tall'
+/** One rendered picture of the desk: wide for a mat in a window, tall for a narrow one, and band for a folded phone
+ * strip, a few of the things on the desk put down in a row along it. */
+export type PlateId = 'wide' | 'tall' | 'band'
 
 /**
  * A plate as studio/desk/desk.py renders it, in em of the plate. size is its width and height, and bleed how far
