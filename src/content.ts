@@ -144,15 +144,12 @@ export const cv: Cv = {
   ],
   skills: [
     { label: 'Languages', value: 'TypeScript, Swift, Python, Golang' },
-    { label: 'Tools I use', value: 'PopSQL, VS Code, Obsidian, Postman, Xcode, Figma, Spline, OrbStack' },
-    { label: 'Frameworks', value: 'Next.js, Django, Express.js, Hono.js, Gin, SvelteKit, SolidStart' },
+    { label: 'Tools', value: 'T3 Code, Claude Code, Zed, Ghostty' },
+    { label: 'Frameworks', value: 'Next.js, Django, SolidStart, Electron, AppKit, SwiftUI' },
     { label: 'Cloud and databases', value: 'PostgreSQL, MySQL, RDS, S3, EC2, Lambda, Lightsail, Digital Ocean Droplet, VPS servers' },
-    {
-      label: 'Relevant coursework',
-      value: 'Data Structures and Algorithms, Operating Systems, Object Oriented Programming, Network Security, Computer Networks, Database Management Systems, Big Data and Web',
-    },
+    { label: 'Books I read', value: 'Algorithms, Network Security, Computer Networks, System Design and Database Optimization' },
     { label: 'Areas of interest', value: 'Web design, serverless architectures, cryptography, typography, low-latency back ends' },
-    { label: 'Soft skills', value: 'Product demos, public speaking, self-learning, adaptability' },
+    { label: 'Soft skills', value: 'Product support, product presentation, public speaking, self-learning, adaptability' },
   ],
   education: [
     { course: 'Bachelor of Technology in Electronics and Communication', school: 'Heritage Institute of Technology, Kolkata', grade: 'CGPA 8.21' },

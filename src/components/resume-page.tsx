@@ -9,7 +9,7 @@ import { Noise } from './bits/noise'
 import { Waves } from './bits/waves'
 import { CommandPalette, PaletteKey } from './resume/command-palette'
 import { TechIcon } from './resume/tech-icon'
-import { CARD, CHIP, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
+import { CARD, DASH_X, DASH_Y, FOCUS, KNOT, LABEL, MONO, RING, RULE, STAMP } from './resume/styles'
 
 const LOGOS: Record<string, string> = {
   'Cybership.io': '/objects/resume/cybership.webp',
@@ -555,8 +555,6 @@ export const ResumePage = () => {
   }
 
   const socials = [...profile.socials, { label: 'Résumé', href: profile.resume.href }]
-  const coursework = cv.skills.find((skill) => skill.label === 'Relevant coursework')
-  const skills = cv.skills.filter((skill) => skill !== coursework)
   const [college, school] = cv.education
   const open = (href: string) => window.open(href, '_blank', 'noopener')
 
@@ -740,7 +738,7 @@ export const ResumePage = () => {
 
         <Section id="skills" title="Skills & Technologies">
           <div className="relative flex flex-col gap-5 pt-6 pb-6">
-            {skills.map((skill) => (
+            {cv.skills.map((skill) => (
               <div key={skill.label}>
                 <p className={LABEL}>{skill.label}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -771,19 +769,6 @@ export const ResumePage = () => {
                     {college.grade} · {college.school.split(', ')[1]}, India
                   </p>
                 </div>
-                <div className="h-px bg-black/30 dark:bg-white/[0.15]" style={DASH_X} />
-                {coursework && (
-                  <div className="px-4 py-3.5">
-                    <p className="text-[10px] font-medium text-zinc-400 uppercase dark:text-zinc-600">{coursework.label}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {coursework.value.split(', ').map((item) => (
-                        <span key={item} className={CHIP}>
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
             <div className="group relative">

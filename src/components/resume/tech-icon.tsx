@@ -1,9 +1,13 @@
 import {
+  siApple,
+  siClaude,
   siDigitalocean,
   siDjango,
   siDocker,
+  siElectron,
   siExpress,
   siFigma,
+  siGhostty,
   siGin,
   siGo,
   siHono,
@@ -20,6 +24,7 @@ import {
   siSwift,
   siTypescript,
   siXcode,
+  siZedindustries,
   siZod,
 } from 'simple-icons'
 import type { ReactNode } from 'react'
@@ -49,6 +54,12 @@ const BRANDS: Record<string, { path: string }> = {
   macOS: siMacos,
   Redis: siRedis,
   Docker: siDocker,
+  'Claude Code': siClaude,
+  Zed: siZedindustries,
+  Ghostty: siGhostty,
+  Electron: siElectron,
+  AppKit: siApple,
+  SwiftUI: siSwift,
 }
 
 const LINES: Record<string, ReactNode> = {
@@ -115,6 +126,13 @@ const LINES: Record<string, ReactNode> = {
     </>
   ),
   file: <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8M10 9H8" />,
+  buoy: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" />
+      <circle cx="12" cy="12" r="4" />
+    </>
+  ),
   truck: (
     <>
       <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2M15 18H9M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
@@ -140,7 +158,13 @@ const GENERIC: Record<string, string> = {
   cryptography: 'key',
   typography: 'type',
   'low-latency back ends': 'zap',
-  'Product demos': 'presentation',
+  'T3 Code': 'code',
+  Algorithms: 'book',
+  'Network Security': 'book',
+  'Computer Networks': 'book',
+  'System Design and Database Optimization': 'book',
+  'Product support': 'buoy',
+  'product presentation': 'presentation',
   'public speaking': 'mic',
   'self-learning': 'book',
   adaptability: 'shuffle',

@@ -85,8 +85,6 @@ const Role = ({ role }: { role: CvRole }) => {
  * open on black bars, and its figures are highlighted.
  */
 export const Slip = () => {
-  const coursework = cv.skills.find((skill) => skill.label === 'Relevant coursework')
-  const skills = cv.skills.filter((skill) => skill !== coursework)
   const button =
     'inline-flex items-center rounded-[3px] px-4 py-2.5 text-[14px] leading-none font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black'
 
@@ -123,7 +121,7 @@ export const Slip = () => {
       <section aria-labelledby="skills" className="mt-6">
         <Bar id="skills">Skills</Bar>
         <dl className="mt-5 grid max-w-[62ch] gap-x-6 gap-y-4 sm:grid-cols-[11rem_1fr]">
-          {skills.map((skill) => (
+          {cv.skills.map((skill) => (
             <div key={skill.label} className="contents">
               <dt className="text-[14px] font-bold [font-stretch:80%] sm:pt-[3px]">{skill.label}</dt>
               <dd className="-mt-3 text-[16px] leading-[1.5] sm:mt-0">{skill.value}</dd>
@@ -142,7 +140,6 @@ export const Slip = () => {
                 <p className="text-[14px] font-semibold tabular-nums [font-stretch:80%]">{school.grade}</p>
               </div>
               <p className="mt-1 text-[16px] text-black/70">{school.course}</p>
-              {school === cv.education[0] && coursework && <p className="mt-2 text-[14px] leading-[1.5] text-black/60">Coursework: {coursework.value}</p>}
             </li>
           ))}
         </ul>

@@ -86,8 +86,6 @@ const Role = ({ role }: { role: CvRole }) => {
  */
 export const Vitrine = () => {
   const city = profile.extras.particulars.find((particular) => particular.label === 'Based in')?.value ?? ''
-  const coursework = cv.skills.find((skill) => skill.label === 'Relevant coursework')
-  const skills = cv.skills.filter((skill) => skill !== coursework)
   const folds = useNarrow() ? FOLDS.narrow : FOLDS.wide
   const pane = useRef<HTMLElement>(null)
 
@@ -151,7 +149,7 @@ export const Vitrine = () => {
 
               <Section id="skills" title="Skills">
                 <dl className="grid max-w-[64ch] gap-x-6 gap-y-3 py-7 sm:grid-cols-[10rem_1fr]">
-                  {skills.map((skill) => (
+                  {cv.skills.map((skill) => (
                     <div key={skill.label} className="contents">
                       <dt className="pt-[2px] text-[13px] tracking-[0.02em] text-[#f7f0ea]/60">{skill.label}</dt>
                       <dd className="-mt-2 text-[15.5px] leading-[1.55] text-[#f7f0ea]/88 sm:mt-0">{skill.value}</dd>
@@ -168,9 +166,6 @@ export const Vitrine = () => {
                       <p className="text-[13px] tracking-[0.04em] text-[#f7f0ea]/60 tabular-nums">{school.grade}</p>
                     </div>
                     <p className="mt-1.5 text-[15px] text-[#f7f0ea]/70">{school.course}</p>
-                    {school === cv.education[0] && coursework && (
-                      <p className="mt-3 max-w-[64ch] text-[14px] leading-[1.6] text-[#f7f0ea]/60">Coursework in {coursework.value}.</p>
-                    )}
                   </div>
                 ))}
               </Section>
