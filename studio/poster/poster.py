@@ -24,8 +24,9 @@ folded, as a column as wide as the poster's middle; and public/objects/poster-ba
 strip, which lies across the window. Each shows the whole of "human experience" in one line on the dark wall, down the
 column and across the band: the poster's own sign, its two words cut from its plate and set a word space apart on one
 baseline, and lit as the poster's is. In the column, four of the poster's lit windows are set round it, two above it
-and two below it. The band is the sign alone, and the page sets three of those windows at the two ends of the strip
-round it, the saxophonist's at its start (poster-band-start.avif) and the candle's and the curtain's together at its
+and two below it. In the band the sign lies over the three windows it crosses on the poster, the man's at the
+yellow window, the red one's and the balcony's, cut out whole and set side by side, dimmed so the sign reads over
+them; and the page sets three of the others at the two ends of the strip round it, the saxophonist's at its start (poster-band-start.avif) and the candle's and the curtain's together at its
 end (poster-band-end.avif), each as tall as the strip shows. The passages come with the page when the strip opens.
 """
 
@@ -53,11 +54,17 @@ WORD_SPACE = 22
 # Four of the poster's windows, each by its box in the reference's pixels: the saxophonist's, the one of the woman
 # sitting high in hers, the candle's, and the child's at the lilac curtain.
 SAX, SITTER, CANDLE, CURTAIN = (308, 163, 390, 293), (405, 122, 500, 238), (520, 228, 636, 372), (415, 710, 527, 855)
+# The three behind a folded phone strip's sign, from the row "human" and "experience" lie between on the poster: the
+# man's at the yellow window, the red one's and the balcony's.
+YELLOW, RED, BALCONY = (100, 372, 292, 478), (305, 455, 420, 552), (440, 463, 636, 552)
 # How tall a pair of them is set above and below the column's sign, and how far apart the two are, in the
 # reference's pixels.
 COLUMN_WINDOWS, PAIR_GAP = 104, 8
 # How tall the windows at a folded phone strip's ends are cut, in the reference's pixels: the page shows them smaller.
 BAND_WINDOWS = 64
+# How tall the windows behind the band's sign are set, against its letters' RISE + FALL, and how much of their light
+# is left under it.
+BEHIND_TALL, BEHIND_LIGHT = 126, 0.85
 # The dark wall left round a folded strip's sign, for its glow, in the reference's pixels.
 GLOW_ROOM = 16
 # How far round each word of the sign a folded strip takes the poster's light with it, and the room left round the
@@ -163,9 +170,16 @@ def put(canvas, image, left, top):
     canvas[top : top + image.shape[0], left : left + image.shape[1]] = image
 
 
-def folded_band(lit, title):
-    """A folded phone strip's picture: the poster's sign in one line on the dark wall, as the poster shows it."""
-    return one_line(lit, title)
+def folded_band(picture, lit, title):
+    """A folded phone strip's picture: the poster's sign in one line, as the poster shows it, over the windows it lies
+    between on the poster, side by side and dimmed, its light laid over theirs as light."""
+    sign = one_line(lit, title)
+    behind = pair(picture, (YELLOW, RED, BALCONY), BEHIND_TALL) * BEHIND_LIGHT
+    band = np.zeros((max(sign.shape[0], behind.shape[0]), max(sign.shape[1], behind.shape[1]), 3), np.float32)
+    put(band, behind, (band.shape[1] - behind.shape[1]) // 2, (band.shape[0] - behind.shape[0]) // 2)
+    over = np.zeros_like(band)
+    put(over, sign, (band.shape[1] - sign.shape[1]) // 2, (band.shape[0] - sign.shape[0]) // 2)
+    return 1 - (1 - band) * (1 - over)
 
 
 def band_windows(picture):
@@ -296,7 +310,7 @@ def main():
     title = plate("title.png", size)
     unlit = picture
     picture, letters = light_sign(lift_sign(picture, title), title, shape)
-    strip, band = folded_column(unlit, picture, title), folded_band(picture, title)
+    strip, band = folded_column(unlit, picture, title), folded_band(unlit, picture, title)
     start, end = band_windows(unlit)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
