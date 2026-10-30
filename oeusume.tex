@@ -177,19 +177,25 @@
     \item {Building Cybership Desktop, an Electron packing-station app to replace the third-party PrintNode agent. Reverse-engineered most of its 64 scale protocols from raw serial, USB HID and Bluetooth captures of proprietary scales, and built that capture tooling into the app: it records request and response bytes at any serial setting, replays them through the live decoders and sends the evidence to support. No print is sent twice: PostgreSQL row-lock claims and an audited job state machine on the server, and an fsynced on-device journal that repairs torn writes and fails closed on corruption.}
     \item {Owned production incidents that blocked customer warehouses from shipping, taking each from first report through root cause to a permanent fix, often the same day. Repaired live data alongside their teams while keeping them informed throughout, and fed what they ran into back into the product so the failure could not recur.}
     \item {Built the Shipping Labels system end to end across EasyPost, USPS (OAuth2), BukuShip and ShipStation for FedEx, UPS, USPS, DHL and Canada Post, plus Mapbox geocoding: pdf-lib label PDFs, Redis-cached rate shopping, webhooks with retries, and batch processing for 10,000+ labels a day.}
-    \item {Runs day-to-day engineering through multi-agent orchestration in T3 Code and Claude Code, delegating research, implementation and review to parallel subagents. Built agent skills for Cybership work: a PR review agent that checks a branch against the repository's review contract and returns a structured verdict, and a Playwright agent that records video proof of a fix, including terminal runs against simulated provider responses, and embeds it in the PR.}
+    \item {Runs day-to-day engineering through multi-agent orchestration in T3 Code and Claude Code. Built agent skills for a PR review agent that checks a branch against the repository's review contract, and a Playwright agent that records video proof of a fix and embeds it in the PR.}
     \resumeItemListEnd
     \resumeSubheading
       {\href{https://nahar.om}{\underline{Nahar OM}}}{Chennai, India}
-      {Product Engineer}{July 2024 - March 2025}
+      {Product Engineer}{June 2024 - March 2025}
       \resumeItemListStart
-    \item {Secondary Trading: led a team of three and built the whole Django REST backend of a marketplace where investors trade fractional units of loans at a fixed price or by bid: OTP and JWT sign-in, PAN, GSTIN and CIN KYC through Surepass, wallets with an audited transaction log, unit-level ownership across resales, and bidding inside database transactions. Wrote an XIRR engine for four repayment structures that solves a target XIRR back into a price with Brent's method, plus eMudhra contracts, a rule engine routing repayments to investors, a buy-back bot for unsold units and TDS reports. Shipped it in Docker through GitHub Actions to DigitalOcean. On Ethyx, the invoice discounting platform, built the ledger and reconciled it against bank statements from Boost Money's account aggregator.}
-    \item {Altern8: built the frontend and design of a construction-lending platform that releases credit to developers in tranches: resumable borrower onboarding for bank statements (Boost Money), PAN (Signzy), tax returns (Scoreme) and the RootFi connect flow for Tally, Zoho and QuickBooks; budget and timeline uploads parsed into editable tables and a Gantt chart; and the admin panel approving borrowers, projects and tranches with per-tranche rules. Cut its Docker image from 2.2 GB to 178 MB.}
+    \item {Secondary Trading: led a team of three and built the whole Django REST backend of a marketplace where investors trade fractional units of loans at a fixed price or by bid: OTP and JWT sign-in, KYC through Surepass, wallets with an audited transaction log, unit-level ownership across resales, and bidding inside database transactions. Wrote an XIRR engine for four repayment structures that solves a target XIRR back into a price with Brent's method, plus eMudhra contracts, a repayment rule engine, a buy-back bot and TDS reports. On Ethyx, the invoice discounting platform, built the ledger and reconciled it against bank statements from Boost Money's account aggregator.}
+    \item {Altern8: built the frontend and design of a construction-lending platform that releases credit to developers in tranches: resumable borrower onboarding for bank statements (Boost Money), PAN (Signzy), tax returns (Scoreme) and the RootFi connect flow for Tally, Zoho and QuickBooks; budget and timeline uploads parsed into editable tables and a Gantt chart; and the admin panel approving borrowers, projects and tranches with per-tranche rules. Cut its Docker image from 2.2~GB to 178~MB.}
     \item {Product demos: pitched both products to investors internationally, showing loans split into tradable units, the two-way XIRR calculator, a bid accepted and e-signed, and a borrower onboarded through tranche approval.}
     \resumeItemListEnd
     \resumeSubheading
+      {\href{https://propersku.com}{\underline{ProperSKU}}}{Remote, part-time}
+      {Principal Frontend Engineer}{December 2023 - June 2024}
+      \resumeItemListStart
+    \item {Founding engineer; built the frontend of a Shopify inventory-forecasting app: invite-only sign-up across five roles with role-scoped data, onboarding with card billing and Shopify connection, sales dashboards by product and SKU, and 3, 6 and 12-month purchase order recommendations.}
+    \resumeItemListEnd
+    \resumeSubheading
       {\href{https://dataverseindia.com}{\underline{DataVerse India}}}{Kolkata, India}
-      {Product Engineer}{August 2023 -  July 2024}
+      {Product Engineer}{December 2022 - December 2023}
       \resumeItemListStart
     \item {Built custom CMS websites from scratch for GenieBaazar and Penn State University with Next.js, SolidStart, Express and Hono, acted as their technical point of contact, and hosted them on AWS and Hostinger.}
     \resumeItemListEnd
