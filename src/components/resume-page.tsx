@@ -44,7 +44,7 @@ const PROJECTS = [
     name: 'Altern8',
     company: 'Ekarth Ventures',
     status: 'Shipped',
-    about: 'A real estate lending platform on Next.js and Django. I led its frontend and the team building it, and pitched it to investors in the US, Turkey, the Netherlands and India.',
+    about: 'A real estate lending platform on Next.js and Django. I led its frontend and the team building it, and pitched it to investors internationally.',
     stack: ['Next.js', 'Django', 'Docker'],
   },
 ]

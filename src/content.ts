@@ -128,7 +128,7 @@ export const cv: Cv = {
       points: [
         'Led frontend development and managed the team delivering Altern8, a real estate lending platform, designing its Next.js and Django architecture for cost efficiency and performance.',
         'Drove CI/CD pipelines on Digital Ocean that cut deployment turnaround by an average of 10 seconds and Docker build size 10-fold (2.2 GB to 178 MB), and managed development and deployment of several third-party B2B APIs for integration with ETHYX Club and the Altern8 platform for data and system interconnectivity.',
-        'Pitched and demonstrated the platform to investors across the US, Turkey, Netherlands and India.',
+        'Pitched and demonstrated the platform to investors internationally.',
       ],
     },
     {
@@ -174,7 +174,7 @@ export const chat: Chat = {
     { side: 'you', kind: 'text', text: 'And before Cybership?' },
     { side: 'me', kind: 'text', text: 'Ekarth Ventures, in Chennai, for about eight months. I led the frontend team on Altern8, a real estate lending platform' },
     { side: 'me', kind: 'link', href: 'https://nahar.om', title: 'Ekarth Ventures', icon: '/objects/resume/ekarth.webp' },
-    { side: 'me', kind: 'text', text: 'I also ended up pitching it to investors in the US, Turkey, the Netherlands and India' },
+    { side: 'me', kind: 'text', text: 'I also ended up pitching it to investors internationally' },
     { side: 'me', kind: 'text', text: 'Before that I interned at DataVerse India' },
     { side: 'you', kind: 'text', text: 'What do you like working with?' },
     { side: 'me', kind: 'text', text: 'Mostly TypeScript, with some Swift, Python and Go' },
