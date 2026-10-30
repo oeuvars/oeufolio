@@ -26,24 +26,22 @@
 \usepackage{multicol}
 \usepackage{graphicx}
 \usepackage{fontspec}
-% Timeless Serif has no italic or small caps; italic maps to the upright cut.
-\setmainfont{TimelessSerifText}[
-  Path=fonts/,
-  Extension=.ttf,
-  UprightFont=*-Book,
-  BoldFont=*-Semibold,
-  ItalicFont=*-Book,
-  BoldItalicFont=*-Semibold,
+% TeX Gyre fonts with kerning off: custom fonts and kerned pairs made ATS parsers read words run together or split ("T ypescript").
+\setmainfont{texgyretermes}[
+  Extension=.otf,
+  UprightFont=*-regular,
+  BoldFont=*-bold,
+  ItalicFont=*-regular,
+  BoldItalicFont=*-bold,
   Ligatures=TeX,
+  Kerning=Off,
 ]
-% Headings: name, section titles and entry titles.
-\newfontfamily\headingfont{GeistMono}[
-  Path=fonts/,
-  Extension=.ttf,
-  UprightFont=*-SemiBold,
-  BoldFont=*-SemiBold,
-  ItalicFont=*-SemiBold,
-  BoldItalicFont=*-SemiBold,
+\newfontfamily\headingfont{SourceCodePro}[
+  Extension=.otf,
+  UprightFont=*-Semibold,
+  BoldFont=*-Semibold,
+  ItalicFont=*-Semibold,
+  BoldItalicFont=*-Semibold,
   LetterSpace=-2.0,
   WordSpace=0.8,
 ]
@@ -154,7 +152,7 @@
 \begin{tabularx}{\linewidth}{L r} \\
   {\headingfont\Large \name} & \href{https://www.linkedin.com/in/oeuvars}{linkedin.com/in/oeuvars} | \href{https://github.com/oeuvars}{github.com/oeuvars} \\
   Product Engineer \href{https://cybership.io}{\underline {@Cybership}}. & \href{mailto:sudo@anurag.gg}{sudo@anurag.gg} \\
-  Kolkata, India. Open to relocation to Singapore, the EU and the UK. & \href{tel:+918335924401}{+91 83359 24401}
+  Kolkata, India. Open to relocation. & \href{tel:+918335924401}{+91 83359 24401}
 \end{tabularx}
 }
 
