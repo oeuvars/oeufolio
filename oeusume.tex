@@ -73,6 +73,10 @@
 }
 
 \urlstyle{same}
+% No hyphenation: a word split across lines ("en- tire") reads as two words to ATS parsers.
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
 
 \raggedright
 \setlength{\tabcolsep}{0in}
@@ -179,9 +183,10 @@
       {\href{https://nahar.om}{\underline{Nahar OM}}}{Chennai, India}
       {Product Engineer}{July 2024 - March 2025}
       \resumeItemListStart
-    \item {Led a team of three on Secondary Trading, the investor side of the company's invoice discounting platform: built its ledgers and XIRR calculators, connected it to the invoice discounting platform, and integrated QuickBooks, Zoho and Boost Money.}
+    \item {Led a team of three on Secondary Trading, a marketplace for fractional units of recurring-revenue loans, and built its entire Django backend: OTP and PAN/GSTIN KYC, wallets, fixed-price and bid trading, eMudhra contract signing, an auto-payment rule engine, an admin buy-back bot and TDS reports.}
+    \item {Wrote XIRR calculators for four repayment structures, solving a target XIRR back into a price with Brent's method. On the invoice discounting platform, built the ledger and integrated QuickBooks, Zoho and Boost Money.}
     \item {Joined and led frontend development of Altern8, a real estate lending platform made with Next.js 14 and Django. Rebuilt its CI/CD, cutting deployment turnaround by an average of 10 seconds and Docker build size 10-fold (2.2 GB -> 178 MB).}
-    \item {Pitched and demonstrated the company's invoice discounting platform and Altern8 to investors across the US, Turkey, Netherlands and India, and was praised as a great product presenter.}
+    \item {Pitched and demoed both platforms to investors in the US, Turkey, the Netherlands and India.}
     \resumeItemListEnd
     \resumeSubheading
       {\href{https://dataverseindia.com}{\underline{DataVerse India}}}{Kolkata, India}
