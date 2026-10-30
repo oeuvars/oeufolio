@@ -153,7 +153,7 @@
 %----------HEADING-----------------
 
 {
-\begin{tabularx}{\linewidth}{L r} \\
+\begin{tabularx}{\linewidth}{L r}
   {\headingfont\Large \name} & \href{https://www.linkedin.com/in/oeuvars}{linkedin.com/in/oeuvars} | \href{https://github.com/oeuvars}{github.com/oeuvars} \\
   Product Engineer \href{https://cybership.io}{\underline {@Cybership}}. & \href{mailto:sudo@anurag.gg}{sudo@anurag.gg} \\
   Kolkata, India. Open to relocation. & \href{tel:+918335924401}{+91 83359 24401}
@@ -163,7 +163,7 @@
 
 %-----------SUMMARY-----------------
 \section{\textbf{Summary}}
-  \small{Software engineer with 3+ years of experience as a Product Engineer, building production systems in TypeScript, React, Node.js and PostgreSQL for 3PL fulfillment and real estate lending. Built a rule engine processing 50,000+ executions daily, a label system handling 10,000+ generations daily, and a packing-station desktop app with 64 scale protocol decoders, most reverse-engineered from proprietary hardware. Also handles customer support and product demos: takes warehouse incidents from first report to a permanent fix while keeping the customer's team informed, and has demonstrated products to investors internationally.}
+  \small{Product Engineer with 3+ years building production systems in TypeScript, React, Node.js, Python and PostgreSQL for 3PL fulfillment and lending: a rule engine running 50,000+ times a day, a label system printing 10,000+ labels a day, and a packing-station app with 64 mostly reverse-engineered scale protocols. Owns warehouse incidents through to a permanent fix.}
 \vspace{-2mm}
 
 %-----------EXPERIENCE-----------------
@@ -173,20 +173,21 @@
       {\href{https://cybership.io}{\underline{Cybership}}}{Remote}
       {Product Engineer}{March 2025 - Present}
       \resumeItemListStart
-    \item {Single-handedly architected and implemented the complete Automation Rules engine from scratch (similar to Shopify Flow), enabling merchants to create complex conditional workflows with 50 trigger types, 16 condition operators with conditional \& Array operations, and 7 action types. Built a type-safe rule evaluation system using Zod validation that processes 50,000+ rule executions daily across order processing, inventory allocation, and shipping automation.}
+    \item {Single-handedly architected and built the Automation Rules engine from scratch (similar to Shopify Flow): 50 trigger types, 16 condition operators including array operations, and 7 action types, with Zod-validated rule evaluation processing 50,000+ executions daily across order processing, inventory allocation and shipping.}
     \item {Building Cybership Desktop, an Electron packing-station app to replace the third-party PrintNode agent. Reverse-engineered most of its 64 scale protocols from raw serial, USB HID and Bluetooth captures of proprietary scales, and built that capture tooling into the app: it records request and response bytes at any serial setting, replays them through the live decoders and sends the evidence to support. No print is sent twice: PostgreSQL row-lock claims and an audited job state machine on the server, and an fsynced on-device journal that repairs torn writes and fails closed on corruption.}
     \item {Owned production incidents that blocked customer warehouses from shipping, taking each from first report through root cause to a permanent fix, often the same day. Repaired live data alongside their teams while keeping them informed throughout, and fed what they ran into back into the product so the failure could not recur.}
-    \item {Built the entire Shipping Labels system end-to-end, integrating with 5 external APIs including EasyPost, USPS (OAuth2), BukuShip, ShipStation for multi-carrier support (FedEx, UPS, USPS, DHL, Canada Post), and Mapbox for geocoding and route visualization. Implemented PDF generation with pdf-lib, Redis-based caching for rate shopping, webhook management with retry logic, and batch processing capabilities handling 10,000+ label generations daily with sub-2-second average response times and 99.9\% uptime.}
+    \item {Built the Shipping Labels system end to end across EasyPost, USPS (OAuth2), BukuShip and ShipStation for FedEx, UPS, USPS, DHL and Canada Post, plus Mapbox geocoding: pdf-lib label PDFs, Redis-cached rate shopping, webhooks with retries, and batch processing for 10,000+ labels a day.}
     \item {Runs day-to-day engineering through multi-agent orchestration in T3 Code and Claude Code, delegating research, implementation and review to parallel subagents. Built agent skills for Cybership work: a PR review agent that checks a branch against the repository's review contract and returns a structured verdict, and a Playwright agent that records video proof of a fix, including terminal runs against simulated provider responses, and embeds it in the PR.}
     \resumeItemListEnd
     \resumeSubheading
       {\href{https://nahar.om}{\underline{Nahar OM}}}{Chennai, India}
       {Product Engineer}{July 2024 - March 2025}
       \resumeItemListStart
-    \item {Led a team of three on Secondary Trading, a marketplace for fractional units of recurring-revenue loans, and built its entire Django backend: OTP and PAN/GSTIN KYC, wallets, fixed-price and bid trading, eMudhra contract signing, an auto-payment rule engine, an admin buy-back bot and TDS reports.}
-    \item {Wrote XIRR calculators for four repayment structures, solving a target XIRR back into a price with Brent's method. On Ethyx (Django, Next.js), built the ledger and reconciled it against bank statements from Boost Money's account aggregator.}
-    \item {Joined and led frontend development of Altern8, a real estate lending platform made with Next.js 14 and Django. Rebuilt its CI/CD, cutting deployment turnaround by an average of 10 seconds and Docker build size 10-fold (2.2 GB -> 178 MB).}
-    \item {Pitched and demoed both platforms to investors in the US, Turkey, the Netherlands and India.}
+    \item {Led a team of three and built the whole Django REST backend of Secondary Trading, the investor marketplace on Ethyx's invoice discounting platform, where loans split into fractional units trade at a fixed price or by bid: OTP and JWT sign-in, PAN, GSTIN and CIN KYC through Surepass, Boost Money bank linking, wallets with an audited transaction log, unit-level ownership across resales, and bidding, each money movement inside a database transaction.}
+    \item {Wrote the XIRR engine for four repayment structures and six payment frequencies: it builds each unit's remaining cashflows, splits the sale day's interest at an admin cut-off time, and solves a target XIRR back into a price with Brent's method.}
+    \item {Built the ledger, reconciled against bank statements from Boost Money's account aggregator; a rule engine routing remittances to investors by remitter and amount; a buy-back bot for unsold units; eMudhra e-signed contracts that release units on signing; and TDS and trading reports. Shipped in Docker through GitHub Actions to DigitalOcean.}
+    \item {Led frontend and design for Altern8 (Next.js 14, TypeScript), a construction-lending platform that releases credit to developers in tranches: resumable onboarding pulling bank statements (Boost Money), PAN (Signzy), tax returns (Scoreme) and Tally, Zoho and QuickBooks data (RootFi); budget and timeline uploads parsed into editable tables and a Gantt chart; and an admin panel approving borrowers, projects and tranches with per-tranche rules. Cut its Docker image from 2.2 GB to 178 MB.}
+    \item {Demoed both platforms to investors in the US, Turkey, the Netherlands and India: loans split into tradable units, the two-way XIRR calculator, a bid accepted and e-signed, and a borrower onboarded through tranche approval.}
     \resumeItemListEnd
     \resumeSubheading
       {\href{https://dataverseindia.com}{\underline{DataVerse India}}}{Kolkata, India}
@@ -208,7 +209,6 @@
      \textbf{Cloud/Databases}{: PostgreSQL, MySQL, Redis, ClickHouse, AWS (RDS, S3, EC2, Lambda), Railway } \\
      \textbf{AI Engineering}{: Multi-Agent Orchestration, Claude Code, T3 Code, Codex, Agent Skills, MCP } \\
      \textbf{Practices}{: REST APIs, Webhooks, OAuth2, Zod, Docker, CI/CD, Production Incident Response } \\
-     \textbf{Soft Skills}{: Customer Support, Product Demos, Public Speaking, Team Leadership } \\
     }}
  \end{itemize}
  \vspace{-16pt}
@@ -219,9 +219,6 @@
     \resumeSubheading
       {Bachelor of Technology in Electronics and Communication}{CGPA: 8.21}
       {Heritage Institute of Technology, Kolkata}{}
-     \resumeSubheading
-      {High School}{Percentage: 91}
-      {Ramkrishna Mission Rahara, Kolkata}{}
   \resumeSubHeadingListEnd
 \vspace{-5.5mm}
 
