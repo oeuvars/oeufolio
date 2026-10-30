@@ -163,7 +163,7 @@
 
 %-----------SUMMARY-----------------
 \section{\textbf{Summary}}
-  \small{Product Engineer with 3+ years building production systems in TypeScript, React, Node.js, Python and PostgreSQL for 3PL fulfillment and lending: a rule engine running 50,000+ times a day, a label system printing 10,000+ labels a day, and a packing-station app with 64 mostly reverse-engineered scale protocols. Owns warehouse incidents through to a permanent fix.}
+  \small{Product Engineer, 3+ years. TypeScript, React, Node.js, Python, PostgreSQL. 3PL fulfillment and lending. Rule engine at 50,000+ runs a day, label system at 10,000+ labels a day, packing-station app with 64 scale protocols, most reverse-engineered. Owns warehouse incidents to a permanent fix.}
 \vspace{-2mm}
 
 %-----------EXPERIENCE-----------------
@@ -173,31 +173,33 @@
       {\href{https://cybership.io}{\underline{Cybership}}}{Remote}
       {Product Engineer}{March 2025 - Present}
       \resumeItemListStart
-    \item {Single-handedly architected and built the Automation Rules engine from scratch (similar to Shopify Flow): 50 trigger types, 16 condition operators including array operations, and 7 action types, with Zod-validated rule evaluation processing 50,000+ executions daily across order processing, inventory allocation and shipping.}
-    \item {Building Cybership Desktop, an Electron packing-station app to replace the third-party PrintNode agent. Reverse-engineered most of its 64 scale protocols from raw serial, USB HID and Bluetooth captures of proprietary scales, and built that capture tooling into the app: it records request and response bytes at any serial setting, replays them through the live decoders and sends the evidence to support. No print is sent twice: PostgreSQL row-lock claims and an audited job state machine on the server, and an fsynced on-device journal that repairs torn writes and fails closed on corruption.}
-    \item {Owned production incidents that blocked customer warehouses from shipping, taking each from first report through root cause to a permanent fix, often the same day. Repaired live data alongside their teams while keeping them informed throughout, and fed what they ran into back into the product so the failure could not recur.}
-    \item {Built the Shipping Labels system end to end across EasyPost, USPS (OAuth2), BukuShip and ShipStation for FedEx, UPS, USPS, DHL and Canada Post, plus Mapbox geocoding: pdf-lib label PDFs, Redis-cached rate shopping, webhooks with retries, and batch processing for 10,000+ labels a day.}
-    \item {Runs day-to-day engineering through multi-agent orchestration in T3 Code and Claude Code. Built agent skills for a PR review agent that checks a branch against the repository's review contract, and a Playwright agent that records video proof of a fix and embeds it in the PR.}
+    \item {Automation Rules engine, built solo from scratch (like Shopify Flow): 50 triggers, 16 condition operators incl. array ops, 7 actions. Zod-validated evaluation, 50,000+ runs a day across orders, inventory allocation and shipping.}
+    \item {Building Cybership Desktop, Electron packing-station app to replace PrintNode. Reverse-engineered most of 64 scale protocols from raw serial, USB HID and Bluetooth captures of proprietary scales. Capture tooling in the app: records request and response bytes at any serial setting, replays them through live decoders, sends evidence to support. No double prints: PostgreSQL row-lock claims, audited job state machine, fsynced on-device journal with torn-write repair, fail-closed.}
+    \item {Production incidents blocking warehouses from shipping: first report to root cause to permanent fix, often same day. Repaired live data with customer teams, kept them informed, fed each failure back into the product.}
+    \item {Shipping Labels, end to end: EasyPost, USPS (OAuth2), BukuShip, ShipStation for FedEx, UPS, USPS, DHL, Canada Post; Mapbox geocoding. pdf-lib PDFs, Redis-cached rate shopping, webhooks with retries, batch jobs, 10,000+ labels a day.}
+    \item {Daily multi-agent orchestration in T3 Code and Claude Code. Built agent skills: PR review agent checking branches against the review contract; Playwright agent recording video proof of fixes into PRs.}
     \resumeItemListEnd
     \resumeSubheading
       {\href{https://nahar.om}{\underline{Nahar OM}}}{Chennai, India}
       {Product Engineer}{June 2024 - March 2025}
       \resumeItemListStart
-    \item {Secondary Trading: led a team of three and built the whole Django REST backend of a marketplace where investors trade fractional units of loans at a fixed price or by bid: OTP and JWT sign-in, KYC through Surepass, wallets with an audited transaction log, unit-level ownership across resales, and bidding inside database transactions. Wrote an XIRR engine for four repayment structures that solves a target XIRR back into a price with Brent's method, plus eMudhra contracts, a repayment rule engine, a buy-back bot and TDS reports. On Ethyx, the invoice discounting platform, built the ledger and reconciled it against bank statements from Boost Money's account aggregator.}
-    \item {Altern8: built the frontend and design of a construction-lending platform that releases credit to developers in tranches: resumable borrower onboarding for bank statements (Boost Money), PAN (Signzy), tax returns (Scoreme) and the RootFi connect flow for Tally, Zoho and QuickBooks; budget and timeline uploads parsed into editable tables and a Gantt chart; and the admin panel approving borrowers, projects and tranches with per-tranche rules. Cut its Docker image from 2.2~GB to 178~MB.}
-    \item {Product demos: pitched both products to investors internationally, showing loans split into tradable units, the two-way XIRR calculator, a bid accepted and e-signed, and a borrower onboarded through tranche approval.}
+    \item {Secondary Trading: led team of 3, built whole Django REST backend. Investors trade fractional loan units at fixed price or by bid. OTP and JWT sign-in, Surepass KYC, wallets with audited transaction log, unit ownership across resales, bidding in DB transactions, eMudhra contracts, repayment rule engine, buy-back bot, TDS reports.}
+    \item {XIRR engine for 4 repayment structures; solves target XIRR back to price with Brent's method. Ethyx (invoice discounting): built the ledger, reconciled against Boost Money account-aggregator bank statements.}
+    \item {Altern8: frontend and design, construction lending released in tranches. Resumable onboarding: bank statements (Boost Money), PAN (Signzy), tax returns (Scoreme), RootFi connect for Tally, Zoho, QuickBooks. Budget and timeline uploads into editable tables and Gantt chart. Admin panel approving borrowers, projects, tranches with per-tranche rules. Docker image 2.2~GB to 178~MB.}
+    \item {Pitched both to investors internationally: loans split into tradable units, two-way XIRR calculator, bid accepted and e-signed, borrower onboarded to tranche approval.}
     \resumeItemListEnd
     \resumeSubheading
       {\href{https://propersku.com}{\underline{ProperSKU}}}{Remote, part-time}
       {Principal Frontend Engineer}{December 2023 - June 2024}
       \resumeItemListStart
-    \item {Founding engineer; built the frontend of a Shopify inventory-forecasting app: invite-only sign-up cascading across five roles with role-scoped menus and data, locked in-app onboarding with card billing and Shopify connection, sales charts by product and SKU with period comparisons, and per-variant order quantities for 3, 6 and 12 months.}
+    \item {Founding engineer; built frontend of Shopify inventory-forecasting app for stores and their warehouses. Invite-only sign-up cascading across 5 roles (admin, warehouse managers, warehouse users, store owners, store users), role fixed by invite, menus and data scoped per warehouse or store. In-app onboarding, menu locked till done: account, card billing (Visa, Mastercard, Amex), Shopify connect by domain, team invites.}
+    \item {Reads Shopify orders, line items, products, variants, inventory per location (available, on hand, committed, backordered). Current and historical sales charts by product and SKU with time-range comparisons. Purchase order recommendations: per-variant minimum order quantities for 3, 6, 12 months. Warehouse view of every store with connection status and SKU count; per-account billing and user management.}
     \resumeItemListEnd
     \resumeSubheading
       {\href{https://dataverseindia.com}{\underline{DataVerse India}}}{Kolkata, India}
       {Product Engineer}{December 2022 - December 2023}
       \resumeItemListStart
-    \item {Built custom CMS websites from scratch for GenieBaazar and Penn State University with Next.js, SolidStart, Express and Hono, acted as their technical point of contact, and hosted them on AWS and Hostinger.}
+    \item {Custom CMS websites from scratch for GenieBaazar and Penn State University: Next.js, SolidStart, Express, Hono. Technical point of contact; hosted on AWS and Hostinger.}
     \resumeItemListEnd
     
     \vspace{2.0mm}
