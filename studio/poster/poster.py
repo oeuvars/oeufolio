@@ -55,16 +55,17 @@ BALCONY, RIGHT = (477, 466, 601, 549), (540, 633, 617, 739)
 # A folded strip is the poster's windows set loosely in a grid along it, each cropped to fill its cell, then shrunk and
 # nudged in it by chance so no two edges or gaps quite line up, with the sign's two words lying across them as light,
 # as on the poster. A wide screen's strip runs down, a phone's band across (it shows 21 by 3.875 rem). For each: its
-# size in pixels, how many columns and rows its grid has, and the gap; each window by the column and row it starts at
+# size in pixels, how many columns and rows its grid has, the gap, and how far each window's edge is blurred into the
+# dark, in pixels (about two CSS pixels as the page shows it); each window by the column and row it starts at
 # and how many of each it spans; and each word by where its top left lies, as parts of the strip's width and length,
 # and how tall its letters and their glow are across the strip, as a part of its width or depth. Down the strip the
 # words are turned to read downwards, as a sign hangs down a building.
-STRIP_GRID = (706, 2892, 2, 12, 18)
+STRIP_GRID = (706, 2892, 2, 12, 18, 7)
 STRIP_CELLS = (("SAX", 0, 0, 1, 2), ("SITTER", 1, 0, 1, 2), ("GLOW", 0, 2, 1, 1), ("CURTAINS", 1, 2, 1, 1),
                ("BALCONY", 0, 3, 2, 2), ("CANDLE", 0, 5, 1, 2), ("RED", 1, 5, 1, 1), ("RIGHT", 1, 6, 1, 3),
                ("WOMAN", 0, 7, 1, 2), ("YELLOW", 0, 9, 2, 1), ("CURTAIN", 0, 10, 1, 2), ("CITY", 1, 10, 1, 2))
 STRIP_WORDS, STRIP_WORD = ((0.38, 0.05), (0.04, 0.43)), 0.5
-BAND_GRID = (2016, 372, 10, 2, 12)
+BAND_GRID = (2016, 372, 10, 2, 12, 9)
 BAND_CELLS = (("SAX", 0, 0, 1, 2), ("CURTAINS", 1, 0, 2, 1), ("RED", 1, 1, 1, 1), ("CITY", 2, 1, 1, 1), ("WOMAN", 3, 0, 2, 2),
               ("BALCONY", 5, 0, 1, 1), ("SITTER", 5, 1, 1, 1), ("YELLOW", 6, 0, 2, 1), ("GLOW", 6, 1, 1, 1),
               ("RIGHT", 7, 1, 1, 1), ("CANDLE", 8, 0, 1, 2), ("CURTAIN", 9, 0, 1, 2))
@@ -72,6 +73,9 @@ BAND_WORDS, BAND_WORD = ((0.10, -0.05), (0.42, 0.45)), 0.5
 # How far a window may be shrunk in from each side of its cell and so nudged, as a part of its cell's shorter side, and
 # how much of their light the windows keep, so the sign reads over them.
 GRID_LOOSE, GRID_LIGHT = 0.16, 0.82
+# How much of a window's light bleeds out round it into the dark, and how far, as times its edge's blur: the poster's
+# windows are a blurred photograph's, their light spreading onto the wall.
+GRID_BLEED, GRID_BLEED_REACH = 0.3, 4
 # The room a folded strip's word is cut with round its letters, for its glow, in the reference's pixels.
 WORD_PAD = 24
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
@@ -176,10 +180,10 @@ def resized(image, width, height):
 
 def gridded(bare, sign, title, grid, cells, words, word, down):
     """A folded strip's picture: the poster's windows set loosely in a grid (STRIP_CELLS, BAND_CELLS), each cropped from
-    its middle to fill its cell, shrunk and nudged in it by chance (GRID_LOOSE), and a little dimmed, on no wall, so
-    the paper shows in the gaps; and the sign's two words, cut from the sign lit on its own, so they carry nothing of
+    its middle to fill its cell, shrunk and nudged in it by chance (GRID_LOOSE), a little dimmed, its edge blurred
+    into the dark and its light bleeding a little round it, on no wall, so the paper shows in the gaps; and the sign's two words, cut from the sign lit on its own, so they carry nothing of
     the poster under them, laid over the windows as light, turned to read down the strip."""
-    wide, deep, columns, rows, gap = grid
+    wide, deep, columns, rows, gap, soft = grid
     column, row = (wide - (columns + 1) * gap) / columns, (deep - (rows + 1) * gap) / rows
     rng = np.random.default_rng(13)
     canvas = np.zeros((deep, wide, 3), np.float32)
@@ -189,11 +193,26 @@ def gridded(bare, sign, title, grid, cells, words, word, down):
         a, b, c, d = rng.uniform(0, GRID_LOOSE * min(w, h), 4)
         x, y, w, h = x + a, y + b, w - a - c, h - b - d
         x0, y0, x1, y1 = globals()[name]
-        window = bare[y0 * SCALE : y1 * SCALE, x0 * SCALE : x1 * SCALE]
-        k = max(w / window.shape[1], h / window.shape[0])
-        window = resized(window, window.shape[1] * k, window.shape[0] * k)
-        top_, left_ = (window.shape[0] - round(h)) // 2, (window.shape[1] - round(w)) // 2
-        put(canvas, window[top_ : top_ + round(h), left_ : left_ + round(w)] * GRID_LIGHT, round(x), round(y))
+        # Scaled to fill its cell from the middle of its box, as far round it as the edge's blur and the light's bleed
+        # reach: the poster round it, at the same scale, so the window keeps its framing and fades out into the dark
+        # there, as the poster's do.
+        room = round(GRID_BLEED_REACH * soft * 2)
+        k = max(w / ((x1 - x0) * SCALE), h / ((y1 - y0) * SCALE))
+        cx, cy, reach_x, reach_y = (x0 + x1) / 2 * SCALE, (y0 + y1) / 2 * SCALE, (w / 2 + room) / k, (h / 2 + room) / k
+        rows_, cols_ = bare.shape[:2]
+        l, t = int(max(0, cx - reach_x)), int(max(0, cy - reach_y))
+        r, b = int(min(cols_, cx + reach_x)), int(min(rows_, cy + reach_y))
+        window = np.zeros((round(2 * reach_y) + 2, round(2 * reach_x) + 2, 3), np.float32)
+        oy, ox = int(t - (cy - reach_y)), int(l - (cx - reach_x))
+        window[oy : oy + b - t, ox : ox + r - l] = bare[t:b, l:r]
+        tall, broad = round(h) + 2 * room, round(w) + 2 * room
+        window = resized(window, broad, tall) * GRID_LIGHT
+        edge = np.zeros((tall, broad), np.float32)
+        edge[room : room + round(h), room : room + round(w)] = 1
+        edge = ndimage.gaussian_filter(edge, soft)[..., None]
+        shown = window * edge
+        bleed = np.stack([ndimage.gaussian_filter(shown[..., c], GRID_BLEED_REACH * soft) for c in range(3)], -1)
+        lay(canvas, 1 - (1 - shown) * (1 - GRID_BLEED * bleed), round(x) - room, round(y) - room)
     across = word * (wide if down else deep)
     for cut, (left, top) in zip(sign_words(sign, title), words):
         cut = resized(cut, cut.shape[1] * across / cut.shape[0], across)
@@ -201,10 +220,6 @@ def gridded(bare, sign, title, grid, cells, words, word, down):
             cut = np.ascontiguousarray(np.rot90(cut, -1))
         lay(canvas, cut, round(left * wide), round(top * deep))
     return canvas
-
-
-def put(canvas, image, left, top):
-    canvas[top : top + image.shape[0], left : left + image.shape[1]] = image[: canvas.shape[0] - top, : canvas.shape[1] - left]
 
 
 def lay(canvas, image, left, top):
