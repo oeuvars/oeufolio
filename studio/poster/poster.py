@@ -75,11 +75,11 @@ GRID_LOOSE, GRID_LIGHT = 0.16, 0.82
 # How much of a window's light bleeds out round it into the dark, and how far, as times its edge's blur: the poster's
 # windows are a blurred photograph's, their light spreading onto the wall.
 GRID_BLEED, GRID_BLEED_REACH = 0.3, 4
-# The most the reference's own glow can be at the sign's letters' edge, over the wall's dark, and how far it falls off
-# by a factor e, in the reference's pixels, measured off the poster (anything brighter round them is a window's light).
-OLD_GLOW_EDGE, OLD_GLOW_FALL = 0.9, 4.5
-# How far round, in the reference's pixels, the wall's own dark is the darkest of.
-OLD_GLOW_WALL = 40
+# The folded strips' words are the poster's own, copied off it with the light round them. Round the letters, no more
+# of the poster's light is copied than its sign's glow is there at most: this much at the letters' edge, falling off by
+# a factor e every so many of the reference's pixels. The glow is always under that, so it comes whole; a window's
+# light or a passage's beside the letters is brighter, so it is held down to it.
+WORD_EDGE, WORD_FALL = 0.9, 4.5
 # The room a folded strip's word is cut with round its letters, as far as its glow reaches, and the room round them its
 # size and place (STRIP_WORDS, BAND_WORDS) are measured with, in the reference's pixels.
 WORD_PAD, WORD_ROOM = 64, 24
@@ -138,20 +138,6 @@ def lift_sign(picture, title):
     return picture * keep[..., None] + fill * under[..., None]
 
 
-def old_glow(bare, title):
-    """The reference's own sign's glow, which its photograph spread round its letters and which stays round the new
-    sign on the poster: the wall lift_sign fills the old letters with, from close round them, over the wall's own dark
-    (the darkest of it round about), as grey light. No more of it is taken than the glow could be at its distance from
-    the letters (OLD_GLOW_EDGE, falling off over OLD_GLOW_FALL), so a window near them does not come with it."""
-    luma = bare @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-    small = ndimage.gaussian_filter(ndimage.grey_erosion(luma[::SCALE, ::SCALE], size=(OLD_GLOW_WALL, OLD_GLOW_WALL)), OLD_GLOW_WALL / 4)
-    dark = ndimage.zoom(small, SCALE, order=1)[: luma.shape[0], : luma.shape[1]]
-    away = ndimage.distance_transform_edt(title < 0.5) / SCALE
-    most = OLD_GLOW_EDGE * np.exp(-away / OLD_GLOW_FALL)
-    glow = np.clip(np.minimum(luma - dark, most), 0, None)
-    return glow[..., None] * SIGN
-
-
 def light_sign(picture, title, shape):
     """A photograph of a lit sign, as the reference has it: its letters a little out of focus, made of a screen's dots
     that do not quite keep their grid, lit unevenly, and grained as film is; their light bleeds close round them and
@@ -186,22 +172,30 @@ def through_reference(image):
     return np.asarray(Image.open(kept).convert("RGB").resize(big.size, Image.LANCZOS)).astype(np.float32) / 255
 
 
-def sign_words(sign, title):
-    """The sign's two words, each cut from the sign lit on its own (light_sign over black), with the room round it
-    its glow runs into (WORD_PAD)."""
+def sign_words(light, title):
+    """The sign's two words copied off the poster's light (the poster as the page shows it, its wall taken off), each
+    with the room round it its glow runs into (WORD_PAD), and round the letters no more of the light than the sign's
+    glow is there at most (WORD_EDGE, WORD_FALL), so only the sign and its glow come with it."""
     pad = WORD_PAD * SCALE
-    return [sign[(base - RISE) * SCALE - pad : (base + FALL) * SCALE + pad, x0 * SCALE - pad : x1 * SCALE + pad] for x0, x1, base in WORDS]
+    away = ndimage.distance_transform_edt(title < 0.5) / SCALE
+    most = WORD_EDGE * np.exp(-away / WORD_FALL)
+    luma = light @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    # What is brighter than the glow could be is held down to it, in the sign's own colour, so no window's comes along.
+    over = (luma > most)[..., None]
+    held = np.where(over, most[..., None] * SIGN / (SIGN @ np.array([0.2126, 0.7152, 0.0722], np.float32)), light)
+    return [held[(base - RISE) * SCALE - pad : (base + FALL) * SCALE + pad, x0 * SCALE - pad : x1 * SCALE + pad] for x0, x1, base in WORDS]
 
 def resized(image, width, height):
     image = Image.fromarray((np.clip(image, 0, 1) * 255 + 0.5).astype(np.uint8))
     return np.asarray(image.resize((round(width), round(height)), Image.LANCZOS)).astype(np.float32) / 255
 
 
-def gridded(bare, floor, sign, title, grid, cells, words, word, down):
+def gridded(bare, floor, cuts, grid, cells, words, word, down):
     """A folded strip's picture: the poster's windows set loosely in a grid (STRIP_CELLS, BAND_CELLS), each cropped from
     its middle to fill its cell, shrunk and nudged in it by chance (GRID_LOOSE), a little dimmed, its edge blurred
-    into the dark and its light bleeding a little round it, on no wall, so the paper shows in the gaps; and the sign's two words, cut from the sign lit on its own, so they carry nothing of
-    the poster under them, laid over the windows as light, turned to read down the strip."""
+    into the dark and its light bleeding a little round it, on no wall, so the paper shows in the gaps; and the sign's
+    two words copied off the poster with their glow (sign_words), laid as light where the words go, turned to read down
+    the strip."""
     wide, deep, columns, rows, gap, soft = grid
     column, row = (wide - (columns + 1) * gap) / columns, (deep - (rows + 1) * gap) / rows
     rng = np.random.default_rng(13)
@@ -236,7 +230,7 @@ def gridded(bare, floor, sign, title, grid, cells, words, word, down):
     # How many pixels a pixel of the sign is here: as the word's letters, with WORD_ROOM round them, are tall across.
     k = word * (wide if down else deep) / ((RISE + FALL + 2 * WORD_ROOM) * SCALE)
     beyond = (WORD_PAD - WORD_ROOM) * SCALE * k
-    for cut, (left, top) in zip(sign_words(sign, title), words):
+    for cut, (left, top) in zip(cuts, words):
         cut = resized(cut, cut.shape[1] * k, cut.shape[0] * k)
         if down:
             cut = np.ascontiguousarray(np.rot90(cut, -1))
@@ -361,6 +355,7 @@ def main():
     title = plate("title.png", size)
     bare = lift_sign(picture, title)
     picture, letters = light_sign(bare, title, shape)
+    signed = picture
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:
@@ -394,12 +389,10 @@ def main():
     # as light (a screen), so the wall it shows is the paper.
     floor = sheet.reshape(-1, 3).mean(0) + FLOOR
     # The folded strips are light already: their windows have the wall taken off as the poster's has, and their words
-    # are only the sign's letters and glow. Taking the wall off those would take off the glow the poster's sign keeps
-    # over its wall.
-    # The sign lit on its own, over only the glow the reference's own sign left round it, as the poster's is.
-    sign, _ = light_sign(old_glow(bare, title), title, shape)
-    strip = gridded(bare, floor, sign, title, STRIP_GRID, STRIP_CELLS, STRIP_WORDS, STRIP_WORD, True)
-    band = gridded(bare, floor, sign, title, BAND_GRID, BAND_CELLS, BAND_WORDS, BAND_WORD, False)
+    # are copied off the poster's light, before the passages and the highlighter went on round them.
+    cuts = sign_words(np.clip(signed - floor, 0, None), title)
+    strip = gridded(bare, floor, cuts, STRIP_GRID, STRIP_CELLS, STRIP_WORDS, STRIP_WORD, True)
+    band = gridded(bare, floor, cuts, BAND_GRID, BAND_CELLS, BAND_WORDS, BAND_WORD, False)
     for name, image in (("poster", np.clip(picture - floor, 0, None)), ("poster-strip", strip), ("poster-band", band)):
         light = image
         lit = np.clip(light.max(-1) / 0.06, 0, 1)[..., None]
