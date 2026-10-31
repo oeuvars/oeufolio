@@ -75,9 +75,11 @@ GRID_LOOSE, GRID_LIGHT = 0.16, 0.82
 # How much of a window's light bleeds out round it into the dark, and how far, as times its edge's blur: the poster's
 # windows are a blurred photograph's, their light spreading onto the wall.
 GRID_BLEED, GRID_BLEED_REACH = 0.3, 4
-# How far round the sign's letters the reference's own glow reaches, in its pixels, and the brightest it is (anything
-# brighter round them is a window's light, not the glow's).
-OLD_GLOW_REACH, OLD_GLOW_CAP = 16, 0.35
+# The most the reference's own glow can be at the sign's letters' edge, over the wall's dark, and how far it falls off
+# by a factor e, in the reference's pixels, measured off the poster (anything brighter round them is a window's light).
+OLD_GLOW_EDGE, OLD_GLOW_FALL = 0.9, 4.5
+# How far round, in the reference's pixels, the wall's own dark is the darkest of.
+OLD_GLOW_WALL = 40
 # The room a folded strip's word is cut with round its letters, as far as its glow reaches, and the room round them its
 # size and place (STRIP_WORDS, BAND_WORDS) are measured with, in the reference's pixels.
 WORD_PAD, WORD_ROOM = 64, 24
@@ -136,17 +138,17 @@ def lift_sign(picture, title):
     return picture * keep[..., None] + fill * under[..., None]
 
 
-def old_glow(picture, bare, title):
+def old_glow(bare, title):
     """The reference's own sign's glow, which its photograph spread round its letters and which stays round the new
-    sign on the poster: the wall lift_sign fills the old letters with, from close round them, over the wall filled from
-    further off, past that glow, as grey light, near the letters only. Light brighter than the glow, a window's, is left
-    out of it."""
-    luma = lambda image: image @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-    clear = ndimage.grey_dilation(title, size=(OLD_GLOW_REACH * SCALE + 1, OLD_GLOW_REACH * SCALE + 1))
-    clear = np.clip(ndimage.gaussian_filter(clear, 2 * SCALE) * 1.5, 0, 1)
-    keep = 1 - clear
-    far = ndimage.gaussian_filter(luma(picture) * keep, 10 * SCALE) / (ndimage.gaussian_filter(keep, 10 * SCALE) + 1e-6)
-    glow = np.clip(np.minimum(luma(bare), OLD_GLOW_CAP) - far, 0, None) * clear
+    sign on the poster: the wall lift_sign fills the old letters with, from close round them, over the wall's own dark
+    (the darkest of it round about), as grey light. No more of it is taken than the glow could be at its distance from
+    the letters (OLD_GLOW_EDGE, falling off over OLD_GLOW_FALL), so a window near them does not come with it."""
+    luma = bare @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    small = ndimage.gaussian_filter(ndimage.grey_erosion(luma[::SCALE, ::SCALE], size=(OLD_GLOW_WALL, OLD_GLOW_WALL)), OLD_GLOW_WALL / 4)
+    dark = ndimage.zoom(small, SCALE, order=1)[: luma.shape[0], : luma.shape[1]]
+    away = ndimage.distance_transform_edt(title < 0.5) / SCALE
+    most = OLD_GLOW_EDGE * np.exp(-away / OLD_GLOW_FALL)
+    glow = np.clip(np.minimum(luma - dark, most), 0, None)
     return glow[..., None] * SIGN
 
 
@@ -357,7 +359,6 @@ def main():
 
     # The sign in place of the old one, and in one line on the folded strips, cut from the poster as it is lit.
     title = plate("title.png", size)
-    picture_unlit = picture
     bare = lift_sign(picture, title)
     picture, letters = light_sign(bare, title, shape)
 
@@ -396,7 +397,7 @@ def main():
     # are only the sign's letters and glow. Taking the wall off those would take off the glow the poster's sign keeps
     # over its wall.
     # The sign lit on its own, over only the glow the reference's own sign left round it, as the poster's is.
-    sign, _ = light_sign(old_glow(picture_unlit, bare, title), title, shape)
+    sign, _ = light_sign(old_glow(bare, title), title, shape)
     strip = gridded(bare, floor, sign, title, STRIP_GRID, STRIP_CELLS, STRIP_WORDS, STRIP_WORD, True)
     band = gridded(bare, floor, sign, title, BAND_GRID, BAND_CELLS, BAND_WORDS, BAND_WORD, False)
     for name, image in (("poster", np.clip(picture - floor, 0, None)), ("poster-strip", strip), ("poster-band", band)):
