@@ -34,6 +34,7 @@ going to its own place on the poster (studio/fold.py).
 """
 
 import argparse
+import io
 import json
 import os
 
@@ -129,14 +130,37 @@ def lift_sign(picture, title):
 
 
 def light_sign(picture, title, shape):
-    """A sign over the wall: its letters a little out of focus and made of dots, then the light they throw."""
-    letters = ndimage.gaussian_filter(title, 1.1 * SCALE)
-    dots = screen_dots(shape, 2.1 * SCALE)
-    face = SIGN * (0.6 + 0.34 * dots)[..., None]
+    """A photograph of a lit sign, as the reference has it: its letters a little out of focus, made of a screen's dots
+    that do not quite keep their grid, lit unevenly, and grained as film is; their light bleeds close round them and
+    then wide. Then the camera's losses: the whole is kept at the reference's size and as a JPEG, as the reference was,
+    and scaled up as the windows round it are, so the sign is as soft and as grainy as they are on the page. Made only
+    at the new size, its dots line up into a moire and its grain is too fine to survive the page showing it smaller."""
+    rng = np.random.default_rng(5)
+    letters = ndimage.gaussian_filter(title, 1.4 * SCALE)
+    dots = screen_dots(shape, 2.1 * SCALE, 0.3 * SCALE * reference_noise(rng, shape, 6), 0.3 * SCALE * reference_noise(rng, shape, 6))
+    mottle = 1 + 0.08 * reference_noise(rng, shape, 3) + 0.05 * reference_noise(rng, shape, 12)
+    grain = reference_noise(rng, shape, 0.6)
+    face = SIGN * np.clip((0.6 + 0.34 * dots) * mottle + 0.04 * grain, 0, 1)[..., None]
     picture = picture * (1 - letters[..., None]) + face * letters[..., None]
-    glow = 0.42 * ndimage.gaussian_filter(title, 3 * SCALE) + 0.18 * ndimage.gaussian_filter(title, 12 * SCALE)
-    glow = np.clip(glow, 0, 1)[..., None] * SIGN
-    return 1 - (1 - picture) * (1 - glow), letters
+    glow = (0.22 * ndimage.gaussian_filter(title, 1.8 * SCALE) + 0.3 * ndimage.gaussian_filter(title, 3.5 * SCALE)
+            + 0.18 * ndimage.gaussian_filter(title, 12 * SCALE))
+    glow = np.clip(glow * (mottle + 0.1 * grain), 0, 1)[..., None] * SIGN
+    return through_reference(1 - (1 - picture) * (1 - glow)), letters
+
+
+def reference_noise(rng, shape, blur):
+    """Noise in the reference's own pixels, blurred by blur of them, scaled up to the new size: about -1 to 1."""
+    noise = ndimage.gaussian_filter(rng.standard_normal((shape[0] // SCALE, shape[1] // SCALE)).astype(np.float32), blur)
+    return ndimage.zoom(noise / (2 * noise.std()), SCALE, order=3)
+
+
+def through_reference(image):
+    """The picture as the reference keeps it, at its size and as a JPEG, then scaled up to the new size again."""
+    big = Image.fromarray((np.clip(image, 0, 1) * 255 + 0.5).astype(np.uint8))
+    small = big.resize((big.width // SCALE, big.height // SCALE), Image.LANCZOS)
+    kept = io.BytesIO()
+    small.save(kept, "JPEG", quality=80)
+    return np.asarray(Image.open(kept).convert("RGB").resize(big.size, Image.LANCZOS)).astype(np.float32) / 255
 
 
 def sign_words(lit, title):
@@ -300,9 +324,11 @@ def highlighter(shape, marks, rng):
     return np.clip(ndimage.gaussian_filter(cover, 0.6 * SCALE), 0, 1)
 
 
-def screen_dots(shape, pitch):
-    """The sign's screen, a grid of lit dots turned 45 degrees, 1 on a dot and 0 between."""
+def screen_dots(shape, pitch, drift_x, drift_y):
+    """The sign's screen, a grid of lit dots turned 45 degrees, 1 on a dot and 0 between, each dot drifted off the
+    grid by drift (in pixels), as a screen photographed through a lens is."""
     y, x = np.mgrid[0 : shape[0], 0 : shape[1]].astype(np.float32)
+    x, y = x + drift_x, y + drift_y
     u, v = (x + y) / np.sqrt(2), (x - y) / np.sqrt(2)
     return 0.5 + 0.5 * np.cos(2 * np.pi * u / pitch) * np.cos(2 * np.pi * v / pitch)
 
