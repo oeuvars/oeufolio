@@ -61,10 +61,10 @@ BALCONY, RIGHT = (477, 466, 601, 549), (540, 633, 617, 739)
 # many of each it spans; and each word by where its top left lies, as parts of the strip's width and length, and how
 # tall its letters and their glow are across the strip, as a part of its width or depth. Down the strip the words are
 # turned to read downwards, as a sign hangs down a building.
-STRIP_GRID = (706, 2892, 2, 12, 18, 7)
-STRIP_CELLS = (("SAX", 0, 0, 1, 2), ("GLOW", 0, 2, 1, 1), ("BALCONY", 0, 3, 2, 2), ("CANDLE", 0, 5, 1, 2), ("RED", 1, 5, 1, 1),
-               ("WOMAN", 0, 7, 1, 2), ("YELLOW", 0, 9, 1, 1), ("CURTAIN", 0, 10, 1, 2), ("CITY", 1, 10, 1, 2))
-STRIP_WORDS, STRIP_WORD = ((0.34, 0.04), (0.33, 0.49)), 0.44
+STRIP_GRID = (706, 2892, 2, 11, 18, 7)
+STRIP_CELLS = (("SAX", 1, 0, 1, 2), ("RED", 1, 2, 1, 1), ("WOMAN", 0, 3, 2, 2), ("CANDLE", 0, 5, 1, 2), ("BALCONY", 0, 7, 1, 1),
+               ("GLOW", 0, 8, 1, 1), ("CURTAIN", 0, 9, 1, 2), ("CITY", 1, 9, 1, 2))
+STRIP_WORDS, STRIP_WORD = ((0.10, 0.02), (0.39, 0.43)), 0.52
 BAND_GRID = (2016, 372, 10, 2, 12, 9)
 BAND_CELLS = (("SAX", 0, 0, 1, 2), ("RED", 1, 1, 1, 1), ("CITY", 2, 1, 1, 1), ("WOMAN", 3, 0, 2, 2), ("BALCONY", 5, 0, 1, 1),
               ("SITTER", 5, 1, 1, 1), ("YELLOW", 6, 0, 2, 1), ("CANDLE", 8, 0, 1, 1), ("CURTAIN", 9, 0, 1, 2))
