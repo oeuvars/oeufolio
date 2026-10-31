@@ -13,5 +13,3 @@ export const slide = { type: 'spring', stiffness: 60, damping: 13.5, mass: 1 } a
 /** The poster that is the work page (studio/poster), in pixels. Its strip opens no wider than it. */
 export const POSTER = { width: 2208, height: 2943 } as const
 
-/** The poster's middle column, which its folded strip shows (STRIP in studio/poster/poster.py), in its pixels. */
-export const POSTER_COLUMN = { left: 900, width: 882 } as const
