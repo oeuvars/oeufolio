@@ -750,8 +750,8 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   // their strips, open or folded, so opening one only uncovers its page.
   const foldOf = (i: number): FoldKind | null =>
     tones[i].hangs ? (mobile ? 'badge' : null) : i === LETTER ? 'letter' : tones[i].bleeds ? (workPoster ? 'poster' : null) : !mobile ? null : tones[i].fills ? 'desk' : tones[i].roll ? 'contact' : null
-  // The page's picture as the page lays it, for the pieces of the letter's or the poster's strip to land in: their pages
-  // are only there while they are open.
+  // The page's picture as the page lays it, for the letter's or the poster's strip to fade into: their pages are only
+  // there while they are open.
   const pictureOf = (i: number) => (foldOf(i) === 'letter' ? <Letter letter={profile.letter} /> : foldOf(i) === 'poster' ? <PosterPicture /> : null)
   const turnedPage = (i: number): CSSProperties => ({
     paddingLeft: '1rem',
@@ -1074,7 +1074,6 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                       {foldOf(i) && (
                         <Fold
                           kind={foldOf(i)!}
-                          wide
                           open={open}
                           folded={open ? folds(i) : folded(i)}
                           opened={openWidthOf(i)}

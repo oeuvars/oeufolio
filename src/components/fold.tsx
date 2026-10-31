@@ -5,27 +5,22 @@ import type { FoldKind, FoldPiece } from '../types'
 import fold from './fold.json'
 
 const SIZES = fold.sizes as unknown as Record<string, [number, number]>
-// Each strip's pieces as a phone's band has them, and as a wide screen's folded strip does, for the letter, whose
-// strip there shows a picture of its own (the others lie under their strips, open or folded). The poster has none.
-const PIECES = fold as unknown as Record<Exclude<FoldKind, 'badge' | 'poster'> | 'letter-wide', FoldPiece[]>
-// The page's picture under the pieces, which keeps a hole where each piece lands until it is there.
-const PAGE_SRC: Partial<Record<FoldKind, string>> = { letter: '/objects/letter.avif', desk: '/objects/mat/desk-wide.avif' }
+// Each strip's pieces as a phone's band has them. The letter and the poster have none (FADE).
+const PIECES = fold as unknown as Record<'desk' | 'contact', FoldPiece[]>
+// The desk's picture under its pieces, which keeps a hole where each piece lands until it is there.
+const DESK_PAGE = '/objects/mat/desk-wide.avif'
 // How far open the strip is when a piece goes over from the band's picture of itself to the page's, at once and in
 // mid-flight, where it moves fastest. The two are often two photographs of the thing (the desk's, the contact set's),
 // from cameras a little apart, so faded one into the other they would show it twice, a little apart.
 const TAKES_ON = 0.5
-// The rest of the page lies where it lies, its pieces' places empty until they arrive, and the strip opening uncovers
-// it; only where the band showed, which the strip already had open, does it come in, by the time the strip is this far
-// open, as the band goes from under the pieces. On the desk the band's mat goes too, in the band's light.
+// How far open the strip is by the time the desk's band mat has gone from under the pieces, in the band's light.
 const BAND_GOES = 0.35
-// How far past the band its going reaches, in px, so it has no edge.
-const BAND_SOFT = 48
 // The page's light has the things' shadows and the dark under them in it, so it takes over from the light without them
 // (bare_light in studio/fold.py) only as they settle onto the mat.
 const SHADOWS_IN = [0.88, 1]
-// The poster has no pieces: its folded picture fades out over the first part of the opening and the poster fades in
-// over the rest, overlapping in the middle.
-const POSTER_FADE = { band: [0, 0.6], page: [0.25, 1] }
+// The letter and the poster have no pieces: the folded picture fades out over the first part of the opening and the
+// page fades in over the rest, overlapping in the middle.
+const FADE = { band: [0, 0.6], page: [0.25, 1] }
 
 const ramp = ([from, to]: number[], p: number) => {
   const t = Math.min(1, Math.max(0, (p - from) / (to - from)))
@@ -59,11 +54,9 @@ type FoldProps = {
   opened: number
   /** Where the page lies on the strip, upright (SiteShell's uprightOf). */
   style: CSSProperties
-  /** The page's picture, laid as the page lays it, for the pieces to land in: the letter's and the poster's, whose
-   * pages are only there while they are open. */
+  /** The page's picture, laid as the page lays it, to fade in: the letter's and the poster's, whose pages are only
+   * there while they are open. */
   children?: ReactNode
-  /** The strip is a wide screen's, whose folded picture is its own, down the strip. */
-  wide?: boolean
 }
 
 /**
@@ -71,12 +64,12 @@ type FoldProps = {
  * its own made of pieces of its page (studio/fold.py); open, its page ([data-fold-page]). In between, as far as the
  * strip is open, each piece travels from where the band has it to where the page has it, turning and growing on the
  * way, over the rest of the page, which the strip uncovers as it opens, with each piece's place left empty. It goes as the strip goes, whether a spring or a finger moves it, and back the same way. The card's band is
- * its own page laid smaller, so the page itself goes there and back. The poster only fades from its band to its page
- * (POSTER_FADE).
+ * its own page laid smaller, so the page itself goes there and back. The letter and the poster only fade from their
+ * band to their page (FADE).
  */
-export const Fold = ({ kind, open, folded, opened, style, children, wide }: FoldProps) => {
+export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps) => {
   const layer = useRef<HTMLDivElement>(null)
-  const pieces = kind === 'badge' || kind === 'poster' ? [] : PIECES[wide && kind === 'letter' ? 'letter-wide' : kind]
+  const pieces = kind === 'desk' || kind === 'contact' ? PIECES[kind] : []
   // The poster's pieces are light, screened over the paper and over each other.
   const light = kind === 'poster'
 
@@ -90,7 +83,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
     let badge: { from: [number, number]; to: [number, number]; grow: number } | null = null
     let was = ''
     let waiting = false
-    const desk = kind === 'desk' ? holes(PAGE_SRC.desk!, pieces) : ''
+    const desk = kind === 'desk' ? holes(DESK_PAGE, pieces) : ''
 
     const find = (inside: Element | null | undefined, src: string) => inside?.querySelector<HTMLElement>(`[src="${src}"], [data-src="${src}"]`)
     // Where a picture is drawn on the screen: its box, or within it, for one fitted into its box whole.
@@ -123,7 +116,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
       waiting = false
       for (const [n, piece] of pieces.entries()) {
         const bandImage = find(band, piece.band.src)
-        const pageImage = find(kind === 'letter' || kind === 'poster' ? rest : page, piece.page.src)
+        const pageImage = find(page, piece.page.src)
         if (!bandImage || !pageImage) return false
         const b = drawn(bandImage, piece.band.src)
         const p = drawn(pageImage, piece.page.src)
@@ -219,23 +212,18 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
           // The lamp's light on the mat is the light without the pieces until they land (bare_light in studio/fold.py).
           page.style.setProperty('--fold-takes', moving ? ramp(SHADOWS_IN, p).toFixed(3) : '1')
         }
-      } else if (kind === 'poster') {
+      } else if (kind === 'letter' || kind === 'poster') {
         if (band) {
           band.style.visibility = state === 'page' ? 'hidden' : 'visible'
-          band.style.opacity = moving ? String(1 - ramp(POSTER_FADE.band, p)) : ''
+          band.style.opacity = moving ? String(1 - ramp(FADE.band, p)) : ''
         }
         if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
-        if (rest) rest.style.opacity = moving ? ramp(POSTER_FADE.page, p).toFixed(3) : '1'
+        if (rest) rest.style.opacity = moving ? ramp(FADE.page, p).toFixed(3) : '1'
         return
       } else {
         if (band) band.style.visibility = state === 'band' ? 'visible' : 'hidden'
         if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
       }
-      if (rest) {
-        const a = moving ? bandGoes.toFixed(3) : '1'
-        rest.style.maskImage = `linear-gradient(to ${wide ? 'right' : 'bottom'}, rgb(0 0 0 / ${a}) 0, rgb(0 0 0 / ${a}) ${folded}px, #000 ${folded + BAND_SOFT}px)`
-      }
-
       if (!moving || !laid) return
       const takes = p >= TAKES_ON
       laid.forEach(({ from, to, grow, turn }, n) => {
@@ -251,19 +239,11 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
       })
     }
 
-    // The page's picture keeps a hole where each piece lands, while they are on their way.
-    const picture = rest && pieces.length && PAGE_SRC[kind] ? find(rest, PAGE_SRC[kind]!) : null
-    if (picture) {
-      picture.style.maskImage = holes(PAGE_SRC[kind]!, pieces)
-      picture.style.maskSize = '100% 100%'
-      picture.style.maskMode = 'luminance'
-    }
-
     apply()
     const watching = new ResizeObserver(apply)
     watching.observe(strip)
     return () => watching.disconnect()
-  }, [kind, open, folded, opened, pieces, wide])
+  }, [kind, open, folded, opened, pieces])
 
   return (
     // The poster's layer is light as a whole, screened over the paper under it: a layer of its own, its pieces screened

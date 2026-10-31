@@ -6,15 +6,15 @@
 
     uv run studio/fold.py [--proof DIR]
 
-On a phone each folded strip shows a band of its own, made of pieces of its page set in a row: the letter's drawings,
-a few of the desk's things, the whole contact set. On a wide screen the letter's strip shows the same drawings set down
-it (letter-wide). The poster's strips are a strip of film that fades into the page, with no pieces. As the strip opens, each piece
+On a phone the desk's and the contact set's folded strips show a band of their own, made of pieces of the page set in
+a row: a few of the desk's things, the whole contact set. The letter's and the poster's strips fade into their pages,
+with no pieces. As the strip opens, each piece
 travels from where the band has it to where the page has it, turning and growing on the way, and as it folds, back.
 For each piece this writes, for the band's picture and the page's: which picture it is in (the src the page lays it
 with), the outline it is cut out by, in that picture's pixels, and the point it turns about, the same point of the
 thing in both; and how far it turns, clockwise, and grows, in pixels of the page's picture to one of the band's.
-Everything is worked out from where the scripts that render the bands and pages put things (studio/letter.py,
-studio/desk/desk.json, studio/ticket/scene.py), and the letter's crop is found by matching.
+Everything is worked out from where the scripts that render the bands and pages put things (studio/desk/desk.json,
+studio/ticket/scene.py).
 
 Writes src/components/fold.json, with each picture's size in pixels,
 and public/objects/mat/desk-{band,wide}-light(-past)-bare.avif, the lamp's light on the desk without the things that
@@ -131,55 +131,6 @@ def piece(band_src, band_clip, band_at, page_src, page_clip, page_at, turn=0.0, 
         "turn": round(float(turn), 2),
         "scale": round(float(scale), 5),
     }
-
-
-def letter():
-    """The letter's drawings, date and signature: each box of the folded strip's (letter.py STRIP), set in a row in the
-    phone's band (letter.py band) and one under another down the wide screen's strip (letter.py strip), and where the
-    page's ink has it, cut from the sheet at an offset found by matching. Returns the phone's pieces and the wide
-    screen's."""
-    import letter as made
-
-    up = made.UP
-    # Down the wide screen's strip: each row of boxes side by side, their feet level, where across it the row says.
-    down = []
-    top = made.STRIP_GAP * 3 // 4
-    for across, boxes in made.STRIP:
-        foot = top + max(y1 - y0 for _, y0, _, y1 in boxes)
-        left = round(across * (made.STRIP_WIDTH - sum(x1 - x0 for x0, _, x1, _ in boxes)))
-        for x0, y0, x1, y1 in boxes:
-            down.append((left, foot - (y1 - y0)))
-            left += x1 - x0
-        top = foot + made.STRIP_GAP
-    groups = [boxes for _, boxes in made.STRIP]
-    tall = max(max(y1 - y0 for _, y0, _, y1 in boxes) for boxes in groups)
-    placed = []
-    left = 0
-    for boxes in groups:
-        high = max(y1 - y0 for _, y0, _, y1 in boxes)
-        foot = (tall + high) // 2
-        for x0, y0, x1, y1 in boxes:
-            placed.append(((x0, y0, x1, y1), (left, foot - (y1 - y0))))
-            left += x1 - x0
-        left += made.BAND_GAP
-
-    band_src, page_src = "/objects/letter-band.avif", "/objects/letter.avif"
-    band, page = load(band_src)[..., 3], load(page_src)[..., 3]
-    # The page's ink is cut close round it, so a box of the reference lies on it up and left by the cut. The largest
-    # drawing is found on it, and the rest lie at the same offset.
-    (x0, y0, x1, y1), (bx, by) = max(placed, key=lambda each: (each[0][2] - each[0][0]) * (each[0][3] - each[0][1]))
-    ink = band[by * up : (by + y1 - y0) * up, bx * up : (bx + x1 - x0) * up]
-    score = signal.fftconvolve(page - page.mean(), (ink - ink.mean())[::-1, ::-1], mode="valid")
-    top, lft = np.unravel_index(np.argmax(score), score.shape)
-    off = (x0 * up - lft, y0 * up - top)
-    print(f"letter cut at {off}")
-    pieces, wide = [], []
-    for ((x0, y0, x1, y1), (bx, by)), (sx, sy) in zip(placed, down):
-        w, h = (x1 - x0) * up, (y1 - y0) * up
-        px, py = x0 * up - off[0], y0 * up - off[1]
-        pieces.append(piece(band_src, [rect(bx * up, by * up, w, h)], (bx * up + w / 2, by * up + h / 2), page_src, [rect(px, py, w, h)], (px + w / 2, py + h / 2)))
-        wide.append(piece("/objects/letter-strip.avif", [rect(sx * up, sy * up, w, h)], (sx * up + w / 2, sy * up + h / 2), page_src, [rect(px, py, w, h)], (px + w / 2, py + h / 2)))
-    return pieces, wide
 
 
 def desk():
@@ -373,8 +324,7 @@ def main():
     import sys
 
     sys.path.insert(0, HERE)
-    letter_pieces, letter_wide = letter()
-    folds = {"letter": letter_pieces, "desk": desk(), "contact": contact(), "letter-wide": letter_wide}
+    folds = {"desk": desk(), "contact": contact()}
     for side in ("band", "page"):
         bare_light(folds["desk"], side, args.proof)
     bare_light(folds["desk"], "page", args.proof, everything=True)
