@@ -1,11 +1,10 @@
 import { POSTER, POSTER_COLUMN } from './house'
 
 /**
- * The work page's poster folded into its strip (studio/poster): the middle column of its windows, the full height
- * of it, with the sign's light running in from either side but none of the passages, which come with the page.
- * Like the building, it has no frame, so it runs on under the tab to the strip's edge. It is light printed on the
- * strip's paper, as the page is, so it is laid over the paper as a screen. Its sign and windows go to their places on
- * the poster as the strip opens, and back as it folds (Fold).
+ * The work page's poster folded into its strip (studio/poster folded_film): a strip of old film lying down the poster's
+ * bare wall, its frames five of the poster's windows, with the sign's light laid down it. Like the building, it has no
+ * frame, so it runs on under the tab to the strip's edge. It is light printed on the strip's paper, as the page is, so
+ * it is laid over the paper as a screen. It fades into the poster as the strip opens, and back as it folds (Fold).
  */
 export const StripPoster = () => (
   <div aria-hidden className="absolute inset-0 mix-blend-screen [container-type:size]">

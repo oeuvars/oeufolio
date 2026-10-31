@@ -7,16 +7,16 @@
     uv run studio/fold.py [--proof DIR]
 
 On a phone each folded strip shows a band of its own, made of pieces of its page set in a row: the letter's drawings,
-the poster's sign and windows, a few of the desk's things, the whole contact set. On a wide screen the letter's and the
-poster's strips show the same drawings and a sign and windows set down them (letter-wide, poster-wide). As the strip opens, each piece
+a few of the desk's things, the whole contact set. On a wide screen the letter's strip shows the same drawings set down
+it (letter-wide). The poster's strips are a strip of film that fades into the page, with no pieces. As the strip opens, each piece
 travels from where the band has it to where the page has it, turning and growing on the way, and as it folds, back.
 For each piece this writes, for the band's picture and the page's: which picture it is in (the src the page lays it
 with), the outline it is cut out by, in that picture's pixels, and the point it turns about, the same point of the
 thing in both; and how far it turns, clockwise, and grows, in pixels of the page's picture to one of the band's.
 Everything is worked out from where the scripts that render the bands and pages put things (studio/letter.py,
-studio/poster/poster.py, studio/desk/desk.json, studio/ticket/scene.py), and the letter's crop is found by matching.
+studio/desk/desk.json, studio/ticket/scene.py), and the letter's crop is found by matching.
 
-Writes src/components/fold.json, with each picture's size in pixels and where the poster band's layers lie in its middle,
+Writes src/components/fold.json, with each picture's size in pixels,
 and public/objects/mat/desk-{band,wide}-light(-past)-bare.avif, the lamp's light on the desk without the things that
 travel, and desk-wide-light(-past)-empty.avif, without anything on it (bare_light). --proof DIR also writes, for each strip, its band and page with every outline drawn
 on them, and the band's pieces carried to the page and laid over it, to check they land on their things.
@@ -180,98 +180,6 @@ def letter():
         pieces.append(piece(band_src, [rect(bx * up, by * up, w, h)], (bx * up + w / 2, by * up + h / 2), page_src, [rect(px, py, w, h)], (px + w / 2, py + h / 2)))
         wide.append(piece("/objects/letter-strip.avif", [rect(sx * up, sy * up, w, h)], (sx * up + w / 2, sy * up + h / 2), page_src, [rect(px, py, w, h)], (px + w / 2, py + h / 2)))
     return pieces, wide
-
-
-def poster():
-    """The poster's sign and the windows a folded strip shows (poster.py): its two words and the three windows behind
-    them, laid together as the band's middle, and the windows at its two ends, each to where it is on the poster."""
-    import sys
-
-    sys.path.insert(0, os.path.join(HERE, "poster"))
-    import poster as made
-
-    k = made.SCALE
-    page_src = "/objects/poster.avif"
-    pad = made.WORD_PAD * k
-    words = [((x0 - made.WORD_PAD) * k, (base - made.RISE) * k - pad, (x1 - x0) * k + 2 * pad, (made.RISE + made.FALL) * k + 2 * pad) for x0, x1, base in made.WORDS]
-    windows = {name: (x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k) for name, (x0, y0, x1, y1) in (("yellow", made.YELLOW), ("red", made.RED), ("balcony", made.BALCONY), ("sax", made.SAX), ("sitter", made.SITTER), ("candle", made.CANDLE), ("curtain", made.CURTAIN))}
-    # What a word's box shares with a window stays with the window, so no two pieces lay the same light twice where
-    # they land: the word's outline has each of those cut out of it. What it shares with a passage goes with the word,
-    # whose letters run into the passages' boxes.
-
-    def less(box, others):
-        x, y, w, h = box
-        holes = []
-        for ox, oy, ow, oh in others:
-            l, t, r, b = max(x, ox), max(y, oy), min(x + w, ox + ow), min(y + h, oy + oh)
-            if l < r and t < b:
-                holes.append(rect(l, t, r - l, b - t))
-        # Holes that overlap each other would fill again, even-odd, so they are kept apart by trimming each against
-        # those before it along whichever side overlaps least.
-        kept = []
-        for hole in holes:
-            (l, t), (r, b) = hole[0], hole[2]
-            for (kl, kt), _, (kr, kb), _ in kept:
-                if l < kr and kl < r and t < kb and kt < b:
-                    t = max(t, kb) if kb - t < r - l else t
-                    l = max(l, kr) if not (kb - t < r - l) else l
-            if l < r and t < b:
-                kept.append(rect(l, t, r - l, b - t))
-        return [rect(*box)] + kept
-
-    def paired(boxes, tall):
-        """Where pair() sets each of its windows, each set tall, PAIR_GAP apart: their boxes in its picture."""
-        placed, left = [], 0
-        for x, y, w, h in boxes:
-            wide = round(w * tall / h) * k
-            placed.append((left, 0, wide, tall * k))
-            left += wide + made.PAIR_GAP * k
-        return placed
-
-    pieces = []
-    # The band's middle: the sign's line over the windows behind it, both centred in it (folded_band).
-    human_w = words[0][2]
-    line_w = human_w + made.WORD_SPACE * k - 2 * pad + words[1][2]
-    behind = paired([windows[n] for n in ("yellow", "red", "balcony")], made.BEHIND_TALL)
-    behind_w = behind[-1][0] + behind[-1][2]
-    middle = (max(line_w, behind_w), max(words[0][3], made.BEHIND_TALL * k))
-    for name, (x, y, w, h) in zip(("human", "experience"), words):
-        src = f"/objects/poster-band-{name}.avif"
-        pieces.append(piece(src, [rect(0, 0, w, h)], (w / 2, h / 2), page_src, less((x, y, w, h), list(windows.values())), (x + w / 2, y + h / 2)))
-    for name, (bx, by, bw, bh) in zip(("yellow", "red", "balcony"), behind):
-        x, y, w, h = windows[name]
-        pieces.append(piece("/objects/poster-band-behind.avif", [rect(bx, by, bw, bh)], (bx + bw / 2, by + bh / 2), page_src, [rect(x, y, w, h)], (x + w / 2, y + h / 2), scale=h / bh))
-    for src, names in (("/objects/poster-band-start.avif", ("sax",)), ("/objects/poster-band-end.avif", ("candle", "curtain"))):
-        for name, (bx, by, bw, bh) in zip(names, paired([windows[n] for n in names], made.BAND_WINDOWS)):
-            x, y, w, h = windows[name]
-            pieces.append(piece(src, [rect(bx, by, bw, bh)], (bx + bw / 2, by + bh / 2), page_src, [rect(x, y, w, h)], (x + w / 2, y + h / 2), scale=h / bh))
-    # The wide screen's folded strip (folded_column): the sign's line turned a quarter clockwise down the middle of a
-    # column as tall as the poster, a pair of windows above it and a pair below. Its two words overlap only in their
-    # glow, which is shared between them halfway.
-    column_w, column_h = (made.STRIP[1] - made.STRIP[0]) * k, Image.open(os.path.join(OBJECTS, "poster.avif")).size[1]
-    deep = words[0][3]
-    sign_left, sign_top = (column_w - deep) // 2, (column_h - line_w) // 2
-    halfway = (human_w + line_w - words[1][2]) / 2
-    wide = []
-    for name, (x, y, w, h), (start, end) in zip(("human", "experience"), words, ((0, halfway), (halfway, line_w))):
-        across = 0 if name == "human" else line_w - w
-        at = (sign_left + deep / 2, sign_top + across + w / 2)
-        wide.append(piece("/objects/poster-strip.avif", [rect(sign_left, sign_top + start, deep, end - start)], at, page_src, less((x, y, w, h), list(windows.values())), (x + w / 2, y + h / 2), turn=-90))
-    room = made.GLOW_ROOM * k
-    for names, top in ((("sax", "sitter"), sign_top - room - made.COLUMN_WINDOWS * k), (("candle", "curtain"), sign_top + line_w + room)):
-        placed = paired([windows[n] for n in names], made.COLUMN_WINDOWS)
-        left = (column_w - (placed[-1][0] + placed[-1][2])) // 2
-        for name, (bx, by, bw, bh) in zip(names, placed):
-            x, y, w, h = windows[name]
-            wide.append(piece("/objects/poster-strip.avif", [rect(left + bx, top + by, bw, bh)], (left + bx + bw / 2, top + by + bh / 2), page_src, [rect(x, y, w, h)], (x + w / 2, y + h / 2), scale=h / bh))
-    # Where the band's layers lie in its middle, as parts of it, for the page to lay them together.
-    layers = {
-        "size": [middle[0], middle[1]],
-        "behind": [(middle[0] - behind_w) // 2, (middle[1] - made.BEHIND_TALL * k) // 2, behind_w, made.BEHIND_TALL * k],
-        "human": [(middle[0] - line_w) // 2, (middle[1] - words[0][3]) // 2, words[0][2], words[0][3]],
-        "experience": [(middle[0] - line_w) // 2 + line_w - words[1][2], (middle[1] - words[1][3]) // 2, words[1][2], words[1][3]],
-    }
-    return pieces, wide, layers
 
 
 def desk():
@@ -465,9 +373,8 @@ def main():
     import sys
 
     sys.path.insert(0, HERE)
-    poster_pieces, poster_wide, layers = poster()
     letter_pieces, letter_wide = letter()
-    folds = {"letter": letter_pieces, "poster": poster_pieces, "desk": desk(), "contact": contact(), "letter-wide": letter_wide, "poster-wide": poster_wide}
+    folds = {"letter": letter_pieces, "desk": desk(), "contact": contact(), "letter-wide": letter_wide}
     for side in ("band", "page"):
         bare_light(folds["desk"], side, args.proof)
     bare_light(folds["desk"], "page", args.proof, everything=True)
@@ -477,7 +384,7 @@ def main():
     # How many pixels each picture is, so the page can tell how large it lays each.
     sizes = {src: list(Image.open(os.path.join(ROOT, "public", src.lstrip("/"))).size) for pieces in folds.values() for each in pieces for src in (each["band"]["src"], each["page"]["src"])}
     with open(OUT, "w") as file:
-        file.write(json.dumps({"sizes": sizes, "layers": {"poster": layers}, **folds}, separators=(",", ":")) + "\n")
+        file.write(json.dumps({"sizes": sizes, **folds}, separators=(",", ":")) + "\n")
     print(f"wrote {OUT}")
 
 

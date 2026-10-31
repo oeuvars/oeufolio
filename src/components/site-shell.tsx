@@ -7,7 +7,7 @@ import { profile } from '../content'
 import type { FoldKind, NavItem, VersionSearch } from '../types'
 import { Art } from './art'
 import { Badge } from './badge'
-import { Fold, POSTER_SIGN } from './fold'
+import { Fold } from './fold'
 import { POSTER } from './house'
 import { Letter } from './letter'
 import { PosterPicture } from './poster'
@@ -262,7 +262,7 @@ const FOLD_AT = { badge: 0.27 }
 const CONTACT_BAND = { long: '22rem', deep: '4.25rem' }
 // The work strip's folded band: as deep as the strip shows, the poster's windows at its ends as tall as that lets them
 // be, and its sign between them.
-const POSTER_BAND = { deep: '3.875rem', windows: '3.25rem', sign: '13rem' }
+const POSTER_BAND = { deep: '3.875rem' }
 // The desk strip's folded band: its plate as deep as the strip shows, in rem, on a mat deep enough to run on under the
 // torn edge of the strip after it.
 const DESK_BAND = { deep: 3.375, mat: '4.25rem' }
@@ -974,31 +974,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                           <Badge badge={profile.badge} page={foldCard} margin={1.5 * metrics.rem} open={false} past={(metrics.height - foldCard) / 2} />
                         </div>
                       ) : tones[i].bleeds && workPoster ? (
-                        <div data-fold-band aria-hidden className="pointer-events-none mix-blend-screen" style={{ ...upright, height: POSTER_BAND.deep }}>
-                          {/* The poster's sign in one line over the windows it crosses on the poster, small enough to
-                              lie between the tabs above and below it, between windows at the strip's two ends. Its
-                              words and the windows behind them are laid apart, as light over light, for each goes to
-                              its own place on the poster. */}
-                          <div className="flex h-full items-center justify-between px-1.5">
-                            <img src="/objects/poster-band-start.avif" alt="" draggable={false} className="w-auto max-w-none select-none" style={{ height: POSTER_BAND.windows }} />
-                            <div className="relative" style={{ width: POSTER_BAND.sign, aspectRatio: `${POSTER_SIGN.size[0]} / ${POSTER_SIGN.size[1]}` }}>
-                              {(['behind', 'human', 'experience'] as const).map((layer) => {
-                                const [x, y, w, h] = POSTER_SIGN[layer]
-                                const [across, down] = POSTER_SIGN.size
-                                return (
-                                  <img
-                                    key={layer}
-                                    src={`/objects/poster-band-${layer}.avif`}
-                                    alt=""
-                                    draggable={false}
-                                    className="absolute max-w-none mix-blend-screen select-none"
-                                    style={{ left: `${(100 * x) / across}%`, top: `${(100 * y) / down}%`, width: `${(100 * w) / across}%`, height: `${(100 * h) / down}%` }}
-                                  />
-                                )
-                              })}
-                            </div>
-                            <img src="/objects/poster-band-end.avif" alt="" draggable={false} className="w-auto max-w-none select-none" style={{ height: POSTER_BAND.windows }} />
-                          </div>
+                        <div data-fold-band aria-hidden className="pointer-events-none flex justify-center mix-blend-screen" style={{ ...upright, height: POSTER_BAND.deep }}>
+                          {/* The poster's strip of film lying across the band, its frames five of the poster's windows,
+                              the sign over it (studio/poster/poster.py folded_film). */}
+                          <img src="/objects/poster-band.avif" alt="" draggable={false} className="h-full w-auto max-w-none select-none" />
                         </div>
                       ) : i === LETTER ? (
                         <div data-fold-band aria-hidden style={uprightOf(i)}>

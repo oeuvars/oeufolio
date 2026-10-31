@@ -4,16 +4,12 @@ import { useLayoutEffect, useRef } from 'react'
 import type { FoldKind, FoldPiece } from '../types'
 import fold from './fold.json'
 
-/** Where the poster band's layers lie in its middle (studio/fold.py), in its pixels: the sign's two words over the
- * windows behind them. */
-export const POSTER_SIGN = fold.layers.poster as unknown as Record<'size', [number, number]> & Record<'behind' | 'human' | 'experience', [number, number, number, number]>
-
 const SIZES = fold.sizes as unknown as Record<string, [number, number]>
-// Each strip's pieces as a phone's band has them, and as a wide screen's folded strip does, for the letter and the
-// poster, whose strips there show pictures of their own (the others lie under their strips, open or folded).
-const PIECES = fold as unknown as Record<Exclude<FoldKind, 'badge'> | 'letter-wide' | 'poster-wide', FoldPiece[]>
+// Each strip's pieces as a phone's band has them, and as a wide screen's folded strip does, for the letter, whose
+// strip there shows a picture of its own (the others lie under their strips, open or folded). The poster has none.
+const PIECES = fold as unknown as Record<Exclude<FoldKind, 'badge' | 'poster'> | 'letter-wide', FoldPiece[]>
 // The page's picture under the pieces, which keeps a hole where each piece lands until it is there.
-const PAGE_SRC: Partial<Record<FoldKind, string>> = { letter: '/objects/letter.avif', poster: '/objects/poster.avif', desk: '/objects/mat/desk-wide.avif' }
+const PAGE_SRC: Partial<Record<FoldKind, string>> = { letter: '/objects/letter.avif', desk: '/objects/mat/desk-wide.avif' }
 // How far open the strip is when a piece goes over from the band's picture of itself to the page's, at once and in
 // mid-flight, where it moves fastest. The two are often two photographs of the thing (the desk's, the contact set's),
 // from cameras a little apart, so faded one into the other they would show it twice, a little apart.
