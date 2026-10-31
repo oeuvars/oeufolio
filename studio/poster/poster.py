@@ -75,8 +75,9 @@ GRID_LOOSE, GRID_LIGHT = 0.16, 0.82
 # How much of a window's light bleeds out round it into the dark, and how far, as times its edge's blur: the poster's
 # windows are a blurred photograph's, their light spreading onto the wall.
 GRID_BLEED, GRID_BLEED_REACH = 0.3, 4
-# The room a folded strip's word is cut with round its letters, for its glow, in the reference's pixels.
-WORD_PAD = 24
+# The room a folded strip's word is cut with round its letters, as far as its glow reaches, and the room round them its
+# size and place (STRIP_WORDS, BAND_WORDS) are measured with, in the reference's pixels.
+WORD_PAD, WORD_ROOM = 64, 24
 # The paper tile: how many pixels of the poster it takes, and how many it is written at (twice the CSS pixels it
 # is shown at, src/components/site-shell.tsx PAPER, the poster being shown about a third of its size).
 PAPER_TAKES = 420
@@ -177,7 +178,7 @@ def resized(image, width, height):
     return np.asarray(image.resize((round(width), round(height)), Image.LANCZOS)).astype(np.float32) / 255
 
 
-def gridded(bare, sign, title, grid, cells, words, word, down):
+def gridded(bare, floor, sign, title, grid, cells, words, word, down):
     """A folded strip's picture: the poster's windows set loosely in a grid (STRIP_CELLS, BAND_CELLS), each cropped from
     its middle to fill its cell, shrunk and nudged in it by chance (GRID_LOOSE), a little dimmed, its edge blurred
     into the dark and its light bleeding a little round it, on no wall, so the paper shows in the gaps; and the sign's two words, cut from the sign lit on its own, so they carry nothing of
@@ -205,19 +206,22 @@ def gridded(bare, sign, title, grid, cells, words, word, down):
         oy, ox = int(t - (cy - reach_y)), int(l - (cx - reach_x))
         window[oy : oy + b - t, ox : ox + r - l] = bare[t:b, l:r]
         tall, broad = round(h) + 2 * room, round(w) + 2 * room
-        window = resized(window, broad, tall) * GRID_LIGHT
+        # Only the window's light, the wall's dark (floor) taken off it, as the poster's is.
+        window = np.clip(resized(window, broad, tall) - floor, 0, None) * GRID_LIGHT
         edge = np.zeros((tall, broad), np.float32)
         edge[room : room + round(h), room : room + round(w)] = 1
         edge = ndimage.gaussian_filter(edge, soft)[..., None]
         shown = window * edge
         bleed = np.stack([ndimage.gaussian_filter(shown[..., c], GRID_BLEED_REACH * soft) for c in range(3)], -1)
         lay(canvas, 1 - (1 - shown) * (1 - GRID_BLEED * bleed), round(x) - room, round(y) - room)
-    across = word * (wide if down else deep)
+    # How many pixels a pixel of the sign is here: as the word's letters, with WORD_ROOM round them, are tall across.
+    k = word * (wide if down else deep) / ((RISE + FALL + 2 * WORD_ROOM) * SCALE)
+    beyond = (WORD_PAD - WORD_ROOM) * SCALE * k
     for cut, (left, top) in zip(sign_words(sign, title), words):
-        cut = resized(cut, cut.shape[1] * across / cut.shape[0], across)
+        cut = resized(cut, cut.shape[1] * k, cut.shape[0] * k)
         if down:
             cut = np.ascontiguousarray(np.rot90(cut, -1))
-        lay(canvas, cut, round(left * wide), round(top * deep))
+        lay(canvas, cut, round(left * wide - beyond), round(top * deep - beyond))
     return canvas
 
 
@@ -338,10 +342,6 @@ def main():
     title = plate("title.png", size)
     bare = lift_sign(picture, title)
     picture, letters = light_sign(bare, title, shape)
-    # The sign lit on its own, over black, for the folded strips' words.
-    sign, _ = light_sign(np.zeros_like(bare), title, shape)
-    strip = gridded(bare, sign, title, STRIP_GRID, STRIP_CELLS, STRIP_WORDS, STRIP_WORD, True)
-    band = gridded(bare, sign, title, BAND_GRID, BAND_CELLS, BAND_WORDS, BAND_WORD, False)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:
@@ -374,8 +374,14 @@ def main():
     # wall is the paper's own dark, so what is no brighter than it comes off, and the page lays the rest over the paper
     # as light (a screen), so the wall it shows is the paper.
     floor = sheet.reshape(-1, 3).mean(0) + FLOOR
-    for name, image in (("poster", picture), ("poster-strip", strip), ("poster-band", band)):
-        light = np.clip(image - floor, 0, None)
+    # The folded strips are light already: their windows have the wall taken off as the poster's has, and their words,
+    # the sign lit on its own over black, are only its letters and glow. Taking the wall off those would take off the
+    # glow the poster's sign keeps over its wall.
+    sign, _ = light_sign(np.zeros_like(bare), title, shape)
+    strip = gridded(bare, floor, sign, title, STRIP_GRID, STRIP_CELLS, STRIP_WORDS, STRIP_WORD, True)
+    band = gridded(bare, floor, sign, title, BAND_GRID, BAND_CELLS, BAND_WORDS, BAND_WORD, False)
+    for name, image in (("poster", np.clip(picture - floor, 0, None)), ("poster-strip", strip), ("poster-band", band)):
+        light = image
         lit = np.clip(light.max(-1) / 0.06, 0, 1)[..., None]
         light = grained(light) * lit + light * (1 - lit)
         write(Image.fromarray((np.clip(light, 0, 1) * 255 + 0.5).astype(np.uint8)), name, args.proof)
