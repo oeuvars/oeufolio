@@ -975,8 +975,8 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         </div>
                       ) : tones[i].bleeds && workPoster ? (
                         <div data-fold-band aria-hidden className="pointer-events-none flex justify-center mix-blend-screen" style={{ ...upright, height: POSTER_BAND.deep }}>
-                          {/* The poster's strip of film lying across the band, its frames five of the poster's windows,
-                              the sign over it (studio/poster/poster.py folded_film). */}
+                          {/* The poster recut along the band: its windows off a grid at different sizes and the sign's two
+                              words among them (studio/poster/poster.py recut). */}
                           <img src="/objects/poster-band.avif" alt="" draggable={false} className="h-full w-auto max-w-none select-none" />
                         </div>
                       ) : i === LETTER ? (

@@ -21,12 +21,9 @@ The page is one material: the poster's bare wall, as a tile of paper. Writes pub
 tile; public/objects/poster.avif, the light printed on it (the windows, the sign and the passages, black where the
 wall was), which the page screens over the paper; public/objects/poster-strip.avif, the same for the work strip
 folded, as a column as wide as the poster's middle; and public/objects/poster-band.avif, the same for a folded phone
-strip, which lies across the window. The column is a strip of old film as wide as the strip, its holes and the white
-round it left clear for the paper: a photograph of one (art/film.jpg), its five frames printed with five of the
-poster's windows under the film's own scratches, dust and stains, and the whole of "human experience" laid down it as
-light in one line: the poster's own sign, its two words cut from its plate and set a word space apart on one baseline,
-and lit as the poster's is. The band is the poster recut along it: its windows set off a grid at different sizes, and
-the sign's two words where they fall among them. The passages come with the page when the strip opens.
+strip, which lies across the window. Each is the poster recut along it: its windows set off a grid at different
+sizes, and the sign's two words, each cut from the lit poster with its glow, where they fall among them, turned to read
+down the column. The passages come with the page when the strip opens.
 """
 
 import argparse
@@ -43,52 +40,36 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 SCALE = 3
 # The passages' boxes in the reference's pixels (left, top, right, bottom), a little past their ink.
 PASSAGES = [(305, 302, 398, 453), (512, 374, 642, 451), (100, 484, 302, 561), (300, 622, 530, 709)]
-# How many pixels across a wide screen's folded strip has the film (the strip shows it about 250 CSS px across).
-STRIP_WIDE = 882
 # The sign's two words on its plate (art/title.png): where each runs from and to across and where its baseline lies,
-# how far its letters run above and below a baseline, and the word space set between the two in one line, in the
-# reference's pixels.
+# and how far its letters run above and below a baseline, in the reference's pixels.
 WORDS = ((99, 334, 370), (244, 631, 613))
 RISE, FALL = 64, 20
-WORD_SPACE = 22
-# The poster's windows, each by its box in the reference's pixels: the candle's, the two women's at the yellow window
-# (all of it, and as far as the second woman's knee), the child's at the lilac curtain, the red one's, the woman's over
-# the city, the saxophonist's, the one of the woman sitting high in hers, the curtained one's, and the man's at the
-# yellow window.
-CANDLE, WOMEN, WOMAN, CURTAIN = (520, 228, 638, 368), (105, 566, 288, 708), (105, 566, 246, 708), (415, 709, 528, 859)
+# The poster's windows, each by its box in the reference's pixels: the candle's, the two women's at the yellow window,
+# the child's at the lilac curtain, the red one's, the woman's over the city, the saxophonist's, the one of the woman
+# sitting high in hers, the curtained one's, the man's at the yellow window, the lit one above the two at the corner,
+# the balcony's, and the one at the right by the last passage.
+CANDLE, WOMAN, CURTAIN = (520, 228, 638, 368), (105, 566, 246, 708), (415, 709, 528, 859)
 RED, CITY, SAX, SITTER = (310, 455, 419, 549), (238, 715, 339, 832), (308, 163, 390, 293), (408, 122, 501, 239)
-CURTAINS, YELLOW = (118, 193, 300, 296), (104, 390, 290, 478)
-# A wide screen's folded strip is a strip of film (art/film.jpg, a photograph of an old one on white), its five frames
-# printed with five of those windows, down it in this order.
-FILM = "film.jpg"
-FILM_FRAMES = ("CANDLE", "WOMEN", "CURTAIN", "RED", "CITY")
-# What of the photograph is the white it lay on (each channel over FILM_CLEAR: the film is dark, and its frames' pale
-# sepia has a dark blue channel), and what is a frame's pale base (its luminance between these two) and not the film's
-# darker bars and edges.
-FILM_CLEAR, FILM_FRAME, FILM_WHITE = 0.7, 0.55, 0.88
-# A patch of white smaller than this, in the photograph's pixels, is a fleck on the film, not a hole through it. How far
-# round the white the film's edge is blurred into it, in those pixels, and how light the film itself is there, at its
-# lightest channel (the dark rebate by the holes).
-FILM_SPECK, FILM_RIM, FILM_RIM_FILM = 40, 3, 0.3
-# A window printed on the film: how far its blacks are lifted, the warm cast of the old print, and how strongly the
-# film's scratches, dust and stains lie over it.
-FILM_LIFT, FILM_WARM, FILM_WEAR = 0.07, np.array([1.0, 0.95, 0.86]), 1.0
-# How much of their colour the film's prints keep, and of their light, so the sign over them reads; and how much of its
-# colour the film's own base keeps.
-FILM_COLOUR, FILM_LIGHT, FILM_BASE = 0.45, 0.68, 0.75
-# The sign's height across the film, as a part of its width.
-FILM_SIGN = 0.41
-# A phone's folded strip is a band of the poster recut: windows set along it off a grid at different sizes, and the
-# sign's two words where they fall among them. The band in pixels (it shows 21 by 3.875 rem), how much of their light
-# the windows keep, and each window by where its top left lies and how tall it is, as parts of the band, then each word
-# by where its top left lies, as parts of the band, and how tall its letters and their glow are, as a part of its depth.
-BAND = (2016, 372)
-BAND_LIGHT = 0.82
+CURTAINS, YELLOW, GLOW = (118, 193, 300, 296), (104, 390, 290, 478), (405, 257, 508, 316)
+BALCONY, RIGHT = (477, 466, 601, 549), (540, 633, 617, 739)
+# A folded strip is the poster recut along it: windows set off a grid at different sizes, and the sign's two words where
+# they fall among them. A wide screen's strip runs down, a phone's band across (it shows 21 by 3.875 rem). For each,
+# its size in pixels; each window by where its top left lies, as parts of its width and length, and how large it is:
+# down the strip, how wide as a part of its width, across the band, how tall as a part of its depth; then each word
+# by where its top left lies, and how tall its letters and their glow are across it, as a part of its width or depth.
+# Down the strip the words are turned to read downwards, as a sign hangs down a building.
+STRIP_SIZE = (882, 2892)
+STRIP_WINDOWS = (("SITTER", 0.52, 0.02, 0.40), ("SAX", 0.10, 0.06, 0.36), ("CANDLE", 0.55, 0.17, 0.38), ("GLOW", 0.08, 0.22, 0.40),
+                 ("YELLOW", 0.06, 0.33, 0.58), ("RED", 0.60, 0.38, 0.34), ("WOMAN", 0.14, 0.52, 0.50), ("BALCONY", 0.50, 0.63, 0.44),
+                 ("RIGHT", 0.08, 0.70, 0.30), ("CITY", 0.44, 0.77, 0.48), ("CURTAIN", 0.12, 0.84, 0.36))
+STRIP_WORDS, STRIP_WORD = ((0.02, 0.06), (0.42, 0.40)), 0.44
+BAND_SIZE = (2016, 372)
 BAND_WINDOWS = (("SAX", 0.01, 0.08, 0.30), ("SITTER", 0.06, 0.52, 0.38), ("CURTAINS", 0.13, 0.10, 0.40), ("CANDLE", 0.30, 0.30, 0.62),
                 ("YELLOW", 0.40, 0.06, 0.40), ("RED", 0.55, 0.44, 0.52), ("WOMAN", 0.66, 0.06, 0.62), ("CITY", 0.82, 0.14, 0.58),
                 ("CURTAIN", 0.92, 0.20, 0.70))
-BAND_WORDS = ((0.10, -0.05), (0.42, 0.45))
-BAND_WORD = 0.5
+BAND_WORDS, BAND_WORD = ((0.10, -0.05), (0.42, 0.45)), 0.5
+# How much of their light the recut windows keep, so the sign reads over them.
+RECUT_LIGHT = 0.82
 # How far round each word of the sign a folded strip takes the poster's light with it, and the room left round the
 # word for that, in the reference's pixels.
 WORD_REACH, WORD_PAD = 6, 24
@@ -194,115 +175,38 @@ def sign_words(lit, title):
     return cut
 
 
-def one_line(lit, title):
-    """The poster's sign in one line, as the poster shows it: its two words (sign_words), "experience" set a word space
-    on from "human", on the same baseline."""
-    pad = WORD_PAD * SCALE
-    human, experience = sign_words(lit, title)
-    line = np.zeros((human.shape[0], human.shape[1] + WORD_SPACE * SCALE - 2 * pad + experience.shape[1], 3), np.float32)
-    put(line, human, 0, 0)
-    at = line.shape[1] - experience.shape[1]
-    line[:, at:] = np.maximum(line[:, at:], experience)
-    return line
-
-
-def put(canvas, image, left, top):
-    canvas[top : top + image.shape[0], left : left + image.shape[1]] = image
-
-
 def resized(image, width, height):
     image = Image.fromarray((np.clip(image, 0, 1) * 255 + 0.5).astype(np.uint8))
     return np.asarray(image.resize((round(width), round(height)), Image.LANCZOS)).astype(np.float32) / 255
 
 
-def film_plate():
-    """The photograph of the film (art/film.jpg), cut to the film: its colour, and
-    how much of each pixel is film. It was photographed on white, which shows round it and through its sprocket holes:
-    none of that is film, so the page's own paper shows there. Where the film's edge is blurred into the white, the
-    white is taken back out of its colour, so no pale rim is left round a hole."""
-    photo = load(FILM)
-    lightest = photo.min(-1)
-    parts, count = ndimage.label(lightest > FILM_CLEAR)
-    # The white that is not film: round the film and through each hole, not a fleck of dust on it.
-    sizes = ndimage.sum(np.ones_like(lightest), parts, range(1, count + 1))
-    white = np.isin(parts, 1 + np.flatnonzero(sizes >= FILM_SPECK))
-    rim = ndimage.binary_dilation(white, iterations=FILM_RIM) & ~white
-    cover = np.where(rim, np.clip((1 - lightest) / (1 - FILM_RIM_FILM), 0, 1), 1.0).astype(np.float32)
-    cover[white] = 0
-    seen = np.maximum(cover, 1e-3)[..., None]
-    photo = np.clip(np.where(rim[..., None], (photo - (1 - seen)) / seen, photo), 0, 1)
-    rows, cols = np.where(cover > 0)
-    box = (slice(rows.min(), rows.max() + 1), slice(cols.min(), cols.max() + 1))
-    return photo[box], cover[box]
-
-
-def film_frames(photo, film):
-    """The film's frames: the pale sepia windows between its bars and its sprocket holes, each as a mask."""
-    luma = photo @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-    pale = ndimage.binary_opening((luma > FILM_FRAME) & (luma < FILM_WHITE) & (film > 0), np.ones((5, 5)))
-    parts, count = ndimage.label(pale)
-    sizes = ndimage.sum(pale, parts, range(1, count + 1))
-    frames = [ndimage.binary_fill_holes(parts == n + 1) for n in np.argsort(sizes)[::-1][: len(FILM_FRAMES)]]
-    return sorted(frames, key=lambda frame: np.argwhere(frame)[:, 0].min())
-
-
-def folded_film(bare, lit, title):
-    """A wide screen's folded strip: the film, its frames printed with the poster's windows, and the sign laid down it as
-    light. A print on old film: muted, darker, its blacks lifted, a little warm, and under the film's own scratches,
-    dust and stains, which are the photograph's, the frame's own light against its blur. It runs down the strip as wide
-    as it, past its top and foot. Round the film and through its holes there is no light: the paper shows."""
-    photo, film = film_plate()
-    k = STRIP_WIDE / photo.shape[1]
-    photo = resized(photo, photo.shape[1] * k, photo.shape[0] * k)
-    film = resized(np.repeat(film[..., None], 3, -1), film.shape[1] * k, film.shape[0] * k)[..., 0]
-    luma = photo @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-    wear = luma / (ndimage.gaussian_filter(luma, 4 * k) + 1e-6)
-    photo = luma[..., None] + FILM_BASE * (photo - luma[..., None])
-    for frame, name in zip(film_frames(photo, film), FILM_FRAMES):
-        (top, left), (bottom, right) = np.argwhere(frame).min(0), np.argwhere(frame).max(0) + 1
+def recut(bare, lit, title, size, windows, words, word, down):
+    """A folded strip's picture: the poster recut along it (STRIP_WINDOWS, BAND_WINDOWS), its windows whole at their own
+    shapes, a little dimmed, on no wall, so the paper shows between them, and the sign's two words, each cut from the
+    lit poster with its glow, laid over them as light where the words go, turned to read down the strip."""
+    wide, deep = size
+    across = wide if down else deep
+    canvas = np.zeros((deep, wide, 3), np.float32)
+    for name, left, top, large in windows:
         x0, y0, x1, y1 = globals()[name]
-        window = bare[y0 * SCALE : y1 * SCALE, x0 * SCALE : x1 * SCALE]
-        cover = max((right - left) / window.shape[1], (bottom - top) / window.shape[0])
-        window = resized(window, window.shape[1] * cover, window.shape[0] * cover)
-        dy, dx = (window.shape[0] - (bottom - top)) // 2, (window.shape[1] - (right - left)) // 2
-        window = window[dy : dy + bottom - top, dx : dx + right - left]
-        grey = (window @ np.array([0.2126, 0.7152, 0.0722], np.float32))[..., None]
-        window = FILM_LIGHT * (grey + FILM_COLOUR * (window - grey))
-        printed = (FILM_LIFT + (1 - FILM_LIFT) * window) * FILM_WARM
-        printed = np.clip(printed * wear[top:bottom, left:right, None] ** FILM_WEAR, 0, 1)
-        edge = ndimage.gaussian_filter(frame[top:bottom, left:right].astype(np.float32), 0.6 * k)[..., None]
-        photo[top:bottom, left:right] = photo[top:bottom, left:right] * (1 - edge) + printed * edge
-    canvas = photo * film[..., None]
-    sign = one_line(lit, title)
-    across = FILM_SIGN * canvas.shape[1]
-    sign = np.ascontiguousarray(np.rot90(resized(sign, sign.shape[1] * across / sign.shape[0], across), -1))
-    lay(canvas, sign, (canvas.shape[1] - sign.shape[1]) // 2, (canvas.shape[0] - sign.shape[0]) // 2)
+        shape = (x1 - x0) / (y1 - y0)
+        w, h = (large * wide, large * wide / shape) if down else (large * deep * shape, large * deep)
+        window = resized(bare[y0 * SCALE : y1 * SCALE, x0 * SCALE : x1 * SCALE], w, h) * RECUT_LIGHT
+        x, y = round(left * wide), round(top * deep)
+        window = window[: deep - y, : wide - x]
+        canvas[y : y + window.shape[0], x : x + window.shape[1]] = window
+    for cut, (left, top) in zip(sign_words(lit, title), words):
+        cut = resized(cut, cut.shape[1] * word * across / cut.shape[0], word * across)
+        if down:
+            cut = np.ascontiguousarray(np.rot90(cut, -1))
+        lay(canvas, cut, round(left * wide), round(top * deep))
     return canvas
 
 
-def folded_band(bare, lit, title):
-    """A phone's folded strip: the poster recut along the band (BAND_WINDOWS), its windows whole at their own shapes,
-    a little dimmed, on no wall, so the paper shows between them, and the sign's two words, each cut from the lit poster
-    with its glow, laid over them as light where BAND_WORDS puts them."""
-    wide, deep = BAND
-    band = np.zeros((deep, wide, 3), np.float32)
-    for name, left, top, tall in BAND_WINDOWS:
-        x0, y0, x1, y1 = globals()[name]
-        window = bare[y0 * SCALE : y1 * SCALE, x0 * SCALE : x1 * SCALE]
-        window = resized(window, tall * deep * (x1 - x0) / (y1 - y0), tall * deep) * BAND_LIGHT
-        x, y = round(left * wide), round(top * deep)
-        window = window[: deep - y, : wide - x]
-        band[y : y + window.shape[0], x : x + window.shape[1]] = window
-    for word, (left, top) in zip(sign_words(lit, title), BAND_WORDS):
-        word = resized(word, word.shape[1] * BAND_WORD * deep / word.shape[0], BAND_WORD * deep)
-        x, y = round(left * wide), round(top * deep)
-        cut = word[max(0, -y) : deep - y, : wide - x]
-        lay(band, cut, x, max(0, y))
-    return band
-
-
 def lay(canvas, image, left, top):
-    """Light laid over the light already there (a screen)."""
+    """Light laid over the light already there (a screen), as much of it as falls on the canvas."""
+    image = image[max(0, -top) : canvas.shape[0] - top, max(0, -left) : canvas.shape[1] - left]
+    top, left = max(0, top), max(0, left)
     under = canvas[top : top + image.shape[0], left : left + image.shape[1]]
     canvas[top : top + image.shape[0], left : left + image.shape[1]] = 1 - (1 - under) * (1 - image)
 
@@ -416,7 +320,8 @@ def main():
     title = plate("title.png", size)
     bare = lift_sign(picture, title)
     picture, letters = light_sign(bare, title, shape)
-    strip, band = folded_film(bare, picture, title), folded_band(bare, picture, title)
+    strip = recut(bare, picture, title, STRIP_SIZE, STRIP_WINDOWS, STRIP_WORDS, STRIP_WORD, True)
+    band = recut(bare, picture, title, BAND_SIZE, BAND_WINDOWS, BAND_WORDS, BAND_WORD, False)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:
