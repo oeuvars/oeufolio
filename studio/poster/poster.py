@@ -53,23 +53,22 @@ RED, CITY, SAX, SITTER = (310, 455, 419, 549), (238, 715, 339, 832), (308, 163, 
 CURTAINS, YELLOW, GLOW = (118, 193, 300, 296), (104, 390, 290, 478), (405, 257, 508, 316)
 BALCONY, RIGHT = (477, 466, 601, 549), (540, 633, 617, 739)
 # A folded strip is the poster's windows set loosely in a grid along it, each cropped to fill its cell, then shrunk and
-# nudged in it by chance so no two edges or gaps quite line up, with the sign's two words lying across them as light,
-# as on the poster. A wide screen's strip runs down, a phone's band across (it shows 21 by 3.875 rem). For each: its
+# nudged in it by chance so no two edges or gaps quite line up, with the sign's two words in lanes of the dark wall
+# left for them, each a little larger than its lane and off its middle, so only its edge runs over the windows beside
+# it, as on the poster. A wide screen's strip runs down, a phone's band across (it shows 21 by 3.875 rem). For each: its
 # size in pixels, how many columns and rows its grid has, the gap, and how far each window's edge is blurred into the
-# dark, in pixels (about two CSS pixels as the page shows it); each window by the column and row it starts at
-# and how many of each it spans; and each word by where its top left lies, as parts of the strip's width and length,
-# and how tall its letters and their glow are across the strip, as a part of its width or depth. Down the strip the
-# words are turned to read downwards, as a sign hangs down a building.
+# dark, in pixels (about two CSS pixels as the page shows it); each window by the column and row it starts at and how
+# many of each it spans; and each word by where its top left lies, as parts of the strip's width and length, and how
+# tall its letters and their glow are across the strip, as a part of its width or depth. Down the strip the words are
+# turned to read downwards, as a sign hangs down a building.
 STRIP_GRID = (706, 2892, 2, 12, 18, 7)
-STRIP_CELLS = (("SAX", 0, 0, 1, 2), ("SITTER", 1, 0, 1, 2), ("GLOW", 0, 2, 1, 1), ("CURTAINS", 1, 2, 1, 1),
-               ("BALCONY", 0, 3, 2, 2), ("CANDLE", 0, 5, 1, 2), ("RED", 1, 5, 1, 1), ("RIGHT", 1, 6, 1, 3),
-               ("WOMAN", 0, 7, 1, 2), ("YELLOW", 0, 9, 2, 1), ("CURTAIN", 0, 10, 1, 2), ("CITY", 1, 10, 1, 2))
-STRIP_WORDS, STRIP_WORD = ((0.38, 0.05), (0.04, 0.43)), 0.5
+STRIP_CELLS = (("SAX", 0, 0, 1, 2), ("GLOW", 0, 2, 1, 1), ("BALCONY", 0, 3, 2, 2), ("CANDLE", 0, 5, 1, 2), ("RED", 1, 5, 1, 1),
+               ("WOMAN", 0, 7, 1, 2), ("YELLOW", 0, 9, 1, 1), ("CURTAIN", 0, 10, 1, 2), ("CITY", 1, 10, 1, 2))
+STRIP_WORDS, STRIP_WORD = ((0.34, 0.04), (0.33, 0.49)), 0.44
 BAND_GRID = (2016, 372, 10, 2, 12, 9)
-BAND_CELLS = (("SAX", 0, 0, 1, 2), ("CURTAINS", 1, 0, 2, 1), ("RED", 1, 1, 1, 1), ("CITY", 2, 1, 1, 1), ("WOMAN", 3, 0, 2, 2),
-              ("BALCONY", 5, 0, 1, 1), ("SITTER", 5, 1, 1, 1), ("YELLOW", 6, 0, 2, 1), ("GLOW", 6, 1, 1, 1),
-              ("RIGHT", 7, 1, 1, 1), ("CANDLE", 8, 0, 1, 2), ("CURTAIN", 9, 0, 1, 2))
-BAND_WORDS, BAND_WORD = ((0.10, -0.05), (0.42, 0.45)), 0.5
+BAND_CELLS = (("SAX", 0, 0, 1, 2), ("RED", 1, 1, 1, 1), ("CITY", 2, 1, 1, 1), ("WOMAN", 3, 0, 2, 2), ("BALCONY", 5, 0, 1, 1),
+              ("SITTER", 5, 1, 1, 1), ("YELLOW", 6, 0, 2, 1), ("CANDLE", 8, 0, 1, 1), ("CURTAIN", 9, 0, 1, 2))
+BAND_WORDS, BAND_WORD = ((0.093, 0.07), (0.58, 0.42)), 0.55
 # How far a window may be shrunk in from each side of its cell and so nudged, as a part of its cell's shorter side, and
 # how much of their light the windows keep, so the sign reads over them.
 GRID_LOOSE, GRID_LIGHT = 0.16, 0.82
