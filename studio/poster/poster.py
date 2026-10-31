@@ -69,6 +69,9 @@ BAND_WINDOWS = 64
 # How tall the windows behind the band's sign are set, against its letters' RISE + FALL, and how much of their light
 # is left under it.
 BEHIND_TALL, BEHIND_LIGHT = 126, 0.85
+# What counts as lit on the poster's wall (a window, a letter), and how far round it the wall is taken as lit too, so
+# its frame and glow come off with it, in the reference's pixels.
+WALL_LIGHT, WALL_CLEAR = 0.1, 14
 # The dark wall left round a folded strip's sign, for its glow, in the reference's pixels.
 GLOW_ROOM = 16
 # How far round each word of the sign a folded strip takes the poster's light with it, and the room left round the
@@ -233,12 +236,42 @@ def folded_column(picture, lit, title):
     above, below = pair(picture, (SAX, SITTER), COLUMN_WINDOWS), pair(picture, (CANDLE, CURTAIN), COLUMN_WINDOWS)
     room = GLOW_ROOM * SCALE
     tall, wide = picture.shape[0], (STRIP[1] - STRIP[0]) * SCALE
-    wall = np.zeros((tall, wide, 3), np.float32)
+    # The wall is the poster's own down its middle, its windows and type taken off it, so the folded strip has the
+    # same grain, mottle and stray light as the open poster round them. All of it is laid on as light.
+    wall = bare_wall(picture)[:, STRIP[0] * SCALE : STRIP[1] * SCALE]
     top = (tall - sign.shape[0]) // 2
-    put(wall, sign, (wide - sign.shape[1]) // 2, top)
-    put(wall, above, (wide - above.shape[1]) // 2, top - room - above.shape[0])
-    put(wall, below, (wide - below.shape[1]) // 2, top + sign.shape[0] + room)
+    lay(wall, sign, (wide - sign.shape[1]) // 2, top)
+    lay(wall, above, (wide - above.shape[1]) // 2, top - room - above.shape[0])
+    lay(wall, below, (wide - below.shape[1]) // 2, top + sign.shape[0] + room)
     return wall
+
+
+def bare_wall(picture):
+    """The poster's dark wall with everything lit on it taken off: the windows, the sign and the passages filled in
+    from the wall round them, slow light from near and far, and the wall's grain laid back over what was filled, at
+    the reference's size and through its JPEG, as the wall's own is."""
+    luma = picture @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    lit = ndimage.grey_dilation((luma > WALL_LIGHT).astype(np.float32), size=(WALL_CLEAR * SCALE, WALL_CLEAR * SCALE))
+    keep = 1 - ndimage.gaussian_filter(lit, SCALE)
+
+    def spread(image):
+        return ndimage.gaussian_filter(image, 12 * SCALE) + 0.05 * ndimage.gaussian_filter(image, 60 * SCALE)
+
+    # Filled in the wall's own colour, so no window's colour runs out over it.
+    tint = (picture * keep[..., None]).reshape(-1, 3).sum(0) / keep.sum()
+    fill = (spread(luma * keep) / (spread(keep) + 1e-6))[..., None] * tint / (tint @ np.array([0.2126, 0.7152, 0.0722], np.float32))
+    # The kept wall's grain, as it is, to give the filled wall the same.
+    residual = luma - ndimage.gaussian_filter(luma, 1.5 * SCALE)
+    strength = residual[keep > 0.99].std()
+    grain = 2 * strength * reference_noise(np.random.default_rng(3), luma.shape, 0.6)
+    fill = fill * (1 + grain / (fill.mean() + 1e-6))[..., None]
+    return through_reference(picture * keep[..., None] + fill * (1 - keep[..., None]))
+
+
+def lay(canvas, image, left, top):
+    """Light laid over the light already there (a screen)."""
+    under = canvas[top : top + image.shape[0], left : left + image.shape[1]]
+    canvas[top : top + image.shape[0], left : left + image.shape[1]] = 1 - (1 - under) * (1 - image)
 
 
 def paper(image):
