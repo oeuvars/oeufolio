@@ -676,10 +676,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const resumeScale = Math.min(RESUME_LARGEST, (metrics.height - lastTab[1]) / metrics.rem / RESUME_ROW)
   const fixed = mobile ? spine + end * resumeScale : spine + end
   const gaps = mobile ? count : count + 1
-  // A strip whose page is a picture is folded half as wide again, to give its own picture room. The ticket's
+  // A strip whose page is a picture is folded a fifth as wide again, to give its own picture room. The ticket's
   // strip shows only its roll, so it folds narrower than the rest. On a phone every strip folds to one band, as
   // the dividers in a drawer do.
-  const folds = (i: number) => (mobile ? strip : tones[i].bleeds ? 1.5 * strip : tones[i].roll ? contact : strip)
+  const folds = (i: number) => (mobile ? strip : tones[i].bleeds ? 1.2 * strip : tones[i].roll ? contact : strip)
   // How wide a strip is open: the room the others leave it, folded.
   const roomFor = (i: number) => metrics.width - fixed - profile.nav.reduce((sum, _, j) => (j === i ? sum : sum + folds(j)), 0) + gaps * overlap
   // The work page's poster runs the window's height and out to the strip's torn edge, so its strip opens only as wide

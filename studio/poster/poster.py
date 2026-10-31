@@ -21,9 +21,9 @@ The page is one material: the poster's bare wall, as a tile of paper. Writes pub
 tile; public/objects/poster.avif, the light printed on it (the windows, the sign and the passages, black where the
 wall was), which the page screens over the paper; public/objects/poster-strip.avif, the same for the work strip
 folded, as a column as wide as the poster's middle; and public/objects/poster-band.avif, the same for a folded phone
-strip, which lies across the window. Each is the poster recut along it: its windows set off a grid at different
-sizes, and the sign's two words, each cut from the lit poster with its glow, where they fall among them, turned to read
-down the column. The passages come with the page when the strip opens.
+strip, which lies across the window. Each is the poster's windows set in a grid along it, cropped to fill their cells,
+with the sign's two words, each cut from the lit poster with its glow, in cells of their own, turned to read down the
+column. The passages come with the page when the strip opens.
 """
 
 import argparse
@@ -52,24 +52,21 @@ CANDLE, WOMAN, CURTAIN = (520, 228, 638, 368), (105, 566, 246, 708), (415, 709, 
 RED, CITY, SAX, SITTER = (310, 455, 419, 549), (238, 715, 339, 832), (308, 163, 390, 293), (408, 122, 501, 239)
 CURTAINS, YELLOW, GLOW = (118, 193, 300, 296), (104, 390, 290, 478), (405, 257, 508, 316)
 BALCONY, RIGHT = (477, 466, 601, 549), (540, 633, 617, 739)
-# A folded strip is the poster recut along it: windows set off a grid at different sizes, and the sign's two words where
-# they fall among them. A wide screen's strip runs down, a phone's band across (it shows 21 by 3.875 rem). For each,
-# its size in pixels; each window by where its top left lies, as parts of its width and length, and how large it is:
-# down the strip, how wide as a part of its width, across the band, how tall as a part of its depth; then each word
-# by where its top left lies, and how tall its letters and their glow are across it, as a part of its width or depth.
-# Down the strip the words are turned to read downwards, as a sign hangs down a building.
-STRIP_SIZE = (882, 2892)
-STRIP_WINDOWS = (("SITTER", 0.52, 0.02, 0.40), ("SAX", 0.10, 0.06, 0.36), ("CANDLE", 0.55, 0.17, 0.38), ("GLOW", 0.08, 0.22, 0.40),
-                 ("YELLOW", 0.06, 0.33, 0.58), ("RED", 0.60, 0.38, 0.34), ("WOMAN", 0.14, 0.52, 0.50), ("BALCONY", 0.50, 0.63, 0.44),
-                 ("RIGHT", 0.08, 0.70, 0.30), ("CITY", 0.44, 0.77, 0.48), ("CURTAIN", 0.12, 0.84, 0.36))
-STRIP_WORDS, STRIP_WORD = ((0.02, 0.06), (0.42, 0.40)), 0.44
-BAND_SIZE = (2016, 372)
-BAND_WINDOWS = (("SAX", 0.01, 0.08, 0.30), ("SITTER", 0.06, 0.52, 0.38), ("CURTAINS", 0.13, 0.10, 0.40), ("CANDLE", 0.30, 0.30, 0.62),
-                ("YELLOW", 0.40, 0.06, 0.40), ("RED", 0.55, 0.44, 0.52), ("WOMAN", 0.66, 0.06, 0.62), ("CITY", 0.82, 0.14, 0.58),
-                ("CURTAIN", 0.92, 0.20, 0.70))
-BAND_WORDS, BAND_WORD = ((0.10, -0.05), (0.42, 0.45)), 0.5
-# How much of their light the recut windows keep, so the sign reads over them.
-RECUT_LIGHT = 0.82
+# A folded strip is the poster's windows set in a grid along it, each cropped to fill its cell and a gap between each,
+# with the sign's two words in cells of their own. A wide screen's strip runs down, a phone's band across (it shows
+# 21 by 3.875 rem). For each: its size in pixels, how many columns and rows its grid has, and the gap; then each cell, a
+# window or a word, by the column and row it starts at and how many of each it spans. Down the strip the words are
+# turned to read downwards, as a sign hangs down a building.
+STRIP_GRID = (706, 2892, 2, 12, 18)
+STRIP_CELLS = (("SAX", 0, 0, 1, 2), ("human", 1, 0, 1, 3), ("GLOW", 0, 2, 1, 1), ("BALCONY", 0, 3, 2, 2),
+               ("CANDLE", 0, 5, 1, 2), ("RED", 1, 5, 1, 1), ("experience", 1, 6, 1, 4), ("WOMAN", 0, 7, 1, 2),
+               ("YELLOW", 0, 9, 1, 1), ("CURTAIN", 0, 10, 1, 2), ("CITY", 1, 10, 1, 2))
+BAND_GRID = (2016, 372, 10, 2, 12)
+BAND_CELLS = (("SAX", 0, 0, 1, 2), ("human", 1, 0, 2, 1), ("RED", 1, 1, 1, 1), ("CITY", 2, 1, 1, 1), ("WOMAN", 3, 0, 2, 2),
+              ("BALCONY", 5, 0, 1, 1), ("SITTER", 5, 1, 1, 1), ("YELLOW", 6, 0, 2, 1), ("CANDLE", 8, 0, 1, 1),
+              ("experience", 6, 1, 3, 1), ("CURTAIN", 9, 0, 1, 2))
+# How much of their light the windows keep, so the sign reads beside them.
+GRID_LIGHT = 0.82
 # How far round each word of the sign a folded strip takes the poster's light with it, and the room left round the
 # word for that, in the reference's pixels.
 WORD_REACH, WORD_PAD = 6, 24
@@ -180,27 +177,42 @@ def resized(image, width, height):
     return np.asarray(image.resize((round(width), round(height)), Image.LANCZOS)).astype(np.float32) / 255
 
 
-def recut(bare, lit, title, size, windows, words, word, down):
-    """A folded strip's picture: the poster recut along it (STRIP_WINDOWS, BAND_WINDOWS), its windows whole at their own
-    shapes, a little dimmed, on no wall, so the paper shows between them, and the sign's two words, each cut from the
-    lit poster with its glow, laid over them as light where the words go, turned to read down the strip."""
-    wide, deep = size
-    across = wide if down else deep
+def gridded(bare, lit, title, grid, cells, down):
+    """A folded strip's picture: the poster's windows in a grid (STRIP_CELLS, BAND_CELLS), each cropped from its middle
+    to fill its cell and a little dimmed, on no wall, so the paper shows in the gaps; and the sign's two words, each cut
+    from the lit poster with its glow, in cells of their own, laid as light. The two words are the same size, as large
+    as lets each fill its cell, turned to read down the strip."""
+    wide, deep, columns, rows, gap = grid
+    column, row = (wide - (columns + 1) * gap) / columns, (deep - (rows + 1) * gap) / rows
+
+    def box(left, top, across, down_):
+        return gap + left * (column + gap), gap + top * (row + gap), across * column + (across - 1) * gap, down_ * row + (down_ - 1) * gap
+
     canvas = np.zeros((deep, wide, 3), np.float32)
-    for name, left, top, large in windows:
+    words = dict(zip(("human", "experience"), sign_words(lit, title)))
+    for name, *place in cells:
+        if name in words:
+            continue
+        x, y, w, h = box(*place)
         x0, y0, x1, y1 = globals()[name]
-        shape = (x1 - x0) / (y1 - y0)
-        w, h = (large * wide, large * wide / shape) if down else (large * deep * shape, large * deep)
-        window = resized(bare[y0 * SCALE : y1 * SCALE, x0 * SCALE : x1 * SCALE], w, h) * RECUT_LIGHT
-        x, y = round(left * wide), round(top * deep)
-        window = window[: deep - y, : wide - x]
-        canvas[y : y + window.shape[0], x : x + window.shape[1]] = window
-    for cut, (left, top) in zip(sign_words(lit, title), words):
-        cut = resized(cut, cut.shape[1] * word * across / cut.shape[0], word * across)
+        window = bare[y0 * SCALE : y1 * SCALE, x0 * SCALE : x1 * SCALE]
+        k = max(w / window.shape[1], h / window.shape[0])
+        window = resized(window, window.shape[1] * k, window.shape[0] * k)
+        top, left = (window.shape[0] - round(h)) // 2, (window.shape[1] - round(w)) // 2
+        put(canvas, window[top : top + round(h), left : left + round(w)] * GRID_LIGHT, round(x), round(y))
+    # How tall a word's cut is across the strip, the same for both: as tall as the narrowest fit of the two.
+    spots = {name: box(*place) for name, *place in cells if name in words}
+    across = min(min(w, h / (words[n].shape[1] / words[n].shape[0])) if down else min(h, w / (words[n].shape[1] / words[n].shape[0])) for n, (x, y, w, h) in spots.items())
+    for name, (x, y, w, h) in spots.items():
+        cut = resized(words[name], words[name].shape[1] * across / words[name].shape[0], across)
         if down:
             cut = np.ascontiguousarray(np.rot90(cut, -1))
-        lay(canvas, cut, round(left * wide), round(top * deep))
+        lay(canvas, cut, round(x + (w - cut.shape[1]) / 2), round(y + (h - cut.shape[0]) / 2))
     return canvas
+
+
+def put(canvas, image, left, top):
+    canvas[top : top + image.shape[0], left : left + image.shape[1]] = image[: canvas.shape[0] - top, : canvas.shape[1] - left]
 
 
 def lay(canvas, image, left, top):
@@ -320,8 +332,8 @@ def main():
     title = plate("title.png", size)
     bare = lift_sign(picture, title)
     picture, letters = light_sign(bare, title, shape)
-    strip = recut(bare, picture, title, STRIP_SIZE, STRIP_WINDOWS, STRIP_WORDS, STRIP_WORD, True)
-    band = recut(bare, picture, title, BAND_SIZE, BAND_WINDOWS, BAND_WORDS, BAND_WORD, False)
+    strip = gridded(bare, picture, title, STRIP_GRID, STRIP_CELLS, True)
+    band = gridded(bare, picture, title, BAND_GRID, BAND_CELLS, False)
 
     # The highlighter goes over the companies before the passages are printed, so their letters print dark on it.
     with open(MARKS) as file:
