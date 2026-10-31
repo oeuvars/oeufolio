@@ -64,6 +64,9 @@ FILM_WHITE, FILM_FRAME = 0.88, 0.55
 # A window printed on the film: how far its blacks are lifted, the warm cast of the old print, and how strongly the
 # film's scratches, dust and stains lie over it.
 FILM_LIFT, FILM_WARM, FILM_WEAR = 0.07, np.array([1.0, 0.95, 0.86]), 1.0
+# How much of their colour the film's prints keep, and of their light, so the sign over them reads; and how much of its
+# colour the film's own base keeps.
+FILM_COLOUR, FILM_LIGHT, FILM_BASE = 0.45, 0.68, 0.75
 # The wall left round the film, as a part of its length, the sign's height across it as a part of its width, and how
 # many pixels deep the film is on a phone's band (which shows it 3.875 rem deep).
 FILM_ROOM, FILM_SIGN, BAND_FILM = 0.02, 0.6, 300
@@ -243,6 +246,7 @@ def folded_film(bare, lit, title, turned):
     film = resized(np.repeat(film[..., None], 3, -1), film.shape[1] * k, film.shape[0] * k)[..., 0]
     luma = photo @ np.array([0.2126, 0.7152, 0.0722], np.float32)
     wear = luma / (ndimage.gaussian_filter(luma, 4 * k) + 1e-6)
+    photo = luma[..., None] + FILM_BASE * (photo - luma[..., None])
     for frame, name in zip(film_frames(photo, film, turned), FILM_FRAMES):
         (top, left), (bottom, right) = np.argwhere(frame).min(0), np.argwhere(frame).max(0) + 1
         x0, y0, x1, y1 = globals()[name]
@@ -251,6 +255,8 @@ def folded_film(bare, lit, title, turned):
         window = resized(window, window.shape[1] * cover, window.shape[0] * cover)
         dy, dx = (window.shape[0] - (bottom - top)) // 2, (window.shape[1] - (right - left)) // 2
         window = window[dy : dy + bottom - top, dx : dx + right - left]
+        grey = (window @ np.array([0.2126, 0.7152, 0.0722], np.float32))[..., None]
+        window = FILM_LIGHT * (grey + FILM_COLOUR * (window - grey))
         printed = (FILM_LIFT + (1 - FILM_LIFT) * window) * FILM_WARM
         printed = np.clip(printed * wear[top:bottom, left:right, None] ** FILM_WEAR, 0, 1)
         edge = ndimage.gaussian_filter(frame[top:bottom, left:right].astype(np.float32), 0.6 * k)[..., None]
