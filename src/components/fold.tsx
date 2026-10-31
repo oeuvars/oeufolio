@@ -27,6 +27,9 @@ const BAND_SOFT = 48
 // The page's light has the things' shadows and the dark under them in it, so it takes over from the light without them
 // (bare_light in studio/fold.py) only as they settle onto the mat.
 const SHADOWS_IN = [0.88, 1]
+// The poster has no pieces: its folded picture fades out over the first part of the opening and the poster fades in
+// over the rest, overlapping in the middle.
+const POSTER_FADE = { band: [0, 0.6], page: [0.25, 1] }
 
 const ramp = ([from, to]: number[], p: number) => {
   const t = Math.min(1, Math.max(0, (p - from) / (to - from)))
@@ -72,11 +75,12 @@ type FoldProps = {
  * its own made of pieces of its page (studio/fold.py); open, its page ([data-fold-page]). In between, as far as the
  * strip is open, each piece travels from where the band has it to where the page has it, turning and growing on the
  * way, over the rest of the page, which the strip uncovers as it opens, with each piece's place left empty. It goes as the strip goes, whether a spring or a finger moves it, and back the same way. The card's band is
- * its own page laid smaller, so the page itself goes there and back.
+ * its own page laid smaller, so the page itself goes there and back. The poster only fades from its band to its page
+ * (POSTER_FADE).
  */
 export const Fold = ({ kind, open, folded, opened, style, children, wide }: FoldProps) => {
   const layer = useRef<HTMLDivElement>(null)
-  const pieces = kind === 'badge' ? [] : PIECES[wide && (kind === 'letter' || kind === 'poster') ? (`${kind}-wide` as const) : kind]
+  const pieces = kind === 'badge' || kind === 'poster' ? [] : PIECES[wide && kind === 'letter' ? 'letter-wide' : kind]
   // The poster's pieces are light, screened over the paper and over each other.
   const light = kind === 'poster'
 
@@ -219,6 +223,14 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
           // The lamp's light on the mat is the light without the pieces until they land (bare_light in studio/fold.py).
           page.style.setProperty('--fold-takes', moving ? ramp(SHADOWS_IN, p).toFixed(3) : '1')
         }
+      } else if (kind === 'poster') {
+        if (band) {
+          band.style.visibility = state === 'page' ? 'hidden' : 'visible'
+          band.style.opacity = moving ? String(1 - ramp(POSTER_FADE.band, p)) : ''
+        }
+        if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
+        if (rest) rest.style.opacity = moving ? ramp(POSTER_FADE.page, p).toFixed(3) : '1'
+        return
       } else {
         if (band) band.style.visibility = state === 'band' ? 'visible' : 'hidden'
         if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
@@ -244,7 +256,7 @@ export const Fold = ({ kind, open, folded, opened, style, children, wide }: Fold
     }
 
     // The page's picture keeps a hole where each piece lands, while they are on their way.
-    const picture = rest && PAGE_SRC[kind] ? find(rest, PAGE_SRC[kind]!) : null
+    const picture = rest && pieces.length && PAGE_SRC[kind] ? find(rest, PAGE_SRC[kind]!) : null
     if (picture) {
       picture.style.maskImage = holes(PAGE_SRC[kind]!, pieces)
       picture.style.maskSize = '100% 100%'
