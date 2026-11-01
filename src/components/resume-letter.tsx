@@ -58,9 +58,11 @@ export const ResumeLetter = () => {
 
   return (
     <div className="typed-letter min-h-dvh px-0 py-0 sm:px-6 sm:py-10">
-      <Link to="/" className="typed-link mx-auto mb-4 hidden max-w-[52rem] text-[13px] text-[#6b6b6b] sm:block">
-        &larr; anurag.gg
-      </Link>
+      <div className="mx-auto mb-4 hidden max-w-[52rem] sm:block">
+        <Link to="/" className="typed-link text-[13px] text-[#6b6b6b]">
+          &larr; anurag.gg
+        </Link>
+      </div>
 
       {/* Typewriter ink: letters worn ragged at the edges, struck darker or lighter one to the next, and bled a little
           into the paper. */}

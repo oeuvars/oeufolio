@@ -55,8 +55,15 @@
   outline-offset: 2px;
 }
 
+/* A touch heavier under the pointer, as if struck twice. Courier Prime comes only in regular and bold, so the
+   step is a hairline stroke round each letter, which leaves the line's width as it was. */
+.typed-link {
+  transition: -webkit-text-stroke-width 120ms ease-out;
+  -webkit-text-stroke: 0 currentColor;
+}
+
 .typed-link:hover {
-  background: #fde24a;
+  -webkit-text-stroke-width: 0.4px;
 }
 
 .typed-link:focus-visible {
