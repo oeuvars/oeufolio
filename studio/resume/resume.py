@@ -1,6 +1,6 @@
 """The resume, lying on the desk to the right of the folders: the page printed, rolled up with the print outward, tied
 round near its foot with red and white baker's twine, and the twine's ends threaded through a manila tag stamped
-RÉSUMÉ in red. The page opens public/resume.pdf. Run from the repository root, after studio/resume/art.py:
+RÉSUMÉ in red. The page opens public/oeusume.pdf. Run from the repository root, after studio/resume/art.py:
 
     blender -b --factory-startup -P studio/resume/resume.py -- [--scale 0.5] [--samples 64] [--proofs DIR]
 

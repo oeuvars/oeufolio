@@ -4,7 +4,7 @@
 # ///
 """The two pieces of art the rolled resume carries, for resume.py: uv run studio/resume/art.py
 
-    art/page.png   the resume's page as the printer laid it down, public/resume.pdf at 300 dpi, black on white
+    art/page.png   the resume's page as the printer laid it down, public/oeusume.pdf at 300 dpi, black on white
     art/stamp.png  the tag's rubber stamp, RESUME in Futura Condensed ExtraBold inside a ruled frame, turned to
                    read down the tag, white on clear
 """
@@ -21,7 +21,7 @@ FUTURA = "/System/Library/Fonts/Supplemental/Futura.ttc"
 CONDENSED_EXTRABOLD = 4
 
 os.makedirs(ART, exist_ok=True)
-page = pymupdf.open(os.path.join(ROOT, "public", "resume.pdf"))[0]
+page = pymupdf.open(os.path.join(ROOT, "public", "oeusume.pdf"))[0]
 page.get_pixmap(dpi=300, colorspace=pymupdf.csGRAY).save(os.path.join(ART, "page.png"))
 
 # The stamp's face, as cut: the word and a rule round it, at PX pixels to the em.
