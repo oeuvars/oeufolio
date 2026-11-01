@@ -50,8 +50,8 @@ RISE, FALL = 64, 20
 # (art/window-musician.jpg, pin 755619643730479522). Each by the box it fills in the reference's pixels, the part of
 # its photograph that fills it (left, top, right, bottom, in the photograph's pixels), and whether the window keeps its
 # glazing bars over it.
-# How far round the sign's letters, in the reference's pixels, a swapped window keeps the old picture.
-SWAP_CLEAR = 6
+# How far round the sign's letters, in the reference's pixels, a swapped window takes the old sign's light back over it.
+SWAP_CLEAR = 14
 WINDOW_SWAPS = (("window-painter.jpg", (108, 568, 296, 708), (150, 400, 736, 854), False),
                 ("window-musician.jpg", (540, 633, 617, 739), (0, 60, 500, 749), True))
 # The poster's windows, each by its box in the reference's pixels: the candle's, the painter's at the yellow window,
@@ -111,14 +111,21 @@ def swap_windows(reference):
     """The reference with WINDOW_SWAPS' photographs in place of the windows they replace, at the reference's own size,
     so they are scaled up, softened and grained with the rest. Each is graded to the window it replaces, its lights and
     darks stretched over that window's and each in the colour the window has at that brightness, so it is lit in the
-    poster's light; given the reference's
-    grain; kept under the window's glazing bars where it has them; and eased in at its edges."""
+    poster's light; given the reference's grain; kept under the window's glazing bars where it has them; eased in at its
+    edges; and lit by the old sign's letters and glow where they lay over it."""
     picture = np.asarray(reference).astype(np.float32) / 255
     rng = np.random.default_rng(17)
-    # The sign's letters and the glow the photograph spread round them stay as they are: the poster's sign is lit over
-    # that glow (sign_words copies it), so a window under a letter keeps the old picture close round the letter.
+    # The old sign's own light, its letters and the glow the photograph spread round them, which the poster's sign is
+    # lit over (sign_words copies it): what is brighter round the letters than the picture filled in from further off,
+    # as grey light, no more at each distance from the letters than the glow is there at most (WORD_EDGE, WORD_FALL),
+    # so none of the old window under it comes too. It is laid back over a swapped window.
     title = plate("title.png", (reference.width * SCALE, reference.height * SCALE))[::SCALE, ::SCALE]
-    sign = ndimage.gaussian_filter(ndimage.grey_dilation(title, size=(2 * SWAP_CLEAR + 1, 2 * SWAP_CLEAR + 1)), 2)
+    near = np.clip(ndimage.gaussian_filter(ndimage.grey_dilation(title, size=(2 * SWAP_CLEAR + 1, 2 * SWAP_CLEAR + 1)), 2), 0, 1)
+    whole = picture @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    spread = lambda image: ndimage.gaussian_filter(image, SWAP_CLEAR) + 0.05 * ndimage.gaussian_filter(image, 4 * SWAP_CLEAR)
+    around = spread(whole * (1 - near)) / (spread(1 - near) + 1e-6)
+    most = WORD_EDGE * np.exp(-ndimage.distance_transform_edt(title < 0.5) / WORD_FALL)
+    sign = (np.minimum(np.clip(whole - around, 0, None), most) * near)[..., None] * SIGN / (SIGN @ np.array([0.2126, 0.7152, 0.0722], np.float32))
     for name, (x0, y0, x1, y1), crop, barred in WINDOW_SWAPS:
         old = picture[y0:y1, x0:x1]
         photo = np.asarray(Image.open(os.path.join(HERE, "art", name)).convert("RGB").crop(crop).resize((x1 - x0, y1 - y0), Image.LANCZOS)).astype(np.float32) / 255
@@ -148,8 +155,9 @@ def swap_windows(reference):
             new = new * (1 - bars) + old * bars
         edge = np.zeros(luma.shape, np.float32)
         edge[2:-2, 2:-2] = 1
-        edge = (ndimage.gaussian_filter(edge, 1) * (1 - np.clip(sign[y0:y1, x0:x1], 0, 1)))[..., None]
-        picture[y0:y1, x0:x1] = old * (1 - edge) + np.clip(new, 0, 1) * edge
+        edge = ndimage.gaussian_filter(edge, 1)[..., None]
+        swapped = old * (1 - edge) + np.clip(new, 0, 1) * edge
+        picture[y0:y1, x0:x1] = 1 - (1 - swapped) * (1 - sign[y0:y1, x0:x1])
     return Image.fromarray((np.clip(picture, 0, 1) * 255 + 0.5).astype(np.uint8))
 
 
