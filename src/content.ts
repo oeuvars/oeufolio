@@ -1,4 +1,4 @@
-import type { Chat, Cv, PageId, PageMeta, Profile, Site } from './types'
+import type { Cv, PageId, PageMeta, Profile, ResumeLetter, Site } from './types'
 
 export const profile: Profile = {
   handle: 'oeuvars',
@@ -95,7 +95,7 @@ export const pages: Record<PageId, PageMeta> = {
   resume: {
     path: '/resume',
     title: 'Résumé | Anurag Das',
-    description: "My résumé, as a text thread with me: Cybership since March 2025, Ekarth Ventures and DataVerse India before that, and what I do when I'm not working. Type a message and it opens in Gmail.",
+    description: 'My résumé, typed as a letter: Cybership since March 2025, and Nahar OM, ProperSKU and DataVerse India before that.',
     preview: { src: '/og/resume.jpg', alt: 'The top of my résumé, with Anurag Das set wide across it.' },
   },
 }
@@ -157,39 +157,31 @@ export const cv: Cv = {
   ],
 }
 
-/** The résumé as a text conversation, every figure in it one resume.pdf gives. The reader's side asks the questions. */
-export const chat: Chat = {
-  contact: { name: 'Anurag', avatar: '/objects/resume/avatar.avif' },
-  thread: [
-    { side: 'me', kind: 'text', text: "Hey, I'm Anurag" },
-    { side: 'me', kind: 'photo', src: '/photos/face.jpg', alt: 'Me, with curly hair and a maroon shirt, against a dark teal wall.', size: [1000, 1000] },
-    { side: 'me', kind: 'text', text: "I'm a product engineer at Cybership. I build the servers and the screens behind a fulfillment platform for warehouses" },
-    { side: 'you', kind: 'text', text: 'What does that look like day to day?' },
-    { side: 'me', kind: 'text', text: "I've been there since March 2025, working remote" },
-    { side: 'me', kind: 'link', href: 'https://cybership.io', title: 'Cybership', icon: '/objects/resume/cybership.webp' },
-    { side: 'me', kind: 'text', text: 'I built their automation rules from scratch, so a merchant can say "when this happens, do that" and stop doing it by hand. They run over 50,000 times a day now' },
-    { side: 'me', kind: 'text', text: "I also made the desktop app that runs at the packing stations. It prints the labels and reads the scales" },
-    { side: 'me', kind: 'text', text: 'And the shipping labels themselves. More than 10,000 a day, usually in under two seconds each' },
-    { side: 'me', kind: 'text', text: "When a warehouse can't ship, that's mine to fix, and I stay on it until it's fixed for good. Often the same day" },
-    { side: 'you', kind: 'text', text: 'And before Cybership?' },
-    { side: 'me', kind: 'text', text: 'Ekarth Ventures, in Chennai, for about eight months. I led the frontend team on Altern8, a real estate lending platform' },
-    { side: 'me', kind: 'link', href: 'https://nahar.om', title: 'Ekarth Ventures', icon: '/objects/resume/ekarth.webp' },
-    { side: 'me', kind: 'text', text: 'I also ended up pitching it to investors internationally' },
-    { side: 'me', kind: 'text', text: 'Before that I interned at DataVerse India' },
-    { side: 'you', kind: 'text', text: 'What do you like working with?' },
-    { side: 'me', kind: 'text', text: 'Mostly TypeScript, with some Swift, Python and Go' },
-    { side: 'me', kind: 'text', text: "And I'm picky about fonts, which you might have noticed" },
-    { side: 'you', kind: 'text', text: 'Where did you study?' },
-    { side: 'me', kind: 'text', text: 'Electronics and Communication at Heritage Institute of Technology. I finished with an 8.21' },
-    { side: 'you', kind: 'text', text: 'And outside work?' },
-    { side: 'me', kind: 'text', text: 'Electric guitar, mostly' },
-    { side: 'me', kind: 'text', text: 'I love football, Arsenal to be precise' },
-    { side: 'me', kind: 'text', text: 'And Dilly, my cat, who likes to fall asleep on my keyboard' },
-    { side: 'you', kind: 'text', text: 'Can I get your résumé as a PDF?' },
-    { side: 'me', kind: 'text', text: 'Here you go' },
-    { side: 'me', kind: 'file', href: '/resume.pdf', name: 'Anurag Das, résumé.pdf', detail: 'PDF Document · 44 KB' },
+/** The résumé as a typed letter. Every fact in it is one oeusume.pdf gives. */
+export const resumeLetter: ResumeLetter = {
+  sender: ['Anurag Das', 'Product Engineer at Cybership', 'Kolkata, India'],
+  place: 'Kolkata',
+  recipient: ['To', 'Whoever is hiring', 'Remote, or wherever', 'OPEN TO RELOCATION'],
+  salutation: 'Dear reader,',
+  body: [
+    "I'm a !!Product Engineer!! with three years and more behind me, mostly in ==TypeScript, React, Node.js, Python and PostgreSQL==, on 3PL fulfillment and on lending. Since March 2025 I've been at ==Cybership==, remote.",
+    'There I built the ==Automation Rules engine== alone and from scratch, something like Shopify Flow: 50 triggers, 16 condition operators including array operations, and 7 actions. Rules are checked with Zod and run ==more than 50,000 times a day== across orders, inventory allocation and shipping.',
+    "I'm building ==Cybership Desktop==, an Electron app for packing stations that replaces PrintNode. I ==reverse-engineered most of its 64 scale protocols== from raw serial, USB HID and Bluetooth captures of proprietary scales. The capture tooling lives in the app: it records request and response bytes at any serial setting, replays them through the live decoders and sends the evidence to support. It ==never prints a label twice==: PostgreSQL row-lock claims, an audited job state machine, and an fsynced journal on the device that repairs torn writes and fails closed.",
+    "I built ==Shipping Labels end to end==: EasyPost, USPS over OAuth2, BukuShip, and ShipStation for FedEx, UPS, USPS, DHL and Canada Post, with Mapbox geocoding, pdf-lib PDFs, Redis-cached rate shopping, webhooks with retries and batch jobs. It makes ==over 10,000 labels a day==.",
+    "When a warehouse can't ship, it's mine: ==first report to root cause to permanent fix==, often the same day. I repair the live data with the customer's team, keep them informed, and feed each failure back into the product. Every day I run ==several agents at once in T3 Code and Claude Code==, and I write skills for them: one reviews a branch against our review contract, another records video proof of a fix into the PR with Playwright.",
+    "From June 2024 to March 2025 I was at ==Nahar OM== in Chennai. On ==Secondary Trading== I led a team of 3 and built the whole Django REST backend, where investors trade fractional loan units at a fixed price or by bid: OTP and JWT sign-in, Surepass KYC, wallets with an audited transaction log, unit ownership across resales, bidding inside database transactions, eMudhra contracts, a repayment rule engine, a buy-back bot and TDS reports. I wrote an ==XIRR engine== for 4 repayment structures that solves a target XIRR back to a price with Brent's method. For Ethyx, their invoice discounting product, I built the ledger and reconciled it against Boost Money account-aggregator bank statements.",
+    "On ==Altern8==, construction lending released in tranches, I did the frontend and the design. Onboarding can be resumed: bank statements through Boost Money, PAN through Signzy, tax returns through Scoreme, and Tally, Zoho or QuickBooks through RootFi. Budgets and timelines upload into editable tables and a Gantt chart, and an admin panel approves borrowers, projects and tranches, with rules per tranche. I took its ==Docker image from 2.2 GB to 178 MB==, and I ==pitched both products to investors internationally==: loans split into tradable units, a two-way XIRR calculator, a bid accepted and e-signed, a borrower taken from onboarding to tranche approval.",
+    "From December 2023 to June 2024 I was the ==founding engineer at ProperSKU==, remote, building a Shopify inventory-forecasting app for stores and their warehouses across the frontend and the backend (Next.js, TypeScript, GraphQL, Redis, BullMQ). I wrote its ==auth and multi-tenant permissions==: invite-only sign-up cascading across 5 roles (admin, warehouse managers, warehouse users, store owners, store users), the role fixed by the invite, menus and data scoped to a warehouse or a store. The menu stays locked until onboarding is done: the account, card billing (Visa, Mastercard, Amex), Shopify connected by domain, the team invited. It reads Shopify orders, line items, products, variants and inventory per location (available, on hand, committed, backordered), charts current and past sales by product and SKU against other ranges, and ==recommends minimum order quantities== per variant for 3, 6 and 12 months. Warehouses see every store with its connection status and SKU count, and each account has its own billing and users.",
+    'Before that, from December 2022 to December 2023, I was at ==DataVerse India== in Kolkata, building custom CMS websites from scratch for GenieBaazar and Penn State University with Next.js, SolidStart, Express and Hono. I was the technical point of contact and hosted them on AWS and Hostinger.',
+    'I write ==TypeScript, JavaScript, Python, Go, Swift and SQL==, in Next.js, React, Node.js, Express.js, Hono, Django, SolidStart, Electron, AppKit and SwiftUI, on PostgreSQL, MySQL, Redis, ClickHouse, AWS (RDS, S3, EC2, Lambda) and Railway. Day to day that means REST APIs, GraphQL, BullMQ, webhooks, OAuth2, Zod, Docker, CI/CD and production incident response, plus multi-agent orchestration with Claude Code, T3 Code and Codex, agent skills and MCP.',
+    'I studied ==Electronics and Communication== at Heritage Institute of Technology, Kolkata, and finished my B.Tech with a CGPA of 8.21.',
+    'Do you have a ==role in mind?== Write to me at sudo@anurag.gg.',
   ],
-  subject: 'Hi Anurag',
-  reply: "Gmail should be open now. Hit send there and I'll get it",
-  placeholder: 'iMessage',
+  closing: 'With many greetings,',
+  signature: 'Anurag',
+  enclosures: [
+    { label: 'Résumé, PDF', href: '/resume.pdf' },
+    { label: 'github.com/oeuvars', href: 'https://github.com/oeuvars' },
+    { label: 'linkedin.com/in/oeuvars', href: 'https://www.linkedin.com/in/oeuvars' },
+  ],
 }
