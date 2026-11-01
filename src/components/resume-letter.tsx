@@ -2,7 +2,7 @@ import '@fontsource/courier-prime/400.css'
 import '@fontsource/courier-prime/700.css'
 
 import { Link } from '@tanstack/react-router'
-import type { CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 
 import { resumeLetter } from '../content'
 
@@ -29,6 +29,10 @@ const Linked = ({ text }: { text: string }) => {
  */
 export const ResumeLetter = () => {
   const { sender, place, recipient, salutation, body, closing, signature, enclosures } = resumeLetter
+  // The day the reader opens it, on their own calendar. The server renders in UTC, which is a day out for half the
+  // world at some hour, so the date is only set in the browser; until then the line holds its place.
+  const [today, setToday] = useState('\u00a0')
+  useEffect(() => setToday(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })), [])
   // Each mark is swept on in turn down the page, as if drawn after the letter was typed.
   let mark = 0
 
@@ -97,7 +101,7 @@ export const ResumeLetter = () => {
           <p>
             {place},
             <br />
-            <span suppressHydrationWarning>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+            {today}
           </p>
           <p>
             {recipient.map((line, i) => (
