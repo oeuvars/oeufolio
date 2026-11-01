@@ -44,11 +44,21 @@ PASSAGES = [(305, 302, 398, 453), (512, 374, 642, 451), (100, 484, 302, 561), (3
 # and how far its letters run above and below a baseline, in the reference's pixels.
 WORDS = ((99, 334, 370), (244, 631, 613))
 RISE, FALL = 64, 20
-# The poster's windows, each by its box in the reference's pixels: the candle's, the two women's at the yellow window,
+# Two of the reference's windows are other photographs now, in place of the lovers in them: the two women's at the big
+# yellow window holds a painter at an easel in an open window (art/window-painter.jpg, Pinterest pin
+# 574349758697909557), and the couple's in the small barred one at the right a musician's shadow on a lit wall, playing
+# (art/window-musician.jpg, pin 755619643730479522). Each by the box it fills in the reference's pixels, the part of
+# its photograph that fills it (left, top, right, bottom, in the photograph's pixels), and whether the window keeps its
+# glazing bars over it.
+# How far round the sign's letters, in the reference's pixels, a swapped window keeps the old picture.
+SWAP_CLEAR = 6
+WINDOW_SWAPS = (("window-painter.jpg", (108, 568, 296, 708), (150, 400, 736, 854), False),
+                ("window-musician.jpg", (540, 633, 617, 739), (0, 60, 500, 749), True))
+# The poster's windows, each by its box in the reference's pixels: the candle's, the painter's at the yellow window,
 # the child's at the lilac curtain, the red one's, the woman's over the city, the saxophonist's, the one of the woman
 # sitting high in hers, the curtained one's, the man's at the yellow window, the lit one above the two at the corner,
 # the balcony's, and the one at the right by the last passage.
-CANDLE, WOMAN, CURTAIN = (520, 228, 638, 368), (105, 566, 246, 708), (415, 709, 528, 859)
+CANDLE, WOMAN, CURTAIN = (520, 228, 638, 368), (105, 566, 252, 708), (415, 709, 528, 859)
 RED, CITY, SAX, SITTER = (310, 455, 419, 549), (238, 715, 339, 832), (308, 163, 390, 293), (408, 122, 501, 239)
 CURTAINS, YELLOW, GLOW = (118, 193, 300, 296), (104, 390, 290, 478), (405, 257, 508, 316)
 BALCONY, RIGHT = (477, 466, 601, 549), (540, 633, 617, 739)
@@ -95,6 +105,52 @@ SIGN = np.array([0.90, 0.91, 0.92])
 # The highlighter: a white paint marker, a little less than opaque, and the companies it is run over.
 MARKER = np.array([0.93, 0.92, 0.89])
 MARKS = os.path.join(ROOT, "src", "components", "poster.json")
+
+
+def swap_windows(reference):
+    """The reference with WINDOW_SWAPS' photographs in place of the windows they replace, at the reference's own size,
+    so they are scaled up, softened and grained with the rest. Each is graded to the window it replaces, its lights and
+    darks stretched over that window's and each in the colour the window has at that brightness, so it is lit in the
+    poster's light; given the reference's
+    grain; kept under the window's glazing bars where it has them; and eased in at its edges."""
+    picture = np.asarray(reference).astype(np.float32) / 255
+    rng = np.random.default_rng(17)
+    # The sign's letters and the glow the photograph spread round them stay as they are: the poster's sign is lit over
+    # that glow (sign_words copies it), so a window under a letter keeps the old picture close round the letter.
+    title = plate("title.png", (reference.width * SCALE, reference.height * SCALE))[::SCALE, ::SCALE]
+    sign = ndimage.gaussian_filter(ndimage.grey_dilation(title, size=(2 * SWAP_CLEAR + 1, 2 * SWAP_CLEAR + 1)), 2)
+    for name, (x0, y0, x1, y1), crop, barred in WINDOW_SWAPS:
+        old = picture[y0:y1, x0:x1]
+        photo = np.asarray(Image.open(os.path.join(HERE, "art", name)).convert("RGB").crop(crop).resize((x1 - x0, y1 - y0), Image.LANCZOS)).astype(np.float32) / 255
+        luma = old @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+        # The photograph's own lights and darks, stretched over the old window's range, each in the colour the old
+        # window has at that brightness: lit in the same light, in the same colours.
+        shade = photo @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+        low, high = np.percentile(shade, (2, 98))
+        # Short of the old window's very brightest, a few pale highlights, so its light keeps its colour.
+        old_low, old_high = np.percentile(luma, (2, 88))
+        shade = old_low + np.clip((shade - low) / (high - low), 0, 1) * (old_high - old_low)
+        edges = np.linspace(old_low, old_high, 33)
+        which = np.clip(np.digitize(luma.ravel(), edges) - 1, 0, 31)
+        counts = np.bincount(which, minlength=32)
+        sums = np.stack([np.bincount(which, old.reshape(-1, 3)[:, c], minlength=32) for c in range(3)], -1)
+        filled = counts > 0
+        middles = (edges[:-1] + edges[1:]) / 2
+        colours = sums[filled] / counts[filled, None]
+        new = np.stack([np.interp(shade, middles[filled], colours[:, c]) for c in range(3)], -1).astype(np.float32)
+        grain = (luma - ndimage.gaussian_filter(luma, 1.5)).std()
+        new = new + grain * ndimage.gaussian_filter(rng.standard_normal(luma.shape).astype(np.float32), 0.6)[..., None]
+        if barred:
+            # The bars: the rows and columns of the old window much darker than its middle.
+            columns, rows = luma.mean(0), luma.mean(1)
+            bars = (columns < 0.6 * np.median(columns))[None, :] | (rows < 0.6 * np.median(rows))[:, None]
+            bars = ndimage.gaussian_filter(bars.astype(np.float32), 0.7)[..., None]
+            new = new * (1 - bars) + old * bars
+        edge = np.zeros(luma.shape, np.float32)
+        edge[2:-2, 2:-2] = 1
+        edge = (ndimage.gaussian_filter(edge, 1) * (1 - np.clip(sign[y0:y1, x0:x1], 0, 1)))[..., None]
+        picture[y0:y1, x0:x1] = old * (1 - edge) + np.clip(new, 0, 1) * edge
+    return Image.fromarray((np.clip(picture, 0, 1) * 255 + 0.5).astype(np.uint8))
 
 
 def load(name):
@@ -343,7 +399,7 @@ def main():
     parser.add_argument("--proof", help="also write the poster as a PNG into this folder")
     args = parser.parse_args()
 
-    source = Image.open(os.path.join(HERE, "art", "reference.jpg")).convert("RGB")
+    source = swap_windows(Image.open(os.path.join(HERE, "art", "reference.jpg")).convert("RGB"))
     size = (source.width * SCALE, source.height * SCALE)
     picture = np.asarray(source.resize(size, Image.LANCZOS)).astype(np.float32) / 255
     shape = picture.shape[:2]
