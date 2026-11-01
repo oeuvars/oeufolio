@@ -253,9 +253,10 @@ export type ResumeLetter = {
   sender: string[]
   /** Where the letter was typed, set above the day it is read. */
   place: string
-  /** Who it goes to, top right, under a line of its own that says To. Its last line is underlined. */
-  recipient: string[]
-  salutation: string
+  /** Who it goes to, top right under To: a blank for the reader's name, with what it shows until filled, and an address. */
+  recipient: { blank: string; address: string }
+  /** How the letter opens: as typed until the reader gives their name, then the greeting and the name. */
+  salutation: { anonymous: string; greeting: string }
   body: string[]
   closing: string
   /** My signature in pen, lifted off a photograph of it (studio/resume/signature.py). */

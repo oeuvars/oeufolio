@@ -39,6 +39,10 @@
   transform: translateZ(0);
 }
 
+.typed-pen {
+  filter: url(#pen-ink);
+}
+
 .typed-letter ::selection {
   background: #fde24a;
   color: inherit;
@@ -83,6 +87,32 @@
   from {
     background-size: 0% 100%;
   }
+}
+
+/* The blank under To, a typed rule for the reader's name, in the letter's own type. */
+.typed-blank {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  padding: 0 0 1px;
+  outline: none;
+}
+
+.typed-blank::placeholder {
+  color: inherit;
+  opacity: 0.45;
+}
+
+.typed-blank:focus {
+  background: #fde24a;
+}
+
+.typed-blank:-webkit-autofill {
+  -webkit-text-fill-color: #141414;
+  box-shadow: inset 0 0 0 100vmax #fde24a;
 }
 
 .typed-strike {
