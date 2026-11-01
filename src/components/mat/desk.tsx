@@ -14,17 +14,13 @@ import { Wallet } from './wallet'
  * strip. The page's own margins are given over to it: the ones undone here are SiteShell's padding round a
  * page, up to where the strip before this one lies over it, and the band beside it. The sports cars like has no object of its
  * own: it is the car key on the bunch that carries the name. SiteShell keeps the desk in its strip, open or
- * folded, so it is laid once and the strip only uncovers and covers it. Given a band, it is only the band plate, a
- * few of the things on the desk in a row along a folded phone strip, that many pixels deep, with nothing on it to take.
- * On a phone the page grows out of that band (Fold).
+ * folded, on a phone as on a wide screen, so it is laid once and the strip only uncovers and covers it.
  */
-export const Desk = ({ band, grows }: { band?: number; grows?: boolean }) => {
+export const Desk = () => {
   const { name, likes, playlist } = profile.extras
 
-  if (band) return <Mat band={band} grows={grows} className="h-full" />
-
   return (
-    <Mat grows={grows} className="h-(--page-room) md:-mt-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem] md:h-auto md:min-h-screen">
+    <Mat className="h-(--page-room) md:-mt-[6.4vh] md:-mr-[calc(clamp(1rem,2.6vw,3rem)+1.9rem)] md:-mb-[6.4vh] md:-ml-[3.1rem] md:h-auto md:min-h-screen">
       <KeyBunch name={name} car={likes.key} />
       <BusinessCard name={name} />
       <RecordSleeve like={likes.record} playlist={playlist} />

@@ -11,12 +11,6 @@ type MatProps = {
   /** What on the mat the page needs to reach: links and the parts that move. Each marks its root with data-prop. */
   children?: React.ReactNode
   className?: string
-  /** Only the band plate, as a folded phone strip shows it (SiteShell), this many pixels deep from the mat's top left,
-   * with no rulers round it: the tabs take their light from the page's own. */
-  band?: number
-  /** The page grows out of a folded phone strip's band and folds back into it (Fold), so the lamp's light is also drawn
-   * as it is without the things that travel between the two, which the mat is lit by while they are on their way. */
-  grows?: boolean
 }
 
 /** Which plate is showing, how many pixels an em of it is, and where its top left lies on the mat. */
@@ -31,17 +25,6 @@ type Geometry = {
 const WIDE_FROM = 420
 // An em of the plate is drawn at most this many pixels, where its render is still sharp.
 const LARGEST = 22
-// While a phone page grows out of its folded strip's band (Fold), its mat is lit as it would be with only what has come in
-// on it so far, from maps of the light without the things that travel (bare, studio/fold.py) and, on the page, with
-// nothing on it (empty), each laid under the one after as the things come in: the rest of the page's (--fold-rest), and
-// then those from the band (--fold-takes). The band's mat has only the band's things. Each is how opaque a map is, as
-// the light it multiplies, and as the light it adds past what the leather was photographed in.
-const LIGHTS: Partial<Record<PlateId, string[]>> = { band: ['bare'], wide: ['empty', 'bare'] }
-const LIT: Record<PlateId, Record<string, [string | undefined, string]>> = {
-  band: { bare: [undefined, 'calc(1 - var(--fold-takes, 1))'] },
-  wide: { empty: [undefined, 'calc(1 - var(--fold-rest, 1))'], bare: ['var(--fold-rest, 1)', 'calc(var(--fold-rest, 1) * (1 - var(--fold-takes, 1)))'] },
-  tall: {},
-}
 // The plate and its light lie over the rulers, which are printed on the mat under everything on it.
 const LAID = 'pointer-events-none absolute z-1 max-w-none'
 
@@ -60,14 +43,12 @@ const over = (geometry: Geometry, x: number, y: number, w: number, h: number): R
  * Where the lamp lights the leather brighter than it was photographed, a second map adds the rest. A prop the
  * plate's camera does not show, seen from a camera of its own (PORTRAITS), lies over the plate as its picture.
  */
-export const Mat = ({ children, className, band, grows }: MatProps) => {
+export const Mat = ({ children, className }: MatProps) => {
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
   const light = useRef<HTMLCanvasElement>(null)
   const past = useRef<HTMLCanvasElement>(null)
-  // The other maps of the light a page that grows out of its band is lit by on the way (LIGHTS), by name.
-  const grown = useRef<Record<string, HTMLCanvasElement | null>>({})
   const [lit, setLit] = useState(0)
 
   // The plate fits the mat, and the objects' boxes follow it. It is laid before it is first painted, so the
@@ -79,16 +60,13 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
     const compose = () => {
       const width = board.clientWidth
       // On a phone the page is never scrolled (SiteShell), so the whole of the wide plate is fitted to it.
-      const id: PlateId = band ? 'band' : width >= WIDE_FROM || window.innerWidth < 768 ? 'wide' : 'tall'
+      const id: PlateId = width >= WIDE_FROM || window.innerWidth < 768 ? 'wide' : 'tall'
       const plate = PLATES[id]
       const [w, h] = plate.size
       let em: number
       let x = 0
       let y = 0
-      if (band) {
-        board.style.minHeight = ''
-        em = band / h
-      } else if (id === 'wide') {
+      if (id === 'wide') {
         board.style.minHeight = ''
         // The wide plate keeps to the top of the mat, but for a phone's, which is the whole page and has it in its middle,
         // clear of its edges by at least a rem.
@@ -127,12 +105,11 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
     const watching = new ResizeObserver(compose)
     watching.observe(board)
     return () => watching.disconnect()
-  }, [band])
+  }, [])
 
   // The maps of the lamp's light, drawn once for the mat's size, and how many times they have been.
   useEffect(() => {
-    const extra = grows && geometry ? (LIGHTS[geometry.id] ?? []).flatMap((name) => [`light-${name}`, `light-past-${name}`]) : []
-    const maps = { light: light.current, 'light-past': past.current, ...Object.fromEntries(extra.map((name) => [name, grown.current[name]])) }
+    const maps = { light: light.current, 'light-past': past.current }
     if (!geometry || Object.values(maps).some((canvas) => !canvas)) return
     const plate = PLATES[geometry.id]
     const across = (plate.size[0] + 2 * plate.bleed[0]) * geometry.em
@@ -141,7 +118,7 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
       .then(() => setLit((times) => times + 1))
       .catch(() => {})
     return () => going.abort()
-  }, [geometry, grows])
+  }, [geometry])
 
   // The folder tab the page hangs from is cut from this leather (SiteShell's Tab), so it takes the same light: the
   // part of the mat's maps that lies under it, copied onto its own canvases.
@@ -150,7 +127,7 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
     const board = sheet.current
     const tabs = [...document.querySelectorAll<HTMLElement>('[data-mat-light]')]
     const copies = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-light]')]
-    if (band || !frame || !board || !tabs.length || !geometry || !lit) return
+    if (!frame || !board || !tabs.length || !geometry || !lit) return
     const plate = PLATES[geometry.id]
     const [w] = plate.size
     const [bx, by] = plate.bleed
@@ -193,7 +170,7 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
         delete copy.dataset.at
       }
     }
-  }, [geometry, lit, band])
+  }, [geometry, lit])
 
   const plate = geometry && PLATES[geometry.id]
   // Where the maps of the light lie: over the plate and on past it as far as the light runs.
@@ -212,12 +189,12 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
         ref={sheet}
         className="relative flex-1 overflow-hidden select-none before:pointer-events-none before:absolute before:inset-0 before:bg-mat-grain before:bg-size-[220px_220px] before:opacity-20 before:mix-blend-multiply"
       >
-        <div aria-hidden className={cn('mat-rules pointer-events-none absolute', band ? 'inset-0' : 'inset-[22px]')} />
-        {!band && <Rulers />}
+        <div aria-hidden className="mat-rules pointer-events-none absolute inset-[22px]" />
+        <Rulers />
         <svg
           aria-hidden
           viewBox="0 0 400 400"
-          className="pointer-events-none absolute bottom-[22px] left-[22px] w-[min(46cqw,520px)] overflow-visible fill-ink/55 font-mono text-[9px]/[normal] font-medium group-data-[plate=band]/mat:hidden group-data-[plate=tall]/mat:hidden"
+          className="pointer-events-none absolute bottom-[22px] left-[22px] w-[min(46cqw,520px)] overflow-visible fill-ink/55 font-mono text-[9px]/[normal] font-medium group-data-[plate=tall]/mat:hidden"
         >
           <path className="fill-none stroke-ink/26 stroke-1 [vector-effect:non-scaling-stroke]" d="M0 400 L400 169 M0 400 L400 0 M0 400 L231 0" />
           <text x="330" y="196">30°</text>
@@ -230,54 +207,20 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
             {/* The lamp's light on the mat, shadows and all, then the objects in it. Both maps of it are drawn on
                 canvases (paint), not laid as pictures. */}
             <div aria-hidden className={`${LAID} inset-0 overflow-hidden mix-blend-multiply`} style={{ backgroundColor: plate.rim }}>
-              {grows &&
-                LIGHTS[geometry.id]?.map((name) => (
-                  <canvas
-                    key={name}
-                    ref={(canvas) => {
-                      grown.current[`light-${name}`] = canvas
-                    }}
-                    className="absolute"
-                    style={{ ...spread, opacity: LIT[geometry.id][name][0] }}
-                  />
-                ))}
-              <canvas
-                ref={light}
-                className="absolute"
-                style={{ ...spread, opacity: grows ? 'var(--fold-takes, 1)' : undefined }}
-              />
+              <canvas ref={light} className="absolute" style={spread} />
             </div>
             {/* Where the lamp lights the leather brighter than it was photographed, which multiplying cannot show,
                 the rest of its light is added over it. */}
-            {grows &&
-              LIGHTS[geometry.id]?.map((name) => (
-                <canvas
-                  key={name}
-                  ref={(canvas) => {
-                    grown.current[`light-past-${name}`] = canvas
-                  }}
-                  aria-hidden
-                  className={`${LAID} mix-blend-plus-lighter`}
-                  style={{ ...spread, opacity: LIT[geometry.id][name][1] }}
-                />
-              ))}
-            <canvas
-              ref={past}
-              aria-hidden
-              className={`${LAID} mix-blend-plus-lighter`}
-              style={{ ...spread, opacity: grows ? 'var(--fold-takes, 1)' : undefined }}
-            />
-            {/* While a folded phone strip grows into the desk, the things travelling there from its band leave holes in the
-                plate, and the rest of what is on the desk comes in round them (Fold). */}
+            <canvas ref={past} aria-hidden className={`${LAID} mix-blend-plus-lighter`} style={spread} />
             <img
               src={`/objects/mat/desk-${geometry.id}.avif`}
               alt=""
               draggable={false}
-              className={`${LAID} opacity-(--fold-rest,1) [mask-image:var(--fold-holes,none)] [mask-mode:luminance] [mask-size:100%_100%]`}
+              className={LAID}
               style={over(geometry, 0, 0, ...plate.size)}
             />
             {/* The watch's dial again over the plate's, its hands at the viewer's time. */}
-            {DIALS[geometry.id] && <WatchHands plate={geometry.id} className={`${LAID} opacity-(--fold-rest,1)`} style={over(geometry, ...DIALS[geometry.id]!.dial)} />}
+            {DIALS[geometry.id] && <WatchHands plate={geometry.id} className={LAID} style={over(geometry, ...DIALS[geometry.id]!.dial)} />}
             {/* The props seen from a camera of their own, over the plate where they stand on it. */}
             {Object.entries(PORTRAITS[geometry.id] ?? {}).map(([prop, seen]) => (
               <img
@@ -285,14 +228,14 @@ export const Mat = ({ children, className, band, grows }: MatProps) => {
                 src={`/objects/mat/desk-${geometry.id}-${prop}.avif`}
                 alt=""
                 draggable={false}
-                className={`${LAID} opacity-(--fold-rest,1)`}
+                className={LAID}
                 style={over(geometry, ...seen.picture)}
               />
             ))}
           </>
         )}
 
-        {children && <div className="absolute inset-0 z-2 opacity-(--fold-rest,1)">{children}</div>}
+        {children && <div className="absolute inset-0 z-2">{children}</div>}
       </div>
     </div>
   )

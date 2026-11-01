@@ -5,19 +5,12 @@ import type { FoldKind, FoldPiece } from '../types'
 import fold from './fold.json'
 
 const SIZES = fold.sizes as unknown as Record<string, [number, number]>
-// Each strip's pieces as a phone's band has them. The letter and the poster have none (FADE).
-const PIECES = fold as unknown as Record<'desk' | 'contact', FoldPiece[]>
-// The desk's picture under its pieces, which keeps a hole where each piece lands until it is there.
-const DESK_PAGE = '/objects/mat/desk-wide.avif'
+// The contact strip's pieces as a phone's band has them. The letter and the poster have none (FADE).
+const PIECES = fold.contact as unknown as FoldPiece[]
 // How far open the strip is when a piece goes over from the band's picture of itself to the page's, at once and in
-// mid-flight, where it moves fastest. The two are often two photographs of the thing (the desk's, the contact set's),
-// from cameras a little apart, so faded one into the other they would show it twice, a little apart.
+// mid-flight, where it moves fastest. The two are two photographs of the contact set, from cameras a little apart, so
+// faded one into the other they would show it twice, a little apart.
 const TAKES_ON = 0.5
-// How far open the strip is by the time the desk's band mat has gone from under the pieces, in the band's light.
-const BAND_GOES = 0.35
-// The page's light has the things' shadows and the dark under them in it, so it takes over from the light without them
-// (bare_light in studio/fold.py) only as they settle onto the mat.
-const SHADOWS_IN = [0.88, 1]
 // The letter and the poster have no pieces: the folded picture fades out over the first part of the opening and the
 // page fades in over the rest, overlapping in the middle.
 const FADE = { band: [0, 0.6], page: [0.25, 1] }
@@ -30,14 +23,6 @@ const ramp = ([from, to]: number[], p: number) => {
 /** Outlines in a picture's pixels as a path laid k pixels to one of them, from (x, y). */
 const path = (clip: [number, number][][], k: number, x: number, y: number) =>
   clip.map((outline) => `M${outline.map(([px, py]) => `${((px - x) * k).toFixed(2)} ${((py - y) * k).toFixed(2)}`).join(' L')} Z`).join(' ')
-
-/** A picture's mask with a hole where each piece lands on it, black on white: it masks by luminance. */
-const holes = (src: string, pieces: FoldPiece[]) => {
-  const [w, h] = SIZES[src]
-  const cut = pieces.map((piece) => `<path fill-rule="evenodd" d="${path(piece.page.clip, 1, 0, 0)}"/>`).join('')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><rect width="${w}" height="${h}" fill="#fff"/><g fill="#000">${cut}</g></svg>`
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
-}
 
 const bounds = (clip: [number, number][][]) => {
   const xs = clip.flat().map(([x]) => x)
@@ -63,13 +48,13 @@ type FoldProps = {
  * A folded strip growing into its page and back. Folded, the strip shows its band ([data-fold-band]), a picture of
  * its own made of pieces of its page (studio/fold.py); open, its page ([data-fold-page]). In between, as far as the
  * strip is open, each piece travels from where the band has it to where the page has it, turning and growing on the
- * way, over the rest of the page, which the strip uncovers as it opens, with each piece's place left empty. It goes as the strip goes, whether a spring or a finger moves it, and back the same way. The card's band is
- * its own page laid smaller, so the page itself goes there and back. The letter and the poster only fade from their
+ * way, over the rest of the page, which the strip uncovers as it opens, with each piece's place left empty. It goes as the strip goes, whether a spring or a finger moves it, and back the
+ * same way. Only the contact strip has pieces. The card's band is its own page laid smaller, so the page itself goes there and back. The letter and the poster only fade from their
  * band to their page (FADE).
  */
 export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps) => {
   const layer = useRef<HTMLDivElement>(null)
-  const pieces = kind === 'desk' || kind === 'contact' ? PIECES[kind] : []
+  const pieces = kind === 'contact' ? PIECES : []
   // The poster's pieces are light, screened over the paper and over each other.
   const light = kind === 'poster'
 
@@ -83,7 +68,6 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
     let badge: { from: [number, number]; to: [number, number]; grow: number } | null = null
     let was = ''
     let waiting = false
-    const desk = kind === 'desk' ? holes(DESK_PAGE, pieces) : ''
 
     const find = (inside: Element | null | undefined, src: string) => inside?.querySelector<HTMLElement>(`[src="${src}"], [data-src="${src}"]`)
     // Where a picture is drawn on the screen: its box, or within it, for one fitted into its box whole.
@@ -168,13 +152,10 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
       if (state !== was) {
         // Each time the strip starts to move it is measured again, for the window may have changed size since.
         if (moving) laid = badge = null
-        // The mat lays its tabs' light off where it lies on the screen, so it is laid again once its page has settled.
-        else if (was) window.dispatchEvent(new Event('scroll'))
         was = state
       }
       if (moving && ((!laid && !badge) || waiting) && !measure(band, page)) return
       root.style.visibility = moving && kind !== 'badge' ? 'visible' : 'hidden'
-      const bandGoes = ramp([0, BAND_GOES], p)
 
       if (kind === 'badge') {
         if (band) band.style.visibility = state === 'band' ? 'visible' : 'hidden'
@@ -193,26 +174,7 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
         return
       }
 
-      if (kind === 'desk') {
-        // The page's mat lies under the band's, in its own light, its things coming in round the pieces; the band's
-        // mat goes, and its things are the pieces.
-        if (band) {
-          band.style.visibility = state === 'page' ? 'hidden' : 'visible'
-          band.style.opacity = moving ? String(1 - bandGoes) : ''
-          band.style.zIndex = moving ? '1' : ''
-          // Its things have left it, so it is lit as it is without them.
-          band.style.setProperty('--fold-takes', moving ? '0' : '1')
-          const plate = find(band, '/objects/mat/desk-band.avif')
-          if (plate) plate.style.visibility = moving ? 'hidden' : ''
-        }
-        if (page) {
-          page.style.visibility = state === 'band' ? 'hidden' : 'visible'
-          page.style.setProperty('--fold-rest', '1')
-          page.style.setProperty('--fold-holes', moving ? desk : 'none')
-          // The lamp's light on the mat is the light without the pieces until they land (bare_light in studio/fold.py).
-          page.style.setProperty('--fold-takes', moving ? ramp(SHADOWS_IN, p).toFixed(3) : '1')
-        }
-      } else if (kind === 'letter' || kind === 'poster') {
+      if (kind === 'letter' || kind === 'poster') {
         if (band) {
           band.style.visibility = state === 'page' ? 'hidden' : 'visible'
           band.style.opacity = moving ? String(1 - ramp(FADE.band, p)) : ''
@@ -220,10 +182,9 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
         if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
         if (rest) rest.style.opacity = moving ? ramp(FADE.page, p).toFixed(3) : '1'
         return
-      } else {
-        if (band) band.style.visibility = state === 'band' ? 'visible' : 'hidden'
-        if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
       }
+      if (band) band.style.visibility = state === 'band' ? 'visible' : 'hidden'
+      if (page) page.style.visibility = state === 'page' ? 'visible' : 'hidden'
       if (!moving || !laid) return
       const takes = p >= TAKES_ON
       laid.forEach(({ from, to, grow, turn }, n) => {

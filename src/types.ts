@@ -268,7 +268,7 @@ export type Chat = {
 }
 
 /** Which folded phone strip's band grows into its page and back (src/components/fold.tsx), and how. */
-export type FoldKind = 'badge' | 'letter' | 'poster' | 'desk' | 'contact'
+export type FoldKind = 'badge' | 'letter' | 'poster' | 'contact'
 
 /**
  * One piece of a folded phone strip's band, as studio/fold.py works it out, in each picture's pixels: the picture it

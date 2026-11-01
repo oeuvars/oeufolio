@@ -263,9 +263,6 @@ const CONTACT_BAND = { long: '22rem', deep: '4.25rem' }
 // The work strip's folded band: as deep as the strip shows, the poster's windows at its ends as tall as that lets them
 // be, and its sign between them.
 const POSTER_BAND = { deep: '3.875rem' }
-// The desk strip's folded band: its plate as deep as the strip shows, in rem, on a mat deep enough to run on under the
-// torn edge of the strip after it.
-const DESK_BAND = { deep: 3.375, mat: '4.25rem' }
 // How long the card's page laid for its folded phone strip is, as a part of how wide it is.
 const FOLD_TALL = 1.7
 // The letter's strip, whose band is its drawings (Art).
@@ -746,10 +743,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       transform: `rotate(90deg) translateY(calc(${(strip + band - under(i)) / 2}px - ${at * 100}%))`,
     }) as CSSProperties
   // Which way a folded strip's picture grows into its page (Fold): the building, the work page's other version, has no
-  // picture of pieces, and only crosses over its strip's. On a wide screen the card, the desk and the ticket lie under
-  // their strips, open or folded, so opening one only uncovers its page.
+  // picture of pieces, and only crosses over its strip's. The desk lies under its strip, open or folded, so opening it
+  // only uncovers its page; on a wide screen so do the card and the ticket.
   const foldOf = (i: number): FoldKind | null =>
-    tones[i].hangs ? (mobile ? 'badge' : null) : i === LETTER ? 'letter' : tones[i].bleeds ? (workPoster ? 'poster' : null) : !mobile ? null : tones[i].fills ? 'desk' : tones[i].roll ? 'contact' : null
+    tones[i].hangs ? (mobile ? 'badge' : null) : i === LETTER ? 'letter' : tones[i].bleeds ? (workPoster ? 'poster' : null) : mobile && tones[i].roll ? 'contact' : null
   // The page's picture as the page lays it, for the letter's or the poster's strip to fade into: their pages are only
   // there while they are open.
   const pictureOf = (i: number) => (foldOf(i) === 'letter' ? <Letter letter={profile.letter} /> : foldOf(i) === 'poster' ? <PosterPicture /> : null)
@@ -952,9 +949,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                     // The strip itself, short of its panel's overhang, so what lies on it upright is pinned to its edge.
                     <div className="absolute inset-y-0 left-0" style={{ right: overhang(i) }}>
                       {/* Folded, a strip shows a picture made for its band, upright and along it, every piece of it
-                          whole and clear of the tabs over it: the contact set and the desk's things put down in a row,
-                          the poster's sign between its windows, the letter's drawings. The card's band is its own page
-                          laid again, still, and slid so its name lies in the middle of what the strip shows (FOLD_AT).
+                          whole and clear of the tabs over it: the contact set put down in a row, the poster's sign
+                          between its windows, the letter's drawings. The card's band is its own page laid again,
+                          still, and slid so its name lies in the middle of what the strip shows (FOLD_AT). The desk
+                          has no band: its page lies on its strip, folded or open, and the strip only uncovers it.
                           Open, it shows its page. Between the two, the band's pieces go to their places on the page
                           and back as the strip opens and folds (Fold), which shows one or the other once it is still. */}
                       {tones[i].roll ? (
@@ -963,13 +961,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         <div data-fold-band aria-hidden className="pointer-events-none" style={{ ...upright, height: CONTACT_BAND.deep }}>
                           <img src="/objects/contact-band.avif" alt="" draggable={false} className="absolute top-0 left-0 max-w-none select-none" style={{ width: CONTACT_BAND.long, height: CONTACT_BAND.deep }} />
                         </div>
-                      ) : tones[i].fills ? (
-                        // The desk's band plate, a few of the things on the desk put down in a row along the strip
-                        // (studio/desk/desk.py --plate band), on the mat, which runs on under the strip's torn neighbour.
-                        <div data-fold-band aria-hidden inert className="pointer-events-none" style={{ ...upright, height: DESK_BAND.mat }}>
-                          <Desk band={DESK_BAND.deep * metrics.rem} grows />
-                        </div>
-                      ) : tones[i].hangs ? (
+                      ) : tones[i].fills ? null : tones[i].hangs ? (
                         <div data-fold-band aria-hidden inert className="pointer-events-none" style={foldBand(i, FOLD_AT.badge, FOLD_TALL * foldCard)}>
                           <Badge badge={profile.badge} page={foldCard} margin={1.5 * metrics.rem} open={false} past={(metrics.height - foldCard) / 2} />
                         </div>
@@ -1007,7 +999,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         <div data-fold-page className="overflow-hidden" style={uprightOf(i)} inert={!open} aria-hidden={!open || undefined}>
                           <div className="grid min-h-full content-center" style={{ paddingBottom: marginsOf(i).foot }}>
                             {open && children}
-                            {tones[i].fills ? <Desk grows /> : <Ticket />}
+                            {tones[i].fills ? <Desk /> : <Ticket />}
                           </div>
                         </div>
                       ) : open ? (
