@@ -7,7 +7,7 @@ import type { CSSProperties } from 'react'
 
 import { resumeLetter } from '../content'
 
-const MARKS = /(==.+?==|!!.+?!!)/
+const MARKS = /(==.+?==|!!.+?!!|~~.+?~~)/
 const EMAILS = /([^\s@]+@[^\s@]+\.[^\s@.,!?]{2,})/
 
 /** A run of typed text with each email address in it linked. */
@@ -25,14 +25,31 @@ const Linked = ({ text }: { text: string }) => {
 
 /**
  * The résumé as a letter off a typewriter, after Wolfgang Weingart's 1986 letter to AIGA/Boston: my address and the
- * reader's, the day it is read, the letter itself with what matters marked over in highlighter, a signature in pen,
- * and what comes with it typed underneath.
+ * reader's, the day it is read, the letter itself with what matters marked over in highlighter and a few second
+ * thoughts struck out in x's, a signature in pen, and what comes with it typed underneath.
  */
 export const ResumeLetter = () => {
   const { sender, place, recipient, salutation, body, closing, signature, enclosures } = resumeLetter
-  const country = recipient.at(-1) ?? ''
   // Each mark is swept on in turn down the page, as if drawn after the letter was typed.
   let mark = 0
+
+  const typed = (text: string) =>
+    text.split(MARKS).map((part, j) => {
+      if (j % 2 === 0) return <Linked key={j} text={part} />
+      const inner = part.slice(2, -2)
+      // Struck out the way a typist did it: backspaced and overtyped with an x on every character.
+      if (part.startsWith('~~'))
+        return (
+          <del key={j} className="typed-strike" data-x={'x'.repeat(inner.length)}>
+            {inner}
+          </del>
+        )
+      return (
+        <mark key={j} className={part.startsWith('!!') ? 'typed-mark typed-mark-red' : 'typed-mark'} style={{ '--mark': mark++ } as CSSProperties}>
+          <Linked text={inner} />
+        </mark>
+      )
+    })
 
   return (
     <div className="typed-letter min-h-dvh px-0 py-0 sm:px-6 sm:py-10">
@@ -40,7 +57,24 @@ export const ResumeLetter = () => {
         &larr; anurag.gg
       </Link>
 
-      <article className="mx-auto max-w-[52rem] bg-white px-6 pt-8 pb-16 text-[13px] leading-[1.22] shadow-[0_1px_2px_rgb(0_0_0/0.08),0_8px_30px_rgb(0_0_0/0.06)] sm:px-[clamp(2.5rem,9vw,7rem)] sm:pt-16 sm:pb-24 sm:text-[15px]">
+      {/* Typewriter ink: letters worn ragged at the edges, struck darker or lighter one to the next, and bled a little
+          into the paper. */}
+      <svg aria-hidden="true" className="absolute size-0">
+        <filter id="typed-ink" x="-2%" y="-2%" width="104%" height="104%" colorInterpolationFilters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" result="grit" />
+          <feDisplacementMap in="SourceGraphic" in2="grit" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="worn" />
+          <feGaussianBlur in="worn" stdDeviation="0.3" result="soft" />
+          <feComponentTransfer in="soft" result="bled">
+            <feFuncA type="linear" slope="1.35" intercept="0" />
+          </feComponentTransfer>
+          <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="11" result="strike" />
+          <feColorMatrix in="strike" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 0.05" result="density" />
+          <feComposite in="bled" in2="density" operator="in" />
+        </filter>
+      </svg>
+
+      <article className="typed-sheet mx-auto max-w-[52rem] bg-[#fdfdfb] px-6 pt-8 pb-16 text-[13px] leading-[1.22] shadow-[0_1px_2px_rgb(0_0_0/0.08),0_8px_30px_rgb(0_0_0/0.06)] sm:px-[clamp(2.5rem,9vw,7rem)] sm:pt-16 sm:pb-24 sm:text-[15px]">
+        <div className="typed-ink">
         <h1 className="sr-only">Anurag Das, résumé</h1>
         <Link to="/" className="typed-link mb-6 inline-block text-[#6b6b6b] sm:hidden">
           &larr; anurag.gg
@@ -67,35 +101,26 @@ export const ResumeLetter = () => {
             <span suppressHydrationWarning>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           </p>
           <p>
-            {recipient.slice(0, -1).map((line, i) => (
-              <span key={line} className={i === 0 ? 'mb-[1.22em] block' : 'block'}>
+            {recipient.map((line, i) => (
+              <span
+                key={line}
+                className={i === 0 ? 'mb-[1.22em] block' : i === recipient.length - 1 ? 'block underline decoration-1 underline-offset-[3px]' : 'block'}
+              >
                 {line}
               </span>
             ))}
-            {/* Typed with a space between letters, the way an envelope's country often was. */}
-            <span aria-label={country} className="mt-[1.22em] block border-b border-current pb-px whitespace-pre">
-              <span aria-hidden="true">{country.split(' ').map((word) => word.split('').join(' ')).join('   ')}</span>
-            </span>
           </p>
         </div>
 
         <div className="mt-14 max-w-[64ch] sm:mt-24">
-          <p>{salutation}</p>
+          <p>{typed(salutation)}</p>
           {body.map((paragraph, i) => (
             <p key={i} className={i === 0 ? '' : 'mt-[1.22em]'}>
-              {paragraph.split(MARKS).map((part, j) => {
-                if (j % 2 === 0) return <Linked key={j} text={part} />
-                const red = part.startsWith('!!')
-                return (
-                  <mark key={j} className={red ? 'typed-mark typed-mark-red' : 'typed-mark'} style={{ '--mark': mark++ } as CSSProperties}>
-                    <Linked text={part.slice(2, -2)} />
-                  </mark>
-                )
-              })}
+              {typed(paragraph)}
             </p>
           ))}
 
-          <p className="mt-[1.22em]">{closing}</p>
+          <p className="mt-[1.22em]">{typed(closing)}</p>
           <p className="typed-signature mt-3 ml-2 -rotate-[5deg] text-[2.6em] leading-none sm:ml-6">{signature}</p>
 
           <dl className="mt-14 grid grid-cols-[auto_1fr] gap-x-[1ch] sm:mt-20">
@@ -108,6 +133,7 @@ export const ResumeLetter = () => {
               ))}
             </dd>
           </dl>
+        </div>
         </div>
       </article>
     </div>

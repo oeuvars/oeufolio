@@ -15,6 +15,30 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* The sheet's paper: a fine grain of fibre and speck, laid over the ink and the highlighter as well as the white,
+   since all three sit in the paper's tooth. */
+.typed-sheet {
+  position: relative;
+  isolation: isolate;
+}
+
+.typed-sheet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.28;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.4  0 0 0 0 0.36  0 0 0 -1.9 1.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* Worn, uneven, slightly bled type off a ribbon (the #typed-ink filter in resume-letter.tsx). Its own layer, so the
+   filter is drawn once and not on every scroll. */
+.typed-ink {
+  filter: url(#typed-ink);
+  transform: translateZ(0);
+}
+
 .typed-letter ::selection {
   background: #fde24a;
   color: inherit;
@@ -59,6 +83,18 @@
   from {
     background-size: 0% 100%;
   }
+}
+
+.typed-strike {
+  position: relative;
+  text-decoration: none;
+}
+
+.typed-strike::after {
+  content: attr(data-x);
+  position: absolute;
+  inset: 0 auto auto 0;
+  white-space: pre;
 }
 
 .typed-signature {

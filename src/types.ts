@@ -244,15 +244,16 @@ export type StackMetrics = {
 }
 
 /**
- * The résumé as a typed letter (src/components/resume-letter.tsx), every fact in it one oeusume.pdf gives. In a body
- * paragraph, ==words== are marked over in yellow and !!words!! in red, as with a highlighter pen.
+ * The résumé as a typed letter (src/components/resume-letter.tsx), every fact in it one oeusume.pdf gives. In the
+ * salutation, body and closing, ==words== are marked over in yellow and !!words!! in red, as with a highlighter pen,
+ * and ~~words~~ are struck out with x's typed over them.
  */
 export type ResumeLetter = {
   /** My name and address, top left. Its last line is underlined. */
   sender: string[]
   /** Where the letter was typed, set above the day it is read. */
   place: string
-  /** Who it goes to, top right. Its last line is spaced out and ruled, like a country on an envelope. */
+  /** Who it goes to, top right, under a line of its own that says To. Its last line is underlined. */
   recipient: string[]
   salutation: string
   body: string[]
