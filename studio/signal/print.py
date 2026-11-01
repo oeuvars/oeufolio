@@ -18,7 +18,9 @@ Each ink is screened at its own angle with a round dot that grows into a chequer
 holes in the shadows, as an offset screen does. The screens are drawn at three times the picture's size and brought
 down, so the dots' edges are soft as printed dots are and not stepped.
 
-Writes public/objects/signal.avif: the inks on white paper, which the page multiplies onto the spine's own paper.
+Writes public/objects/signal.avif: the inks on white paper, which the page multiplies onto the spine's own paper; and
+public/objects/signal-phone.avif, the same with the cats spread evenly down the whole post, for a phone, which shows
+the whole of it down its spine.
 """
 
 import argparse
@@ -69,21 +71,42 @@ CATS = [
     ("roof", 0.5, 0.97, True),
 ]
 GAP = 0.05  # between one cat and the next, as a share of the width
+# A phone shows the whole picture down the spine, so its print spreads the cats evenly down the post to this far from
+# its foot, as a share of the width.
+PHONE_FOOT = 0.6
+# How far onto the post the phone print lays each cat, past the side of it nearest the post, as a share of the width.
+SINK = 0.03
+# A phone shows the print about half as wide as a wide screen does, and the whole of its height: its screen is ruled
+# this much coarser, so its dots are as large on the screen and it still reads as print, and its sky only goes as pale
+# down the whole post as a wide screen's goes down what it shows of it.
+PHONE_PITCH, PHONE_SKY = 2.0, 0.55
 SIZE = 0.88  # all of them, so they keep their size against the signal as it is framed
 SKY_TOP = np.array([0.13, 0.38, 0.75], dtype=np.float32)
 SKY_LOW = np.array([0.58, 0.78, 0.95], dtype=np.float32)
 SHADE = np.array([-0.1, -0.02, 0.1], dtype=np.float32)  # how the sky turns a shadow, the darker the more
 
 
-def sky(h, w):
-    """The sky down the picture, a colour per row: deepest at the top, palest where the tallest screen ends."""
-    t = np.clip(np.arange(h, dtype=np.float32) / (9 * w), 0, 1)[:, None] ** 0.85
+def sky(h, w, depth=1.0):
+    """The sky down the picture, a colour per row: deepest at the top, palest where the tallest screen ends, or only
+    depth of the way there at the foot."""
+    t = np.clip(depth * np.arange(h, dtype=np.float32) / (9 * w), 0, 1)[:, None] ** 0.85
     return SKY_TOP * (1 - t) + SKY_LOW * t
 
 
-def lay_cats(signal, air):
+def cats(w):
+    """Each cat cut out, sized against a signal w wide and mirrored to face its way, with its parts as CATS has them."""
+    out = []
+    for name, tall, ground, mirror in CATS:
+        cat = Image.open(os.path.join(HERE, "art", "cats", f"{name}-cut.png"))
+        scale = SIZE * tall * w / (ground * cat.height)
+        cat = cat.resize((round(cat.width * scale), round(cat.height * scale)), Image.LANCZOS)
+        out.append((cat.transpose(Image.FLIP_LEFT_RIGHT) if mirror else cat, ground))
+    return out
+
+
+def lay_cats(signal, air, spread=False):
     """Pastes the cats down the post of the signal, an RGBA image, under the sky air, a colour per row, and returns
-    it."""
+    it: GAP apart, or spread evenly down the whole post to PHONE_FOOT from its foot."""
     w = signal.width
     alpha = np.asarray(signal.getchannel("A"), dtype=np.float32) / 255 > 0.5
     across = alpha.sum(axis=1)
@@ -96,12 +119,11 @@ def lay_cats(signal, air):
     lean = np.degrees(np.arctan(slope))
     out = signal.copy()
     y = rows[0] + 0.12 * w
-    for name, tall, ground, mirror in CATS:
-        cat = Image.open(os.path.join(HERE, "art", "cats", f"{name}-cut.png"))
-        scale = SIZE * tall * w / (ground * cat.height)
-        cat = cat.resize((round(cat.width * scale), round(cat.height * scale)), Image.LANCZOS)
-        if mirror:
-            cat = cat.transpose(Image.FLIP_LEFT_RIGHT)
+    laid = cats(w)
+    gap = GAP * w
+    if spread:
+        gap = (signal.height - PHONE_FOOT * w - y - sum(cat.width for cat, _ in laid)) / (len(laid) - 1)
+    for cat, ground in laid:
         length = cat.width
         # A quarter turn clockwise: the cat's up is the strip's right, its feet on a line down the strip.
         feet = np.array([cat.height * (1 - ground), cat.width / 2])
@@ -113,9 +135,21 @@ def lay_cats(signal, air):
         d = feet - middle
         feet = np.array([np.cos(a) * d[0] + np.sin(a) * d[1], -np.sin(a) * d[0] + np.cos(a) * d[1]]) + np.array(cat.size) / 2
         centre = y + length / 2
-        at = (round(edge(centre) - 0.05 * w - feet[0]), round(centre - feet[1]))
+        if spread:
+            # Set by where it touches: the side of it nearest the post, along its middle (a tail hung over the post
+            # at either end does not count), laid a little onto the post, so it sits on it as a cut-out laid there
+            # does, and none stands off it in the air.
+            solid = np.asarray(cat.getchannel("A")) > 128
+            along = np.nonzero(solid.any(axis=1))[0]
+            middle_rows = along[(along > along[0] + 0.15 * len(along)) & (along < along[-1] - 0.15 * len(along))]
+            nearest = np.array([np.argmax(solid[r]) for r in middle_rows if solid[r].any()])
+            feet[0] = np.percentile(nearest, 8)
+            sink = SINK * w
+        else:
+            sink = 0.05 * w
+        at = (round(edge(centre) - sink - feet[0]), round(centre - feet[1]))
         out.alpha_composite(daylight(cat, air[np.clip(at[1] + np.arange(cat.height), 0, len(air) - 1)]), dest=(max(at[0], 0), at[1]), source=(max(-at[0], 0), 0))
-        y += length + GAP * w
+        y += length + gap
         if y > signal.height:
             break
     return out
@@ -133,13 +167,13 @@ def daylight(cat, behind):
     return Image.fromarray((np.dstack([rgb, a]) * 255).astype(np.uint8), "RGBA")
 
 
-def screen(cover, angle, offset, rng):
+def screen(cover, angle, offset, rng, pitch=PITCH):
     h, w = cover.shape
     ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
     xs, ys = xs / UP - offset[0], ys / UP - offset[1]
     a = np.radians(angle)
-    u = (xs * np.cos(a) + ys * np.sin(a)) * 2 * np.pi / PITCH
-    v = (-xs * np.sin(a) + ys * np.cos(a)) * 2 * np.pi / PITCH
+    u = (xs * np.cos(a) + ys * np.sin(a)) * 2 * np.pi / pitch
+    v = (-xs * np.sin(a) + ys * np.cos(a)) * 2 * np.pi / pitch
     spot = (np.cos(u) + np.cos(v)) / 2  # 1 in the middle of a dot, -1 between them
     # The ink creeps along the paper's fibres, so a dot's edge wanders.
     fibre = ndimage.gaussian_filter(rng.standard_normal((h, w)).astype(np.float32), UP * 0.7)
@@ -156,8 +190,13 @@ def main():
     args = parser.parse_args()
 
     signal = Image.open(args.source).convert("RGBA")
-    air = sky(signal.height, signal.width)
-    image = np.asarray(lay_cats(signal, air), dtype=np.float32) / 255
+    for name, spread in (("signal", False), ("signal-phone", True)):
+        air = sky(signal.height, signal.width, PHONE_SKY if spread else 1.0)
+        printed(signal, air, spread, name, args.proof)
+
+
+def printed(signal, air, spread, name, proof):
+    image = np.asarray(lay_cats(signal, air, spread), dtype=np.float32) / 255
     alpha = image[..., 3:]
     rgb = image[..., :3] * alpha + air[:, None, :] * (1 - alpha)
     # A press gains contrast and pushes colour: the dark paint goes deep and the lamps stay bright.
@@ -169,20 +208,20 @@ def main():
 
     rng = np.random.default_rng(7)
     paper = np.ones_like(big)
-    for name, cover in separate(big).items():
-        through, angle, offset = INKS[name]
-        dots = screen(cover, angle, offset, rng)
+    for ink, cover in separate(big).items():
+        through, angle, offset = INKS[ink]
+        dots = screen(cover, angle, offset, rng, PITCH * PHONE_PITCH if spread else PITCH)
         paper *= 1 - dots[..., None] * (1 - np.array(through, dtype=np.float32))
     printed = np.asarray(Image.fromarray((np.clip(paper, 0, 1) * 255).astype(np.uint8)).resize((w, h), Image.LANCZOS), dtype=np.float32) / 255
 
     out = Image.fromarray((printed * 255).astype(np.uint8), "RGB")
     # The spine shows it about 250 pixels wide on a dense screen. Sent any larger, the screened sky only weighs more.
     out = out.resize((SENT, round(out.height * SENT / out.width)), Image.LANCZOS)
-    if args.proof:
-        os.makedirs(args.proof, exist_ok=True)
-        out.save(os.path.join(args.proof, "signal-print.png"))
+    if proof:
+        os.makedirs(proof, exist_ok=True)
+        out.save(os.path.join(proof, f"{name}-print.png"))
         return
-    out.save(os.path.join(ROOT, "public", "objects", "signal.avif"), quality=62, subsampling="4:4:4", speed=4)
+    out.save(os.path.join(ROOT, "public", "objects", f"{name}.avif"), quality=62, subsampling="4:4:4", speed=4)
 
 
 main()

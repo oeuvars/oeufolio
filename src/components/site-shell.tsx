@@ -868,7 +868,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
               lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down
               past the foot of the strip, so a short window cuts it there. */}
           <Link to="/" aria-label={profile.handle} className="torn">
-            <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
+            {/* A phone shows the whole post down its spine, so its print spreads the cats evenly down it, and it is cut
+                from the left, where the post leans to at its foot, not the right, where there is only sky past the cats. */}
+            <img alt="" src={mobile ? '/objects/signal-phone.avif' : '/objects/signal.avif'} draggable={false} className={`size-full object-cover mix-blend-multiply ${mobile ? 'object-left-top' : 'object-top'}`} />
           </Link>
           <div aria-hidden className="pointer-events-none absolute inset-y-0" style={SPINE_CAST} />
         </aside>
