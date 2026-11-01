@@ -258,7 +258,8 @@ export type ResumeLetter = {
   salutation: string
   body: string[]
   closing: string
-  signature: string
+  /** My signature in pen, lifted off a photograph of it (studio/resume/signature.py). */
+  signature: { src: string; alt: string; size: [number, number] }
   /** What goes with the letter, typed under the signature as an enclosures line. */
   enclosures: { label: string; href: string }[]
 }

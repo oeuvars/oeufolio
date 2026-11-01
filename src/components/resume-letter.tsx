@@ -1,6 +1,5 @@
 import '@fontsource/courier-prime/400.css'
 import '@fontsource/courier-prime/700.css'
-import '@fontsource/nothing-you-could-do/400.css'
 
 import { Link } from '@tanstack/react-router'
 import type { CSSProperties } from 'react'
@@ -26,7 +25,7 @@ const Linked = ({ text }: { text: string }) => {
 /**
  * The résumé as a letter off a typewriter, after Wolfgang Weingart's 1986 letter to AIGA/Boston: my address and the
  * reader's, the day it is read, the letter itself with what matters marked over in highlighter and a few second
- * thoughts struck out in x's, a signature in pen, and what comes with it typed underneath.
+ * thoughts struck out in x's, my signature in pen, and what comes with it typed underneath.
  */
 export const ResumeLetter = () => {
   const { sender, place, recipient, salutation, body, closing, signature, enclosures } = resumeLetter
@@ -62,13 +61,13 @@ export const ResumeLetter = () => {
       <svg aria-hidden="true" className="absolute size-0">
         <filter id="typed-ink" x="-2%" y="-2%" width="104%" height="104%" colorInterpolationFilters="sRGB">
           <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" result="grit" />
-          <feDisplacementMap in="SourceGraphic" in2="grit" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="worn" />
-          <feGaussianBlur in="worn" stdDeviation="0.3" result="soft" />
+          <feDisplacementMap in="SourceGraphic" in2="grit" scale="0.6" xChannelSelector="R" yChannelSelector="G" result="worn" />
+          <feGaussianBlur in="worn" stdDeviation="0.2" result="soft" />
           <feComponentTransfer in="soft" result="bled">
-            <feFuncA type="linear" slope="1.35" intercept="0" />
+            <feFuncA type="linear" slope="1.6" intercept="0" />
           </feComponentTransfer>
           <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="11" result="strike" />
-          <feColorMatrix in="strike" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 0.05" result="density" />
+          <feColorMatrix in="strike" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.9 0 0 0 0.5" result="density" />
           <feComposite in="bled" in2="density" operator="in" />
         </filter>
       </svg>
@@ -121,9 +120,20 @@ export const ResumeLetter = () => {
           ))}
 
           <p className="mt-[1.22em]">{typed(closing)}</p>
-          <p className="typed-signature mt-3 ml-2 -rotate-[5deg] text-[2.6em] leading-none sm:ml-6">{signature}</p>
+        </div>
+        </div>
 
-          <dl className="mt-14 grid grid-cols-[auto_1fr] gap-x-[1ch] sm:mt-20">
+        {/* Signed in pen, so out of the typewriter's ink. */}
+        <img
+          src={signature.src}
+          alt={signature.alt}
+          width={signature.size[0]}
+          height={signature.size[1]}
+          className="mt-3 ml-1 block h-auto w-[13em] -rotate-2 sm:ml-4"
+        />
+
+        <div className="typed-ink">
+          <dl className="mt-10 grid grid-cols-[auto_1fr] gap-x-[1ch] sm:mt-16">
             <dt>Encl.:</dt>
             <dd>
               {enclosures.map((item) => (
@@ -133,7 +143,6 @@ export const ResumeLetter = () => {
               ))}
             </dd>
           </dl>
-        </div>
         </div>
       </article>
     </div>

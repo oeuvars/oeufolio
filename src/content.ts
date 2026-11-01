@@ -178,7 +178,7 @@ export const resumeLetter: ResumeLetter = {
     "I'm not sure how to end this. Do you have a ==role in mind?== Write to me at sudo@anurag.gg. I'd ==move cities== for the right one.",
   ],
   closing: 'Yours ~~faithfully~~ hopefully,',
-  signature: 'Anurag',
+  signature: { src: '/objects/resume/signature.webp', alt: 'Anurag Das', size: [719, 382] },
   enclosures: [
     { label: 'Résumé, PDF', href: '/resume.pdf' },
     { label: 'github.com/oeuvars', href: 'https://github.com/oeuvars' },
