@@ -21,9 +21,13 @@ const fallback: StackMetrics = {
 const measure = (): StackMetrics => {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const mobile = window.innerWidth < 768
-  // On a phone the stack is turned on its side (SiteShell), so it runs the window's height and is as deep as the window is wide.
+  // On a phone the spine stands down the window's left edge, as on a wide screen, as wide as lets its post fill the
+  // window's height with its cats whole beside it.
+  const spine = mobile ? 4 * rem : clamp(6.5 * rem, 0.17 * window.innerHeight, 10 * rem)
+  // On a phone the stack is turned on its side (SiteShell), so it runs the window's height, and it is as deep as the
+  // window is wide past the spine, under whose torn edge it runs a rem.
   const width = mobile ? window.innerHeight : window.innerWidth
-  const height = mobile ? window.innerWidth : window.innerHeight
+  const height = mobile ? window.innerWidth - spine + rem : window.innerHeight
 
   return {
     width,
@@ -34,8 +38,7 @@ const measure = (): StackMetrics => {
     band: (mobile ? 0.98 : 1.9) * rem,
     protrude: (mobile ? 1.05 : 2.1) * rem,
     strip: mobile ? 5.4 * rem : clamp(8 * rem, 0.12 * width, 13 * rem),
-    // On a phone the spine lies across the window's foot, shallow enough that the whole post and its cats show.
-    spine: mobile ? 3 * rem : clamp(6.5 * rem, 0.17 * height, 10 * rem),
+    spine,
     contact: clamp(7 * rem, 0.09 * width, 10 * rem),
     end: 3.2 * rem,
   }

@@ -229,7 +229,7 @@ export type PageId = 'basics' | 'letter' | 'work' | 'desk' | 'contact' | 'resume
 export type StackMetrics = {
   /** How long the stack runs, from its first strip to past its last: the window's width, or its height on a phone, where the stack is turned on its side. */
   width: number
-  /** How deep the stack is, down every strip: the window's height, or its width on a phone. */
+  /** How deep the stack is, down every strip: the window's height, or on a phone its width past the spine. */
   height: number
   rem: number
   mobile: boolean
@@ -237,34 +237,29 @@ export type StackMetrics = {
   band: number
   protrude: number
   strip: number
+  /** How wide the spine is: it stands down the window's left edge on a phone too, out of the turned stack. */
   spine: number
   contact: number
   end: number
 }
 
-/** Who sent a message in the résumé's conversation: me, or the reader, whose side asks the questions. */
-export type ChatSide = 'me' | 'you'
-
 /**
- * One message in the résumé's conversation (src/components/chat.tsx): a line of text, a photograph, a link with its
- * preview card, or a file sent as an attachment.
+ * The résumé as a typed letter (src/components/resume-letter.tsx), every fact in it one oeusume.pdf gives. In a body
+ * paragraph, ==words== are marked over in yellow and !!words!! in red, as with a highlighter pen.
  */
-export type ChatMessage =
-  | { side: ChatSide; kind: 'text'; text: string }
-  | { side: ChatSide; kind: 'photo'; src: string; alt: string; size: [number, number] }
-  | { side: ChatSide; kind: 'link'; href: string; title: string; icon: string }
-  | { side: ChatSide; kind: 'file'; href: string; name: string; detail: string }
-
-/**
- * The résumé as a conversation: the scripted thread, and for what the reader types, the subject of the Gmail draft
- * it opens, what I say back, and the composer's placeholder.
- */
-export type Chat = {
-  contact: { name: string; avatar: string }
-  thread: ChatMessage[]
-  subject: string
-  reply: string
-  placeholder: string
+export type ResumeLetter = {
+  /** My name and address, top left. Its last line is underlined. */
+  sender: string[]
+  /** Where the letter was typed, set above the day it is read. */
+  place: string
+  /** Who it goes to, top right. Its last line is spaced out and ruled, like a country on an envelope. */
+  recipient: string[]
+  salutation: string
+  body: string[]
+  closing: string
+  signature: string
+  /** What goes with the letter, typed under the signature as an enclosures line. */
+  enclosures: { label: string; href: string }[]
 }
 
 /** Which folded phone strip's band grows into its page and back (src/components/fold.tsx), and how. */

@@ -24,7 +24,7 @@ const { size: REFERENCE, marks: MARKS } = posterMarks as PosterMarks
 // The page the poster lies on, and the poster as the page lays it.
 const FRAME = 'absolute inset-0 overflow-hidden mix-blend-screen [container-type:size] max-md:top-(--page-top) max-md:bottom-(--page-foot)'
 const SHEET =
-  'absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,#000_10%,#000_90%,transparent),linear-gradient(to_right,transparent,#000_10%,#000_90%,transparent)] [mask-composite:intersect] max-md:w-[min(calc((100cqw_-_1rem)*2208/1628),calc((100cqh_-_1rem)*2208/2191))] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]'
+  'absolute top-1/2 left-1/2 w-full origin-top-left -translate-x-1/2 -translate-y-1/2 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.12)_4%,rgb(0_0_0/0.45)_8%,#000_12.5%,#000_87%,rgb(0_0_0/0.45)_91.5%,rgb(0_0_0/0.12)_95.5%,transparent),linear-gradient(to_right,transparent,rgb(0_0_0/0.12)_4%,rgb(0_0_0/0.45)_8.5%,#000_13%,#000_87%,rgb(0_0_0/0.45)_91.5%,rgb(0_0_0/0.12)_96%,transparent)] [mask-composite:intersect] max-md:w-[min(calc((100cqw_-_1rem)*2208/1628),calc((100cqh_-_1rem)*2208/2191))] md:w-[max(100cqw,calc(100cqh*2208/2943))] md:[mask-image:none]'
 
 export const Poster = () => {
   const sheet = useRef<HTMLDivElement>(null)
@@ -52,7 +52,8 @@ export const Poster = () => {
       {/* The poster as the page lays it, centred: covering the strip on a wide screen, and on a phone as large as
           keeps its lit windows and passages on the page, half a rem in from its sides, top and foot. They lie between
           px 284 and 1912 across and 368 and 2559 down, and round them it is dark. The dark is a little lighter than the
-          paper, so on a phone it fades out to every side short of them, and no edge of the sheet shows. */}
+          paper, so on a phone it fades out to every side over the whole of that dark, from the windows out, and no edge
+          of the sheet shows. */}
       <div
         ref={sheet}
         className={SHEET}

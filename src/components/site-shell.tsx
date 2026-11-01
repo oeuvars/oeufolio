@@ -669,7 +669,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
     return [from, from + shape.height + 2 * reach]
   })()
   const resumeScale = Math.min(RESUME_LARGEST, (metrics.height - lastTab[1]) / metrics.rem / RESUME_ROW)
-  const fixed = mobile ? spine + end * resumeScale : spine + end
+  // On a phone the spine stands beside the turned stack, not in it, so the stack runs from the window's foot.
+  const head = mobile ? 0 : spine
+  const fixed = mobile ? end * resumeScale : spine + end
   const gaps = mobile ? count : count + 1
   // A strip whose page is a picture is folded a fifth as wide again, to give its own picture room. The ticket's
   // strip shows only its roll, so it folds narrower than the rest. On a phone every strip folds to one band, as
@@ -714,8 +716,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   }
   // A page upright on its turned strip: as wide as the window and as tall as the strip is open, its top at the strip's
   // edge, so the strip opening uncovers it downward and folding covers it again from below, and nothing on it moves.
-  // A phone page is never scrolled: it is laid to fit between its margins, the room it is given (--page-room).
-  const upright: CSSProperties = { position: 'absolute', top: 0, left: '100%', width: metrics.height, transformOrigin: '0 0', transform: 'rotate(90deg)' }
+  // A phone page is never scrolled: it is laid to fit between its margins, the room it is given (--page-room). It
+  // starts past the rem of the stack that runs under the spine's torn edge, so nothing on it lies under the spine.
+  const upright: CSSProperties = { position: 'absolute', top: overlap, left: '100%', width: metrics.height - overlap, transformOrigin: '0 0', transform: 'rotate(90deg)' }
   // The foot of an open page that the strip before lies over, its edge and its tab, kept clear.
   const under = (i: number) => (i > 0 ? overlap + protrude : overlap)
   // A page's margins on a phone: clear of its own edge's tear at its top, and of the strip before at its foot. The desk
@@ -756,7 +759,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   })
 
   const lefts: number[] = []
-  let cursor = spine - overlap
+  let cursor = head - overlap
   for (let i = 0; i < count; i++) {
     lefts.push(cursor)
     cursor += (i === index ? openWidth : folded(i)) - overlap
@@ -770,7 +773,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
   const stackWith = (k: number) => {
     const sizes = profile.nav.map((_, i) => (i === k ? roomFor(k) : folds(i)))
     const at: number[] = []
-    sizes.reduce((left, size) => (at.push(left), left + size - overlap), spine - overlap)
+    sizes.reduce((left, size) => (at.push(left), left + size - overlap), head - overlap)
     return { lefts: at, widths: sizes }
   }
   const navigate = useNavigate()
@@ -854,25 +857,27 @@ export const SiteShell = ({ children }: SiteShellProps) => {
         className="fixed inset-0 overflow-hidden bg-[#1f1e1b]"
         style={{ '--band-w': `${band}px`, '--protrude': `${protrude}px` } as CSSProperties}
       >
-        {/* On a phone the stack, turned on its side: its start at the window's foot, its depth across the window. */}
-        <div
-          className={mobile ? 'absolute top-0 left-0 origin-top-left' : 'contents'}
-          style={mobile ? { width: metrics.width, height: metrics.height, transform: `translateY(${metrics.width}px) rotate(-90deg)` } : undefined}
+        {/* The spine, first in the stack and in front of it, standing down the window's left edge: on a phone too,
+            where it stands beside the turned stack, so the stack's pages take the window's width past it. */}
+        <aside
+          className="strip"
+          style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7, [], 'torn'), filter: 'none' }}
         >
-          {/* The spine, first in the stack and in front of it: on a phone, along the window's foot. */}
-          <aside
-            className="strip"
-            style={{ ...stripStyle(spineTone, 0, stack + 1, { left: 0, width: spine }), ...torn(7, [], 'torn'), filter: 'none' }}
-          >
-            <div aria-hidden className="torn" style={grained()} />
-            {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
-                lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down
-                past the foot of the strip, so a short window cuts it there. */}
-            <Link to="/" aria-label={profile.handle} className="torn">
-              <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
-            </Link>
-            <div aria-hidden className="pointer-events-none absolute inset-y-0" style={SPINE_CAST} />
-          </aside>
+          <div aria-hidden className="torn" style={grained()} />
+          {/* A traffic signal printed in four colours, a rose, a sunflower with an eye and a lily pad for its
+              lamps (studio/signal). It runs out to the tear, which cuts it as it cuts the paper, and its post runs on down
+              past the foot of the strip, so a short window cuts it there. */}
+          <Link to="/" aria-label={profile.handle} className="torn">
+            <img alt="" src="/objects/signal.avif" draggable={false} className="size-full object-cover object-top mix-blend-multiply" />
+          </Link>
+          <div aria-hidden className="pointer-events-none absolute inset-y-0" style={SPINE_CAST} />
+        </aside>
+        {/* On a phone the stack, turned on its side: its start at the window's foot, its depth across the window past
+            the spine, under whose torn edge it runs. */}
+        <div
+          className={mobile ? 'absolute top-0 origin-top-left' : 'contents'}
+          style={mobile ? { left: spine - overlap, width: metrics.width, height: metrics.height, transform: `translateY(${metrics.width}px) rotate(-90deg)` } : undefined}
+        >
           {/* The desk past the last folder, with the résumé on it, turned with the stack, so it lies across the top. */}
           {mobile && (
             <div
