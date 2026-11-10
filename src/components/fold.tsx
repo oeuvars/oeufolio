@@ -1,3 +1,4 @@
+import type { MotionValue } from 'motion/react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useLayoutEffect, useRef } from 'react'
 
@@ -19,6 +20,8 @@ type FoldProps = {
   /** How wide the strip is folded and open, in px: how far it is open is read off how wide it is. */
   folded: number
   opened: number
+  /** How wide the strip shows now, as its spring or a finger moves it (SiteShell's Strip). */
+  width: MotionValue<number>
   /** Where the page lies on the strip, upright (SiteShell's uprightOf). */
   style: CSSProperties
   /** The page's picture, laid as the page lays it, to fade in: the letter's and the poster's, whose pages are only
@@ -32,7 +35,7 @@ type FoldProps = {
  * the same way. The card's band is its own page laid smaller, so the page itself goes there and back. The letter and
  * the poster only fade from their band to their page (FADE).
  */
-export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps) => {
+export const Fold = ({ kind, open, folded, opened, width, style, children }: FoldProps) => {
   const layer = useRef<HTMLDivElement>(null)
   // The poster's picture is light, screened over the paper.
   const light = kind === 'poster'
@@ -62,7 +65,7 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
     }
 
     const apply = () => {
-      const p = Math.min(1, Math.max(0, (strip.offsetWidth - folded) / (opened - folded)))
+      const p = Math.min(1, Math.max(0, (width.get() - folded) / (opened - folded)))
       const band = strip.querySelector<HTMLElement>('[data-fold-band]')
       const page = strip.querySelector<HTMLElement>('[data-fold-page]')
       const state = p <= 0.001 && !open ? 'band' : p >= 0.999 && open ? 'page' : 'moving'
@@ -101,10 +104,8 @@ export const Fold = ({ kind, open, folded, opened, style, children }: FoldProps)
     }
 
     apply()
-    const watching = new ResizeObserver(apply)
-    watching.observe(strip)
-    return () => watching.disconnect()
-  }, [kind, open, folded, opened])
+    return width.on('change', apply)
+  }, [kind, open, folded, opened, width])
 
   return (
     <div ref={layer} aria-hidden inert className={`pointer-events-none invisible z-2 overflow-hidden ${light ? 'mix-blend-screen' : ''}`} style={style}>

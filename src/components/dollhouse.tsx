@@ -1,6 +1,7 @@
 import { animate, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef } from 'react'
 
+import { stripRect } from '../lib/utils'
 import type { Role } from '../types'
 import { PAGE, RAISE, STRIP, slide } from './house'
 
@@ -37,7 +38,7 @@ export const Dollhouse = ({ roles }: DollhouseProps) => {
 
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
     // The strip is still folded when the page first lays out. Its picture starts a rem in, under the strip before it.
-    const folded = strip.getBoundingClientRect().width
+    const folded = stripRect(strip).width
     if (folded > page.offsetWidth / 2) return
 
     const metre = (folded - rem) / STRIP

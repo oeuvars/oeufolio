@@ -1,6 +1,7 @@
 import { animate, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef } from 'react'
 
+import { stripRect } from '../lib/utils'
 import { PAGE, RAISE, STRIP, slide } from './house'
 
 type StripHouseProps = {
@@ -29,10 +30,11 @@ export const StripHouse = ({ open, turned }: StripHouseProps) => {
     if (!folding || !image || !strip || still || turned) return
 
     // The strip is still unfolded when this lays out, and the page's picture was sized off it (Dollhouse).
-    const unfolded = strip.getBoundingClientRect().width
+    const box = stripRect(strip)
+    const unfolded = box.width
     const metre = image.offsetWidth / STRIP
     const large = Math.min(1.87 * unfolded, 1.5 * window.innerHeight) / PAGE
-    const across = unfolded / 2 - (image.offsetLeft + image.offsetParent!.getBoundingClientRect().left - strip.getBoundingClientRect().left + image.offsetWidth / 2)
+    const across = unfolded / 2 - (image.offsetLeft + image.offsetParent!.getBoundingClientRect().left - box.left + image.offsetWidth / 2)
     const shrinking = animate(image, { scale: [large / metre, 1], x: [across, 0], y: [RAISE * large, 0] }, slide)
 
     return () => shrinking.stop()

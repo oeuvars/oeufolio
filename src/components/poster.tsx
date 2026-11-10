@@ -1,6 +1,7 @@
 import { animate, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef } from 'react'
 
+import { stripRect } from '../lib/utils'
 import type { PosterMarks } from '../types'
 import { POSTER } from './house'
 import posterMarks from './poster.json'
@@ -37,7 +38,7 @@ export const Poster = () => {
     const strip = page?.closest<HTMLElement>('.strip')
     if (!page || !full || !strip) return
     // The strip is still folded when the page first lays out if it is opening: narrower than the page.
-    const opening = strip.getBoundingClientRect().width < page.parentElement!.getBoundingClientRect().width - 40
+    const opening = stripRect(strip).width < page.parentElement!.getBoundingClientRect().width - 40
     if (still || opening || window.innerWidth < 768) {
       full.style.opacity = '1'
       return

@@ -1,7 +1,8 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { MotionConfig, motion, useReducedMotion } from 'motion/react'
-import type { CSSProperties, HTMLAttributes } from 'react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { MotionConfig, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import type { HTMLMotionProps, MotionValue } from 'motion/react'
+import type { CSSProperties, HTMLAttributes, ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 
 import { profile } from '../content'
 import type { FoldKind, NavItem, VersionSearch } from '../types'
@@ -454,6 +455,60 @@ const Tab = ({ label, shape, to, search, current, src, footless, leather, surfac
   )
 }
 
+type StripProps = Omit<HTMLMotionProps<'section'>, 'children' | 'style'> & {
+  /** Where the strip's left edge is going and how wide it is going to show, in px. */
+  left: number
+  width: number
+  /** How wide the strip is laid: as wide as it ever opens, so sliding it never lays it out again. */
+  span: number
+  transition: typeof slide | typeof instant
+  style: CSSProperties
+  /** What lies on the strip, given how wide it shows now and how far to slide what is laid from its left to keep it
+   * there as the strip slides. */
+  children: (width: MotionValue<number>, shift: MotionValue<number>) => ReactNode
+}
+
+/** A length on the screen to the nearest device pixel, so a layer slid by it lies on the pixel grid and its type stays sharp. */
+const snap = (length: number) => {
+  const ratio = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1
+  return Math.round(length * ratio) / ratio
+}
+
+/**
+ * One strip in the stack. It is laid once, as wide as it ever opens, and only slid, so its edge lies where a strip as
+ * wide as it shows would have its edge: what runs on past its left lies under the strips before it, which are in
+ * front. Sliding moves it whole on the compositor, with nothing on it laid out or painted again on any frame. What is
+ * laid from the strip's left is slid back the other way (shift), so it lies where it did on a strip that wide. The part
+ * that shows is kept as a box of its own ([data-strip-box], stripRect), for whatever measures the strip.
+ */
+const Strip = ({ left, width, span, transition, style, className, children, ...rest }: StripProps) => {
+  const from = useMotionValue(left)
+  const shows = useMotionValue(width)
+  // Its width is snapped too: on a phone the stack is turned, and the strip's far edge is where its layer starts.
+  const laid = useMotionValue(snap(span))
+  useLayoutEffect(() => laid.set(snap(span)), [laid, span])
+  useEffect(() => {
+    if (transition === instant) {
+      from.set(left)
+      shows.set(width)
+      return
+    }
+    const moves = [animate(from, left, transition), animate(shows, width, transition)]
+    return () => moves.forEach((move) => move.stop())
+  }, [from, shows, left, width, transition])
+  const x = useTransform([from, shows, laid], ([l, w, s]: number[]) => snap(l + w - s))
+  // What is laid from the left lies at the strip's left edge, snapped as the strip is, so the two never part by a pixel.
+  const shift = useTransform([from, x], ([l, at]: number[]) => snap(l) - at)
+  const scaleX = useTransform([shows, laid], ([w, s]: number[]) => w / s)
+
+  return (
+    <motion.section {...rest} className={`${className ?? ''} will-change-transform`} style={{ ...style, left: 0, width: laid, x }}>
+      <motion.div aria-hidden data-strip-box className="pointer-events-none invisible absolute inset-y-0 left-0" style={{ width: laid, scaleX, originX: 1 }} />
+      {children(shows, shift)}
+    </motion.section>
+  )
+}
+
 type SiteShellProps = {
   children: React.ReactNode
 }
@@ -897,16 +952,25 @@ export const SiteShell = ({ children }: SiteShellProps) => {
           {profile.nav.map((item, i) => {
             const open = i === index
 
+            // A sheet whose material is laid from the strip's left lays it under what is laid from there, in the layer slid
+            // back as the strip slides, not on the panel, so the two go together as they did.
+            const panelStyle = sheets(tones[i]) ? sheet(i, tones[i]) : undefined
+            const { backgroundImage, backgroundSize, backgroundBlendMode, backgroundPosition, ...framed } = panelStyle ?? {}
+            const material = panelStyle && !pinnedToEdge(tones[i]) ? { backgroundImage, backgroundSize, backgroundBlendMode, backgroundPosition } : null
+
             return (
-              <motion.section
+              <Strip
                 key={item.to}
                 data-strip={i}
                 className={`strip ${reachesOver(i) ? 'strip-reaches' : ''}`}
-                initial={false}
-                animate={pulled ? { left: lerp(lefts[i], pulled.lefts[i]), width: lerp(widths[i], pulled.widths[i]) } : { left: lefts[i], width: widths[i] }}
+                left={pulled ? lerp(lefts[i], pulled.lefts[i]) : lefts[i]}
+                width={pulled ? lerp(widths[i], pulled.widths[i]) : widths[i]}
+                span={Math.max(roomFor(i), widths[i])}
                 transition={pulled ? instant : transition}
                 style={{ ...stripStyle(tones[i], i + 1, stack - i, {}, tops), ...tears[i] }}
               >
+                {(width, shift) => (
+                <>
                 {/* A page that hangs covers its whole strip, so the strip has no paper of its own to show at the tear. */}
                 {!hangs(tones[i]) && <div aria-hidden className="torn" />}
                 {tones[i].cast && (
@@ -936,7 +1000,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 )}
                 <div
                   className={`panel scroll-quiet overflow-x-hidden ${mobile ? 'overflow-y-hidden' : 'overflow-y-auto'} ${hangs(tones[i]) ? 'panel-hangs' : ''}`}
-                  style={sheets(tones[i]) ? sheet(i, tones[i]) : undefined}
+                  style={material ? framed : panelStyle}
                 >
                   {tones[i].surface && (
                     <div
@@ -978,7 +1042,8 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         // the strip before and its tab and the band the strip's own tab stands on.
                         <motion.div
                           aria-hidden
-                          style={{ position: 'absolute', top: 0, bottom: 0, left: under(i), width: strip - band - under(i) }}
+                          className="will-change-transform"
+                          style={{ position: 'absolute', top: 0, bottom: 0, left: under(i), width: strip - band - under(i), x: shift }}
                           initial={false}
                           animate={{ opacity: open ? 0 : 1 }}
                           transition={{ duration: open ? 0.35 : 0 }}
@@ -1008,7 +1073,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                         </div>
                       ) : null}
                       {foldOf(i) && (
-                        <Fold kind={foldOf(i)!} open={open} folded={folds(i)} opened={roomFor(i)} style={uprightOf(i)}>
+                        <Fold kind={foldOf(i)!} open={open} folded={folds(i)} opened={roomFor(i)} width={width} style={uprightOf(i)}>
                           {pictureOf(i) && (
                             <div className={PAGE} style={turnedPage(i)}>
                               <div className="grid flex-1 content-center">{pictureOf(i)}</div>
@@ -1019,33 +1084,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                     </div>
                   ) : (
                     <>
-                      {tones[i].hangs ? (
-                        <Badge badge={profile.badge} page={openWidthOf(i)} margin={band + protrude} open={open} past={protrude} />
-                      ) : tones[i].fills || tones[i].roll ? null : foldOf(i) ? (
-                        // A picture runs on under the strip before it as far as that strip's tear can bite, and out to its
-                        // panel's edge past its own tear's reach, as the open page does, so no tear uncovers bare panel.
-                        <div
-                          data-fold-band
-                          aria-hidden
-                          className="absolute inset-y-0"
-                          style={tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) } : { left: overlap, width: folded(i) - band - overlap }}
-                        >
-                          <Art index={i} open={open} poster={workPoster} />
-                        </div>
-                      ) : (
-                        <motion.div
-                          aria-hidden
-                          className="absolute inset-y-0"
-                          style={{ left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) }}
-                          initial={false}
-                          animate={{ opacity: open ? 0 : 1 }}
-                          // The building folds back into its strip's picture, which has to be there at once to take over.
-                          transition={{ duration: open ? 0.35 : 0 }}
-                        >
-                          <Art index={i} open={open} poster={workPoster} />
-                        </motion.div>
-                      )}
-
+                      {tones[i].hangs && <Badge badge={profile.badge} page={openWidthOf(i)} margin={band + protrude} open={open} past={protrude} />}
                       {tones[i].fills || tones[i].roll ? (
                         // The desk and the ticket are always here, open or folded, laid at the page's open width and pinned
                         // to the strip's edge: folded, the strip shows the edge of them beside the tab, and opening it only
@@ -1056,25 +1095,58 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                             {tones[i].fills ? <Desk /> : <Ticket />}
                           </div>
                         </div>
-                      ) : open ? (
-                        <div data-fold-page className={PAGE} style={page(i)}>
-                          <div className="grid flex-1 content-center py-[4vh]">{children}</div>
-                        </div>
-                      ) : null}
-                      {foldOf(i) && (
-                        <Fold
-                          kind={foldOf(i)!}
-                          open={open}
-                          folded={open ? folds(i) : folded(i)}
-                          opened={openWidthOf(i)}
-                          style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: page(i).width }}
-                        >
-                          {pictureOf(i) && (
-                            <div className={PAGE} style={page(i)}>
-                              <div className="grid flex-1 content-center py-[4vh]">{pictureOf(i)}</div>
+                      ) : (
+                        // What is laid from the strip's left, with the material under it, is one layer slid back the other
+                        // way as the strip slides (Strip), so it lies where it did. The material is in it, not on the panel,
+                        // so the poster's light, screened over the paper, still has the paper under it to screen.
+                        <motion.div className="absolute inset-y-0 left-0 w-full will-change-transform" style={{ x: shift }}>
+                          {material && <div aria-hidden className="pointer-events-none absolute inset-0" style={{ ...material, backgroundColor: 'var(--panel)' }} />}
+                          {tones[i].hangs ? null : foldOf(i) ? (
+                            // A picture runs on under the strip before it as far as that strip's tear can bite, and out to its
+                            // panel's edge past its own tear's reach, as the open page does, so no tear uncovers bare panel.
+                            <div
+                              data-fold-band
+                              aria-hidden
+                              className="absolute inset-y-0"
+                              style={tones[i].bleeds ? { left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) } : { left: overlap, width: folded(i) - band - overlap }}
+                            >
+                              <Art index={i} open={open} poster={workPoster} />
+                            </div>
+                          ) : (
+                            <motion.div
+                              aria-hidden
+                              className="absolute inset-y-0"
+                              style={{ left: overlap - TEAR_WIDTH, width: folded(i) - overlap + TEAR_WIDTH + (reachesOver(i) ? TEAR_WIDTH : 0) }}
+                              initial={false}
+                              animate={{ opacity: open ? 0 : 1 }}
+                              // The building folds back into its strip's picture, which has to be there at once to take over.
+                              transition={{ duration: open ? 0.35 : 0 }}
+                            >
+                              <Art index={i} open={open} poster={workPoster} />
+                            </motion.div>
+                          )}
+                          {open && (
+                            <div data-fold-page className={PAGE} style={page(i)}>
+                              <div className="grid flex-1 content-center py-[4vh]">{children}</div>
                             </div>
                           )}
-                        </Fold>
+                          {foldOf(i) && (
+                            <Fold
+                              kind={foldOf(i)!}
+                              open={open}
+                              folded={open ? folds(i) : folded(i)}
+                              opened={openWidthOf(i)}
+                              width={width}
+                              style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: page(i).width }}
+                            >
+                              {pictureOf(i) && (
+                                <div className={PAGE} style={page(i)}>
+                                  <div className="grid flex-1 content-center py-[4vh]">{pictureOf(i)}</div>
+                                </div>
+                              )}
+                            </Fold>
+                          )}
+                        </motion.div>
                       )}
                     </>
                   )}
@@ -1096,7 +1168,9 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                     a layer of its own with nothing under it to brighten. */}
                 {pageTones[i].surface && hideLight(i)}
                 <Tab label={item.label} shape={tabShape(i + 1)} to={item.to} search={searchOf(item.to)} current={open} src={(mobile && tones[i].turnedTab) || tones[i].tab} footless={hangs(tones[i])} leather={tones[i].fills} surface={tones[i].surface} paper={sheets(tones[i])} cut={tones[i].deckled || tones[i].frayed ? undefined : tabCut(i + 1, stuffOf(tones[i]))} pull={pullOf(i)} />
-              </motion.section>
+                </>
+                )}
+              </Strip>
             )
           })}
         </div>
